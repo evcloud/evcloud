@@ -1,0 +1,100 @@
+{%extends 'reports_base.html'%}
+{% load sizeformat %}
+{% load percentageformat %}
+{%block base%}
+    <h2>资源分配列表</h2>
+<h3>分中心资源分配列表</h3>
+{% if r_alloc_c %}
+    <table class="table">
+        <tr>
+            <th>分中心</th>
+            <th>总cpu(/核)</th>
+            <th>已分配cpu(/核)</th>
+            <th>cpu分配率</th>
+            <th>总内存</th>
+            <th>已使用内存</th>
+            <th>内存使用率</th>
+            <th>主机数</th>
+        </tr>
+{%for r in r_alloc_c%}
+    <tr>
+        <td>{{r.center_name}}</td>
+        <td>{{r.vcpu_total}}</td>
+        <td>{{r.vcpu_allocated}}</td>
+        <td>{{r.vcpu_alloc_rate | percentageformat}}</td>
+        <td>{{r.mem_total | sizeformat:'MB'}}</td>
+        <td>{{r.mem_used | sizeformat:'MB'}}</td>
+        <td>{{r.mem_used_rate | percentageformat}}</td> 
+        <td>{{r.hostcount}}</td> 
+    </tr>
+{%endfor%}
+</table>
+{% else %}
+    <b style="color: red">所在权限，无分中心数据</b>
+{% endif%}
+
+<h3>主机组资源分配列表</h3>
+{% if r_alloc_g %}
+<table class="table">
+    <tr>
+        <th>主机组</th>
+        <th>分中心</th>
+        <th>总cpu(/核)</th>
+        <th>已用cpu(/核)</th>
+        <th>cpu使用率</th>
+        <th>总内存</th>
+        <th>已使用内存</th>
+        <th>内存使用率</th>
+        <th>主机数</th>
+    </tr>
+{%for r in r_alloc_g%}
+<tr>
+	<td>{{r.group_name}}</td>
+	<td>{{r.center_name}}</td>
+	<td>{{r.vcpu_total}}</td>
+	<td>{{r.vcpu_allocated}}</td>
+	<td>{{r.vcpu_alloc_rate | percentageformat}}</td>
+	<td>{{r.mem_total | sizeformat:'MB'}}</td>
+	<td>{{r.mem_used | sizeformat:'MB'}}</td>
+	<td>{{r.mem_used_rate | percentageformat}}</td> 
+    <td>{{r.hostcount}}</td> 
+</tr>
+{%endfor%}
+</table>
+{% else %}
+    <b style="color: red">所在权限，无主机组数据</b>
+{% endif%}
+
+<h3>宿主机资源分配列表</h3>
+{% if r_alloc_h %}
+<table class="table">
+    <tr>
+        <th>宿主机</th>
+        <th>主机组</th>
+        <th>分中心</th>        
+        <th>总cpu(/核)</th>
+        <th>已分配cpu(/核)</th>
+        <th>cpu分配率</th>
+        <th>总内存</th>
+        <th>已使用内存</th>
+        <th>内存使用率</th>
+</tr>
+{%for r in r_alloc_h%}
+    <tr>
+        <td>{{r.ipv4}}</td>
+        <td>{{r.group_name}}</td>
+        <td>{{r.center_name}}</td>
+        <td>{{r.vcpu_total}}</td>
+        <td>{{r.vcpu_allocated}}</td>
+        <td>{{r.vcpu_alloc_rate | percentageformat}}</td>
+        <td>{{r.mem_total | sizeformat:'MB'}}</td>
+        <td>{{r.mem_used | sizeformat:'MB'}}</td>
+        <td>{{r.mem_used_rate | percentageformat}}</td> 
+    </tr>
+{%endfor%}
+</table>
+{% else %}
+    <b style="color: red">所在权限，无主机数据</b>
+{% endif%}
+
+{%endblock%}

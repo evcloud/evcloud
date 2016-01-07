@@ -1,0 +1,125 @@
+#coding=utf-8
+from django.conf import settings
+from ..models import Host
+from .host import Host as VMHost
+import commands
+import importlib
+    
+
+class HostManager(object):
+    def __init__(self):
+        if hasattr(settings, 'HOST_FILTER_STRATEGY'):
+            self._set_filter_strategy(settings.HOST_FILTER_STRATEGY)
+        else:
+            from .filter import HostFilterStrategy
+            self.filter_strategy = HostFilterStrategy
+        
+    def _set_filter_strategy(self, strategy):
+        try:
+            mo = importlib.import_module(strategy)
+            self.filter_strategy = mo.HostFilterStrategy
+        except Exception, e:
+            raise RuntimeError('set filter strategy error. %s' % e)
+            
+             
+    def list(self, *args, **wargs):
+        '''获取宿主机列表'''
+        hosts = Host.objects.filter(wargs)
+        return hosts
+    
+    def available_hosts(self, group_id):
+        hosts = [h for h in Host.objects.filter(group_id = group_id, enable=True) 
+                 if h.vm_created < h.vm_limit 
+                 and h.mem_allocated < h.mem_total - h.mem_reserved]
+        return hosts
+    
+    def filter(self, hosts, vcpu, mem, claim=False):
+        '''宿主机筛选'''
+        #检查参数
+        if type(hosts) != list:
+            return False
+        for host in hosts:
+            if type(host) != Host:
+                return False 
+        if type(vcpu) != int:
+            return False
+        if type(mem) != int:
+            return False
+        
+        strategy = self.filter_strategy()
+            
+        try:
+            best_host = strategy.filter(hosts, vcpu, mem)
+        except Exception, e:
+            if settings.DEBUG: print 'host filter error:', e
+            self.error = e
+            return False
+        else:
+            if not best_host:
+                if settings.DEBUG: print 'host not find'
+                self.error = 'Host not find.'
+                return False
+            
+            if claim: 
+                res = self.claim(best_host, vcpu, mem)
+                if res == True:
+                    return best_host
+            return best_host
+        return False
+    
+    def check_host(self, host):
+        if type(host) == VMHost:
+            return host
+        elif type(host) == Host:
+            return VMHost(host)
+        else:
+            host_obj = None
+            try:
+                host_obj = Host.objects.get(id = host)
+            except: pass
+            
+            if not host_obj:
+                try:
+                    host_obj = Host.objects.get(ipv4 = host)
+                except: pass
+            
+            if not host_obj:
+                self.error = 'host error.'
+                return False
+            return VMHost(host_obj)
+        
+    def claim(self, host, vcpu, mem, vm_num = 1, fake=False):
+        if settings.DEBUG: print 'host manager claim resource: ', host, vcpu, mem, vm_num, fake 
+        host = self.check_host(host)
+        if not host:
+            return False
+        
+        res = host.claim(vcpu, mem, vm_num, fake)
+        if not res:
+            self.error = host.error
+            if settings.DEBUG: print self.error
+            return False
+        else:
+            return True
+            
+    def release(self, host, vcpu, mem, vm_num = 1, fake=False):
+        if settings.DEBUG: print type(host), Host
+        host = self.check_host(host)
+        if not host:
+            return False
+        
+        res = host.release(vcpu, mem, vm_num, fake)
+        if not res:
+            self.error = host.error 
+            return False
+        else:
+            return True
+    
+    def host_alive(self, host_ip, times = 1):
+        try:
+            host = Host.objects.get(ipv4 = host_ip)
+        except:
+            self.error = 'host_ip error.'
+            return False
+        return VMHost(host).alive(times)
+        

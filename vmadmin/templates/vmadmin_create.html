@@ -1,0 +1,201 @@
+{%extends 'vmadmin_base.html'%}
+{%block base%}
+
+<form id="form" role="form"  class="form-horizontal"  method="post" action="" 
+	onsubmit ="getElementById('form_btn').disabled=true;getElementById('form_btn').value='正在创建';return true;">
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title"><strong>创建云主机</strong></h3>
+  </div>
+  <div class="panel-body">
+
+
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="name" class="col-sm-3 control-label">分中心</label>
+        <div class="col-sm-9">
+            <div style="padding-bottom:10px">
+            {%for center in center_list%}
+               <input type="button" class="btn 
+                {%if request.GET.center %} 
+                    {%if request.GET.center|add:0 == center.id%} btn-info {%endif%} 
+                {%else%} 
+                    {%if forloop.first%}btn-info{%endif%}{%endif%}" value="{{center.name}}" onclick="javascript:window.location.href='?center={{center.id}}'">
+            {%endfor%}
+            </div>
+            <!-- <select name='center' class="form-control" style="width:200px">
+				{%for center in centers%}
+				<option value="{{center.pk}}" >{{center.name}}</option>
+				{%endfor%}
+			</select> -->
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">集群</label>
+        <div class="col-sm-9">
+            <select name="group" class="form-control" style="width:400px">
+            {%for group in group_list%}
+            <option value="{{group.id}}">{{group.name}}</option>
+            {%endfor%}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">镜像</label>
+        <div class="col-sm-9">
+            <div style="padding-bottom:10px">
+            {%for t in image_dic.keys%}
+               <input id="itype_{{forloop.counter}}" type="button" class="btn itype {%if forloop.first%}btn-info{%endif%}" value="{{t}}">
+            {%endfor%}
+            </div>
+            {%for images in image_dic.values%}
+                <select id="images_{{forloop.counter}}"  class="form-control images" 
+                {%if forloop.first%}style="width:400px" name='image'{%else%}style="width:400px; display: none;"{%endif%}>
+                    {%for image in images%}
+                    <option value="{{image.id}}">{{image.name}} {{image.version}}</option>
+                    {%endfor%}
+                </select>
+            {%endfor%}
+        </div>
+    </div>
+    <script type="text/javascript">
+        $("input[id^='itype_']").click(function (){
+            var id = this.id.substr(6);
+            $(".itype").removeClass('btn-info');
+            $(this).addClass('btn-info');
+            $(".images").each(function(){
+                $(this).hide();
+                this.name = '';
+            });
+            $("#images_" + id).show();
+            $("#images_" + id)[0].name = 'image';
+        })
+    </script>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">网络类型</label>
+        <div class="col-sm-9">
+            <select name="net" class="form-control" style="width:200px">
+                {%for vtype in vlan_type_dic.items%}
+                <option value="{{vtype.0}}">{{vtype.1}}</option>
+                {%endfor%}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label" style="font-weight: 200;">网络</label>
+        <div class="col-sm-9">
+            <select name="vlan" class="form-control" style="width:200px">
+            </select>
+        </div>
+    </div>
+    <script type="text/javascript">
+    (function(){
+    	var vlans = {{vlans_json|safe}};
+    	set_vlan();
+    	
+    	$("select[name='net']").change(set_vlan);
+    	$('select[name="group"]').change(set_vlan);
+    	
+    	function set_vlan() {
+        	var type = $("select[name='net']").val();
+    		var group_id = $('select[name="group"]').val();
+    		var options = '<option value=""><随机选择></option>';
+    		vlan_list = vlans[group_id][type]
+    		for (var i in vlan_list) {
+    			options += '<option value="'+vlan_list[i]['id']+'">'+vlan_list[i]['vlan']+'</opction>';
+    		}
+    		$("select[name='vlan']").html(options);
+    	}
+    })();
+       
+    </script>
+
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label">CPU数</label>
+        <div class="col-sm-9">
+        <input required name="vcpu" type="integer" class="form-control" value="2" style="width:200px;display:inline">个
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label">内存大小</label>
+        <div class="col-sm-9">
+        <input required name="mem" type="integer" class="form-control" value="2048" style="width:200px;display:inline"><span style="display:inline">MB</span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label">创建数量</label>
+        <div class="col-sm-9">
+        {%if req.user.is_superuser%}
+        <input required name="num" type="integer" class="form-control" value="1" style="width:200px;display:inline">个
+        
+        {%else%}
+        <select name="num" class="form-control" style="width:100px">
+        	<option value=1>1</option>
+        	<option value=2>2</option>
+        	<option value=3>3</option>
+        	<option value=4>4</option>
+        	<option value=5>5</option>
+        </select>
+        {%endif%}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label" style="font-weight: 200;">备注</label>
+        <div class="col-sm-9">
+			<textarea rows="" cols="" name="remarks" class="form-control" style="width:75%"></textarea>
+           
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label"></label>
+        <div class="col-sm-9">
+            
+           
+        </div>
+    </div>
+
+</div>
+  <div class="panel-footer">
+	  <div align="right">
+	  <input id="form_btn" type="submit" class="btn btn-primary" value="创建" style="width:150px"/>
+	  </div>
+  </div>
+</div>
+</form>
+{%if res%}
+<div class="panel panel-success">
+  <div class="panel-heading">
+    <h3 class="panel-title">创建结果</h3>
+  </div>
+  <div class="panel-body">
+	<table class="table">
+		<tr>
+			<th></th><th>结果</th><th>UUID</th><th></th>
+		</tr>
+	{%for r in res%}
+		<tr>
+			<td>{{forloop.counter}}</td>
+			<td>{%if r.res%}成功{%else%}失败{%endif%}</td>
+			<td>{{r.uuid}}</td>
+			<td>{{r.error}}</td>
+		</tr>
+	{%endfor%}
+	
+	</table>
+	</div>
+	</div>
+{%endif%}
+{%if error%}
+<div class="panel panel-warning">
+  <div class="panel-heading">
+    <h3 class="panel-title">创建失败</h3>
+  </div>
+  <div class="panel-body">
+	{{error}}
+</div>
+</div>
+{%endif%}  
+{%endblock%}
