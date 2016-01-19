@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>数据中心云主机管理系统</title>
+    <title>中科院弈维云</title>
     
   
     {% block extrastyle %}{% endblock %}
@@ -96,17 +96,20 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">数据中心云主机管理系统</a>
+                <a class="navbar-brand" href="http://ev.dcloud.cn"><strong>中科院弈维云</strong></a>
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
                     <li id="first_list"><a href="/vmadmin/vm/list/">云主机列表</a></li>
                     <li id="first_create"><a href="/vmadmin/vm/create/">创建云主机</a></li>
-                    <li><a href="/admin/">后台管理</a></li>
+                    {% if request.user.is_superuser %}
+                    <li><a href="/admin/">后台管理</a></li>                    
+                    {% endif%}
                     <li><a href="/reports/">统计报表</a></li> 
+
                 </ul>
                 <ul class="nav navbar-nav pull-right">
-                    <li> <a href="/admin/password_change/">{{request.user}}</a></li>
+                    <li> <a href="#">{{request.user}}</a></li>
                     <li class=""> <a href="/accounts/logout/?next=/vmadmin/">退出</a></li>
                 </ul>
             </div><!--/.nav-collapse -->
@@ -124,7 +127,7 @@
 
         <div class="footer-bottom">
             <ul class="list-inline text-center">
-                <li>数据中心云主机管理系统</li>
+                <li>本平台由弈维云EVcloud提供支持 <a href="http://ev.dcloud.cn">ev.dcloud.cn</a></li>
             </ul>
         </div>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

@@ -38,9 +38,9 @@
 	    <span class="sr-only">Toggle Dropdown</span>
 	  </button>
 	  <ul class="dropdown-menu" style="min-width: 0px;">
-	    <li><button class="btn btn-xs btn-primary" style="width:100px;margin-top:2px" onclick="vm_start('/vmadmin/vm/op/', '{{vmobj.uuid}}')">启动</button></li>
-	  <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_reboot('/vmadmin/vm/op/','{{vmobj.uuid}}')">重启</button></li>
-	  <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_shutdown('/vmadmin/vm/op/','{{vmobj.uuid}}')">关闭</button></li>
+	    <li><button class="btn btn-xs btn-primary" style="width:100px;margin-top:2px" onclick="vm_start('/vmadmin/vm/op/', '{{vmobj.uuid}}')">开机</button></li>
+	  <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_reboot('/vmadmin/vm/op/','{{vmobj.uuid}}')">软重启</button></li>
+	  <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_shutdown('/vmadmin/vm/op/','{{vmobj.uuid}}')">软关机</button></li>
 	  <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_poweroff('/vmadmin/vm/op/','{{vmobj.uuid}}')">关闭电源</button></li>
 	  <li><button class="btn btn-xs btn-danger" style="width:100px;margin-top:2px" onclick="vm_delete('/vmadmin/vm/op/','{{vmobj.uuid}}')">删除</button></li>
 	  </ul>

@@ -12,7 +12,7 @@ def get_vm_list_by_center(user, center_id):
             if vms_info['res']:
                 vm_list += vms_info['list']
             else:
-                print vms_info
+                print(vms_info)
     return vm_list
 
 def vm_list_sort(vm_list):
@@ -21,4 +21,9 @@ def vm_list_sort(vm_list):
 
 def image_list_sort(image_list):
     image_list = sorted(image_list, key = lambda image: image['name'])
+    image_list = sorted(image_list, key = lambda image: image['order'])
     return image_list
+
+def vlan_list_sort(vlan_list):
+    vlan_list = sorted(vlan_list, key = lambda vlan: vlan['order'])
+    return vlan_list

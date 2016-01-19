@@ -1,6 +1,6 @@
 import os
 import unittest
-from manager import HostManager
+from .manager import HostManager
 
 class HostTest(unittest.TestCase):
     

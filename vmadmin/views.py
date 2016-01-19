@@ -1,28 +1,44 @@
 #coding=utf-8
-import uuid, json, libxml2, re
-from django.shortcuts import render, render_to_response
+import uuid
+import json
+import libxml2
+import re
+from django.shortcuts import render
+from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 
 from django.contrib.auth.decorators import login_required
-from auth import staff_required
+from .auth import staff_required
 
 from utils.page import get_page
 from django.conf import settings
 
-from api.vm import ( get_list as api_vm_get_list, status as api_vm_status, 
-                     op as api_vm_op, edit as api_vm_edit, create as api_vm_create,
-                     get as api_vm_get, migrate as api_vm_migrate)
+from api.vm import get_list as api_vm_get_list
+from api.vm import status as api_vm_status
+from api.vm import op as api_vm_op
+from api.vm import edit as api_vm_edit
+from api.vm import create as api_vm_create
+from api.vm import get as api_vm_get
+from api.vm import migrate as api_vm_migrate
 from api.center import get_list as api_center_get_list
 from api.group import get_list as api_group_get_list
-from api.host import get_list as api_host_get_list, get as api_host_get
+from api.host import get_list as api_host_get_list
+from api.host import get as api_host_get
 from api.images import get_list as api_image_get_list
+from api.images import get_type_list as api_image_get_type_list
 from api.ceph import get_list as api_ceph_get_list
-from api.net import get_vlan_list as api_net_get_vlan_list, get_vlan as api_net_get_vlan
+from api.net import get_vlan_list as api_net_get_vlan_list
+from api.net import get_vlan as api_net_get_vlan
+from api.net import get_vlan_type_list as api_net_get_vlan_type_list
 from api.vnc import open as api_vnc_open
 from api.error import ERROR_CN
 
-from .view_tools import get_vm_list_by_center, vm_list_sort, image_list_sort
+from .view_tools import get_vm_list_by_center
+from .view_tools import vm_list_sort
+from .view_tools import image_list_sort
+from .view_tools import vlan_list_sort
 
 @login_required
 def index_view(req):
@@ -104,9 +120,9 @@ def vm_list_view(req):
     #从虚拟机列表中获取创建者集合
     creator_dic = {}
     for vm in vm_list:
-        if not creator_dic.has_key(vm['creator']):
+        if vm['creator'] not in creator_dic:
             creator_dic[vm['creator']] = 1
-    dicts['creator_list'] = creator_dic.keys()
+    dicts['creator_list'] = list(creator_dic.keys())
               
     #根据创建者筛选
     if arg_creator:
@@ -171,32 +187,49 @@ def vm_create_view(req):
                 image_res = api_image_get_list({'req_user': req.user, 'ceph_id': cephpool['id']})
                 if image_res['res']:
                     for image in image_res['list']:
-                        if image_dic.has_key(image['type']):
+                        if image['type'] in image_dic:
                             image_dic[image['type']].append(image)
                         else:
                             image_dic[image['type']] = [image]
-                            
-        for image_type in image_dic.keys():
-            image_dic[image_type] = image_list_sort(image_dic[image_type])
-        dicts['image_dic'] = image_dic
+        image_type_list_info = api_image_get_type_list()
+        if image_type_list_info['res']:
+            image_type_list = [t['name'] for t in image_type_list_info['list']]
+        else:
+            image_type_list = list(image_dic.keys())
+        image_list_ordered = []
+        for image_type in image_type_list:
+            if image_type in image_dic:
+                image_list_ordered.append((image_type, image_list_sort(image_dic[image_type])))
+                 
         
+        dicts['image_list_ordered'] = image_list_ordered
         
         #获取网络类型
         vlan_type_dic = {}
         vlans = {}
         for group in dicts['group_list']:
-            if not vlans.has_key(group['id']):
+            if group['id'] not in vlans:
                 vlans[group['id']] = {}
             vlan_dic = api_net_get_vlan_list({'req_user': req.user, 'group_id': group['id']})
             if vlan_dic['res']:
-                for vlan in vlan_dic['list']:
-                    if not vlan_type_dic.has_key(vlan['type_code']):
+                #vlan sorting
+                vlan_list = vlan_list_sort(vlan_dic['list'])
+                for vlan in vlan_list:
+                    if vlan['type_code'] not in vlan_type_dic:
                         vlan_type_dic[vlan['type_code']] = vlan['type']
-                    if not vlans[group['id']].has_key(vlan['type_code']):
+                    if vlan['type_code'] not in vlans[group['id']]:
                         vlans[group['id']][vlan['type_code']] = [vlan]
                     else:
                         vlans[group['id']][vlan['type_code']].append(vlan)
-        dicts['vlan_type_dic'] = vlan_type_dic
+
+        #VLAN_type sorting
+        vlan_type_list_info = api_net_get_vlan_type_list()
+        if vlan_type_list_info['res']:
+            vlan_type_list = [(t['code'], t['name']) for t in vlan_type_list_info['list'] if t['code'] in vlan_type_dic]
+        else:
+            vlan_type_list = [(t[0], t[1]) for t in list(vlan_type_dic.items())]
+        dicts['vlan_type_list'] = vlan_type_list
+
         dicts['vlans_json'] = json.dumps(vlans)
         
         
@@ -225,6 +258,9 @@ def vm_create_view(req):
                         'vcpu': arg_vcpu,
                         'mem': arg_mem,
                         'remarks': arg_remarks})
+                    if create_res['res'] == False:
+                        if create_res['err'] in ERROR_CN:
+                            create_res['error'] = ERROR_CN[create_res['err']]
                     res.append(create_res)
                 dicts['res'] = res
             else:
@@ -275,7 +311,7 @@ def vm_edit_view(req):
 def vm_vnc_view(req):
     arg_vmid = req.GET.get('vmid')
     url_res = api_vnc_open({'req_user': req.user, 'uuid': arg_vmid})
-    if settings.DEBUG: print url_res
+    if settings.DEBUG: print(url_res)
     if url_res['res']:
         return HttpResponseRedirect(url_res['url'])
     return HttpResponse('vnc链接获取失败。')
@@ -291,7 +327,7 @@ def vm_detail_view(req):
         if vlan['res']:
             dicts['vmobj']['br'] = vlan['info']['br'] 
     else:
-        if settings.DEBUG: print vm_res['err']
+        if settings.DEBUG: print(vm_res['err'])
         return HttpResponseRedirect('../list/')
     return render_to_response('vmadmin_detail.html', dicts, context_instance=RequestContext(req))
 
@@ -340,7 +376,7 @@ def vm_status_ajax(req):
     if status['res']:
         status['vmid'] = vmid
     else:
-        if ERROR_CN.has_key(status['err']):
+        if status['err'] in ERROR_CN:
             status['error'] = ERROR_CN[status['err']] 
     return HttpResponse(json.dumps(status), content_type='application/json')
 
@@ -352,7 +388,7 @@ def vm_op_ajax(req):
         'req_user': req.user,
         'uuid': vmid,
         'op': op})
-    if not res['res'] and ERROR_CN.has_key(res['err']):
+    if not res['res'] and res['err'] in ERROR_CN:
         res['error'] = ERROR_CN[res['err']]
     return HttpResponse(json.dumps(res), content_type='application/json')
 
@@ -364,6 +400,6 @@ def vm_edit_remarks_ajax(req):
                        'req_user': req.user,
                        'uuid': vmid, 
                        'remarks': remarks})
-    if not res['res'] and ERROR_CN.has_key(res['err']):
+    if not res['res'] and res['err'] in ERROR_CN:
         res['error'] = ERROR_CN[res['err']]
     return HttpResponse(json.dumps(res), content_type='application/json')

@@ -35,7 +35,7 @@ def sizeformat(bytes, arg="B"):
         'TB': TB,
         'PB': PB
     }
-    if switch.has_key(arg):
+    if arg in switch:
         bytes *= switch[arg]
     
     if bytes < KB:

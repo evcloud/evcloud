@@ -1,5 +1,5 @@
 #coding=utf-8
-from filter import HostFilterStrategy as BaseStrategy
+from .filter import HostFilterStrategy as BaseStrategy
 from .manager import HostManager
 
 class HostFilterStrategy(BaseStrategy):
@@ -11,7 +11,7 @@ class HostFilterStrategy(BaseStrategy):
             if hostmanager.claim(host, vcpu, mem, 1, True):
                 enables.append(host)
             else:
-                print hostmanager.error
+                print(hostmanager.error)
         
         if len(enables) == 0:
             return None

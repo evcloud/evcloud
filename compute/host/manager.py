@@ -2,7 +2,7 @@
 from django.conf import settings
 from ..models import Host
 from .host import Host as VMHost
-import commands
+import subprocess
 import importlib
     
 
@@ -18,7 +18,7 @@ class HostManager(object):
         try:
             mo = importlib.import_module(strategy)
             self.filter_strategy = mo.HostFilterStrategy
-        except Exception, e:
+        except Exception as e:
             raise RuntimeError('set filter strategy error. %s' % e)
             
              
@@ -50,13 +50,13 @@ class HostManager(object):
             
         try:
             best_host = strategy.filter(hosts, vcpu, mem)
-        except Exception, e:
-            if settings.DEBUG: print 'host filter error:', e
+        except Exception as e:
+            if settings.DEBUG: print('host filter error:', e)
             self.error = e
             return False
         else:
             if not best_host:
-                if settings.DEBUG: print 'host not find'
+                if settings.DEBUG: print('host not find')
                 self.error = 'Host not find.'
                 return False
             
@@ -89,7 +89,7 @@ class HostManager(object):
             return VMHost(host_obj)
         
     def claim(self, host, vcpu, mem, vm_num = 1, fake=False):
-        if settings.DEBUG: print 'host manager claim resource: ', host, vcpu, mem, vm_num, fake 
+        if settings.DEBUG: print('host manager claim resource: ', host, vcpu, mem, vm_num, fake) 
         host = self.check_host(host)
         if not host:
             return False
@@ -97,13 +97,13 @@ class HostManager(object):
         res = host.claim(vcpu, mem, vm_num, fake)
         if not res:
             self.error = host.error
-            if settings.DEBUG: print self.error
+            if settings.DEBUG: print(self.error)
             return False
         else:
             return True
             
     def release(self, host, vcpu, mem, vm_num = 1, fake=False):
-        if settings.DEBUG: print type(host), Host
+        if settings.DEBUG: print(type(host), Host)
         host = self.check_host(host)
         if not host:
             return False

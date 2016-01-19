@@ -7,47 +7,47 @@ from ..group import get_list, get
 class GroupTest(TestCase):
     def setUp(self):
         u1 = User()
-        u1.username = u'apitest'
+        u1.username = 'apitest'
         u1.is_active = True
         u1.api_user = True
         u1.save()
         
         u2 = User()
-        u2.username = u'superuser'
+        u2.username = 'superuser'
         u2.is_active = True
         u2.is_superuser = True
         u2.api_user = True
         u2.save()
         
         c1 = Center()
-        c1.name = u'测试中心1'
-        c1.location = u'位置1'
-        c1.desc = u'备注1'
+        c1.name = '测试中心1'
+        c1.location = '位置1'
+        c1.desc = '备注1'
         c1.save()
         
         g1 = Group()
         g1.center = c1
-        g1.name = u'测试集群1'
-        g1.desc = u'备注1'
+        g1.name = '测试集群1'
+        g1.desc = '备注1'
         g1.save()
         g1.admin_user.add(u1)
         
         g2 = Group()
         g2.center = c1
-        g2.name = u'groupname2'
-        g2.desc = u'desc2'
+        g2.name = 'groupname2'
+        g2.desc = 'desc2'
         g2.save()
         
         c2 = Center()
-        c2.name = u'测试中心2'
-        c2.location = u'位置2'
-        c2.desc = u'备注2'
+        c2.name = '测试中心2'
+        c2.location = '位置2'
+        c2.desc = '备注2'
         c2.save()
         
         g3 = Group()
         g3.center = c2
-        g3.name = u'groupname3'
-        g3.desc = u'desc3'
+        g3.name = 'groupname3'
+        g3.desc = 'desc3'
         g3.save()
         
         self.u1 = u1

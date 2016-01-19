@@ -19,7 +19,7 @@ def get_list(args):
     '''获取集群列表'''
     ret_list = []
     
-    if args.has_key('center_id'):
+    if 'center_id' in args:
         group_list = get_groups_in_perm(args['req_user'], args['center_id'])
     else:
         group_list = get_groups_in_perm(args['req_user'])
@@ -30,7 +30,8 @@ def get_list(args):
             'center_id': group.center_id,
             'name': group.name,
             'desc': group.desc,
-            'admin_user': [user.username for user in group.admin_user]})
+            'admin_user': [user.username for user in group.admin_user],
+            'order': group.order})
     return {'res': True, 'list': ret_list}
 
 

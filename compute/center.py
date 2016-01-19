@@ -21,7 +21,7 @@ def get_center(center_id):
     return _get_center_data(center)
 
 def get_centers():
-    centers = ModelCenter.objects.all()
+    centers = ModelCenter.objects.all().order_by('order')
     ret_list = []
     for center in centers:
         ret_list.append(_get_center_data(center))

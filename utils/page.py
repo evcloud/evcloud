@@ -72,7 +72,7 @@ def get_page(objs, request, perpage=0):
     p = Page(objs, perpage, page_num)
 
     get_list = []
-    for g in request.GET.items():
+    for g in list(request.GET.items()):
         if g[0] != 'page':
             get_list.append(g[0] + '=' + g[1])
     get_list.append('page=')

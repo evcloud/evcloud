@@ -7,11 +7,11 @@
 #@desc:    vnc            
 ########################################################################
 import os, uuid
-import commands
+import subprocess
 from compute.models import Vm
 from compute.vm.vm import VM, VIR_DOMAIN_RUNNING
 from django.conf import settings
-from token import TokenManager
+from .token import TokenManager
 import cmd
 
 class VNC():
@@ -29,7 +29,7 @@ class VNC():
     
         
         cmd = 'ssh %s virsh vncdisplay %s'%(obj.host.ipv4, obj.uuid)
-        (res, info) = commands.getstatusoutput(cmd)
+        (res, info) = subprocess.getstatusoutput(cmd)
         if res == 0:
             port = False
             for line in info.split('\n'):
@@ -44,8 +44,7 @@ class VNC():
             vncid = uuid.uuid4()    
             self.instance.add_token(vncid, obj.host.ipv4, port)    
             return {
-                'url':'http://%(domain)s/vnc/?vncid=%(vncid)s' % {
-                    'domain': settings.DOMAIN,
+                'url':'/vnc/?vncid=%(vncid)s' % {
                     'vncid': vncid
                     },
                 'id':vncid

@@ -150,6 +150,9 @@ def vm_edit(req):
 def vnc_open(req):
     args = get_args_from_post(req)
     dic = api_vnc_open(args)
+    if dic['res']:
+        http_host = req.META['HTTP_HOST']
+        dic['url'] = 'http://' + http_host + dic['url']
     return HttpResponse(json.dumps(dic))
 
 @csrf_exempt

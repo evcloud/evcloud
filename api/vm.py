@@ -109,21 +109,21 @@ def get_list(args):
 @args_required(['group_id', 'image_id', 'vcpu', 'mem'])
 def create(args):
     '''创建虚拟机'''
-    if not args.has_key('net_type_id') and not args.has_key('vlan_id'):
+    if 'net_type_id' not in args and 'vlan_id' not in args:
         return {'res': False, 'err': ERR_ARGS_VM_CREATE_NO_VLANTYPE}
     
     kwargs = {}
     
-    if args.has_key('net_type_id'):
+    if 'net_type_id' in args:
         kwargs['net_type_id'] = args['net_type_id']
     
-    if args.has_key('vlan_id'):
+    if 'vlan_id' in args:
         kwargs['vlan_id'] = args['vlan_id']
     
-    if args.has_key('diskname'):
+    if 'diskname' in args:
         kwargs['diskname'] = args['diskname']
         
-    if args.has_key('remarks'):
+    if 'remarks' in args:
         kwargs['remarks'] = args['remarks']
     
     vm = create_vm(args['req_user'].username, args['group_id'], args['image_id'], args['vcpu'], args['mem'],**kwargs)
@@ -167,12 +167,12 @@ def op(args):
         'delete': 'delete',
         'reset': 'reset'}
     
-    if op_list.has_key(args['op']):
+    if args['op'] in op_list:
         try:
             res = getattr(vm, op_list[args['op']]).__call__()
-        except Error, e:
+        except Error as e:
             return {'res': False, 'err': e.err}
-        except Exception, e:
+        except Exception as e:
             return {'res': False, 'err': ERR_VM_OP}
     else:
         return {'res': False, 'err': ERR_VM_NO_OP}
@@ -196,21 +196,21 @@ def edit(args):
     vcpu = False
     mem  = False
     remarks = False
-    if args.has_key('vcpu'):
+    if 'vcpu' in args:
         vcpu = args['vcpu']
         try:
             vcpu = int(vcpu)
         except:
             return {'res': False, 'err': ERR_ARGS_VM_VCPU}
         
-    if args.has_key('mem'):
+    if 'mem' in args:
         mem = args['mem']
         try:
             mem = int(mem)
         except:
             return {'res': False, 'err': ERR_ARGS_VM_MEM}
     
-    if args.has_key('remarks'):
+    if 'remarks' in args:
         remarks = args['remarks']
 
     if vcpu == False and mem == False and remarks == False:

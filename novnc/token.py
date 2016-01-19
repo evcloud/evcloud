@@ -9,20 +9,19 @@
 ########################################################################
 
 import os, uuid
-import commands
+import subprocess
 from compute.models import Vm
 from compute.vm.vm import VM, VIR_DOMAIN_RUNNING
 from django.conf import settings
 
-import thread
+import _thread
 
 class TokenManager(object):
 	class TManager(object):
 		novnc_tokens = {}
-		lock = thread.allocate_lock()
+		lock = _thread.allocate_lock()
 		def __init__(self):
-			path = os.path.dirname(os.path.abspath(__file__))
-			self._token_file_path = path+'/novnc/vnc_tokens'
+			self._token_file_path = '/' + settings.BASE_DIR.strip('/') + '/' + settings.NOVNC_TOKEN_FILE_PATH.strip('/')
 			tokens_file = open(self._token_file_path, 'r')
 			for token in tokens_file.readlines():
 				t = token.strip().split(':', 1)
@@ -39,7 +38,7 @@ class TokenManager(object):
 
 		def del_token(self, vncid):
 			self.lock.acquire()
-			for k, v in self.novnc_tokens.items():
+			for k, v in list(self.novnc_tokens.items()):
 				if v == vncid:
 					del self.novnc_tokens[k]
 			# print self.novnc_tokens
@@ -48,7 +47,7 @@ class TokenManager(object):
 
 		def flush(self):
 			tokens_file = open(self._token_file_path, 'w')
-			for k, v in self.novnc_tokens.items():
+			for k, v in list(self.novnc_tokens.items()):
 				tokens_file.write('%s: %s\n' % (v, k))
 			tokens_file.close()
 

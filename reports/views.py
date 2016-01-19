@@ -5,11 +5,11 @@ from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseRedirect
 
 from django.contrib.auth.decorators import login_required
-from auth import staff_required
+from .auth import staff_required
 
 
 from compute.models import Host, Center, Group, Vm
-from models import Alloc_Host, Alloc_Center, Alloc_Group, Alloc_Host_Latest, Alloc_Center_Latest, Alloc_Group_Latest
+from .models import Alloc_Host, Alloc_Center, Alloc_Group, Alloc_Host_Latest, Alloc_Center_Latest, Alloc_Group_Latest
 # Create your views here.
 
 #from utils.page import get_page
@@ -93,8 +93,8 @@ def alloc_center(request):
        mem_y["used"].append(i['mem_used']/1024)
        mem_y["remainder"].append((i['mem_total']-i['mem_used'])/1024)
     
-    chart_cpu={"title":u"分中心资源分配统计：CPU","xaxis":x,"yaxis":cpu_y,"xtitle":u"分中心","ytitle":u"cpu(核)"}
-    chart_mem={"title":u"分中心资源分配统计：内存","xaxis":x,"yaxis":mem_y,"xtitle":u"分中心","ytitle":u"mem(GB)"}
+    chart_cpu={"title":"分中心资源分配统计：CPU","xaxis":x,"yaxis":cpu_y,"xtitle":"分中心","ytitle":"cpu(核)"}
+    chart_mem={"title":"分中心资源分配统计：内存","xaxis":x,"yaxis":mem_y,"xtitle":"分中心","ytitle":"mem(GB)"}
     dicts={"chart_name":"center","chart_cpu":chart_cpu,"chart_mem":chart_mem,"r_alloc_c":r_alloc_c1}
     #return render(request,'reports_center.html',dicts)
     return render_to_response('reports_alloc_center.html', dicts, context_instance=RequestContext(request))
@@ -126,8 +126,8 @@ def alloc_group(request):
        mem_y["total"].append(i['mem_total']/1024)
        mem_y["used"].append(i['mem_used']/1024)
        mem_y["remainder"].append((i['mem_total']-i['mem_used'])/1024)
-    chart_cpu={"title":u"主机组资源分配统计：CPU","xaxis":x,"yaxis":cpu_y,"xtitle":u"主机组","ytitle":u"cpu(核)"}
-    chart_mem={"title":u"主机组资源分配统计：内存","xaxis":x,"yaxis":mem_y,"xtitle":u"主机组","ytitle":u"mem(GB)"}
+    chart_cpu={"title":"主机组资源分配统计：CPU","xaxis":x,"yaxis":cpu_y,"xtitle":"主机组","ytitle":"cpu(核)"}
+    chart_mem={"title":"主机组资源分配统计：内存","xaxis":x,"yaxis":mem_y,"xtitle":"主机组","ytitle":"mem(GB)"}
     dicts={"chart_name":"center","chart_cpu":chart_cpu,"chart_mem":chart_mem,"r_alloc_g":r_alloc_g1}
     #return render(request,'reports_group.html',dicts)
     return render_to_response('reports_alloc_group.html', dicts, context_instance=RequestContext(request))

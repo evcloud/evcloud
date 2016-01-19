@@ -77,7 +77,7 @@
 
 <table class="table">
 	<tr>
-		<th>UUID</th>
+		<th>云主机编号</th>
 		<th>宿主机</th>
 		<th>镜像</th>
 		<th>IP地址</th>
@@ -90,7 +90,7 @@
 	</tr>
 {%for vm in p.object_list%}
 <tr id="tr_{{vm.uuid}}" onmouseover="show_remarks_pen('{{vm.uuid}}')" onmouseout="hide_remarks_pen('{{vm.uuid}}')">
-	<td><a href="/vmadmin/vm/detail/?vmid={{vm.uuid}}" title="{{vm.uuid}}">{{vm.uuid|slice:":6"}}</a></td>
+	<td><a href="/vmadmin/vm/detail/?vmid={{vm.uuid}}" title="{{vm.uuid}}">{{vm.uuid|slice:":8"}}</a></td>
 	<td>{{vm.host_ipv4}}</td>
 	<td>{{vm.image}}</td>
 	<td>{{vm.ipv4}}</td>
@@ -111,29 +111,29 @@
 	</td>
 	<td>
     <div class="btn-group">
-      <button type="button" class="btn btn-sm btn-success" onclick="window.open('/vmadmin/vm/vnc/?vmid={{vm.uuid}}')">VNC</button>
+      <button type="button" class="btn btn-sm btn-success" onclick="window.open('/vmadmin/vm/vnc/?vmid={{vm.uuid}}')">远程桌面</button>
       <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <span class="caret"></span>
         <span class="sr-only">Toggle Dropdown</span>
       </button>
       <ul class="dropdown-menu" style="min-width: 0px;">
       {%if vm.can_operate%}
-          <li><button class="btn btn-xs btn-primary" style="width:100px;margin-top:2px" onclick="vm_start('/vmadmin/vm/op/', '{{vm.uuid}}')">启动</button></li>
-	      <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_reboot('/vmadmin/vm/op/','{{vm.uuid}}')">重启</button></li>
-	      <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_shutdown('/vmadmin/vm/op/','{{vm.uuid}}')">关闭</button></li>
+          <li><button class="btn btn-xs btn-primary" style="width:100px;margin-top:2px" onclick="vm_start('/vmadmin/vm/op/', '{{vm.uuid}}')">开机</button></li>
+	      <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_reboot('/vmadmin/vm/op/','{{vm.uuid}}')">软重启</button></li>
+	      <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_shutdown('/vmadmin/vm/op/','{{vm.uuid}}')">软关机</button></li>
 	      <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_poweroff('/vmadmin/vm/op/','{{vm.uuid}}')">关闭电源</button></li>
-	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/edit/?vmid={{vm.uuid}}'">修改</button></li>
-	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/migrate/?vmid={{vm.uuid}}'">迁移</button></li>
-	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="vm_reset('/vmadmin/vm/op/','{{vm.uuid}}')">重置</button></li>
+	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/edit/?vmid={{vm.uuid}}'">修改配置</button></li>
+	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/migrate/?vmid={{vm.uuid}}'">关机迁移</button></li>
+	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="vm_reset('/vmadmin/vm/op/','{{vm.uuid}}')">系统初始化</button></li>
 	      <li><button class="btn btn-xs btn-danger" style="width:100px;margin-top:2px" onclick="vm_delete('/vmadmin/vm/op/','{{vm.uuid}}')">删除</button></li>
       {%else%}
-      	  <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">启动</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">重启</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">关闭</button></li>
+      	  <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">开机</button></li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">软重启</button></li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">软关机</button></li>
 	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">关闭电源</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">修改</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">迁移</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">重置</button></li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">修改配置</button></li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">关机迁移</button></li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">系统初始化</button></li>
 	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">删除</button></li>
       {%endif%}
       </ul>

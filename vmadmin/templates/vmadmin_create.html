@@ -46,14 +46,14 @@
         <label class="col-sm-3 control-label">镜像</label>
         <div class="col-sm-9">
             <div style="padding-bottom:10px">
-            {%for t in image_dic.keys%}
-               <input id="itype_{{forloop.counter}}" type="button" class="btn itype {%if forloop.first%}btn-info{%endif%}" value="{{t}}">
+            {%for item in image_list_ordered%}
+               <input id="itype_{{forloop.counter}}" type="button" class="btn itype {%if forloop.first%}btn-info{%endif%}" value="{{item.0}}">
             {%endfor%}
             </div>
-            {%for images in image_dic.values%}
+            {%for item in image_list_ordered%}
                 <select id="images_{{forloop.counter}}"  class="form-control images" 
                 {%if forloop.first%}style="width:400px" name='image'{%else%}style="width:400px; display: none;"{%endif%}>
-                    {%for image in images%}
+                    {%for image in item.1%}
                     <option value="{{image.id}}">{{image.name}} {{image.version}}</option>
                     {%endfor%}
                 </select>
@@ -78,7 +78,7 @@
         <label class="col-sm-3 control-label">网络类型</label>
         <div class="col-sm-9">
             <select name="net" class="form-control" style="width:200px">
-                {%for vtype in vlan_type_dic.items%}
+                {%for vtype in vlan_type_list%}
                 <option value="{{vtype.0}}">{{vtype.1}}</option>
                 {%endfor%}
             </select>
@@ -168,12 +168,14 @@
 {%if res%}
 <div class="panel panel-success">
   <div class="panel-heading">
-    <h3 class="panel-title">创建结果</h3>
+    <h3 class="panel-title">创建结果
+        <input class="btn btn-info btn-xs" type="botton" onclick="javascript:window.location.href='../'" value="查看创建成功的虚拟机" style="float:right">
+    </h3>
   </div>
   <div class="panel-body">
 	<table class="table">
 		<tr>
-			<th></th><th>结果</th><th>UUID</th><th></th>
+			<th></th><th>结果</th><th>云主机编号</th><th>信息</th>
 		</tr>
 	{%for r in res%}
 		<tr>

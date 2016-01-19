@@ -9,6 +9,7 @@ from storage.ceph import get_cephpool
 
 from .manager import ImageManager
 from .models import Image as ModelImage
+from .models import ImageType
 
 
 imagemanager = ImageManager()
@@ -49,10 +50,21 @@ def get_image(image_id):
     return Image(image[0])
 
 def get_images(pool_id):
-    images = ModelImage.objects.filter(cephpool_id = pool_id)
+    images = ModelImage.objects.filter(cephpool_id = pool_id).order_by('order')
     ret_list = []
     for image in images:
         ret_list.append(Image(image))
+    return ret_list
+
+def get_image_types():
+    types = ImageType.objects.all().order_by('order')
+    ret_list = []
+    for t in types:
+        ret_list.append({
+            'code': t.code,
+            'name': t.name,
+            'order': t.order
+            })
     return ret_list
     
 class Image(object):

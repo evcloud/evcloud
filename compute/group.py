@@ -22,6 +22,7 @@ def get_groups_in_perm(user, center_id = None):
             groups = ModelGroup.objects.filter(admin_user = user)
         else:
             groups = ModelGroup.objects.filter(admin_user = user, center_id = center_id)
+    groups = groups.order_by('order')
     ret_list = []
     for group in groups:
         ret_list.append(_get_group_data(group))
@@ -60,6 +61,7 @@ class Group(object):
         self.name = self.db_obj.name
         self.desc = self.db_obj.desc
         self.admin_user = [user for user in self.db_obj.admin_user.all()]
+        self.order = self.db_obj.order
         
     
     def managed_by(self, user):

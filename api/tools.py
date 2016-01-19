@@ -35,7 +35,7 @@ def check_args_exists(args, required_key):
     '''检查args中是否包含required_key中所要求的参数'''
     miss = []
     for r in required_key:
-        if not args.has_key(r):
+        if r not in args:
             miss.append(r)
     if miss == []:
         return True, ''
@@ -68,18 +68,18 @@ def catch_error(func):
     def handle_args(*args, **kwargs): 
         try:
             return func(*args, **kwargs)  
-        except Error, e:
-            print e
+        except Error as e:
+            print(e)
             if settings.DEBUG: 
                 import traceback
-                print traceback.format_exc()
+                print(traceback.format_exc())
             
             return {'res': False, 'err': e.err} 
-        except Exception,e:
-            print e
+        except Exception as e:
+            print(e)
             if settings.DEBUG: 
                 import traceback
-                print traceback.format_exc()
+                print(traceback.format_exc())
             
             return {'res': False, 'err':ERR_PROCESS}
         
@@ -95,9 +95,9 @@ def print_process_time(func):
             start_time = time.time()
             res = func(*args, **kwargs)
             end_time = time.time()
-            print func.__module__, func.__name__, ' process time: ', end_time - start_time
+            print(func.__module__, func.__name__, ' process time: ', end_time - start_time)
             return res   
-        except Exception,e:
+        except Exception as e:
             return {'res': False, 'err': ERR_PROCESS}
     handle_args.__name__ = func.__name__
     handle_args.__module__ = func.__module__
@@ -112,8 +112,8 @@ def api_log(func):
             start_time = datetime.datetime.now()
             res = func(*args, **kwargs)
             end_time = datetime.datetime.now()
-            if settings.DEBUG: print func.__module__, func.__name__, ' process time: ', end_time - start_time
-            if len(args) > 0 and type(args[0]) == dict and args[0].has_key('req_user'):
+            if settings.DEBUG: print(func.__module__, func.__name__, ' process time: ', end_time - start_time)
+            if len(args) > 0 and type(args[0]) == dict and 'req_user' in args[0]:
                 try:
                     log = Log()
                     log.user = args[0]['req_user']
@@ -121,21 +121,21 @@ def api_log(func):
                     log.start_time = start_time
                     log.finish_time = end_time
                     log.result = res['res']
-                    log.from_trd_part = args[0].has_key('__from_post')
+                    log.from_trd_part = '__from_post' in args[0]
                     log.args = args
                     if not log.result:
                         error = ''
-                        if res.has_key('err'):
+                        if 'err' in res:
                             error += res['err'] + ' '
-                        if res.has_key('error'):
+                        if 'error' in res:
                             error += res['error']
                         log.error = error
                     log.save()
-                except Exception ,e:
+                except Exception as e:
                     pass
 
             return res   
-        except Exception,e:
+        except Exception as e:
             return {'res': False, 'err': ERR_LOG}
     handle_args.__name__ = func.__name__
     handle_args.__module__ = func.__module__
@@ -146,19 +146,19 @@ def login_required(func):
     def handle_args(req, **kwargs): 
         try:
             session_id = req.POST.get('session_id')
-            if settings.DEBUG: print 'login required', session_id
+            if settings.DEBUG: print('login required', session_id)
             if session_id:
                 from .auth import SESSION_KEY, IP_SESSION_KEY, get_session_by_id
                 session = get_session_by_id(session_id)
                 username = session.get(SESSION_KEY)
                 ip = session.get(IP_SESSION_KEY)
-                if settings.DEBUG: print 'login required', username, ip
+                if settings.DEBUG: print('login required', username, ip)
                 if ip == req.META['REMOTE_ADDR']:
                     user = User.objects.get(username = username)
                     req.user = user
                     return func(req, **kwargs)
-        except Exception, e:
-            if settings.DEBUG: print e 
+        except Exception as e:
+            if settings.DEBUG: print(e) 
         return HttpResponse(json.dumps({'res': False, 'err':ERR_AUTH_NO_LOGIN}))
         
     handle_args.__name__ = func.__name__

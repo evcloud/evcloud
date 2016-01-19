@@ -22,13 +22,7 @@
     <div id="header" style="background:#222222">
         <div id="branding">
           <h1 id="site-name" style="color:#EEEEEE">
-          {% if request.GET.next|slice:":13" == '/interclient/'%}
-	  数据中心云主机平台
-          {%elif request.GET.next|slice:":9" == '/vmadmin/'%}
-	  数据中心云主机管理系统
-          {%else%}
-          VMManager
-          {%endif%}
+          中科院弈维云
           </h1>
         </div>
     </div>
@@ -48,11 +42,11 @@
 {% csrf_token %}
   <div class="form-row">
     
-    <label for="id_username" class="required">Username:</label> <input id="id_username" maxlength="254" name="username" type="text" />
+    <label for="id_username" class="required">用户名:</label> <input id="id_username" maxlength="254" name="username" type="text" />
   </div>
   <div class="form-row">
     
-    <label for="id_password" class="required">Password:</label> <input id="id_password" name="password" type="password" />
+    <label for="id_password" class="required">密码:</label> <input id="id_password" name="password" type="password" autocomplete="off"/>
     <input type="hidden" name="this_is_the_login_form" value="1" />
     <input type="hidden" name="next" value="{{request.GET.next}}" />
   </div>

@@ -31,7 +31,7 @@ def login(args):
     if user and user.api_user:
         session[SESSION_KEY] = user.username
         session[IP_SESSION_KEY] = args['ip']
-        if args.has_key('expiry') and args['expiry'].isdigit():
+        if 'expiry' in args and args['expiry'].isdigit():
             session.set_expiry(int(args['expiry']))
         else:
             session.set_expiry(86400)
@@ -44,7 +44,7 @@ def logout(args):
     try:
         session = get_session_by_id(args['session_id'])
         session.delete()
-    except Exception, e:
+    except Exception as e:
         return {'res': False, 'err': ERR_AUTH_LOGOUT}
     return {'res': True}
 

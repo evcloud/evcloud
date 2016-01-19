@@ -263,7 +263,7 @@ class VM(VMData):
                         if d.UUIDString() == self.db_obj.uuid:
                             self._vm = d
                             return True
-                except Exception, e:
+                except Exception as e:
                     self.error = e
                 else:
                     if not self._vm:
@@ -314,11 +314,11 @@ class VM(VMData):
 
         if res and not self.exists():
             if not self.ceph_id:
-                if settings.DEBUG: print '[compute.vm.vm.delete]', '获取ceph信息失败'
+                if settings.DEBUG: print('[compute.vm.vm.delete]', '获取ceph信息失败')
                 return False 
             archive_success, archive_disk_name = archive_disk(self.ceph_id,  self.db_obj.disk)
             if not archive_success:
-                if settings.DEBUG: print '[compute.vm.vm.delete]','archive操作失败'
+                if settings.DEBUG: print('[compute.vm.vm.delete]','archive操作失败')
                 res = False
             if res:
                 try:
@@ -346,17 +346,17 @@ class VM(VMData):
                     archive.creator = self.db_obj.creator
                     archive.create_time = self.db_obj.create_time
                     archive.save()
-                except Exception, e:
-                    if settings.DEBUG: print '[compute.vm.vm.delete]', '归档记录保存失败', e
+                except Exception as e:
+                    if settings.DEBUG: print('[compute.vm.vm.delete]', '归档记录保存失败', e)
                     if archive_success and archive_disk_name:
-                        if settings.DEBUG: print '[compute.vm.vm.delete]', '恢复虚拟机镜像'
+                        if settings.DEBUG: print('[compute.vm.vm.delete]', '恢复虚拟机镜像')
                         revert_success, revert = archive_disk(self.ceph_id, archive_disk_name, self.db_obj.disk)
                         if not revert_success:
                             raise RuntimeError('vm archive error! revert error!!')
                     self.error = e.message
                     return False
                 else:
-                    if settings.DEBUG: print '[compute.vm.vm.delete]', '归档成功'
+                    if settings.DEBUG: print('[compute.vm.vm.delete]', '归档成功')
                     mac_release(archive.mac, archive.uuid)
                     host_release(self.db_obj.host, self.db_obj.vcpu, self.db_obj.mem)
                     self.db_obj.delete()
@@ -369,7 +369,7 @@ class VM(VMData):
         res = True
         if res:
             #判断虚拟机是否关机
-            if settings.DEBUG: print '[compute.vm.vm.reset]', '判断虚拟机是否关机'
+            if settings.DEBUG: print('[compute.vm.vm.reset]', '判断虚拟机是否关机')
             if (self.status == VIR_DOMAIN_RUNNING
                 or self.status == VIR_DOMAIN_BLOCKED
                 or self.status == VIR_DOMAIN_PAUSED
@@ -383,7 +383,7 @@ class VM(VMData):
                 if archive_success:
                     disk_archived = True
                 else: 
-                    if settings.DEBUG: print '[compute.vm.vm.reset]', '旧镜像归档错误'
+                    if settings.DEBUG: print('[compute.vm.vm.reset]', '旧镜像归档错误')
                     res = False
             else:
                 res = False
@@ -392,7 +392,7 @@ class VM(VMData):
         if res:
             #新镜像初始化
             init_success, init_res = init_disk(self.db_obj.image_id, self.db_obj.disk)
-            if settings.DEBUG: print '[compute.vm.vm.reset]', '磁盘初始化结果：', init_success
+            if settings.DEBUG: print('[compute.vm.vm.reset]', '磁盘初始化结果：', init_success)
             if not init_success:
                 res = False
             else:
@@ -478,7 +478,7 @@ class VM(VMData):
             self.db_obj.save()
             try:
                 res = self._connection.defineXML(xmldesc)
-            except Exception, e:
+            except Exception as e:
                 reset = self.unset_vcpu()
                 if not reset:
                     raise RuntimeError('set vcpu error, can not reset.')
@@ -542,7 +542,7 @@ class VM(VMData):
             self.db_obj.save()
             try:
                 res = self._connection.defineXML(xmldesc)
-            except Exception, e:
+            except Exception as e:
                 reset = self.unset_mem()
                 if not reset:
                     raise RuntimeError('set mem error, can not reset.')
@@ -569,7 +569,7 @@ class VM(VMData):
         try:
             info = self._domain.info()
             return info[0]
-        except Exception, e:
+        except Exception as e:
             if not self.host_alive:
                 return VIR_DOMAIN_HOST_DOWN
             return VIR_DOMAIN_MISS

@@ -1,5 +1,5 @@
 #coding=utf-8
-import commands
+import subprocess
 from django.db import transaction
 from ..models import Host as ModelHost
 from django.conf import settings
@@ -37,29 +37,30 @@ class Host(object):
     def alive(self, times=3):
         # cmd = 'ping %s -c %d' % (self.db_obj.ipv4, times)
         cmd = 'fping %s -r %d' % (self.db_obj.ipv4, times)
-        res, info = commands.getstatusoutput(cmd)
+        res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
         return False
             
     def claim(self, vcpu, mem, vm_num = 1, fake=False):
-        if settings.DEBUG:print 'claim resource', vcpu, mem
+        if settings.DEBUG:print('claim resource', vcpu, mem)
         if type(vcpu) != int or type(mem) != int or type(vm_num) != int:
             try:
                 vcpu = int(vcpu)
                 mem = int(mem)
                 vm_num = int(vm_num)
             except:
-                if settings.DEBUG: print 'host claim args error.'     
+                if settings.DEBUG: print('host claim args error.')     
                 self.error = 'args error.'
                 return False
         
         if vcpu < 0 or mem < 0 or vm_num < 0:
-            if settings.DEBUG: print 'host claim args < 0'  
+            if settings.DEBUG: print('host claim args < 0')  
             self.error = 'args error.'
             return False
 
         with transaction.atomic():
+            self._db_fresh()
 #             if self.db_obj.vcpu_allocated + vcpu > self.db_obj.vcpu_total:
 #                 self.error = 'vcpu not enough.'
 #                 return False
@@ -77,14 +78,14 @@ class Host(object):
                 self.db_obj.mem_allocated += mem
                 self.db_obj.vm_created += vm_num
                 self.db_obj.save()
-            except Exception,e:
-                if settings.DEBUG: print 'host claim.', e.message  
+            except Exception as e:
+                if settings.DEBUG: print('host claim.', e.message)  
                 self.error = e.message
                 return False
             return True
 
     def release(self, vcpu, mem, vm_num = 1, fake=False):
-        if settings.DEBUG: print 'release resource', vcpu, mem
+        if settings.DEBUG: print('release resource', vcpu, mem)
         if type(vcpu) != int or type(mem) != int or type(vm_num) != int:
             try:
                 vcpu = int(vcpu)
@@ -102,6 +103,7 @@ class Host(object):
             return True
         
         with transaction.atomic():
+            self._db_fresh()
             self.db_obj.vcpu_allocated -= vcpu
             self.db_obj.mem_allocated -= mem
             self.db_obj.vm_created -= vm_num
@@ -113,7 +115,7 @@ class Host(object):
                 self.db_obj.vm_created = 0
             try:
                 self.db_obj.save()
-            except Exception, e:
+            except Exception as e:
                 self.error = e.message 
                 return False
         return True
@@ -123,3 +125,18 @@ class Host(object):
             return True
         return user in self.db_obj.group.admin_user.all()
         
+    # def br_exists(self, br):
+    #     cmd = 'brctl show | grep ^%s | wc -l' % br
+    #     res, lines = commands.getstatusoutput(cmd)
+    #     if res == 0:
+    #         l = int(lines)
+    #         if l >0 :
+    #             return True
+    #     return False
+
+    def _db_fresh(self):
+        try:
+            obj = ModelHost.objects.select_for_update().get(pk = self.db_obj.pk)
+            self.db_obj = obj
+        except Exception as e:
+            print(e)

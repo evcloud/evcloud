@@ -3,13 +3,15 @@ from .base import VMModelAdmin
 from compute.models import *
 
 class CenterAdmin(VMModelAdmin):
-    list_display = ('name','location','desc',)
+    list_display = ('name','location','desc','order')
+    ordering = ('order',)
   
 class GroupAdmin(VMModelAdmin):
     list_display_links = ('name',)
-    list_display = ('name','center','desc',)
+    list_display = ('name','center','desc','order')
+    list_filter = ['center']
     filter_horizontal = ('admin_user',)
-    ordering = ('center', 'name')
+    ordering = ('order',)
  
 class HostAdmin(VMModelAdmin):
     list_display_links = ('ipv4',)

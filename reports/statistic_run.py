@@ -37,12 +37,12 @@ def statistic():
     conn=MySQLdb.connect(host=dbhost,user=username,passwd=password,db=dbname, charset='utf8',cursorclass = MySQLdb.cursors.DictCursor)
     cur=conn.cursor()
     if not conn:
-        print '数据库连接失败！\n'
-    print '-----------statistic(): begin---------\n'
+        print('数据库连接失败！\n')
+    print('-----------statistic(): begin---------\n')
     nowtimestr=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     #####更新host资源统计信息######
     #查询最新的tbname_host 数据
-    print '----更新host资源统计数据----\n'
+    print('----更新host资源统计数据----\n')
     sqlstr='select * from %s;'%(tbname_host)
     cur.execute(sqlstr)
     compute_hosts=cur.fetchall()
@@ -92,7 +92,7 @@ def statistic():
     
     #####更新group资源统计信息######
     #查询tbname_group中的所有group，并更新统计数据
-    print '----更新group资源统计数据----\n'
+    print('----更新group资源统计数据----\n')
     sqlstr='select * from %s;'%(tbname_group)
     cur.execute(sqlstr)
     compute_groups=cur.fetchall()
@@ -159,7 +159,7 @@ def statistic():
     
     #####更新center资源统计信息######
     #查询tbname_center中的所有center数据，分别更新统计数据
-    print '----更新center资源统计数据----'
+    print('----更新center资源统计数据----')
     sqlstr='select * from %s;'%(tbname_center)
     cur.execute(sqlstr)
     compute_centers=cur.fetchall()
@@ -221,17 +221,17 @@ def statistic():
                         %(tbname_report_center_latest,c["id"],c["name"],center_statistic["vcpu_total"],center_statistic["vcpu_allocated"],vcpu_alloc_rate,center_statistic["mem_total"],center_statistic["mem_allocated"],center_statistic["mem_reserved"],mem_alloc_rate,nowtimestr)
                 cur.execute(sqlstr)
                 conn.commit()
-    print '----更新center资源统计数据-结束---\n'
+    print('----更新center资源统计数据-结束---\n')
     cur.close()
     conn.close()
-    print '-----------statistic(): end---------\n'
+    print('-----------statistic(): end---------\n')
 
 #main():run by itself
 #每隔T 小时，运行一次资源数据统计
 if __name__=='__main__':
-    print 'welcome to use this process ,by lzx! lzxddz@cnic.cn \n'
-    print time.strftime('当前时间： %Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+    print('welcome to use this process ,by lzx! lzxddz@cnic.cn \n')
+    print(time.strftime('当前时间： %Y-%m-%d %H:%M:%S',time.localtime(time.time())))
     last_datetime=datetime.datetime.now()
     now_datetime=datetime.datetime.now()
     statistic()
-    print 'bye! \n'
+    print('bye! \n')

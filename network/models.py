@@ -4,8 +4,10 @@ from django.db import models
 app_label = 'network'
 
 class VlanType(models.Model):
-    code = models.CharField('类型编号', max_length=50, primary_key=True)
+    code = models.AutoField('类型编号', primary_key=True)
     name = models.CharField('类型名称', max_length=100)
+    order= models.IntegerField('排序', default=0, 
+        help_text="用于在页面中的显示顺序，数值越小越靠前。")
     
     def __unicode__(self):
         return self.name
@@ -21,6 +23,13 @@ class Vlan(models.Model):
     type    = models.ForeignKey(VlanType)
     enable  = models.BooleanField()
     remarks = models.TextField(null=True, blank=True)
+    subnetip = models.GenericIPAddressField(null=True, blank=True)
+    netmask = models.GenericIPAddressField(null=True, blank=True)
+    gateway = models.GenericIPAddressField(null=True, blank=True)
+    dnsserver = models.GenericIPAddressField(null=True, blank=True)
+    order    = models.IntegerField('排序', default=0, 
+        help_text="用于在页面中的显示顺序，数值越小越靠前。")
+
 
     def __unicode__(self):
     	return self.vlan

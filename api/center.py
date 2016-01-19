@@ -22,7 +22,7 @@ def get_list(args=None):
         def do_filter(c):
             if c.managed_by(args['req_user']):
                 return c
-        center_list = filter(do_filter, center_list)
+        center_list = list(filter(do_filter, center_list))
         
     ret_list = []
     for center in center_list:       
@@ -30,5 +30,6 @@ def get_list(args=None):
             'id':   center.id,
             'name': center.name,
             'location': center.location,
-            'desc': center.desc})
+            'desc': center.desc,
+            'order': center.order})
     return {'res': True, 'list': ret_list}

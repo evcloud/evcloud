@@ -17,6 +17,7 @@ class Vlan(object):
         self.type_name = self.db_obj.type.name
         self.enable = self.db_obj.enable
         self.remarks = self.db_obj.remarks
+        self.order = self.db_obj.order
         
     def managed_by(self, user):
         if user.is_superuser:

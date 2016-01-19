@@ -1,13 +1,13 @@
 #coding=utf-8
 from django.db import transaction
-from models import Vlan, MacIP, VlanType
+from .models import Vlan, MacIP, VlanType
 from django.conf import settings
 
 from random import randint
 
 class NetManager(object):
     def filter(self, vlans, claim=False, vmid=None):
-        if settings.DEBUG: print '[NetManager.filter]', '开始网络筛选：', vlans, claim, vmid
+        if settings.DEBUG: print('[NetManager.filter]', '开始网络筛选：', vlans, claim, vmid)
         if type(vlans) != list:
             return False
         
@@ -17,7 +17,7 @@ class NetManager(object):
                 try:
                     vlan = Vlan.objects.get(pk = vlan)
                 except:
-                    if settings.DEBUG: print '[NetManager.filter]', '参数vlans错误'
+                    if settings.DEBUG: print('[NetManager.filter]', '参数vlans错误')
                     return False 
             available_vlans.append(vlan)
             
@@ -41,7 +41,7 @@ class NetManager(object):
     
     error = ''
     def claim(self, vlan, vmid):
-        if settings.DEBUG: print 'netmanager claim: ', vlan, vmid
+        if settings.DEBUG: print('netmanager claim: ', vlan, vmid)
         if type(vlan) != Vlan:
             vlan = Vlan.objects.filter(pk = vlan)
             if not vlan:
@@ -65,7 +65,7 @@ class NetManager(object):
         return mac.mac
     
     def claim_mac(self, mac, vmid):
-        if settings.DEBUG: print 'netmanager filter claim_mac: ', mac, vmid
+        if settings.DEBUG: print('netmanager filter claim_mac: ', mac, vmid)
         with transaction.atomic():
             if type(mac) == MacIP:
                 obj = mac
@@ -82,10 +82,10 @@ class NetManager(object):
         return True
 
     def release(self, mac, vmid):
-        if settings.DEBUG: print 'release mac:', mac, vmid 
+        if settings.DEBUG: print('release mac:', mac, vmid) 
         macipobj = MacIP.objects.filter(mac=mac, vmid=vmid, enable=True)
         for m in macipobj:
-            if settings.DEBUG: print 'set null', m.mac
+            if settings.DEBUG: print('set null', m.mac)
             m.vmid = ''
             m.save()
 
@@ -125,9 +125,9 @@ class NetManager(object):
         vlan_dic = {}
         for host in host_list:
             for vlan in host.vlan.all():
-                if not vlan_dic.has_key(vlan.id):
+                if vlan.id not in vlan_dic:
                     vlan_dic[vlan.id] = vlan
-        return vlan_dic.values()
+        return list(vlan_dic.values())
     
     def get_vlan_list_by_type(self, vlan_type):
         if type(vlan_type) != VlanType:

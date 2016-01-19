@@ -1,10 +1,8 @@
 from abc import ABCMeta, abstractmethod
 import xml.dom.minidom
-from manager import ImageManager
+from .manager import ImageManager
 
-class AbsXML(object):
-    __metaclass__ = ABCMeta
-
+class AbsXML(object, metaclass=ABCMeta):
     @abstractmethod
     def _get_xml_tpl(self):pass
 
@@ -18,7 +16,7 @@ class XMLEditor(object):
     def set_xml(self, xml_string):
         try:
             self._dom = xml.dom.minidom.parseString(xml_string)
-        except Exception, e:
+        except Exception as e:
             return False
         else:
             return True

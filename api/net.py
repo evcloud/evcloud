@@ -12,6 +12,7 @@ from .error import ERR_AUTH_PERM, ERR_VLAN_NO_FIND, ERR_VLAN_ID, ERR_GROUP_ID
 
 from compute.group import get_group
 import network
+from network import get_vlan_types
 
 @api_log
 @catch_error
@@ -36,7 +37,8 @@ def get_vlan_list(args=None):
                 'br': vlan.br,
                 'type_code': vlan.type_code,
                 'type': vlan.type_name,
-                'enable': vlan.enable
+                'enable': vlan.enable,
+                'order': vlan.order
                 })
         return {'res': True, 'list': vlan_list}
     return {'res': False, 'err': ERR_VLAN_NO_FIND}
@@ -63,3 +65,9 @@ def get_vlan(args=None):
                      'type_code': vlan.type_code,
                      'type_name': vlan.type_name,
                      'enable': vlan.enable}}
+
+@api_log
+@catch_error
+def get_vlan_type_list():
+    vlan_type_list = get_vlan_types()
+    return {'res': True, 'list': vlan_type_list}

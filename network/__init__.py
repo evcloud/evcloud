@@ -1,5 +1,7 @@
 #coding=utf-8
-from .models import Vlan as ModelVlan, MacIP
+from .models import Vlan as ModelVlan
+from .models import MacIP
+from .models import VlanType
 from .manager import NetManager
 from .vlan import Vlan
 from django.contrib.auth.models import User
@@ -56,4 +58,14 @@ def mac_claim(mac, vmid):
 
 def mac_release(mac, vmid):
     return netmanager.release(mac, vmid)
-        
+
+def get_vlan_types():
+    type_list = VlanType.objects.all().order_by('order')
+    ret_list = []
+    for t in type_list:
+        ret_list.append({
+            'code': t.code,
+            'name': t.name,
+            'order': t.order
+            })
+    return ret_list

@@ -6,10 +6,10 @@ from network.models import *
 from storage.models import *
 from image.models import *
 from ..vm import get, get_list, create, status, op, edit, migrate
-from testsettings import *
+from .testsettings import *
 
-import commands, os, libvirt, time
-from __builtin__ import True
+import subprocess, os, libvirt, time
+from builtins import True
 
 
 class VmTest(TestCase):
@@ -17,21 +17,21 @@ class VmTest(TestCase):
     mem = 2048
     def setUp(self):
         u1 = User()
-        u1.username = u'apiuser'
+        u1.username = 'apiuser'
         u1.is_active = True
         u1.api_user = True
         u1.save()
         self.u1 = u1
         
         u2 = User()
-        u2.username = u'apiuser1'
+        u2.username = 'apiuser1'
         u2.is_active = True
         u2.api_user = True
         u2.save()
         self.u2 = u2
 
         u3 = User()
-        u3.username = u'superuser'
+        u3.username = 'superuser'
         u3.is_active = True
         u3.api_user = True
         u3.is_superuser = True
@@ -39,29 +39,29 @@ class VmTest(TestCase):
         self.u3 = u3
 
         c1 = Center()
-        c1.name = u'测试中心1'
-        c1.location = u'位置1'
-        c1.desc = u'备注1'
+        c1.name = '测试中心1'
+        c1.location = '位置1'
+        c1.desc = '备注1'
         c1.save()
         self.c1 = c1
       
         g1 = Group()
         g1.center = c1
-        g1.name = u'测试集群1'
-        g1.desc = u'备注1'
+        g1.name = '测试集群1'
+        g1.desc = '备注1'
         g1.save()
         g1.admin_user.add(u1)
         self.g1 = g1
                 
         vt1 = VlanType()
-        vt1.code = u'vlantype1'
-        vt1.name = u'vlantype1'
+        vt1.code = 'vlantype1'
+        vt1.name = 'vlantype1'
         vt1.save()
         self.vt1 = vt1
         
         v1 = Vlan()
-        v1.vlan = unicode(TEST_VLAN)
-        v1.br = unicode(TEST_BR)
+        v1.vlan = str(TEST_VLAN)
+        v1.br = str(TEST_BR)
         v1.type = vt1
         v1.enable = True
         v1.save()
@@ -76,7 +76,7 @@ class VmTest(TestCase):
                 
         h1 = Host()
         h1.group = g1
-        h1.ipv4 = unicode(TEST_HOST)
+        h1.ipv4 = str(TEST_HOST)
         h1.enable = True
         h1.save()
         h1.vlan.add(v1)
@@ -84,9 +84,9 @@ class VmTest(TestCase):
         
         ch1 = CephHost()
         ch1.center = c1
-        ch1.host = unicode(TEST_CEPH['host'])
+        ch1.host = str(TEST_CEPH['host'])
         ch1.port = TEST_CEPH['port']
-        ch1.uuid = unicode(TEST_CEPH['uuid'])
+        ch1.uuid = str(TEST_CEPH['uuid'])
         ch1.save()
         
         cp1 = CephPool()
@@ -97,21 +97,21 @@ class VmTest(TestCase):
         self.cp1 = cp1
         
         it1 = ImageType()
-        it1.code = u'code1'
-        it1.name = u'imagetype1'
+        it1.code = 'code1'
+        it1.name = 'imagetype1'
         it1.save()
         
         x1 = Xml()
-        x1.name = u'linux'
+        x1.name = 'linux'
         x1.xml = TEST_XML
         x1.save()
         
         i1 = Image()
         i1.cephpool = cp1
-        i1.name = u'image1'
-        i1.version = u'v0.1'
+        i1.name = 'image1'
+        i1.version = 'v0.1'
         i1.snap = TEST_IMAGE
-        i1.desc = u''
+        i1.desc = ''
         i1.xml = x1
         i1.type = it1
         i1.enable = True
@@ -126,13 +126,13 @@ class VmTest(TestCase):
         if self.vm_uuid:
             if self._vm_exist(self.h1.ipv4, self.vm_uuid):
                 cmd = 'ssh %s virsh destroy %s' % (self.h1.ipv4, self.vm_uuid)
-                r, info = commands.getstatusoutput(cmd)
+                r, info = subprocess.getstatusoutput(cmd)
 #                 if r != 0:
 #                     os.system('ssh %s virsh destroy %s' % (self.h1.ipv4, self.vm_uuid))
 #                     print info
                     
                 cmd = 'ssh %s virsh undefine %s' % (self.h1.ipv4, self.vm_uuid)
-                r, info = commands.getstatusoutput(cmd)
+                r, info = subprocess.getstatusoutput(cmd)
                 if r != 0:
                     os.system('ssh %s virsh undefine %s' % (self.h1.ipv4, self.vm_uuid))
 #                     print info
@@ -142,19 +142,19 @@ class VmTest(TestCase):
                 
         if self.vm_disk:
             cmd = 'ssh %s rbd ls %s | grep x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-            r, info = commands.getstatusoutput(cmd)
+            r, info = subprocess.getstatusoutput(cmd)
             if r == 0:
                 cmd1 = 'ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-                r1, info1 = commands.getstatusoutput(cmd1)
+                r1, info1 = subprocess.getstatusoutput(cmd1)
                 if r1 != 0:
                     os.system('ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
 #                     print info1
                     
             cmd = 'ssh %s rbd ls %s | grep %s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-            r, info = commands.getstatusoutput(cmd)
+            r, info = subprocess.getstatusoutput(cmd)
             if r == 0:
                 cmd1 = 'ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-                r1, info1 = commands.getstatusoutput(cmd1)
+                r1, info1 = subprocess.getstatusoutput(cmd1)
                 if r1 != 0:
                     os.system('ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
 #                     print info1
@@ -165,7 +165,7 @@ class VmTest(TestCase):
     def _host_alive(self, ipv4):
         cmd = 'ping %s -c %d' % (ipv4, 3)
 #         print cmd
-        res, info = commands.getstatusoutput(cmd)
+        res, info = subprocess.getstatusoutput(cmd)
 #         print info
         if res == 0:
             return True
@@ -173,13 +173,13 @@ class VmTest(TestCase):
     
     def _vm_exist(self, host_ip, vm_uuid):
         cmd = 'ssh %s virsh list --all | grep %s' % (host_ip, vm_uuid) 
-        r, info = commands.getstatusoutput(cmd)
+        r, info = subprocess.getstatusoutput(cmd)
         if r == 0:
             return True
         return False
 
     def test_create(self):
-        self.assert_(self._host_alive(self.ip1) == False)
+        self.assertTrue(self._host_alive(self.ip1) == False)
         
         res1 = create({'req_user': self.u1})
         exp1 = {'res': False}
@@ -196,33 +196,33 @@ class VmTest(TestCase):
         self.vm_uuid = res2['uuid']
         
         r = self._vm_exist(self.h1.ipv4, self.vm_uuid)
-        self.assert_(r, '')# 查看虚拟机是否存在
+        self.assertTrue(r, '')# 查看虚拟机是否存在
         vmobj = Vm.objects.filter(uuid = self.vm_uuid)
-        self.assert_(vmobj.exists(), '') #数据库vm记录是否存在
+        self.assertTrue(vmobj.exists(), '') #数据库vm记录是否存在
         vmobj= vmobj[0]
         
         #数据库 vm 是否正常
-        self.assert_(vmobj.host == self.h1)
-        self.assert_(vmobj.image_id == self.i1.pk)
-        self.assert_(vmobj.image_snap == self.i1.snap)
-        self.assert_(vmobj.vcpu == self.vcpu)
-        self.assert_(vmobj.mem == self.mem)
+        self.assertTrue(vmobj.host == self.h1)
+        self.assertTrue(vmobj.image_id == self.i1.pk)
+        self.assertTrue(vmobj.image_snap == self.i1.snap)
+        self.assertTrue(vmobj.vcpu == self.vcpu)
+        self.assertTrue(vmobj.mem == self.mem)
           
         self.newvm = vmobj
           
         self.vm_disk = vmobj.disk
         #数据库 宿主机修改是否正常
         host = Host.objects.get(pk = self.h1.pk)
-        self.assert_(host.vcpu_total == self.h1.vcpu_total)
-        self.assert_(host.vcpu_allocated == self.vcpu)
-        self.assert_(host.mem_total == self.h1.mem_total)
-        self.assert_(host.mem_allocated == self.mem)
-        self.assert_(host.mem_reserved == self.h1.mem_reserved)
-        self.assert_(host.vm_limit == self.h1.vm_limit)
-        self.assert_(host.vm_created == 1) 
+        self.assertTrue(host.vcpu_total == self.h1.vcpu_total)
+        self.assertTrue(host.vcpu_allocated == self.vcpu)
+        self.assertTrue(host.mem_total == self.h1.mem_total)
+        self.assertTrue(host.mem_allocated == self.mem)
+        self.assertTrue(host.mem_reserved == self.h1.mem_reserved)
+        self.assertTrue(host.vm_limit == self.h1.vm_limit)
+        self.assertTrue(host.vm_created == 1) 
         
         macip = MacIP.objects.get(pk = self.ip1.pk)
-        self.assert_(macip.vmid == self.vm_uuid ) #数据库ip记录修改是否正常
+        self.assertTrue(macip.vmid == self.vm_uuid ) #数据库ip记录修改是否正常
 
     def _setupvm(self):
         res = create({'req_user': self.u1, 
@@ -386,7 +386,7 @@ class VmTest(TestCase):
         res1 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'start'})
         exp1 = {'res': True}
         self.assertDictEqual(exp1, res1)
-        self.assert_(domain.info()[0] == 1)
+        self.assertTrue(domain.info()[0] == 1)
         
     def test_op_poweroff(self):
         if not self._setupvm():
@@ -397,7 +397,7 @@ class VmTest(TestCase):
         res1 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'poweroff'})
         exp1 = {'res': True}
         self.assertDictEqual(exp1, res1)
-        self.assert_(domain.info()[0] == 5)
+        self.assertTrue(domain.info()[0] == 5)
         
     def test_op_shutdown(self):
         if not self._setupvm():
@@ -409,7 +409,7 @@ class VmTest(TestCase):
         time.sleep(30)
         exp1 = {'res': True}
         self.assertDictEqual(exp1, res1)
-        self.assert_(domain.info()[0] == 5)
+        self.assertTrue(domain.info()[0] == 5)
         
     def test_op_reset(self):
         if not self._setupvm():
@@ -417,7 +417,7 @@ class VmTest(TestCase):
         
         def get_disk_count(host, pool, disk):
             cmd = 'ssh %s rbd ls %s | grep ^%s | wc -l' % (host, pool, disk)
-            r, info = commands.getstatusoutput(cmd)
+            r, info = subprocess.getstatusoutput(cmd)
             if r == 0:
                 return int(info)
             return -1
@@ -465,47 +465,47 @@ class VmTest(TestCase):
         
         # 归档记录是否添加
         vmarc = VmArchive.objects.filter(uuid = self.newvm.uuid)
-        self.assert_(vmarc.exists())
-        self.assert_(vmarc.count() == 1)
+        self.assertTrue(vmarc.exists())
+        self.assertTrue(vmarc.count() == 1)
         
         # 归档记录是否正确
         if vmarc.count() == 1:
             vmarc = vmarc[0]
-            self.assert_(vmarc.center_id == self.c1.id)
-            self.assert_(vmarc.center_name == self.c1.name)
-            self.assert_(vmarc.group_id == self.g1.id)
-            self.assert_(vmarc.group_name == self.g1.name)
-            self.assert_(vmarc.host_id == self.h1.id)
-            self.assert_(vmarc.host_ipv4 == self.h1.ipv4)
-            self.assert_(vmarc.ceph_host == self.cp1.host.host)
-            self.assert_(vmarc.ceph_pool == self.cp1.pool)
-            self.assert_(vmarc.image_id == self.i1.id)
-            self.assert_(vmarc.image_snap == self.i1.snap)
-            self.assert_(vmarc.name == self.newvm.name)
-            self.assert_(vmarc.uuid == self.newvm.uuid)
-            self.assert_(vmarc.vcpu == self.newvm.vcpu)
-            self.assert_(vmarc.mem == self.newvm.mem)
-            self.assert_(vmarc.disk[2:-21] == self.newvm.disk)
-            self.assert_(vmarc.mac == self.ip1.mac)
-            self.assert_(vmarc.ipv4 == self.ip1.ipv4)
-            self.assert_(vmarc.vlan == self.v1.vlan)
-            self.assert_(vmarc.br == self.v1.br)
+            self.assertTrue(vmarc.center_id == self.c1.id)
+            self.assertTrue(vmarc.center_name == self.c1.name)
+            self.assertTrue(vmarc.group_id == self.g1.id)
+            self.assertTrue(vmarc.group_name == self.g1.name)
+            self.assertTrue(vmarc.host_id == self.h1.id)
+            self.assertTrue(vmarc.host_ipv4 == self.h1.ipv4)
+            self.assertTrue(vmarc.ceph_host == self.cp1.host.host)
+            self.assertTrue(vmarc.ceph_pool == self.cp1.pool)
+            self.assertTrue(vmarc.image_id == self.i1.id)
+            self.assertTrue(vmarc.image_snap == self.i1.snap)
+            self.assertTrue(vmarc.name == self.newvm.name)
+            self.assertTrue(vmarc.uuid == self.newvm.uuid)
+            self.assertTrue(vmarc.vcpu == self.newvm.vcpu)
+            self.assertTrue(vmarc.mem == self.newvm.mem)
+            self.assertTrue(vmarc.disk[2:-21] == self.newvm.disk)
+            self.assertTrue(vmarc.mac == self.ip1.mac)
+            self.assertTrue(vmarc.ipv4 == self.ip1.ipv4)
+            self.assertTrue(vmarc.vlan == self.v1.vlan)
+            self.assertTrue(vmarc.br == self.v1.br)
             
             self.vm_disk = vmarc.disk
             
         # 宿主机信息是否正确
         host = Host.objects.get(pk = self.h1.pk)
-        self.assert_(host.vcpu_total == self.h1.vcpu_total)
-        self.assert_(host.vcpu_allocated == 0)
-        self.assert_(host.mem_total == self.h1.mem_total)
-        self.assert_(host.mem_allocated == 0)
-        self.assert_(host.mem_reserved == self.h1.mem_reserved)
-        self.assert_(host.vm_limit == self.h1.vm_limit)
-        self.assert_(host.vm_created == 0) 
+        self.assertTrue(host.vcpu_total == self.h1.vcpu_total)
+        self.assertTrue(host.vcpu_allocated == 0)
+        self.assertTrue(host.mem_total == self.h1.mem_total)
+        self.assertTrue(host.mem_allocated == 0)
+        self.assertTrue(host.mem_reserved == self.h1.mem_reserved)
+        self.assertTrue(host.vm_limit == self.h1.vm_limit)
+        self.assertTrue(host.vm_created == 0) 
         
         # IP地址是否释放
         ip = MacIP.objects.get(pk = self.ip1.pk)
-        self.assert_(ip.vmid == '')
+        self.assertTrue(ip.vmid == '')
         
     def test_edit_args(self):
         if not self._setupvm():
@@ -557,12 +557,12 @@ class VmTest(TestCase):
         if not self._setupvm():
             return
         # 修改备注测试
-        remarks = u'测试测试'
+        remarks = '测试测试'
         res4 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'remarks': remarks})
         exp4 = {'res': True}
         self.assertDictEqual(exp4, res4)
         vmobj = Vm.objects.get(pk = self.newvm.pk)
-        self.assert_(vmobj.remarks == remarks)    
+        self.assertTrue(vmobj.remarks == remarks)    
         self._assert_vcpu_mem(self.newvm.vcpu, self.newvm.mem)
     
     def test_edit_when_running(self):
@@ -617,39 +617,39 @@ class VmTest(TestCase):
     
     def _assert_vm(self, vcpu, mem):
         vmobj = Vm.objects.get(pk = self.newvm.pk)
-        self.assert_(vmobj.vcpu == vcpu)
-        self.assert_(vmobj.mem == mem)
+        self.assertTrue(vmobj.vcpu == vcpu)
+        self.assertTrue(vmobj.mem == mem)
         
     def _assert_host(self, host, vcpu, mem, num = 1):
         hostobj = Host.objects.get(pk = host.pk)
-        self.assert_(hostobj.vcpu_total == host.vcpu_total)
-        self.assert_(hostobj.vcpu_allocated == vcpu)
-        self.assert_(hostobj.mem_total == host.mem_total)
-        self.assert_(hostobj.mem_allocated == mem)
-        self.assert_(hostobj.mem_reserved == host.mem_reserved)
-        self.assert_(hostobj.vm_limit == host.vm_limit)
-        self.assert_(hostobj.vm_created == num)
+        self.assertTrue(hostobj.vcpu_total == host.vcpu_total)
+        self.assertTrue(hostobj.vcpu_allocated == vcpu)
+        self.assertTrue(hostobj.mem_total == host.mem_total)
+        self.assertTrue(hostobj.mem_allocated == mem)
+        self.assertTrue(hostobj.mem_reserved == host.mem_reserved)
+        self.assertTrue(hostobj.vm_limit == host.vm_limit)
+        self.assertTrue(hostobj.vm_created == num)
                       
 class VmMigrateTest(TestCase):
     vcpu = 2
     mem = 2048
     def setUp(self):
         u1 = User()
-        u1.username = u'apiuser'
+        u1.username = 'apiuser'
         u1.is_active = True
         u1.api_user = True
         u1.save()
         self.u1 = u1
         
         u2 = User()
-        u2.username = u'apiuser1'
+        u2.username = 'apiuser1'
         u2.is_active = True
         u2.api_user = True
         u2.save()
         self.u2 = u2
 
         u3 = User()
-        u3.username = u'superuser'
+        u3.username = 'superuser'
         u3.is_active = True
         u3.api_user = True
         u3.is_superuser = True
@@ -657,29 +657,29 @@ class VmMigrateTest(TestCase):
         self.u3 = u3
 
         c1 = Center()
-        c1.name = u'测试中心1'
-        c1.location = u'位置1'
-        c1.desc = u'备注1'
+        c1.name = '测试中心1'
+        c1.location = '位置1'
+        c1.desc = '备注1'
         c1.save()
         self.c1 = c1
       
         g1 = Group()
         g1.center = c1
-        g1.name = u'测试集群1'
-        g1.desc = u'备注1'
+        g1.name = '测试集群1'
+        g1.desc = '备注1'
         g1.save()
         g1.admin_user.add(u1)
         self.g1 = g1
                 
         vt1 = VlanType()
-        vt1.code = u'vlantype1'
-        vt1.name = u'vlantype1'
+        vt1.code = 'vlantype1'
+        vt1.name = 'vlantype1'
         vt1.save()
         self.vt1 = vt1
         
         v1 = Vlan()
-        v1.vlan = unicode(TEST_VLAN)
-        v1.br = unicode(TEST_BR)
+        v1.vlan = str(TEST_VLAN)
+        v1.br = str(TEST_BR)
         v1.type = vt1
         v1.enable = True
         v1.save()
@@ -694,7 +694,7 @@ class VmMigrateTest(TestCase):
                 
         h1 = Host()
         h1.group = g1
-        h1.ipv4 = unicode(TEST_HOST)
+        h1.ipv4 = str(TEST_HOST)
         h1.enable = True
         h1.save()
         h1.vlan.add(v1)
@@ -702,7 +702,7 @@ class VmMigrateTest(TestCase):
         
         h2 = Host()
         h2.group = g1
-        h2.ipv4 = unicode(TEST_HOST_2)
+        h2.ipv4 = str(TEST_HOST_2)
         h2.enable = True
         h2.save()
         h2.vlan.add(v1)
@@ -710,9 +710,9 @@ class VmMigrateTest(TestCase):
         
         ch1 = CephHost()
         ch1.center = c1
-        ch1.host = unicode(TEST_CEPH['host'])
+        ch1.host = str(TEST_CEPH['host'])
         ch1.port = TEST_CEPH['port']
-        ch1.uuid = unicode(TEST_CEPH['uuid'])
+        ch1.uuid = str(TEST_CEPH['uuid'])
         ch1.save()
         
         cp1 = CephPool()
@@ -723,21 +723,21 @@ class VmMigrateTest(TestCase):
         self.cp1 = cp1
         
         it1 = ImageType()
-        it1.code = u'code1'
-        it1.name = u'imagetype1'
+        it1.code = 'code1'
+        it1.name = 'imagetype1'
         it1.save()
         
         x1 = Xml()
-        x1.name = u'linux'
+        x1.name = 'linux'
         x1.xml = TEST_XML
         x1.save()
         
         i1 = Image()
         i1.cephpool = cp1
-        i1.name = u'image1'
-        i1.version = u'v0.1'
+        i1.name = 'image1'
+        i1.version = 'v0.1'
         i1.snap = TEST_IMAGE
-        i1.desc = u''
+        i1.desc = ''
         i1.xml = x1
         i1.type = it1
         i1.enable = True
@@ -753,38 +753,38 @@ class VmMigrateTest(TestCase):
             vmobj = Vm.objects.get(uuid = self.vm_uuid)
             if self._vm_exist(vmobj.host.ipv4, self.vm_uuid):
                 cmd = 'ssh %s virsh destroy %s' % (vmobj.host.ipv4, self.vm_uuid)
-                r, info = commands.getstatusoutput(cmd)
+                r, info = subprocess.getstatusoutput(cmd)
 #                 if r != 0:
 #                     os.system('ssh %s virsh destroy %s' % (self.h1.ipv4, self.vm_uuid))
 #                     print info
                     
                 cmd = 'ssh %s virsh undefine %s' % (vmobj.host.ipv4, self.vm_uuid)
-                r, info = commands.getstatusoutput(cmd)
+                r, info = subprocess.getstatusoutput(cmd)
                 if r != 0:
                     os.system('ssh %s virsh undefine %s' % (vmobj.host.ipv4, self.vm_uuid))
-                    print info
+                    print(info)
                 
             if not self.vm_disk:
                 self.vm_disk  = 'test_'+self.vm_uuid
                 
         if self.vm_disk:
             cmd = 'ssh %s rbd ls %s | grep x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-            r, info = commands.getstatusoutput(cmd)
+            r, info = subprocess.getstatusoutput(cmd)
             if r == 0:
                 cmd1 = 'ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-                r1, info1 = commands.getstatusoutput(cmd1)
+                r1, info1 = subprocess.getstatusoutput(cmd1)
                 if r1 != 0:
                     os.system('ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
-                    print info1
+                    print(info1)
                     
             cmd = 'ssh %s rbd ls %s | grep %s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-            r, info = commands.getstatusoutput(cmd)
+            r, info = subprocess.getstatusoutput(cmd)
             if r == 0:
                 cmd1 = 'ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-                r1, info1 = commands.getstatusoutput(cmd1)
+                r1, info1 = subprocess.getstatusoutput(cmd1)
                 if r1 != 0:
                     os.system('ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
-                    print info1
+                    print(info1)
                 
 #         print 'finished tear down ================================'
     
@@ -807,7 +807,7 @@ class VmMigrateTest(TestCase):
     def _host_alive(self, ipv4):
         cmd = 'ping %s -c %d' % (ipv4, 3)
 #         print cmd
-        res, info = commands.getstatusoutput(cmd)
+        res, info = subprocess.getstatusoutput(cmd)
 #         print info
         if res == 0:
             return True
@@ -815,7 +815,7 @@ class VmMigrateTest(TestCase):
     
     def _vm_exist(self, host_ip, vm_uuid):
         cmd = 'ssh %s virsh list --all | grep %s' % (host_ip, vm_uuid) 
-        r, info = commands.getstatusoutput(cmd)
+        r, info = subprocess.getstatusoutput(cmd)
         if r == 0:
             return True
         return False
@@ -882,7 +882,7 @@ class VmMigrateTest(TestCase):
         self.assertDictEqual(exp1, res1)
         
         vmobj = Vm.objects.get(pk = self.newvm.pk)
-        self.assert_(vmobj.host == target_host)
+        self.assertTrue(vmobj.host == target_host)
         
         self._assert_host(self.newvm.host, 0,0,0)
         self._assert_host(target_host, self.newvm.vcpu, self.newvm.mem, 1)
@@ -895,18 +895,18 @@ class VmMigrateTest(TestCase):
     
     def _assert_vm(self, vcpu, mem):
         vmobj = Vm.objects.get(pk = self.newvm.pk)
-        self.assert_(vmobj.vcpu == vcpu)
-        self.assert_(vmobj.mem == mem)
+        self.assertTrue(vmobj.vcpu == vcpu)
+        self.assertTrue(vmobj.mem == mem)
         
     def _assert_host(self, host, vcpu, mem, num = 1):
         hostobj = Host.objects.get(pk = host.pk)
-        self.assert_(hostobj.vcpu_total == host.vcpu_total)
-        self.assert_(hostobj.vcpu_allocated == vcpu)
-        self.assert_(hostobj.mem_total == host.mem_total)
-        self.assert_(hostobj.mem_allocated == mem)
-        self.assert_(hostobj.mem_reserved == host.mem_reserved)
-        self.assert_(hostobj.vm_limit == host.vm_limit)
-        self.assert_(hostobj.vm_created == num)
+        self.assertTrue(hostobj.vcpu_total == host.vcpu_total)
+        self.assertTrue(hostobj.vcpu_allocated == vcpu)
+        self.assertTrue(hostobj.mem_total == host.mem_total)
+        self.assertTrue(hostobj.mem_allocated == mem)
+        self.assertTrue(hostobj.mem_reserved == host.mem_reserved)
+        self.assertTrue(hostobj.vm_limit == host.vm_limit)
+        self.assertTrue(hostobj.vm_created == num)
                       
         
         

@@ -14,24 +14,24 @@ class CenterTest(TestCase):
         self.u1 = u1
         
         c1 = Center()
-        c1.name = u'测试中心'
-        c1.location = u'北京'
-        c1.desc = u'备注'
+        c1.name = '测试中心'
+        c1.location = '北京'
+        c1.desc = '备注'
         c1.save()
         self.c1 = c1
         
         g1 = Group()
         g1.center = c1
-        g1.name = u'测试'
-        g1.desc = u'测试'
+        g1.name = '测试'
+        g1.desc = '测试'
         g1.save()
         g1.admin_user.add(u1)
         self.g1 = g1
         
         c2 = Center()
-        c2.name = u'测试中心2'
-        c2.location = u'北京2'
-        c2.desc = u'备注2'
+        c2.name = '测试中心2'
+        c2.location = '北京2'
+        c2.desc = '备注2'
         c2.save()
         self.c2 = c2
         

@@ -7,7 +7,7 @@
 # time: 2015-10-10
 ###############################################
 
-from filter import HostFilterStrategy
+from .filter import HostFilterStrategy
 
 from .manager import HostManager
 from .host import Host, ModelHost

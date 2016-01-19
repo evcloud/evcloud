@@ -11,6 +11,8 @@ class Center(models.Model):
     name     = models.CharField('名称', max_length = 100, unique = True)
     location = models.CharField('位置', max_length = 100)
     desc     = models.CharField('简介', max_length = 200, null = True, blank = True)
+    order    = models.IntegerField('排序', default=0, 
+        help_text="用于在页面中的显示顺序，数值越小越靠前。")
 
     def __unicode__(self):
         return self.name
@@ -24,6 +26,8 @@ class Group(models.Model):
     name   = models.CharField(max_length = 100)
     desc   = models.CharField(max_length = 200, null = True, blank = True)
     admin_user = models.ManyToManyField(User, blank = True)
+    order    = models.IntegerField('排序', default=0, 
+        help_text="用于在页面中的显示顺序，数值越小越靠前。")
 
     def __unicode__(self):
         return self.name   
@@ -44,7 +48,6 @@ class Host(models.Model):
     vm_limit        = models.IntegerField(default=10)
     vm_created      = models.IntegerField(default=0)
     enable          = models.BooleanField(default=True)
-        
     desc   = models.CharField(max_length = 200, null = True, blank = True)
     
     def __unicode__(self):

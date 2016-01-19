@@ -26,7 +26,7 @@ def open(args):
 @args_required('vncid')
 def close(args):
     vncmanager = VNC()
-    if args.has_key('delay') and type(args['delay']) == int:
+    if 'delay' in args and type(args['delay']) == int:
         res = vncmanager.del_token_delay(args['vncid'], args['delay'])
     else:
         res = vncmanager.del_token(args['vncid'])

@@ -10,7 +10,7 @@
 from .tools import args_required, catch_error, api_log
 from .error import ERR_AUTH_PERM, ERR_IMAGE_ID, ERR_CEPH_ID
 
-from image import get_image, get_images
+from image import get_image, get_images, get_image_types
 from storage.ceph import get_cephpool 
 
 @api_log
@@ -55,6 +55,13 @@ def get_list(args):
             'ceph_id': image.cephpool_id,
             'name': image.name,
             'version': image.version,
-            'type': image.type_name
+            'type': image.type_name,
+            'order': image.order
             })
+    return {'res': True, 'list': ret_list}
+
+# @api_log
+# @catch_error
+def get_type_list(args=None):
+    ret_list = get_image_types()
     return {'res': True, 'list': ret_list}

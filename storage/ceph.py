@@ -12,7 +12,7 @@
 # email: fubo@cnic.cn
 # time: 2015-12-03
 ###############################################
-import commands
+import subprocess
 
 from .models import CephPool as ModelCephPool
 
@@ -60,9 +60,10 @@ class CephPool(object):
             'src':src, 
             'dst':dst
         }
-        res, info = commands.getstatusoutput(cmd)
+        res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
+        print(res, info, cmd)
         self.error = info
         return False
         
@@ -73,7 +74,7 @@ class CephPool(object):
             'src':src, 
             'dst':dst
         }
-        res, info = commands.getstatusoutput(cmd)
+        res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
         self.error = info
@@ -85,7 +86,7 @@ class CephPool(object):
             'ceph_pool':self._ceph_pool,
             'dst':dst
         }
-        res, info = commands.getstatusoutput(cmd)
+        res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
         self.error = info
@@ -97,7 +98,7 @@ class CephPool(object):
             'ceph_pool':self._ceph_pool,
             'name':name
         }
-        res, lines = commands.getstatusoutput(cmd)
+        res, lines = subprocess.getstatusoutput(cmd)
         if res == 0:
             try:
                 l = int(lines)
@@ -105,6 +106,28 @@ class CephPool(object):
                     return True
             except: pass
         return False
+
+    def create_snap(self, name):
+        cmd = 'ssh %(ceph_host)s rbd snap create %(ceph_pool)s/%(name)s' % {
+            'ceph_host':self._ceph_host, 
+            'ceph_pool':self._ceph_pool,
+            'name':name
+        }
+        res, lines = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            return True
+        return False        
+    
+    def protect_snap(self, name):
+        cmd = 'ssh %(ceph_host)s rbd snap protect %(ceph_pool)s/%(name)s' % {
+            'ceph_host':self._ceph_host, 
+            'ceph_pool':self._ceph_pool,
+            'name':name
+        }
+        res, lines = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            return True
+        return False        
     
 
 class CephPoolData(CephPool):

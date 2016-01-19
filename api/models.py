@@ -32,7 +32,7 @@ class ProfileBase(type):
         parents = [b for b in bases if isinstance(b, ProfileBase)]  
         if parents:  
             fields = []  
-            for obj_name, obj in attrs.items():  
+            for obj_name, obj in list(attrs.items()):  
                 if isinstance(obj, models.Field): fields.append(obj_name)  
                 User.add_to_class(obj_name, obj)  
             UserAdmin.fieldsets = list(UserAdmin.fieldsets)  
@@ -41,8 +41,8 @@ class ProfileBase(type):
             UserAdmin.list_display = tuple(list(UserAdmin.list_display) + ['is_superuser'])
         return super(ProfileBase, cls).__new__(cls, name, bases, attrs)  
 
-class ProfileUser(object):  
-    __metaclass__ = ProfileBase    
+class ProfileUser(object, metaclass=ProfileBase):  
+    pass
     
 class MyProfile(ProfileUser):  
     api_user = models.BooleanField('API用户', default=False)

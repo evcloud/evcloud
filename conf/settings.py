@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '5o5^f^_-a7%$w#$)-1g9-(t-$nkog_ro@-ymq)jg^41#foo@y3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -92,10 +92,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'vmmanager_2',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+    	'USER': 'root',
+    	'PASSWORD': '',
+    	'HOST': '127.0.0.1',
+    	'PORT': '3306',
         'TEST': {
             'CHARSET': "utf8",
             'COLLATION': "utf8_general_ci",
@@ -132,23 +132,8 @@ TEMPLATE_CONTEXT_PROCESSORS=(
     "django.contrib.auth.context_processors.auth",
 )
 
-
-TOKAN_FILE = BASE_DIR + '/novnc/vnc_tokens'
-NOVNC_HOST = 'x.x.x.x'
-NOVNC_PORT = 6081
+NOVNC_PORT = 8080
+NOVNC_TOKEN_FILE_PATH = '../novnc/vnc_tokens'
 VNCSERVER_BASE_PORT = 5900
 
-DOMAIN = 'test.test.cn'
-
-
 HOST_FILTER_STRATEGY = 'compute.host.ram_filter'
-
-EMAIL_USE_TLS = True
-EMAIL_HOST = 'mail.test.cn'
-EMAIL_HOST_USER = 'user@test.cn'
-EMAIL_HOST_PASSWORD = 'password'
-
-SERVER_EMAIL = 'user@test.cn'
-ADMINS = (
-    ('admin', 'admin@test.cn'),
-)

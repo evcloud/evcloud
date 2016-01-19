@@ -18,8 +18,10 @@ def vnc_view(req):
         
     else:
         dic = {'vncid': vncid}
+        http_host = req.META['HTTP_HOST']
+        http_host = http_host.split(':')[0]
         dic['url'] = 'http://%(host)s:%(port)d/vnc_auto.html?path=websockify/?token=%(vncid)s' % {
-            'host': settings.NOVNC_HOST,
+            'host': http_host,
             'port': settings.NOVNC_PORT,
             'vncid': vncid
             }
