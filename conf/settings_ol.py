@@ -142,8 +142,8 @@ HOST_FILTER_STRATEGY = 'compute.host.ram_filter'
 
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'mail.cnic.cn'
-EMAIL_HOST_USER = 'helpdesk@cnic.cn'
-EMAIL_HOST_PASSWORD = '5SbrDekYFzmszffXVV95'
+EMAIL_HOST_USER = '***@cnic.cn'
+EMAIL_HOST_PASSWORD = '****'
 
 SERVER_EMAIL = 'helpdesk@cnic.cn'
 ADMINS = (
