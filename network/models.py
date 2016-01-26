@@ -9,7 +9,7 @@ class VlanType(models.Model):
     order= models.IntegerField('排序', default=0, 
         help_text="用于在页面中的显示顺序，数值越小越靠前。")
     
-    def __unicode__(self):
+    def __str__(self):
         return self.name
  
     class Meta:
@@ -31,7 +31,7 @@ class Vlan(models.Model):
         help_text="用于在页面中的显示顺序，数值越小越靠前。")
 
 
-    def __unicode__(self):
+    def __str__(self):
     	return self.vlan
  
     class Meta:
@@ -46,7 +46,7 @@ class MacIP(models.Model):
     vmid    = models.CharField(max_length=100,null=True,blank=True, default='')
     enable  = models.BooleanField(default=True)
 
-    def __unicode__(self):
+    def __str__(self):
     	return self.mac
  
     class Meta:

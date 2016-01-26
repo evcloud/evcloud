@@ -30,3 +30,9 @@ ALTER TABLE `network_vlantype`
     CHANGE COLUMN `code` `code` INT(11) NOT NULL AUTO_INCREMENT FIRST;
 ALTER TABLE `image_image`
     CHANGE COLUMN `type_id` `type_id` INT(11) NOT NULL AFTER `xml_id`;
+
+
+#-------------------------------------------------
+
+ALTER TABLE `storage_cephhost`
+    ADD COLUMN `username` VARCHAR(100) NOT NULL AFTER `uuid`;

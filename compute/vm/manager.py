@@ -2,48 +2,50 @@
 import libvirt
 import uuid
 from django.conf import settings
-from compute.models import VM_NAME_LEN_LIMIT, Vm, MigrateLog
-from compute.host import (host_alive, get_available_hosts, host_filter, 
-                          host_claim, host_release, get_host)
+from compute.models import VM_NAME_LEN_LIMIT
+from compute.models import Vm
+from compute.models import MigrateLog
+from compute.host import host_alive
+from compute.host import get_available_hosts
+from compute.host import host_filter 
+from compute.host import host_claim
+from compute.host import host_release
+from compute.host import get_host
 
-from image import init_disk, get_image_info
+from image import init_disk
+from image import get_image_info
 from image.vmxml import DomainXML
-from .vm import VM, VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED
+from .vm import VM
+from .vm import VIR_DOMAIN_RUNNING
+from .vm import VIR_DOMAIN_BLOCKED
+from .vm import VIR_DOMAIN_PAUSED
+from .vm import VIR_DOMAIN_PMSUSPENDED
 
 from api.error import Error
-from api.error import (ERR_GROUP_ID, 
-                       ERR_HOST_ID, ERR_HOST_FILTER_NONE, ERR_HOST_CLAIM, ERR_HOST_CONNECTION,
-                       ERR_VM_NAME, ERR_VM_UUID,  
-                       ERR_VLAN_FILTER_NONE, ERR_VLAN_TYPE_ID,
-                       ERR_VM_MIGRATE_DIFF_CEPH, ERR_VM_MIGRATE_LIVING)
+from api.error import ERR_GROUP_ID
+from api.error import ERR_HOST_ID
+from api.error import ERR_HOST_FILTER_NONE
+from api.error import ERR_HOST_CLAIM
+from api.error import ERR_HOST_CONNECTION
+from api.error import ERR_VM_NAME
+from api.error import ERR_VM_UUID
+from api.error import ERR_VLAN_FILTER_NONE
+from api.error import ERR_VLAN_TYPE_ID
+from api.error import ERR_VM_MIGRATE_DIFF_CEPH
+from api.error import ERR_VM_MIGRATE_LIVING
 
-from network import (vlan_type_exists, vlan_exists, get_vlans_by_type, vlan_filter, 
-                     get_net_info_by_vm, mac_release)
+from network import vlan_type_exists
+from network import vlan_exists
+from network import get_vlans_by_type
+from network import vlan_filter
+from network import get_net_info_by_vm
+from network import mac_release
 
-class VMManager(object):
+from ..manager import VirtManager
+
+class VMManager(VirtManager):
     def __init__(self):
         self.error = ''
-
-    def _connection(self, host):
-        error = ''
-        if not host:
-            try:
-                conn = libvirt.open("qemu:///system")
-            except Exception as e:
-                error = e
-            else:
-                return conn
-        else:
-#             if self.hostmanager.host_alive(host):
-            if host_alive(host):
-                try:
-                    conn = libvirt.open("qemu+ssh://%s/system" % host)
-                except Exception as e:
-                    error = e
-                else:
-                    return conn
-        if settings.DEBUG: print(e)
-        raise Error(ERR_HOST_CONNECTION)
     
     def _filter_vlan_and_host(self, group_id, vlan_type_code, vcpu, mem, vmid, vlan_id = None):
         '''根据集群id，网络类型/网络id筛选出合适的宿主机'''
@@ -135,7 +137,7 @@ class VMManager(object):
                 raise Error(ERR_VLAN_TYPE_ID)
             
             if 'group_id' not in args:
-                raise RuntimeError(ERR_GROUP_ID)
+                raise Error(ERR_GROUP_ID)
             
             if 'vlan_id' in args:
                 vlan_id = args['vlan_id']
@@ -170,7 +172,7 @@ class VMManager(object):
                 init_res, tmp = init_disk(args['image_id'], args['diskname'])
                 if settings.DEBUG: print('磁盘初始化结果：', init_res)
                 if not init_res:
-                    raise RuntimeError('disk init error. %s' % self.imagemanager.error)
+                    raise RuntimeError('disk init error. %s' % tmp)
             
 #             diskinfo = self.imagemanager.get_image_info(args['image_id'])
             get_disk_info_success, disk_info = get_image_info(args['image_id'])

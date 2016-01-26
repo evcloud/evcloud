@@ -7,7 +7,6 @@
 #@desc:    宿主机集群相关的API函数，每一个函数封装并实现一个API接口的功能。
 ########################################################################
 
-from compute.models import Center
 from compute.group import get_groups_in_perm, get_group
 from .tools import args_required, catch_error, print_process_time, api_log
 

@@ -9,8 +9,10 @@ class CephHost(models.Model):
     host = models.GenericIPAddressField()
     port = models.IntegerField(default=6789)
     uuid = models.CharField(max_length=100)
+    username = models.CharField(max_length=100, default='admin')
+    
 
-    def __unicode__(self):
+    def __str__(self):
         return self.host
     
     class Meta:
@@ -27,7 +29,7 @@ class CephPool(models.Model):
     pool = models.CharField(max_length=100)
     type = models.IntegerField(choices = ceph_pool_type)
     
-    def __unicode__(self):
+    def __str__(self):
         return self.host.host + '_' + self.pool    
     
     class Meta:

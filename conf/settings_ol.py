@@ -91,7 +91,7 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'vmmanager_2',
+        'NAME': 'vmmanager_dev',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': '127.0.0.1',

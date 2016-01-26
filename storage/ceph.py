@@ -19,6 +19,7 @@ from .models import CephPool as ModelCephPool
 from compute.group import has_center_perm
 from django.contrib.auth.models import User
 
+#即将删除
 def get_cephpools(center_id):
     pool_list = ModelCephPool.objects.filter(host__center_id = center_id)
     ret_list = []
@@ -30,18 +31,21 @@ def get_cephpools(center_id):
 
     return ret_list
 
+#即将删除
 def get_cephpool(cephpool_id):
+    print(1)
     cephpool = ModelCephPool.objects.filter(id = cephpool_id)
+    print(cephpool)
     if not cephpool.exists():
         return False
     return _get_ceph_data(cephpool[0])
 
+#即将删除
 def _get_ceph_data(pool):
     if not type(pool) == ModelCephPool:
         return False
     
     p = CephPoolData(pool)
-    
     return p
 
 
@@ -63,7 +67,6 @@ class CephPool(object):
         res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
-        print(res, info, cmd)
         self.error = info
         return False
         
@@ -127,8 +130,31 @@ class CephPool(object):
         res, lines = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
-        return False        
+        return False     
+
+    def create(self, name, size):
+        cmd = 'ssh %(ceph_host)s rbd create %(name)s --size %(size)d --pool %(ceph_pool)s' % {
+            'ceph_host': self._ceph_host, 
+            'ceph_pool': self._ceph_pool,
+            'name': name,
+            'size': size
+        }
+        res, lines = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            return True
+        return False   
     
+    def resize(self, name, size):
+        cmd = 'ssh %(ceph_host)s rbd resize %(name)s --size %(size)d --pool %(ceph_pool)s' % {
+            'ceph_host': self._ceph_host, 
+            'ceph_pool': self._ceph_pool,
+            'name': name,
+            'size': size
+        }
+        res, lines = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            return True
+        return False  
 
 class CephPoolData(CephPool):
     def __init__(self, obj):
@@ -146,6 +172,7 @@ class CephPoolData(CephPool):
         self.host = self.db_obj.host.host
         self.port = self.db_obj.host.port 
         self.uuid = self.db_obj.host.uuid
+        self.username = self.db_obj.host.username
     
     def managed_by(self, user):
         if user.is_superuser:

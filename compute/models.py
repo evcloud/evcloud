@@ -14,7 +14,7 @@ class Center(models.Model):
     order    = models.IntegerField('排序', default=0, 
         help_text="用于在页面中的显示顺序，数值越小越靠前。")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
     
     class Meta:
@@ -29,7 +29,7 @@ class Group(models.Model):
     order    = models.IntegerField('排序', default=0, 
         help_text="用于在页面中的显示顺序，数值越小越靠前。")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name   
 #     
     class Meta:
@@ -50,7 +50,7 @@ class Host(models.Model):
     enable          = models.BooleanField(default=True)
     desc   = models.CharField(max_length = 200, null = True, blank = True)
     
-    def __unicode__(self):
+    def __str__(self):
         return self.ipv4
 
     class Meta:
@@ -73,7 +73,7 @@ class Vm(models.Model):
     
     remarks = models.TextField(default='')
     
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:

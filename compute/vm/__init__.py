@@ -59,6 +59,7 @@ def get_vm(vm_uuid):
 def get_vms(group_id, host_id = None, order = None):
     if host_id == None:
         vms = ModelVm.objects.filter(host__group_id = group_id)
+        print(vms, group_id)
     else:
         vms = ModelVm.objects.filter(host__group_id = group_id, host_id = host_id)
     if order:

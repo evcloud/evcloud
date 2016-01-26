@@ -18,7 +18,7 @@ def init_disk(image_id, disk_name):
     '''初始化磁盘'''
     res = imagemanager.init_disk(image_id, disk_name)
     if not res:
-        return False, ERR_DISK_INIT
+        raise Error(ERR_DISK_INIT)
     return True, ''
 
 def archive_disk(cephpool_id, disk_name, archive_disk_name=None):

@@ -574,4 +574,21 @@ class VM(VMData):
                 return VIR_DOMAIN_HOST_DOWN
             return VIR_DOMAIN_MISS
     
+    def attach_device(self, xml):
+        try:
+            res = self._domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        except Exception as e:
+            if 'already in the domain configuration' in str(e):
+                res = 0
+            else:
+                res = -1
+        if res == 0:
+            return True
+        return False
+
+    def detach_device(self, xml):
+        res = self._domain.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        if res == 0:
+            return True
+        return False
     

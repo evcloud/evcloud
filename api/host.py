@@ -26,6 +26,7 @@ def get(args):
     return {'res': True,
             'info': {
                      'id': host.id,
+                     'group_id': host.group_id,
                      'vlan_list': host.vlans,
                      'ipv4': host.ipv4,
                      'vcpu_total': host.vcpu_total,

@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 from .group import has_center_perm
 from .models import Center as ModelCenter
 
-
+#即将删除
 def get_center(center_id):
     center = ModelCenter.objects.filter(id = center_id)
     if not center.exists():
@@ -20,6 +20,7 @@ def get_center(center_id):
     center = center[0]
     return _get_center_data(center)
 
+#即将删除
 def get_centers():
     centers = ModelCenter.objects.all().order_by('order')
     ret_list = []
@@ -27,6 +28,7 @@ def get_centers():
         ret_list.append(_get_center_data(center))
     return ret_list
 
+#即将删除
 def _get_center_data(center):
     if type(center) != ModelCenter:
         return False

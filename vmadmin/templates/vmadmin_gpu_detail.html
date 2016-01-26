@@ -1,0 +1,96 @@
+{%extends 'vmadmin_base.html'%}
+{%load  sizeformat%}
+{%block base%}
+<style type="text/css">
+	.detail {
+	  margin-right: 0;
+	  margin-left: 0;
+	  /*background-color: #fff;*/
+	  border-color: #080808;
+	  border-width: 1px;
+	  border-radius: 4px 4px 0 0;
+	  /*-webkit-box-shadow: none;*/
+	  padding:20px;
+	  box-shadow: none;
+	}
+</style>
+
+<script type="text/javascript">
+  	window.vm_status_url = '/vmadmin/vm/status/';
+	window.vm_status_tag  = 'vm_status_';
+	update_status(window.vm_status_url , ['{{vmobj.uuid}}'], 600000);
+</script>
+           	
+<form id="form" role="form"  class="form-horizontal"  method="post" action="" 
+	onsubmit ="getElementById('form_btn').disabled=true;getElementById('form_btn').value='处理中...';return true;">
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h2 class="panel-title">
+    	<strong>卸载GPU</strong>
+    </h2>
+  </div>
+  <div class="panel-body">
+
+    {% csrf_token %}
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">宿主机</label>
+	    <div class="col-sm-9">
+	        <span  class="form-value" >{{info.host_ipv4}}</span>
+	    </div>
+	</div>
+
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">GPU</label>
+	    <div class="col-sm-9">
+	    	<span class="form-value">{{info.address}}</span>
+	    </div>
+	</div>
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">云主机</label>
+	    <div class="col-sm-9">
+	    	<span class="form-value">{{info.vm}}</span>
+	    </div>
+	</div>
+	</div>
+	<div class="panel-footer">
+	  <div align="right">
+	  {%if info.vm %}
+	  <button type="button" class="btn btn-sm btn-success" onclick="gpu_umount({{info.id}})">卸载</button>
+			<script type="text/javascript">
+			function gpu_umount(gpu_id) {
+				$.ajax({
+					url: '/vmadmin/gpu/umount/',
+					type: 'post',
+					data: {
+						'gpu_id': gpu_id,
+					},
+					success:function(data){
+						if (data.res){
+							alert('卸载成功');
+							window.location.reload();
+						} else {
+							alert(data.error);
+						}
+					}
+					
+				}, 'json');
+			}
+			</script>
+		{%else%}
+        	<button type="button" class="btn btn-success" onclick="window.location.href='../mount/?gpu_id={{info.id}}'">挂载</button>
+        {%endif%}
+        	<button type="button" class="btn btn-default" onclick="window.location.href='../list/'">返回</button>
+        
+        </div>
+    </div>
+
+</div>
+</form>
+<script type="text/javascript">
+{%if warning%}
+alert('{{warning}}');
+{%endif%}
+
+</script>
+{%endblock%}

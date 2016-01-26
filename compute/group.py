@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 
 from .models import Group as ModelGroup
 
+#即将删除
 def get_groups_in_perm(user, center_id = None):
     if user.is_superuser:
         if center_id == None:
@@ -28,13 +29,14 @@ def get_groups_in_perm(user, center_id = None):
         ret_list.append(_get_group_data(group))
     return ret_list
 
+#即将删除
 def get_group(group_id):
     group = ModelGroup.objects.filter(id = group_id)
     if not group.exists():
         return False
     return _get_group_data(group[0])
 
-        
+#即将删除
 def has_center_perm(user, center_id):
     '''对指定center有部分或全部管理权，即对该分中心中的 某个集群有管理权,则返回True'''
     return ModelGroup.objects.filter(admin_user = user, center_id = center_id).exists()
@@ -43,6 +45,7 @@ def has_center_perm(user, center_id):
 
 
 #--------------------------------------------------------
+#即将删除
 def _get_group_data(group):
     if not type(group) == ModelGroup:
         return False

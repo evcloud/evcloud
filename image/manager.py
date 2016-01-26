@@ -22,6 +22,7 @@ class ImageManager(object):
 
         image = image[0]
         cephpool = get_cephpool(image.cephpool_id)
+        print(1111111, cephpool)
         res  = cephpool.clone(image.snap, str(diskname))
         if res:
             return True

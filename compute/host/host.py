@@ -140,3 +140,12 @@ class Host(object):
             self.db_obj = obj
         except Exception as e:
             print(e)
+    
+
+    def get_pci_device_list(self):
+        cmd = 'ssh %s lspci' % self.ipv4
+        res, lines = subprocess.getstatusoutput(cmd)
+        print(lines)
+        if res == 0:
+            return True
+        return False  

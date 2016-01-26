@@ -5,7 +5,7 @@ from django.contrib.auth.views import login, logout
 from vmadmin.admin import admin_site
 
 urlpatterns = [
-    url(r'^$', "vmadmin.views.index_view"),
+    url(r'^$', "vmadmin.vm_views.index_view"),
     url(r'^admin/', include(admin_site.urls)),
     url(r'^api/v1/', include('api.urls')),
     url(r'^vnc/', include('novnc.urls')),

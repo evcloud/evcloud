@@ -55,4 +55,8 @@ from api.models import Log
 from .api_admin import LogAdmin
 admin_site.register(Log, LogAdmin)
 
+from device.models import DBGPU
+from .device_admin import DBGPUAdmin
+admin_site.register(DBGPU, DBGPUAdmin)
+
 

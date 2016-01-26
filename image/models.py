@@ -9,7 +9,7 @@ class Xml(models.Model):
     xml  = models.TextField()
     desc = models.TextField(null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name 
 
     class Meta:
@@ -23,7 +23,7 @@ class ImageType(models.Model):
     order= models.IntegerField('排序', default=0, 
         help_text="用于在页面中的显示顺序，数值越小越靠前。")
     
-    def __unicode__(self):
+    def __str__(self):
         return self.name 
 
     class Meta:
@@ -47,7 +47,7 @@ class Image(models.Model):
     order   = models.IntegerField('排序', default=0, 
         help_text="用于在页面中的显示顺序，数值越小越靠前。")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.snap
 
     class Meta:

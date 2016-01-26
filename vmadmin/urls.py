@@ -1,5 +1,6 @@
 from django.conf.urls import include, url
-from .views import *
+from .vm_views import *
+from .gpu_views import *
 
 urlpatterns = [
 #     url(r'^(?P<url>.+)', root),
@@ -14,4 +15,10 @@ urlpatterns = [
     url(r'^vm/status/$', vm_status_ajax),
     url(r'^vm/op/$', vm_op_ajax),
     url(r'^vm/edit_remarks/$', vm_edit_remarks_ajax),
+
+    url(r'^gpu/list/$', gpu_list_view),
+    url(r'^gpu/mount/$', gpu_mount_view),
+    url(r'^gpu/umount/$', gpu_umount_ajax),
+    url(r'^gpu/detail/$', gpu_detail_view),
+    url(r'^gpu/edit_remarks/$', gpu_edit_remarks_ajax),
 ]

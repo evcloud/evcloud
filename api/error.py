@@ -44,7 +44,21 @@ ERR_IMAGE_CEPHHOST      = '50014'
 ERR_IMAGE_CEPHPOOL      = '50015'
 ERR_HOST_CONNECTION     = '50016'
 ERR_VM_MISSING          = '50017'
+ERR_GPU_EDIT_REMARKS    = '50018'
+ERR_GPU_MOUNT           = '50019'
+ERR_GPU_UMOUNT          = '50020'
 
+ERR_USERNAME            = '60001'
+ERR_USER_DB             = '60002'
+ERR_INT_VOLUME_SIZE     = '60003'
+ERR_VOLUME_ID           = '60004'
+ERR_PERM_DEL_VOLUME     = '60005'
+ERR_CEPHPOOL_ID         = '60006'
+ERR_VOLUME_CREATE_DB    = '60007'
+ERR_VM_ID               = '60008'
+ERR_HOST_IPV4           = '60009'
+ERR_GPU_ID              = '60010'
+ERR_GPU_ADDRESS         = '60011'
 
 ERROR_CN = {
     ERR_AUTH_NO_LOGIN       : '用户未登录',
@@ -90,8 +104,22 @@ ERROR_CN = {
     ERR_IMAGE_CEPHHOST      : '获取镜像所属CEPH集群失败',
     ERR_IMAGE_CEPHPOOL      : '获取镜像所属CEPH资源池失败',
     ERR_HOST_CONNECTION     : '宿主机连接失败',
-    ERR_VM_MISSING          : '虚拟机连接失败'      
+    ERR_VM_MISSING          : '虚拟机连接失败',
+    ERR_GPU_EDIT_REMARKS    : 'GPU备注修改失败',
+    ERR_GPU_MOUNT           : 'GPU挂载失败',
+    ERR_GPU_UMOUNT          : 'GPU卸载失败',
 
+    ERR_USERNAME            : '有户名有误',
+    ERR_USER_DB             : 'DBUser对象有误',
+    ERR_INT_VOLUME_SIZE     : '磁盘容量参数必须为正整数',
+    ERR_VOLUME_ID           : 'CEPH块ID有误',
+    ERR_PERM_DEL_VOLUME     : '权限错误：无权删除ceph块',
+    ERR_CEPHPOOL_ID         : 'CEPH资源池ID错误',
+    ERR_VOLUME_CREATE_DB    : 'VOLUME创建时写入数据库失败',
+    ERR_VM_ID               : 'VM UUID有误',
+    ERR_HOST_IPV4           : '宿主机IP地址有误',
+    ERR_GPU_ID              : 'GPU ID有误',
+    ERR_GPU_ADDRESS         : 'GPU 标识有误'
 }
 
 STRERR_EN = {
