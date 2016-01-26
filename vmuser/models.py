@@ -16,7 +16,7 @@ class ProfileBase(type):
             UserAdmin.fieldsets.insert(1, (name, {'fields': fields}))  
             UserAdmin.list_display = tuple(list(UserAdmin.list_display) + fields)
             UserAdmin.list_display = tuple(list(UserAdmin.list_display) + ['is_superuser'])
-        return super(ProfileBase, cls).__new__(cls, name, bases, attrs)  
+        return super().__new__(cls, name, bases, attrs)  
 
 class ProfileUser(object, metaclass=ProfileBase):  
     pass

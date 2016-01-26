@@ -2,7 +2,6 @@
 from django.db import models
 from compute.models import Host as DBHost
 
-
 class DBGPU(models.Model):
     host = models.ForeignKey(DBHost)
     address = models.CharField(max_length=100, help_text='format:<domain>:<bus>:<slot>:<function>, example: 0000:84:00:0')
