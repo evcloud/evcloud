@@ -7,12 +7,14 @@
 #@desc:    分中心相关的API函数，每一个函数封装并实现一个API接口的功能。
 ########################################################################
 
-from .tools import catch_error, args_required, api_log
-from .error import ERR_AUTH_PERM, ERR_VLAN_NO_FIND, ERR_VLAN_ID, ERR_GROUP_ID
+from .tools import catch_error
+from .tools import args_required
+from .tools import api_log
+from .error import ERR_AUTH_PERM
+from .error import ERR_VLAN_NO_FIND
 
-from compute.group import get_group
-import network
-from network import get_vlan_types
+from compute.api import GroupAPI
+from network.api import NetworkAPI
 
 @api_log
 @catch_error
@@ -20,13 +22,14 @@ from network import get_vlan_types
 def get_vlan_list(args=None):
     '''获取网络列表'''
     ret_list = []
-    group = get_group(args['group_id'])
-    if not group:
-        return {'res': False, 'err': ERR_GROUP_ID}
+    group_api = GroupAPI()
+    group = group_api.get_group_by_id(args['group_id'])
+
     if not group.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
 
-    vlans = network.get_vlans(args['group_id'])
+    network_api = NetworkAPI()
+    vlans = network_api.get_vlan_list_by_group_id(args['group_id'])
     
     if vlans:
         vlan_list = []
@@ -49,10 +52,8 @@ def get_vlan_list(args=None):
 @args_required('vlan_id')
 def get_vlan(args=None):
     '''获取网络列表'''
-    
-    vlan = network.get_vlan(args['vlan_id'])
-    if not vlan:
-        return {'res': False, 'err': ERR_VLAN_ID}
+    network_api = NetworkAPI()
+    vlan = network_api.get_vlan_by_id(args['vlan_id'])
     
     if not vlan.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
@@ -68,6 +69,12 @@ def get_vlan(args=None):
 
 @api_log
 @catch_error
-def get_vlan_type_list():
-    vlan_type_list = get_vlan_types()
+@args_required()
+def get_vlan_type_list(args=None):
+    print(111)
+    network_api = NetworkAPI()
+    try:
+        vlan_type_list = network_api.get_vlan_type_list()
+    except Exception as e:
+        print(e)
     return {'res': True, 'list': vlan_type_list}

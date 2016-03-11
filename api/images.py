@@ -7,11 +7,13 @@
 #@desc:    镜像相关的API函数，每一个函数封装并实现一个API接口的功能。
 ########################################################################
 
-from .tools import args_required, catch_error, api_log
-from .error import ERR_AUTH_PERM, ERR_IMAGE_ID, ERR_CEPH_ID
+from .tools import args_required
+from .tools import catch_error
+from .tools import api_log
+from .error import ERR_AUTH_PERM
 
-from image import get_image, get_images, get_image_types
-from storage.ceph import get_cephpool 
+from image.api import ImageAPI
+from storage.api import CephStorageAPI
 
 @api_log
 @catch_error
@@ -19,9 +21,9 @@ from storage.ceph import get_cephpool
 def get(args):
     '''获取镜像信息'''
     info = {}
-    image = get_image(args['image_id'])
-    if not image:
-        return {'res': False, 'err': ERR_IMAGE_ID}
+    image_api = ImageAPI()
+    image = image_api.get_image_by_id(args['image_id'])
+    
     if not image.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
     
@@ -36,19 +38,20 @@ def get(args):
     }
     return {'res': True, 'info': info}    
 
-# @api_log
-# @catch_error
+@api_log
+@catch_error
 @args_required('ceph_id')
 def get_list(args):
     '''获取镜像列表'''
     ret_list = []
-    cephpool = get_cephpool(args['ceph_id'])
-    if not cephpool:
-        return {'res': False, 'err': ERR_CEPH_ID}
+    storage_api = CephStorageAPI()
+    image_api = ImageAPI()
+    cephpool = storage_api.get_pool_by_id(args['ceph_id'])
+
     if not cephpool.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
     
-    image_list = get_images(args['ceph_id'])
+    image_list = image_api.get_image_list_by_pool_id(args['ceph_id'])
     for image in image_list:
         ret_list.append({
             'id':   image.id,
@@ -63,5 +66,6 @@ def get_list(args):
 # @api_log
 # @catch_error
 def get_type_list(args=None):
-    ret_list = get_image_types()
+    image_api = ImageAPI()
+    ret_list = image_api.get_image_type_list()
     return {'res': True, 'list': ret_list}

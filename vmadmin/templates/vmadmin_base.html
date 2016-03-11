@@ -82,6 +82,7 @@
  .navbar{
  height:52px;
  }
+
 </style>
 {%block head%}
 {%endblock head%}
@@ -102,6 +103,7 @@
                 <ul class="nav navbar-nav">
                     <li id="first_list"><a href="/vmadmin/vm/list/">云主机列表</a></li>
                     <li id="first_create"><a href="/vmadmin/vm/create/">创建云主机</a></li>
+                    <li id="first_volume"><a href="/vmadmin/volume/list/">云硬盘</a></li>
                     <li id="first_gpu"><a href="/vmadmin/gpu/list/">GPU</a></li>
                     {% if request.user.is_superuser %}
                     <li><a href="/admin/">后台管理</a></li>                    
@@ -117,7 +119,7 @@
             </div>
         </div>
         {%block bigmain%}
-        <div class="jumbotron" style="min-height:800px; padding-bottom:0">
+        <div class="jumbotron" style="min-height:580px; padding-bottom:0">
             <div class="container" >
             <h1></h1>
             {%block base%}

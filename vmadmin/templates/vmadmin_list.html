@@ -3,7 +3,10 @@
 {%block base%}
 <div class="panel panel-default">
   <div class="panel-heading">
-    <h2 class="panel-title"><strong>云主机列表 ({{p.count}})</strong></h2>
+    <h2 class="panel-title"><strong>云主机列表 ({{p.count}})</strong>
+<button type="button" class="btn btn-xs btn-primary" style="float:right" onclick="window.location.href='../create/'">创建云主机<img style="margin-top: -3px" alt="True" src="/static/admin/img/tooltag-add.png"></button>
+    </h2>
+
   </div>
   <div class="panel-body">
   
@@ -146,6 +149,9 @@
 </table>
 
   </div>
+
+
+  {%if p.page_range%}
   <div class="panel-footer">
   <div align="right">
 	<ul class="pagination" style="margin:0;">
@@ -177,8 +183,10 @@
 	      <li><a href="{{p.link}}{{ p.next_page_number }}">&raquo;</a></li>  {%else%}
 	      <li class="disabled"><span>&raquo;</span></li>
 	       {% endif %}
-	    </ul></div>
+	    </ul>
+	</div>
     </div>
+   	{%endif%}
 </div>
 <script type="text/javascript">
 	function edit_remarks(vmid) {

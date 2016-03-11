@@ -1,12 +1,12 @@
-TEST_HOST = '10.0.20.109'
-TEST_HOST_2 = '10.0.20.108'
-TEST_CEPH = {'host': '10.0.20.101',
-             'pool': 'vmpool',
+TEST_HOST = '192.168.50.11'
+TEST_HOST_2 = '127.0.0.1'
+TEST_CEPH = {'host': '192.168.50.11',
+             'pool': 'vm',
              'port': 6789,
-             'uuid': '00000000-2015-0806-1307-000000000101'}
-TEST_IMAGE = '0000_demo_centos6@snap_20150811'
+             'uuid': '00000000-2016-0120-1058-192168088008'}
+TEST_IMAGE = '0000_demo_centos_6_cuda@20160121'
 TEST_VLAN = '10.0.60.0'
-TEST_BR = 'br60'
+TEST_BR = 'br1'
 TEST_MAC = 'C8:00:60:00:01:53'
 TEST_IP = '10.0.60.153'
 TEST_XML = '''

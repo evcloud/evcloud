@@ -35,6 +35,7 @@ class GPU(object):
         return True
 
     def mount(self, vm_id):
+        res = True
         try:
             with transaction.atomic():
                 db = DBGPU.objects.select_for_update().get(pk = self._db.pk)
@@ -44,12 +45,13 @@ class GPU(object):
                     db.save()
                     self._db = db
                 else:
-                    return False
+                    res = False
         except:
-            return False
-        return True
+            res = False
+        return res
 
     def umount(self):
+        res = True
         try:
             with transaction.atomic():
                 db = DBGPU.objects.select_for_update().get(pk = self._db.pk)
@@ -59,12 +61,13 @@ class GPU(object):
                     db.save()
                     self._db = db
                 else:
-                    return False
+                    res = False
         except:
-            return False
-        return True        
+            res = False
+        return res        
 
     def set_enable(self):
+        res = True
         try:
             with transaction.atomic():
                 db = DBGPU.objects.select_for_update().get(pk = self._db.pk)
@@ -72,10 +75,11 @@ class GPU(object):
                 db.save()
                 self._db = db
         except:
-            return False
-        return True 
+            res = False
+        return res 
 
     def set_disable(self):
+        res = True
         try:
             with transaction.atomic():
                 db = DBGPU.objects.select_for_update().get(pk = self._db.pk)
@@ -83,8 +87,8 @@ class GPU(object):
                 db.save()
                 self._db = db
         except:
-            return False
-        return True 
+            res = False
+        return res 
 
     @property
     def host_ipv4(self):

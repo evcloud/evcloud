@@ -11,5 +11,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         api = CephVolumeAPI()
         for v in api.get_volume_list():
-            print(v.id, v.size)
+            print(v.id, v.size, v.vm, v.attach_time)
 

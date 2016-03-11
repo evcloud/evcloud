@@ -7,18 +7,19 @@
 #@desc:    宿主机相关的API函数，每一个函数封装并实现一个API接口的功能。
 ########################################################################
 
-from compute.host import get_host, get_hosts
-from compute.group import get_group
-from .tools import args_required, catch_error, print_process_time, api_log
-from .error import ERR_HOST_ID, ERR_AUTH_PERM, ERR_GROUP_ID
+from compute.api import HostAPI
+from compute.api import GroupAPI
+from .tools import args_required
+from .tools import catch_error
+from .tools import api_log
+from .error import ERR_AUTH_PERM
 
 @api_log
 @catch_error
 @args_required('host_id')
 def get(args):
-    host = get_host(args['host_id'])
-    if not host:
-        return {'res': False, 'err': ERR_HOST_ID}
+    host_api = HostAPI()
+    host = host_api.get_host_by_id(args['host_id'])
     
     if not host.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
@@ -45,13 +46,14 @@ def get(args):
 def get_list(args):
     '''获取宿主机列表'''
     ret_list = []
-    group = get_group(args['group_id'])
-    if not group:
-        return {'res': False, 'err': ERR_GROUP_ID}
+    group_api = GroupAPI()
+    group = group_api.get_group_by_id(args['group_id'])
+    
     if not group.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
-     
-    host_list = get_hosts(args['group_id'])
+    
+    host_api = HostAPI()
+    host_list = host_api.get_host_list_by_group_id(args['group_id'])
      
     for host in host_list:
         ret_list.append({

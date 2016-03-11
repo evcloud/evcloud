@@ -91,9 +91,11 @@
 	<td>{{gpu.id}}</td>
 	<td>{{gpu.host_ipv4}}</td>
 	<td>{{gpu.address}}</td>
-	<td>{{gpu.vm}}</td>
-	<td>{{gpu.attach_time}}</td>
-	<td>{{gpu.enable}}</td>
+	<td>{{gpu.vm|slice:":8"|default_if_none:''}}</td>
+	<td>{{gpu.attach_time|date:'Y-m-d H:i:s'}}</td>
+	<td>
+	{%if gpu.enable%}<img alt="True" src="/static/admin/img/icon-yes.gif">{%else%}<img alt="False" src="/static/admin/img/icon-no.gif">{%endif%}
+	</td>
 	<td>
 		<div id="remarks_{{gpu.id}}_show">
 			<span id="remarks_{{gpu.id}}_span" style="padding-right:18px" >{{gpu.remarks|default_if_none:''}}</span>
@@ -107,7 +109,7 @@
 	<td>
 		{%if gpu.enable%}
 		{%if gpu.vm %}
-			<button type="button" class="btn btn-sm btn-danger" onclick="gpu_umount({{gpu.id}})">卸载</button>
+			<button type="button" class="btn btn-xs btn-danger" onclick="gpu_umount({{gpu.id}})">卸载</button>
 			<script type="text/javascript">
 			function gpu_umount(gpu_id) {
 				$.ajax({
@@ -132,7 +134,7 @@
 			}
 			</script>
 		{%else%}
-		    <button type="button" class="btn btn-sm btn-primary" onclick="window.location.href='/vmadmin/gpu/mount/?gpu_id={{gpu.id}}'">挂载</button>
+		    <button type="button" class="btn btn-xs btn-primary" onclick="window.location.href='/vmadmin/gpu/mount/?gpu_id={{gpu.id}}'">挂载</button>
 		 {%endif%}
 		{%endif%}		
 
@@ -143,6 +145,8 @@
 </table>
 
   </div>
+
+  {%if p.page_range%}
   <div class="panel-footer">
   <div align="right">
 	<ul class="pagination" style="margin:0;">
@@ -176,6 +180,7 @@
 	       {% endif %}
 	    </ul></div>
     </div>
+    {%endif%}
 </div>
 <script type="text/javascript">
 	function edit_remarks(gpu_id) {

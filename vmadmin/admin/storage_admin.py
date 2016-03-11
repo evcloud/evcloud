@@ -7,5 +7,5 @@ class CephHostAdmin(VMModelAdmin):
     ordering = ('host',)
  
 class CephPoolAdmin(VMModelAdmin):
-    list_display = ('host', 'pool', 'type')
+    list_display = ('host', 'pool', 'type', 'enable', 'remarks')
     ordering = ('host', 'pool')

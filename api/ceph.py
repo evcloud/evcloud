@@ -8,10 +8,14 @@
 ########################################################################
 
 from compute.api import CenterAPI
-from storage.ceph import get_cephpools
-from .tools import args_required, catch_error, print_process_time, api_log
+from storage.api import CephStorageAPI
+from .tools import args_required
+from .tools import catch_error
+from .tools import api_log
 
-from .error import ERR_AUTH_PERM, ERR_CENTER_ID
+from .error import ERR_AUTH_PERM
+from .error import ERR_CENTER_ID
+from .error import ERR_CEPHPOOL_ID
 
 @api_log
 @catch_error
@@ -19,16 +23,20 @@ from .error import ERR_AUTH_PERM, ERR_CENTER_ID
 def get_list(args):
     '''获取ceph资源池列表'''
     ret_list = []
+    storage_api = CephStorageAPI()
     center_api = CenterAPI()
     if not center_api.center_id_exists(args['center_id']):
         return {'res': False, 'err': ERR_CENTER_ID}
-    center = center_api.get_center_by_id(args['center_id'])
-    
-    if not center.managed_by(args['req_user']):
-        return {'res': False, 'err': ERR_AUTH_PERM}
-
-    pool_list = get_cephpools(args['center_id'])
+    center = center_api.get_center_by_id(args['center_id'])    
+    try:        
+        if not center.managed_by(args['req_user']):
+            return {'res': False, 'err': ERR_AUTH_PERM}
         
+    
+        pool_list = storage_api.get_pool_list_by_center_id(args['center_id'])
+    except Exception as e:
+        print(e)
+        raise e    
     for pool in pool_list:
         ret_list.append({
             'id':   pool.id,
@@ -42,3 +50,32 @@ def get_list(args):
 
     return {'res': True, 'list': ret_list}
 
+@api_log
+@catch_error
+@args_required('cephpool_id')
+def get(args):
+    '''获取ceph资源池列表'''
+    ret_list = []
+    api = CephStorageAPI()
+    try:
+        pool = api.get_pool_by_id(args['cephpool_id'])
+        if not pool.managed_by(args['req_user']):
+            return {'res': False, 'err': ERR_AUTH_PERM}
+    except Exception as e:
+        print(e)
+
+    if pool:
+        return {
+            'res': True, 
+            'info':{
+                'id':   pool.id,
+                'pool': pool.pool,
+                'type': pool.type,
+                'center_id': pool.center_id,
+                'host': pool.host,
+                'port': pool.port,
+                'uuid': pool.uuid
+                }
+            }
+
+    return {'res': False, 'err': ERR_CEPHPOOL_ID}

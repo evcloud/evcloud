@@ -9,410 +9,478 @@ from ..vm import get, get_list, create, status, op, edit, migrate
 from .testsettings import *
 
 import subprocess, os, libvirt, time
-from builtins import True
 
+from .tools import create_user, create_superuser
+from .tools import create_center, create_group, create_host
+from .tools import create_vlantype, create_vlan, create_ip
+from .tools import create_ceph_host, create_ceph_image_pool
+from .tools import create_imagetype, create_image, create_xml
 
 class VmTest(TestCase):
     vcpu = 2
     mem = 2048
     def setUp(self):
-        u1 = User()
-        u1.username = 'apiuser'
-        u1.is_active = True
-        u1.api_user = True
-        u1.save()
-        self.u1 = u1
-        
-        u2 = User()
-        u2.username = 'apiuser1'
-        u2.is_active = True
-        u2.api_user = True
-        u2.save()
-        self.u2 = u2
+        self.u1 = create_user('apiuser1')
+        self.u2 = create_user('apiuser2')
+        self.u3 = create_superuser('superuser')
+        self.u4 = create_user('apiuser4')
 
-        u3 = User()
-        u3.username = 'superuser'
-        u3.is_active = True
-        u3.api_user = True
-        u3.is_superuser = True
-        u3.save()
-        self.u3 = u3
+        self.c1 = create_center('1', '1', '1')
 
-        c1 = Center()
-        c1.name = '测试中心1'
-        c1.location = '位置1'
-        c1.desc = '备注1'
-        c1.save()
-        self.c1 = c1
-      
-        g1 = Group()
-        g1.center = c1
-        g1.name = '测试集群1'
-        g1.desc = '备注1'
-        g1.save()
-        g1.admin_user.add(u1)
-        self.g1 = g1
+        self.g1 = create_group(self.c1, '1', '1', [self.u1, self.u4])
                 
-        vt1 = VlanType()
-        vt1.code = 'vlantype1'
-        vt1.name = 'vlantype1'
-        vt1.save()
-        self.vt1 = vt1
+        self.vt1 = create_vlantype('vlantype1')
         
-        v1 = Vlan()
-        v1.vlan = str(TEST_VLAN)
-        v1.br = str(TEST_BR)
-        v1.type = vt1
-        v1.enable = True
-        v1.save()
-        self.v1 = v1
+        self.v1 = create_vlan(str(TEST_VLAN), str(TEST_BR), self.vt1)
         
-        ip1 = MacIP()
-        ip1.vlan = v1
-        ip1.mac = TEST_MAC
-        ip1.ipv4 = TEST_IP
-        ip1.save()
-        self.ip1 = ip1
+        self.ip1 = create_ip(self.v1, TEST_MAC, TEST_IP)
                 
-        h1 = Host()
-        h1.group = g1
-        h1.ipv4 = str(TEST_HOST)
-        h1.enable = True
-        h1.save()
-        h1.vlan.add(v1)
-        self.h1 = h1
+        self.h1 = create_host(self.g1, str(TEST_HOST), True, [self.v1])
+
+        self.ch1 = create_ceph_host(self.c1, str(TEST_CEPH['host']), TEST_CEPH['port'], str(TEST_CEPH['uuid']))
+
+        self.cp1 = create_ceph_image_pool(self.ch1, TEST_CEPH['pool'])
         
-        ch1 = CephHost()
-        ch1.center = c1
-        ch1.host = str(TEST_CEPH['host'])
-        ch1.port = TEST_CEPH['port']
-        ch1.uuid = str(TEST_CEPH['uuid'])
-        ch1.save()
+        self.it1 = create_imagetype('imagetype1')
         
-        cp1 = CephPool()
-        cp1.host = ch1
-        cp1.pool = TEST_CEPH['pool']
-        cp1.type = 1
-        cp1.save()
-        self.cp1 = cp1
+        self.x1 = create_xml('linux', TEST_XML)
         
-        it1 = ImageType()
-        it1.code = 'code1'
-        it1.name = 'imagetype1'
-        it1.save()
+        self.i1 = create_image(self.cp1, self.x1, self.it1, 'image1', 'v0.1', TEST_IMAGE)
+
         
-        x1 = Xml()
-        x1.name = 'linux'
-        x1.xml = TEST_XML
-        x1.save()
-        
-        i1 = Image()
-        i1.cephpool = cp1
-        i1.name = 'image1'
-        i1.version = 'v0.1'
-        i1.snap = TEST_IMAGE
-        i1.desc = ''
-        i1.xml = x1
-        i1.type = it1
-        i1.enable = True
-        i1.save()
-        self.i1 = i1
-        
-        self.vm_uuid = None
-        self.vm_disk = None
-        
-    def tearDown(self):
-#         print 'tear down ========================================'
-        if self.vm_uuid:
-            if self._vm_exist(self.h1.ipv4, self.vm_uuid):
-                cmd = 'ssh %s virsh destroy %s' % (self.h1.ipv4, self.vm_uuid)
-                r, info = subprocess.getstatusoutput(cmd)
+#     def tearDown(self):
+# #         print 'tear down ========================================'
+#         if self.vm_uuid:
+#             if self._vm_exist(self.h1.ipv4, self.vm_uuid):
+#                 cmd = 'ssh %s virsh destroy %s' % (self.h1.ipv4, self.vm_uuid)
+#                 r, info = subprocess.getstatusoutput(cmd)
+# #                 if r != 0:
+# #                     os.system('ssh %s virsh destroy %s' % (self.h1.ipv4, self.vm_uuid))
+# #                     print info
+                    
+#                 cmd = 'ssh %s virsh undefine %s' % (self.h1.ipv4, self.vm_uuid)
+#                 r, info = subprocess.getstatusoutput(cmd)
 #                 if r != 0:
-#                     os.system('ssh %s virsh destroy %s' % (self.h1.ipv4, self.vm_uuid))
-#                     print info
+#                     os.system('ssh %s virsh undefine %s' % (self.h1.ipv4, self.vm_uuid))
+# #                     print info
+                
+#             if not self.vm_disk:
+#                 self.vm_disk  = 'test_'+self.vm_uuid
+                
+#         if self.vm_disk:
+#             cmd = 'ssh %s rbd ls %s | grep x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
+#             r, info = subprocess.getstatusoutput(cmd)
+#             if r == 0:
+#                 cmd1 = 'ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
+#                 r1, info1 = subprocess.getstatusoutput(cmd1)
+#                 if r1 != 0:
+#                     os.system('ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
+# #                     print info1
                     
-                cmd = 'ssh %s virsh undefine %s' % (self.h1.ipv4, self.vm_uuid)
-                r, info = subprocess.getstatusoutput(cmd)
-                if r != 0:
-                    os.system('ssh %s virsh undefine %s' % (self.h1.ipv4, self.vm_uuid))
-#                     print info
+#             cmd = 'ssh %s rbd ls %s | grep %s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
+#             r, info = subprocess.getstatusoutput(cmd)
+#             if r == 0:
+#                 cmd1 = 'ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
+#                 r1, info1 = subprocess.getstatusoutput(cmd1)
+#                 if r1 != 0:
+#                     os.system('ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
+# #                     print info1
                 
-            if not self.vm_disk:
-                self.vm_disk  = 'test_'+self.vm_uuid
-                
-        if self.vm_disk:
-            cmd = 'ssh %s rbd ls %s | grep x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-            r, info = subprocess.getstatusoutput(cmd)
-            if r == 0:
-                cmd1 = 'ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-                r1, info1 = subprocess.getstatusoutput(cmd1)
-                if r1 != 0:
-                    os.system('ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
-#                     print info1
-                    
-            cmd = 'ssh %s rbd ls %s | grep %s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-            r, info = subprocess.getstatusoutput(cmd)
-            if r == 0:
-                cmd1 = 'ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-                r1, info1 = subprocess.getstatusoutput(cmd1)
-                if r1 != 0:
-                    os.system('ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
-#                     print info1
-                
-#         print 'finished tear down ================================'
+# #         print 'finished tear down ================================'
         
-        
-    def _host_alive(self, ipv4):
-        cmd = 'ping %s -c %d' % (ipv4, 3)
-#         print cmd
-        res, info = subprocess.getstatusoutput(cmd)
-#         print info
-        if res == 0:
-            return True
-        return False
-    
-    def _vm_exist(self, host_ip, vm_uuid):
-        cmd = 'ssh %s virsh list --all | grep %s' % (host_ip, vm_uuid) 
-        r, info = subprocess.getstatusoutput(cmd)
-        if r == 0:
-            return True
-        return False
-
-    def test_create(self):
+    def test_create_vm_err_args(self):
         self.assertTrue(self._host_alive(self.ip1) == False)
-        
-        res1 = create({'req_user': self.u1})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-        
-        res2 = create({'req_user': self.u1, 
-                       'group_id': self.g1.id, 
-                       'image_id': self.i1.id, 
-                       'net_type_id': self.vt1.pk, 
-                       'vcpu': self.vcpu, 
-                       'mem': self.mem})
-        exp2 = {'res': True}
-        self.assertDictContainsSubset(exp2, res2)  #创建是否成功
-        self.vm_uuid = res2['uuid']
-        
-        r = self._vm_exist(self.h1.ipv4, self.vm_uuid)
-        self.assertTrue(r, '')# 查看虚拟机是否存在
-        vmobj = Vm.objects.filter(uuid = self.vm_uuid)
-        self.assertTrue(vmobj.exists(), '') #数据库vm记录是否存在
-        vmobj= vmobj[0]
-        
-        #数据库 vm 是否正常
-        self.assertTrue(vmobj.host == self.h1)
-        self.assertTrue(vmobj.image_id == self.i1.pk)
-        self.assertTrue(vmobj.image_snap == self.i1.snap)
-        self.assertTrue(vmobj.vcpu == self.vcpu)
-        self.assertTrue(vmobj.mem == self.mem)
-          
-        self.newvm = vmobj
-          
-        self.vm_disk = vmobj.disk
-        #数据库 宿主机修改是否正常
-        host = Host.objects.get(pk = self.h1.pk)
-        self.assertTrue(host.vcpu_total == self.h1.vcpu_total)
-        self.assertTrue(host.vcpu_allocated == self.vcpu)
-        self.assertTrue(host.mem_total == self.h1.mem_total)
-        self.assertTrue(host.mem_allocated == self.mem)
-        self.assertTrue(host.mem_reserved == self.h1.mem_reserved)
-        self.assertTrue(host.vm_limit == self.h1.vm_limit)
-        self.assertTrue(host.vm_created == 1) 
-        
-        macip = MacIP.objects.get(pk = self.ip1.pk)
-        self.assertTrue(macip.vmid == self.vm_uuid ) #数据库ip记录修改是否正常
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem}
+        exp = {'res': False}
+        res = create(req)
+        if res['res']:
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)
 
-    def _setupvm(self):
-        res = create({'req_user': self.u1, 
-                      'group_id': self.g1.id, 
-                      'image_id': self.i1.id, 
-                      'net_type_id': self.vt1.pk, 
-                      'vcpu': self.vcpu, 
-                      'mem': self.mem})
-        if not res['res']:
-            return False
+    def test_create_vm_err_args1(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 'net_type_id': self.vt1.code}
+        exp = {'res': False}
+        res = create(req)
+        if res['res']:
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)
+
+    def test_create_vm_err_args2(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 'group_id': self.g1.id}
+        exp = {'res': False}
+        res = create(req)
+        if res['res']:
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)
+
+    def test_create_vm_nettype(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'net_type_id': self.vt1.code, 'group_id': self.g1.id}
+        exp = {'res': True}
+        res = create(req)
+        if res['res']:
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)        
+
+    def test_create_vm_nettype1(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'net_type_id': self.vt1.code, 'host_id': self.h1.id}
+        exp = {'res': True}
+        res = create(req)
+        if res['res']:
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)        
         
-        self.newvm = Vm.objects.get(uuid = res['uuid'])
-        self.vm_uuid = self.newvm.uuid
-        self.vm_disk = self.newvm.disk
-        return True
-    
-    def test_get(self):
-        res1 = get({'req_user': self.u1})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-        
-        if not self._setupvm():
-            return
-         
-        res2 = get({'req_user': self.u1, 'uuid': self.newvm.uuid})
-        exp2 = {'res': True,
-                'info': {
-                    'uuid':  self.newvm.uuid,
-                    'name':   self.newvm.name, 
-                    'vcpu':   self.newvm.vcpu ,
-                    'mem':    self.newvm.mem ,
-                    'creator':       self.newvm.creator, 
-                    'create_time':   self.newvm.create_time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'remarks':       self.newvm.remarks,
-                    'deleted':       self.newvm.deleted,
-                    'image_id':      self.newvm.image_id,
-                    'image_snap':    self.newvm.image_snap,
-                    'image':         self.newvm.image,
-                    'host_id':       self.newvm.host_id,
-                    'host_ipv4':     self.newvm.host.ipv4,
-                    'group_id':      self.newvm.host.group_id,
-                    'group_name':    self.newvm.host.group.name,
-                    'center_id':     self.newvm.host.group.center_id,
-                    'center_name':   self.newvm.host.group.center.name, 
+    def test_create_vm_vlan(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'vlan_id': self.v1.id, 'group_id': self.g1.id}
+        exp = {'res': True}
+        res = create(req)
+        if res['res']:
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)        
+
+    def test_create_vm_vlan1(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'vlan_id': self.v1.id, 'host_id': self.h1.id}
+        exp = {'res': True}
+        res = create(req)
+        if res['res']:
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)   
+
+    def test_create_get_vm(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'net_type_id': self.vt1.code, 'group_id': self.g1.id, 'remarks': 'test11122333'}
+        exp = {'res': True}
+        res = create(req)
+        if res['res']:
+            #正常获取vm信息
+            req1 = {'req_user': self.u1, 'uuid': res['uuid']}
+            exp1 = {'res': True, 'info':{
+                'uuid':     res['uuid'],
+                'name':     res['uuid'], 
+                'vcpu':     self.vcpu ,
+                'mem':      self.mem ,
+                'creator':       self.u1.username, 
+                'remarks':       req['remarks'],
+                'image_id':      self.i1.id,
+                'image_snap':    self.i1.snap,
+                'image':         self.i1.fullname,
+                'host_id':       self.h1.id,
+                'host_ipv4':     self.h1.ipv4,
+                'group_id':      self.g1.id,
+                'group_name':    self.g1.name,
+                'center_id':     self.c1.id,
+                'center_name':   self.c1.name, 
+            
+                'vlan_id':       self.v1.id,
+                'vlan_name':     self.v1.vlan,
+                'mac':           self.ip1.mac,
+                'ipv4':          self.ip1.ipv4,
                 
-                    'vlan_id':       self.v1.id,
-                    'vlan_name':     self.v1.vlan,
-                    'mac':           self.ip1.mac,
+                'ceph_id':       self.cp1.id,
+                'ceph_host':     self.ch1.host,
+                'ceph_pool':     self.cp1.pool
+            }}
+            res1 = get(req1)
+            self.assertTrue(res1['res'])
+            if res1['res']:
+                self.assertDictContainsSubset(exp1['info'], res1['info'])
+
+            #越权获取vm信息
+            req3 = {'req_user': self.u2, 'uuid': res['uuid']}
+            exp3 = {'res': False}
+            res3 = get(req3)
+            self.assertDictContainsSubset(exp3, res3)
+
+
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)  
+     
+
+    def test_create_get_vmlist(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'net_type_id': self.vt1.code, 'group_id': self.g1.id, 'remarks': 'test11122333'}
+        exp = {'res': True}
+        res = create(req)
+        if res['res']:
+            #正常获取vm列表
+            req2 = {'req_user': self.u1, 'group_id': self.g1.id}
+            exp2 = {'res': True, 'list':[
+                {
+                    'uuid':     res['uuid'],
+                    'name':     res['uuid'], 
+                    'group_id':      self.g1.id,
+                    'group_name':    self.g1.name,
+                    'center_id':     self.c1.id,
+                    'center_name':   self.c1.name, 
+                    'host_id':       self.h1.id,
+                    'host_ipv4':     self.h1.ipv4,
+                    'image_id':      self.i1.id,
+                    'image':         self.i1.fullname,
                     'ipv4':          self.ip1.ipv4,
-                    
-                    'ceph_id':       self.cp1.id,
-                    'ceph_host':     self.cp1.host.host,
-                    'ceph_pool':     self.cp1.pool 
+                    'vcpu':     self.vcpu ,
+                    'mem':      self.mem ,
+                    'remarks':       req['remarks'],
                 }
-            }
-        self.assertDictEqual(exp2, res2)
+            ]}
+            res2 = get_list(req2)
+            
+            self.assertTrue(res2['res'])
+            if res2['res']:
+                self.assertEqual(len(res2['list']), len(exp2['list']))
+                for i in range(len(exp2['list'])):
+                    self.assertDictContainsSubset(exp2['list'][i], res2['list'][i])
+
+            #越权获取vm列表
+            req4 = {'req_user': self.u2, 'group_id': self.g1.id}
+            exp4 = {'res': False}
+            res4 = get_list(req4)
+            self.assertDictContainsSubset(exp4, res4)
+
+
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)  
+
+    def test_create_delete_vm_db(self):
+        host_pre = Host.objects.get(id = self.h1.id)
+        ip_pre = MacIP.objects.get(id = self.ip1.id)
+
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'net_type_id': self.vt1.code, 'group_id': self.g1.id}
+        exp = {'res': True}
+        res = create(req)
+        if res['res']:
+            host_aft = Host.objects.get(id = self.h1.id)
+            ip_aft = MacIP.objects.get(id = self.ip1.id)
+            self.assertEqual(host_pre.vcpu_allocated + self.vcpu, host_aft.vcpu_allocated)
+            self.assertEqual(host_pre.mem_allocated + self.mem, host_aft.mem_allocated)
+            self.assertEqual(host_pre.vm_created + 1, host_aft.vm_created)
+
+            self.assertEqual(ip_aft.vmid, res['uuid'])
+
+            req1 = {'req_user': self.u1, 'uuid': res['uuid'], 'op': 'delete'}
+            exp1 = {'res': True}
+            res1 = op(req1)
+            self.assertDictContainsSubset(exp1, res1)
+            if res1['res']:
+                host_del = Host.objects.get(id = self.h1.id)
+                ip_del = MacIP.objects.get(id = self.ip1.id)
+                self.assertEqual(host_del.vcpu_allocated, host_aft.vcpu_allocated - self.vcpu)
+                self.assertEqual(host_del.mem_allocated, host_aft.mem_allocated - self.mem)
+                self.assertEqual(host_del.vm_created, host_aft.vm_created - 1)
+                self.assertEqual(ip_del.vmid, '')
+
+                # domain 是否删除
+                self.assertFalse(self._vm_exist(self.h1.ipv4, res['uuid']))
+                
+                # 虚拟机记录是否删除
+                vmobj = Vm.objects.filter(uuid = res['uuid'])
+                self.assertFalse(vmobj.exists())
+                
+                # 归档记录是否添加
+                vmarc = VmArchive.objects.filter(uuid = res['uuid'])
+                self.assertTrue(vmarc.exists())
+                self.assertTrue(vmarc.count() == 1)
+                
+                # 归档记录是否正确
+                if vmarc.count() == 1:
+                    vmarc = vmarc[0]
+                    self.assertTrue(vmarc.center_id == self.c1.id)
+                    self.assertTrue(vmarc.center_name == self.c1.name)
+                    self.assertTrue(vmarc.group_id == self.g1.id)
+                    self.assertTrue(vmarc.group_name == self.g1.name)
+                    self.assertTrue(vmarc.host_id == self.h1.id)
+                    self.assertTrue(vmarc.host_ipv4 == self.h1.ipv4)
+                    self.assertTrue(vmarc.ceph_host == self.cp1.host.host)
+                    self.assertTrue(vmarc.ceph_pool == self.cp1.pool)
+                    self.assertTrue(vmarc.image_id == self.i1.id)
+                    self.assertTrue(vmarc.image_snap == self.i1.snap)
+                    self.assertTrue(vmarc.name == res['uuid'])
+                    self.assertTrue(vmarc.uuid == res['uuid'])
+                    self.assertTrue(vmarc.vcpu == self.vcpu)
+                    self.assertTrue(vmarc.mem == self.mem)
+                    self.assertTrue(vmarc.disk[2:-21] == res['uuid'])
+                    self.assertTrue(vmarc.mac == self.ip1.mac)
+                    self.assertTrue(vmarc.ipv4 == self.ip1.ipv4)
+                    self.assertTrue(vmarc.vlan == self.v1.vlan)
+                    self.assertTrue(vmarc.br == self.v1.br)
+
+            self._teardownvm(res['uuid'])
+        self.assertDictContainsSubset(exp, res) 
+
+    def test_vm_op_perm(self):
+        self.assertTrue(self._host_alive(self.ip1) == False)
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'net_type_id': self.vt1.code, 'group_id': self.g1.id}
+        exp = {'res': True}
+        res = create(req)
+        if res['res']:
+            #自己
+            req1 = {'req_user': self.u1, 'uuid': res['uuid'], 'op': 'reboot'}
+            exp1 = {'res': True}
+            res1 = op(req1)
+            self.assertDictContainsSubset(exp1, res1)
+
+            #同集群其他管理员
+            req1 = {'req_user': self.u4, 'uuid': res['uuid'], 'op': 'reboot'}
+            exp1 = {'res': False}
+            res1 = op(req1)
+            self.assertDictContainsSubset(exp1, res1)            
+
+            #非该集群管理员
+            req1 = {'req_user': self.u2, 'uuid': res['uuid'], 'op': 'reboot'}
+            exp1 = {'res': False}
+            res1 = op(req1)
+            self.assertDictContainsSubset(exp1, res1)
+
+            #超级管理员
+            req1 = {'req_user': self.u3, 'uuid': res['uuid'], 'op': 'reboot'}
+            exp1 = {'res': True}
+            res1 = op(req1)
+            self.assertDictContainsSubset(exp1, res1)
+
+            self.assertTrue(self._vm_exist(self.h1.ipv4, res['uuid']))
+            self._del_vm(self.h1.ipv4, res['uuid'])
+            self._del_ceph(self.cp1, res['uuid'])
+        self.assertDictContainsSubset(exp, res)    
+
+
+    def test_edit_shutdown_start(self):
+        vm_uuid = self._setupvm()
+        if not vm_uuid:
+            return
+
+        #修改备注测试
+        vmobj = Vm.objects.get(uuid = vm_uuid)
+        hostobj = Host.objects.get(id = self.h1.id)
+        remarks = 'test123'
+        req = {'req_user': self.u1, 'uuid': vmobj.uuid, 'remarks': remarks}
+        exp = {'res': True}
+        res = edit(req)
+        self.assertDictEqual(exp, res)
+        self._assert_host(hostobj)
+        vmobj.remarks = remarks
+        self._assert_vm(vmobj)
         
-        res3 = get({'req_user': self.u2, 'uuid': self.newvm.uuid})
-        exp3 = {'res': False}
-        self.assertDictContainsSubset(exp3, res3)
-        
-        res4 = get({'req_user': self.u3, 'uuid': self.newvm.uuid})
-        self.assertDictEqual(exp2, res4)
-        
-    def test_get_list(self):
-        res1 = get_list({'req_user': self.u1})
+        #运行状态修改
+        vmobj = Vm.objects.get(uuid = vm_uuid)
+        hostobj = Host.objects.get(id = self.h1.id)
+        vcpu = 3
+        mem = 3000
+        req1 = {'req_user': self.u1, 'uuid': vmobj.uuid, 'vcpu': vcpu, 'mem': mem}
         exp1 = {'res': False}
+        res1 = edit(req1)
         self.assertDictContainsSubset(exp1, res1)
-        
-        if not self._setupvm():
-            return
-        
-        res2 = get_list({'req_user': self.u1, 'group_id': self.g1.id})
-        vm = self.newvm
-        exp2 = {'res': True,
-                'list': [
-                    {
-                        'uuid':         vm.uuid,
-                        'name':         vm.name,
-                        'center_id':    vm.host.group.center.id,
-                        'center_name':  vm.host.group.center.name,
-                        'group_id':     vm.host.group.id,
-                        'group_name':   vm.host.group.name,
-                        'host_id':      vm.host.id,
-                        'host_ipv4':    vm.host.ipv4,
-                        'image_id':     vm.image_id,
-                        'image':        vm.image,
-                        'ipv4':         self.ip1.ipv4,
-                        'vcpu':         vm.vcpu,
-                        'mem':          vm.mem,
-                        'creator':      vm.creator,
-                        'create_time':  vm.create_time.strftime('%Y-%m-%d %H:%M:%S'),
-                        'remarks':      vm.remarks
-                    } 
-                ]
-            }
-        self.assertDictEqual(exp2, res2)
-        
-        res3 = get_list({'req_user': self.u2, 'group_id': self.g1.id})
-        vm = self.newvm
-        exp3 = {'res': False}
-        self.assertDictContainsSubset(exp3, res3)
-        
-        res4 = get_list({'req_user': self.u3, 'group_id': self.g1.id})
-        self.assertDictEqual(exp2, res4)
-        
-    def test_status(self):
-        res1 = status({'req_user': self.u1})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-        
-        if not self._setupvm():
-            return
-        
-        conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
-        info = domain.info()
-        
-        res2 = status({'req_user': self.u1, 'uuid': self.newvm.uuid})
-        exp2 = {'res': True, 'status': info[0]}
-        self.assertDictEqual(exp2, res2)
-        
-        res3 = status({'req_user': self.u2, 'uuid': self.newvm.uuid})
-        exp3 = {'res': False}
-        self.assertDictContainsSubset(exp3, res3)
-        
-        res4 = status({'req_user': self.u3, 'uuid': self.newvm.uuid})
-        self.assertDictEqual(exp2, res4)
-        
-    def test_op_reboot(self):
-        res1 = op({'req_user': self.u1})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-        
-        if not self._setupvm():
-            return
-        
-        res2 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'test'})
-        exp2 = {'res': False}
-        self.assertDictContainsSubset(exp2, res2)
-        
-        res3 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'reboot'})
-        exp3 = {'res': True}
-        self.assertDictEqual(exp3, res3)
-        
-        res4 = op({'req_user': self.u2, 'uuid': self.newvm.uuid, 'op': 'reboot'})
-        exp4 = {'res': False}
-        self.assertDictContainsSubset(exp4, res4)
-        
-        res5 = op({'req_user': self.u3, 'uuid': self.newvm.uuid, 'op': 'reboot'})
-        exp5 = {'res': True}
-        self.assertDictEqual(exp5, res5)
-        
-    def test_op_start(self):
-        if not self._setupvm():
-            return
-        conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
-        domain.destroy()
-        
-        res1 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'start'})
-        exp1 = {'res': True}
-        self.assertDictEqual(exp1, res1)
-        self.assertTrue(domain.info()[0] == 1)
-        
-    def test_op_poweroff(self):
-        if not self._setupvm():
-            return
-        conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
-        
-        res1 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'poweroff'})
-        exp1 = {'res': True}
-        self.assertDictEqual(exp1, res1)
-        self.assertTrue(domain.info()[0] == 5)
-        
-    def test_op_shutdown(self):
-        if not self._setupvm():
-            return
-        conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
-        time.sleep(30)
-        res1 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'shutdown'})
-        time.sleep(30)
-        exp1 = {'res': True}
-        self.assertDictEqual(exp1, res1)
-        self.assertTrue(domain.info()[0] == 5)
-        
+        self._assert_host(hostobj)
+        self._assert_vm(vmobj)
+
+        #poweroff操作测试
+        req11 = {'req_user': self.u1, 'uuid': vmobj.uuid, 'op':'poweroff'}
+        exp11 = {'res': True}
+        res11 = op(req11)
+        self.assertDictEqual(exp11, res11)
+
+        if res11['res']:
+            #状态
+            req6 = {'req_user': self.u1, 'uuid': vm_uuid}
+            conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
+            domain = conn.lookupByUUIDString(vm_uuid)
+            info = domain.info()
+            exp6 = {'res': True, 'status': info[0]}
+            res6 = status(req6)
+            self.assertDictEqual(exp6, res6)
+
+            #修改cpu测试
+            vmobj = Vm.objects.get(uuid = vm_uuid)
+            hostobj = Host.objects.get(id = self.h1.id)
+            vcpu = 4
+            req2 = {'req_user': self.u1, 'uuid': vmobj.uuid, 'vcpu': vcpu}
+            exp2 = {'res': True}
+            res2 = edit(req2)
+            self.assertDictEqual(exp2, res2)
+
+            hostobj.vcpu_allocated = hostobj.vcpu_allocated - vmobj.vcpu + vcpu
+            self._assert_host(hostobj)
+            
+            vmobj.vcpu = vcpu
+            self._assert_vm(vmobj)
+            
+            #修改mem测试
+            vmobj = Vm.objects.get(uuid = vm_uuid)
+            hostobj = Host.objects.get(id = self.h1.id)
+            mem = 4096
+            req3 = {'req_user': self.u1, 'uuid': vmobj.uuid, 'mem': mem}
+            exp3 = {'res': True}
+            res3 = edit(req3)
+            self.assertDictEqual(exp3, res3)
+            
+            hostobj.mem_allocated = hostobj.mem_allocated - vmobj.mem + mem
+            self._assert_host(hostobj)
+
+            vmobj.mem = mem
+            self._assert_vm(vmobj)
+
+            #修改cpu和mem测试
+            vmobj = Vm.objects.get(uuid = vm_uuid)
+            hostobj = Host.objects.get(id = self.h1.id)
+            vcpu = 3
+            mem = 3000
+            req4 = {'req_user': self.u1, 'uuid': vmobj.uuid, 'vcpu': vcpu, 'mem': mem}
+            exp4 = {'res': True}
+            res4 = edit(req4)
+            self.assertDictEqual(exp4, res4)
+            
+            hostobj.vcpu_allocated = hostobj.vcpu_allocated - vmobj.vcpu + vcpu
+            hostobj.mem_allocated = hostobj.mem_allocated - vmobj.mem + mem
+            self._assert_host(hostobj)
+
+            vmobj.vcpu = vcpu
+            vmobj.mem = mem
+            self._assert_vm(vmobj)
+
+            #start操作测试
+            req5 = {'req_user': self.u1, 'uuid': vmobj.uuid, 'op': 'start'}
+            exp5 = {'res': True}
+            res5 = op(req5)
+            self.assertDictEqual(exp5, res5)
+
+            
+
+        self._teardownvm(vm_uuid)
+
+       
     def test_op_reset(self):
-        if not self._setupvm():
+        vm_uuid = self._setupvm()
+        if not vm_uuid:
             return
         
         def get_disk_count(host, pool, disk):
@@ -422,390 +490,44 @@ class VmTest(TestCase):
                 return int(info)
             return -1
         
-        
         #非关机状态判断
-        disk_count = get_disk_count(self.cp1.host.host, self.cp1.pool, self.newvm.disk)
-        x_disk_count = get_disk_count(self.cp1.host.host, self.cp1.pool, 'x_'+self.newvm.disk)
-        res1 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'reset'})
+        disk_count = get_disk_count(self.cp1.host.host, self.cp1.pool, vm_uuid)
+        x_disk_count = get_disk_count(self.cp1.host.host, self.cp1.pool, 'x_'+vm_uuid)
+        res1 = op({'req_user': self.u1, 'uuid': vm_uuid, 'op': 'reset'})
         exp1 = {'res': False}
         self.assertDictContainsSubset(exp1, res1)
-        self.assertEqual(disk_count, get_disk_count(self.cp1.host.host, self.cp1.pool, self.newvm.disk))
-        self.assertEqual(x_disk_count, get_disk_count(self.cp1.host.host, self.cp1.pool, 'x_'+self.newvm.disk))
+        self.assertEqual(disk_count, get_disk_count(self.cp1.host.host, self.cp1.pool, vm_uuid))
+        self.assertEqual(x_disk_count, get_disk_count(self.cp1.host.host, self.cp1.pool, 'x_'+vm_uuid))
         
         conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
+        domain = conn.lookupByUUIDString(vm_uuid)
         domain.destroy()
         
         #常规测试
-        disk_count = get_disk_count(self.cp1.host.host, self.cp1.pool, self.newvm.disk)
-        x_disk_count = get_disk_count(self.cp1.host.host, self.cp1.pool, 'x_'+self.newvm.disk)
-        res2 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'reset'})
+        disk_count = get_disk_count(self.cp1.host.host, self.cp1.pool, vm_uuid)
+        x_disk_count = get_disk_count(self.cp1.host.host, self.cp1.pool, 'x_'+vm_uuid)
+        res2 = op({'req_user': self.u1, 'uuid': vm_uuid, 'op': 'reset'})
         exp2 = {'res': True}
         self.assertDictEqual(exp2, res2)
-        self.assertEqual(disk_count, get_disk_count(self.cp1.host.host, self.cp1.pool, self.newvm.disk))
-        self.assertEqual(x_disk_count + 1, get_disk_count(self.cp1.host.host, self.cp1.pool, 'x_'+self.newvm.disk))
+        self.assertEqual(disk_count, get_disk_count(self.cp1.host.host, self.cp1.pool, vm_uuid))
+        self.assertEqual(x_disk_count + 1, get_disk_count(self.cp1.host.host, self.cp1.pool, 'x_'+vm_uuid))
         
-        
-        
-    def test_op_delete(self):
-        if not self._setupvm():
-            return
-        
-        res1 = op({'req_user': self.u1, 'uuid': self.newvm.uuid, 'op': 'delete'})
-        exp1 = {'res': True}
-        self.assertDictEqual(exp1, res1)
-        
-        #domain 是否删除
-        r = self._vm_exist(self.h1.ipv4, self.newvm.uuid)
-        self.assertFalse(r)
-        
-        # 虚拟机记录是否删除
-        vmobj = Vm.objects.filter(uuid = self.newvm.uuid)
-        self.assertFalse(vmobj.exists())
-        
-        # 归档记录是否添加
-        vmarc = VmArchive.objects.filter(uuid = self.newvm.uuid)
-        self.assertTrue(vmarc.exists())
-        self.assertTrue(vmarc.count() == 1)
-        
-        # 归档记录是否正确
-        if vmarc.count() == 1:
-            vmarc = vmarc[0]
-            self.assertTrue(vmarc.center_id == self.c1.id)
-            self.assertTrue(vmarc.center_name == self.c1.name)
-            self.assertTrue(vmarc.group_id == self.g1.id)
-            self.assertTrue(vmarc.group_name == self.g1.name)
-            self.assertTrue(vmarc.host_id == self.h1.id)
-            self.assertTrue(vmarc.host_ipv4 == self.h1.ipv4)
-            self.assertTrue(vmarc.ceph_host == self.cp1.host.host)
-            self.assertTrue(vmarc.ceph_pool == self.cp1.pool)
-            self.assertTrue(vmarc.image_id == self.i1.id)
-            self.assertTrue(vmarc.image_snap == self.i1.snap)
-            self.assertTrue(vmarc.name == self.newvm.name)
-            self.assertTrue(vmarc.uuid == self.newvm.uuid)
-            self.assertTrue(vmarc.vcpu == self.newvm.vcpu)
-            self.assertTrue(vmarc.mem == self.newvm.mem)
-            self.assertTrue(vmarc.disk[2:-21] == self.newvm.disk)
-            self.assertTrue(vmarc.mac == self.ip1.mac)
-            self.assertTrue(vmarc.ipv4 == self.ip1.ipv4)
-            self.assertTrue(vmarc.vlan == self.v1.vlan)
-            self.assertTrue(vmarc.br == self.v1.br)
-            
-            self.vm_disk = vmarc.disk
-            
-        # 宿主机信息是否正确
-        host = Host.objects.get(pk = self.h1.pk)
-        self.assertTrue(host.vcpu_total == self.h1.vcpu_total)
-        self.assertTrue(host.vcpu_allocated == 0)
-        self.assertTrue(host.mem_total == self.h1.mem_total)
-        self.assertTrue(host.mem_allocated == 0)
-        self.assertTrue(host.mem_reserved == self.h1.mem_reserved)
-        self.assertTrue(host.vm_limit == self.h1.vm_limit)
-        self.assertTrue(host.vm_created == 0) 
-        
-        # IP地址是否释放
-        ip = MacIP.objects.get(pk = self.ip1.pk)
-        self.assertTrue(ip.vmid == '')
-        
-    def test_edit_args(self):
-        if not self._setupvm():
-            return
-        
-        #参数缺失测试
-        res1 = edit({})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-        
-        res2 = edit({'req_user': self.u1})
-        self.assertDictContainsSubset(exp1, res2)
-        
-        res3 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid})
-        self.assertDictContainsSubset(exp1, res3)
-        
-        #负数测试
-        self.newvm = Vm.objects.get(pk = self.newvm.pk)
-        vcpu = -3
-        res8 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'vcpu': vcpu})
-        self.assertDictContainsSubset(exp1, res8)
-        
-        mem = -2048
-        res9 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'mem': mem})
-        self.assertDictContainsSubset(exp1, res9)
-        
-        self._assert_vcpu_mem(self.newvm.vcpu, self.newvm.mem)
-
-        #字符串测试
-        self.newvm = Vm.objects.get(pk = self.newvm.pk)
-        vcpu = 'abd'
-        res8 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'vcpu': vcpu})
-        self.assertDictContainsSubset(exp1, res8)
-        
-        mem = 'ab'
-        res9 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'mem': mem})
-        self.assertDictContainsSubset(exp1, res9)
-        
-        self._assert_vcpu_mem(self.newvm.vcpu, self.newvm.mem)
-        
-        #超额修改测试
-        mem = 999999999
-        res9 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'mem': mem})
-        self.assertDictContainsSubset(exp1, res9)
-        
-        self._assert_vcpu_mem(self.newvm.vcpu, self.newvm.mem)
-    
-    def test_edit_remark(self):
-        if not self._setupvm():
-            return
-        # 修改备注测试
-        remarks = '测试测试'
-        res4 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'remarks': remarks})
-        exp4 = {'res': True}
-        self.assertDictEqual(exp4, res4)
-        vmobj = Vm.objects.get(pk = self.newvm.pk)
-        self.assertTrue(vmobj.remarks == remarks)    
-        self._assert_vcpu_mem(self.newvm.vcpu, self.newvm.mem)
-    
-    def test_edit_when_running(self):
-        if not self._setupvm():
-            return
-        #运行状态修改cpu或mem测试
-        vcpu = 4
-        res1 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'vcpu': vcpu})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-        
-        self._assert_vcpu_mem(self.newvm.vcpu, self.newvm.mem)
-        
-    def test_edit(self):
-        if not self._setupvm():
-            return
-        conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
-        domain.destroy()
-        
-        #修改cpu测试
-        self.newvm = Vm.objects.get(pk = self.newvm.pk)
-        vcpu = 4
-        res1 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'vcpu': vcpu})
-        exp1 = {'res': True}
-        self.assertDictEqual(exp1, res1)
-        
-        self._assert_vcpu_mem(vcpu, self.newvm.mem)
-        
-        #修改mem测试
-        self.newvm = Vm.objects.get(pk = self.newvm.pk)
-        mem = 4096
-        res2 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'mem': mem})
-        self.assertDictEqual(exp1, res2)
-        
-        self._assert_vcpu_mem(self.newvm.vcpu, mem)
-        
-        #修改cpu和mem测试
-        self.newvm = Vm.objects.get(pk = self.newvm.pk)
-        vcpu = 3
-        mem = 3000
-        res3 = edit({'req_user': self.u1, 'uuid': self.newvm.uuid, 'vcpu': vcpu, 'mem': mem})
-        self.assertDictEqual(exp1, res3)
-        
-        self._assert_vcpu_mem(vcpu, mem)
         
 
-        
-    def _assert_vcpu_mem(self, vcpu, mem, num = 1):
-        self._assert_vm(vcpu, mem)
-        self._assert_host(self.h1, vcpu, mem, num)
-    
-    def _assert_vm(self, vcpu, mem):
-        vmobj = Vm.objects.get(pk = self.newvm.pk)
-        self.assertTrue(vmobj.vcpu == vcpu)
-        self.assertTrue(vmobj.mem == mem)
-        
-    def _assert_host(self, host, vcpu, mem, num = 1):
-        hostobj = Host.objects.get(pk = host.pk)
-        self.assertTrue(hostobj.vcpu_total == host.vcpu_total)
-        self.assertTrue(hostobj.vcpu_allocated == vcpu)
-        self.assertTrue(hostobj.mem_total == host.mem_total)
-        self.assertTrue(hostobj.mem_allocated == mem)
-        self.assertTrue(hostobj.mem_reserved == host.mem_reserved)
-        self.assertTrue(hostobj.vm_limit == host.vm_limit)
-        self.assertTrue(hostobj.vm_created == num)
-                      
-class VmMigrateTest(TestCase):
-    vcpu = 2
-    mem = 2048
-    def setUp(self):
-        u1 = User()
-        u1.username = 'apiuser'
-        u1.is_active = True
-        u1.api_user = True
-        u1.save()
-        self.u1 = u1
-        
-        u2 = User()
-        u2.username = 'apiuser1'
-        u2.is_active = True
-        u2.api_user = True
-        u2.save()
-        self.u2 = u2
-
-        u3 = User()
-        u3.username = 'superuser'
-        u3.is_active = True
-        u3.api_user = True
-        u3.is_superuser = True
-        u3.save()
-        self.u3 = u3
-
-        c1 = Center()
-        c1.name = '测试中心1'
-        c1.location = '位置1'
-        c1.desc = '备注1'
-        c1.save()
-        self.c1 = c1
-      
-        g1 = Group()
-        g1.center = c1
-        g1.name = '测试集群1'
-        g1.desc = '备注1'
-        g1.save()
-        g1.admin_user.add(u1)
-        self.g1 = g1
-                
-        vt1 = VlanType()
-        vt1.code = 'vlantype1'
-        vt1.name = 'vlantype1'
-        vt1.save()
-        self.vt1 = vt1
-        
-        v1 = Vlan()
-        v1.vlan = str(TEST_VLAN)
-        v1.br = str(TEST_BR)
-        v1.type = vt1
-        v1.enable = True
-        v1.save()
-        self.v1 = v1
-        
-        ip1 = MacIP()
-        ip1.vlan = v1
-        ip1.mac = TEST_MAC
-        ip1.ipv4 = TEST_IP
-        ip1.save()
-        self.ip1 = ip1
-                
-        h1 = Host()
-        h1.group = g1
-        h1.ipv4 = str(TEST_HOST)
-        h1.enable = True
-        h1.save()
-        h1.vlan.add(v1)
-        self.h1 = h1
-        
-        h2 = Host()
-        h2.group = g1
-        h2.ipv4 = str(TEST_HOST_2)
-        h2.enable = True
-        h2.save()
-        h2.vlan.add(v1)
-        self.h2 = h2
-        
-        ch1 = CephHost()
-        ch1.center = c1
-        ch1.host = str(TEST_CEPH['host'])
-        ch1.port = TEST_CEPH['port']
-        ch1.uuid = str(TEST_CEPH['uuid'])
-        ch1.save()
-        
-        cp1 = CephPool()
-        cp1.host = ch1
-        cp1.pool = TEST_CEPH['pool']
-        cp1.type = 1
-        cp1.save()
-        self.cp1 = cp1
-        
-        it1 = ImageType()
-        it1.code = 'code1'
-        it1.name = 'imagetype1'
-        it1.save()
-        
-        x1 = Xml()
-        x1.name = 'linux'
-        x1.xml = TEST_XML
-        x1.save()
-        
-        i1 = Image()
-        i1.cephpool = cp1
-        i1.name = 'image1'
-        i1.version = 'v0.1'
-        i1.snap = TEST_IMAGE
-        i1.desc = ''
-        i1.xml = x1
-        i1.type = it1
-        i1.enable = True
-        i1.save()
-        self.i1 = i1
-        
-        self.vm_uuid = None
-        self.vm_disk = None
-        
-    def tearDown(self):
-#         print 'tear down ========================================'
-        if self.vm_uuid:
-            vmobj = Vm.objects.get(uuid = self.vm_uuid)
-            if self._vm_exist(vmobj.host.ipv4, self.vm_uuid):
-                cmd = 'ssh %s virsh destroy %s' % (vmobj.host.ipv4, self.vm_uuid)
-                r, info = subprocess.getstatusoutput(cmd)
-#                 if r != 0:
-#                     os.system('ssh %s virsh destroy %s' % (self.h1.ipv4, self.vm_uuid))
-#                     print info
-                    
-                cmd = 'ssh %s virsh undefine %s' % (vmobj.host.ipv4, self.vm_uuid)
-                r, info = subprocess.getstatusoutput(cmd)
-                if r != 0:
-                    os.system('ssh %s virsh undefine %s' % (vmobj.host.ipv4, self.vm_uuid))
-                    print(info)
-                
-            if not self.vm_disk:
-                self.vm_disk  = 'test_'+self.vm_uuid
-                
-        if self.vm_disk:
-            cmd = 'ssh %s rbd ls %s | grep x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-            r, info = subprocess.getstatusoutput(cmd)
-            if r == 0:
-                cmd1 = 'ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-                r1, info1 = subprocess.getstatusoutput(cmd1)
-                if r1 != 0:
-                    os.system('ssh %s rbd rm %s/x_%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
-                    print(info1)
-                    
-            cmd = 'ssh %s rbd ls %s | grep %s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-            r, info = subprocess.getstatusoutput(cmd)
-            if r == 0:
-                cmd1 = 'ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk)
-                r1, info1 = subprocess.getstatusoutput(cmd1)
-                if r1 != 0:
-                    os.system('ssh %s rbd rm %s/%s' % (self.cp1.host.host, self.cp1.pool, self.vm_disk))
-                    print(info1)
-                
-#         print 'finished tear down ================================'
-    
     def _setupvm(self):
-        res = create({'req_user': self.u1, 
-                      'group_id': self.g1.id, 
-                      'image_id': self.i1.id, 
-                      'net_type_id': self.vt1.pk, 
-                      'vcpu': self.vcpu, 
-                      'mem': self.mem})
-        if not res['res']:
-            return False
-        
-        self.newvm = Vm.objects.get(uuid = res['uuid'])
-        self.vm_uuid = self.newvm.uuid
-        self.vm_disk = self.newvm.disk
-        return True
-      
-        
+        req = {'req_user': self.u1, 'image_id': self.i1.id, 'vcpu': self.vcpu, 'mem': self.mem, 
+            'net_type_id': self.vt1.code, 'group_id': self.g1.id}
+        res = create(req)
+        if res['res']:
+            return res['uuid']
+        return False
+
+    def _teardownvm(self, vm_uuid):
+        self._del_vm(self.h1.ipv4, vm_uuid)
+        self._del_ceph(self.cp1, vm_uuid)
+
     def _host_alive(self, ipv4):
-        cmd = 'ping %s -c %d' % (ipv4, 3)
+        cmd = 'fping %s -c %d' % (ipv4, 1)
 #         print cmd
         res, info = subprocess.getstatusoutput(cmd)
 #         print info
@@ -813,6 +535,13 @@ class VmMigrateTest(TestCase):
             return True
         return False
     
+    def _disk_exist(self, cephpool, disk_uuid):
+        cmd = 'ssh %s rbd ls %s | grep %s' % (cephpool.host.host, cephpool.pool, disk_uuid)
+        r, info = subprocess.getstatusoutput(cmd)
+        if r == 0:
+            return True
+        return False
+
     def _vm_exist(self, host_ip, vm_uuid):
         cmd = 'ssh %s virsh list --all | grep %s' % (host_ip, vm_uuid) 
         r, info = subprocess.getstatusoutput(cmd)
@@ -820,96 +549,42 @@ class VmMigrateTest(TestCase):
             return True
         return False
 
-    def test_migrate_args(self):
-        if not self._setupvm():
-            return
-        
-        conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
-        domain.destroy()
-        
-        res1 = migrate({})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-        
-        res2 = migrate({'req_user': self.u1})
-        self.assertDictContainsSubset(exp1, res2)
-        
-        res3 = migrate({'req_user': self.u1, 'uuid': self.newvm.uuid})
-        self.assertDictContainsSubset(exp1, res3)
-        
-        res4 = migrate({'req_user': self.u1, 'host_id': self.h2.id})
-        self.assertDictContainsSubset(exp1, res4)
+    def _del_ceph(self, cephpool, disk_uuid):
+        if self._disk_exist(cephpool, disk_uuid):
+            try:
+                cmd = 'ssh %s rbd rm %s/%s' % (cephpool.host.host, cephpool.pool, disk_uuid)
+                r, info = subprocess.getstatusoutput(cmd)
+                if r != 0:
+                    os.system('ssh %s rbd rm %s/%s' % (cephpool.host.host, cephpool.pool, disk_uuid))
+            except:pass
+
+    def _del_vm(self, host_ip, vm_uuid):
+        if self._vm_exist(host_ip, vm_uuid):
+            try:
+                cmd = 'ssh %s virsh destroy %s' % (host_ip, vm_uuid)
+                r, info = subprocess.getstatusoutput(cmd)
+                if r != 0:
+                    os.system('ssh %s virsh destroy %s' % (host_ip, vm_uuid))
+                    # print info
+                    
+                cmd = 'ssh %s virsh undefine %s' % (host_ip, vm_uuid)
+                r, info = subprocess.getstatusoutput(cmd)
+                if r != 0:
+                    os.system('ssh %s virsh undefine %s' % (host_ip, vm_uuid))
+                    # print info
+            except:pass
     
-    def test_migrate_when_running(self):
-        if not self._setupvm():
-            return
+    def _assert_vm(self, vm_tmp):
+        vmobj = Vm.objects.get(id = vm_tmp.id)
+        self.assertTrue(vmobj.vcpu == vm_tmp.vcpu)
+        self.assertTrue(vmobj.mem == vm_tmp.mem)
         
-        if self.newvm.host == self.h1:
-            target_host = self.h2
-        else:
-            target_host = self.h1
-        res1 = migrate({'req_user': self.u1, 'uuid': self.newvm.uuid, 'host_id': target_host})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-    
-    def test_migrate_same_host(self):
-        if not self._setupvm():
-            return
-        
-        conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
-        domain.destroy()
-        
-        res1 = migrate({'req_user': self.u1, 'uuid': self.newvm.uuid, 'host_id': self.newvm.host.id})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1)
-        
-    def test_migrate(self):
-        if not self._setupvm():
-            return 
-        
-        conn = libvirt.open("qemu+ssh://%s/system" % self.h1.ipv4)
-        domain = conn.lookupByUUIDString(self.newvm.uuid)
-        domain.destroy()
-        
-        if self.newvm.host == self.h1:
-            target_host = self.h2
-        else:
-            target_host = self.h1
-        res1 = migrate({'req_user': self.u1, 'uuid': self.newvm.uuid, 'host_id': target_host})
-        exp1 = {'res': True}
-        self.assertDictEqual(exp1, res1)
-        
-        vmobj = Vm.objects.get(pk = self.newvm.pk)
-        self.assertTrue(vmobj.host == target_host)
-        
-        self._assert_host(self.newvm.host, 0,0,0)
-        self._assert_host(target_host, self.newvm.vcpu, self.newvm.mem, 1)
-        
-        
-        
-    def _assert_vcpu_mem(self, vcpu, mem, num = 1):
-        self._assert_vm(vcpu, mem)
-        self._assert_host(self.h1, vcpu, mem, num)
-    
-    def _assert_vm(self, vcpu, mem):
-        vmobj = Vm.objects.get(pk = self.newvm.pk)
-        self.assertTrue(vmobj.vcpu == vcpu)
-        self.assertTrue(vmobj.mem == mem)
-        
-    def _assert_host(self, host, vcpu, mem, num = 1):
-        hostobj = Host.objects.get(pk = host.pk)
-        self.assertTrue(hostobj.vcpu_total == host.vcpu_total)
-        self.assertTrue(hostobj.vcpu_allocated == vcpu)
-        self.assertTrue(hostobj.mem_total == host.mem_total)
-        self.assertTrue(hostobj.mem_allocated == mem)
-        self.assertTrue(hostobj.mem_reserved == host.mem_reserved)
-        self.assertTrue(hostobj.vm_limit == host.vm_limit)
-        self.assertTrue(hostobj.vm_created == num)
-                      
-        
-        
-        
-        
-        
+    def _assert_host(self, host_tmp):
+        hostobj = Host.objects.get(pk = host_tmp.pk)
+        self.assertTrue(hostobj.vcpu_total == host_tmp.vcpu_total)
+        self.assertTrue(hostobj.vcpu_allocated == host_tmp.vcpu_allocated)
+        self.assertTrue(hostobj.mem_total == host_tmp.mem_total)
+        self.assertTrue(hostobj.mem_allocated == host_tmp.mem_allocated)
+        self.assertTrue(hostobj.mem_reserved == host_tmp.mem_reserved)
+        self.assertTrue(hostobj.vm_limit == host_tmp.vm_limit)
+        self.assertTrue(hostobj.vm_created == host_tmp.vm_created)

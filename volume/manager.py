@@ -1,11 +1,14 @@
 #coding=utf-8
 import uuid
 from .models import DBCephVolume
-from api.error import Error, ERR_VOLUME_CREATE_DB, ERR_VOLUME_ID
+from api.error import Error
+from api.error import ERR_VOLUME_CREATE_DB
+from api.error import ERR_VOLUME_ID
+from api.error import ERR_CEPH_CREATE
 from .volume import CephVolume
 
 class CephManager(object):
-    def create_volume(self, cephpool, size, volume_id=None):
+    def create_volume(self, cephpool, size, group_id, volume_id=None):
         if not volume_id:
             volume_id = str(uuid.uuid4())
         create_success = cephpool.create(volume_id, size)
@@ -15,17 +18,18 @@ class CephManager(object):
                 db.uuid = volume_id
                 db.size = size
                 db.cephpool_id = cephpool.id
+                db.group_id = group_id
                 db.save()        
             except Exception as e:
-                print(e)
                 cephpool.rm(volume_id)
                 raise Error(ERR_VOLUME_CREATE_DB)
             else:
                 return volume_id
-        return False
+        else:
+            raise Error(ERR_CEPH_CREATE)
 
-    def get_volume_list(self, user_id=None, creator=None, cephpool_id=None, group_id=None):
-        volume_list = DBCephVolume.objects.all()
+    def get_volume_list(self, user_id=None, creator=None, cephpool_id=None, group_id=None, vm_uuid=None):
+        volume_list = DBCephVolume.objects.all().order_by('-create_time')
         if user_id:
             volume_list = volume_list.filter(user_id=user_id)
         if creator:
@@ -34,7 +38,8 @@ class CephManager(object):
             volume_list = volume_list.filter(cephpool_id=cephpool_id)
         if group_id:
             volume_list = volume_list.filter(group_id=group_id)
-        
+        if vm_uuid:
+            volume_list = volume_list.filter(vm=vm_uuid)
         ret_list = []
         for volume in volume_list:
             ret_list.append(CephVolume(db=volume))

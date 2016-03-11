@@ -3,148 +3,176 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from compute.models import *
 from network.models import *
-from ..net import get_vlan_list, get_vlan
+from ..net import get_vlan_list, get_vlan, get_vlan_type_list
+
+from .tools import create_user, create_superuser
+from .tools import create_center, create_group, create_host
+from .tools import create_vlan, create_vlantype
 
 class NetTest(TestCase):
     def setUp(self):
-        u1 = User()
-        u1.username = 'apiuser'
-        u1.is_active = True
-        u1.api_user = True
-        u1.save()
-        self.u1 = u1
+        self.u1 = create_user('apiuser')
+        self.u2 = create_superuser('superuser')
         
-        u2 = User()
-        u2.username = 'superuser'
-        u2.is_active = True
-        u2.is_superuser = True
-        u2.api_user = True
-        u2.save()
-        self.u2 = u2
-        
-        c1 = Center()
-        c1.name = '测试中心1'
-        c1.location = '位置1'
-        c1.desc = '备注1'
-        c1.save()
-        self.c1 = c1
+        self.c1 = create_center('1', '1', '1')
       
-        g1 = Group()
-        g1.center = c1
-        g1.name = '测试集群1'
-        g1.desc = '备注1'
-        g1.save()
-        g1.admin_user.add(u1)
-        self.g1 = g1
+        self.g1 = create_group(self.c1, '1', '1', [self.u1])
+        self.g2 = create_group(self.c1, '2', '2')
         
-        g2 = Group()
-        g2.center = c1
-        g2.name = '测试集群2'
-        g2.desc = '备注2'
-        g2.save()
-        self.g2 = g2
+        self.vt1 = create_vlantype('vlantype1')
         
-        vt1 = VlanType()
-        vt1.code = 'vlantype1'
-        vt1.name = 'vlantype1'
-        vt1.save()
+        self.v1 = create_vlan('0.0.0.0', 'br1', self.vt1)
         
-        v1 = Vlan()
-        v1.vlan = '0.0.0.0'
-        v1.br = 'br1'
-        v1.type = vt1
-        v1.enable = True
-        v1.save()
-        self.v1 = v1
+        self.v2 = create_vlan('0.0.0.1', 'br2', self.vt1, False)
         
-        v2 = Vlan()
-        v2.vlan = '0.0.0.1'
-        v2.br = 'br2'
-        v2.type = vt1
-        v2.enable = False
-        v2.save()
-        self.v2 = v2
-        
-        h1 = Host()
-        h1.group = g1
-        h1.ipv4 = '1.1.1.1'
-        h1.enable = True
-        h1.save()
-        h1.vlan.add(v1)
+        self.h1 = create_host(self.g1, '1.1.1.1', True, [self.v1])
+        self.h2 = create_host(self.g2, '1.1.1.2', True, [self.v2])
+    
+    def test_get_vlan_err_args(self):
+        req = {'req_user': 1}
+        exp = {'res': False}
+        res = get_vlan(req)
+        self.assertDictContainsSubset(exp, res)
 
-        h2 = Host()
-        h2.group = g2
-        h2.ipv4 = '1.1.1.2'
-        h2.enable = True
-        h2.save()
-        h2.vlan.add(v2)
-        
-    def test_get_vlan_list(self):
-        res1 = get_vlan_list({'req_user': self.u1})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1, "")
-        
-        res2 = get_vlan_list({'req_user': self.u1, 'group_id': self.g1.id})
-        vlan = self.v1
-        exp2 = {'res': True, 
-                'list': [
-                    {
-                        'id': vlan.id,
-                        'vlan': vlan.vlan,
-                        'br': vlan.br,
-                        'type_code': vlan.type.code,
-                        'type': vlan.type.name,
-                        'enable': vlan.enable
-                        }]}
-        self.assertDictEqual(exp2, res2, "")
-        
-        res3 = get_vlan_list({'req_user': self.u1, 'group_id': self.g2.id})
-        exp3 = {'res': False}
-        self.assertDictContainsSubset(exp3, res3, "")
-        
-        res4 = get_vlan_list({'req_user': self.u2, 'group_id': self.g2.id})
-        vlan = self.v2
-        exp4 = {'res': True, 
-                'list': [
-                    {
-                        'id': vlan.id,
-                        'vlan': vlan.vlan,
-                        'br': vlan.br,
-                        'type_code': vlan.type.code,
-                        'type': vlan.type.name,
-                        'enable': vlan.enable
-                        }]}
-        self.assertDictEqual(exp4, res4, "")
-        
+        req1 = {'req_user': self.u1}
+        res1 = get_vlan(req1)
+        self.assertDictContainsSubset(exp, res1)
+
+        req2 = {'req_user': self.u1, 'vlan_id': -1}
+        res2 = get_vlan(req2)
+        self.assertDictContainsSubset(exp, res2)
+
+    def test_get_vlan_err_perm(self):
+        req = {'req_user': self.u1, 'vlan_id':self.v2.id}
+        exp = {'res': False}
+        res = get_vlan(req)
+        self.assertDictContainsSubset(exp, res)
+
+    def test_get_vlan_superuser(self):
+        req = {'req_user': self.u2, 'vlan_id': self.v1.id}
+        exp = {'res': True, 'info':{
+                     'id': self.v1.id,
+                     'vlan': self.v1.vlan,
+                     'br': self.v1.br,
+                     'type_code': self.v1.type.code,
+                     'type_name': self.v1.type.name,
+                     'enable': self.v1.enable}}
+        res = get_vlan(req)
+        self.assertDictEqual(exp, res)
+
+    def test_get_vlan_superuser1(self):
+        req = {'req_user': self.u2, 'vlan_id': self.v2.id}
+        exp = {'res': True, 'info':{
+                     'id': self.v2.id,
+                     'vlan': self.v2.vlan,
+                     'br': self.v2.br,
+                     'type_code': self.v2.type.code,
+                     'type_name': self.v2.type.name,
+                     'enable': self.v2.enable}}
+        res = get_vlan(req)
+        self.assertDictEqual(exp, res)
+
     def test_get_vlan(self):
-        res1 = get_vlan({'req_user': self.u1})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1, "")
+        req = {'req_user': self.u1, 'vlan_id': self.v1.id}
+        exp = {'res': True, 'info':{
+                     'id': self.v1.id,
+                     'vlan': self.v1.vlan,
+                     'br': self.v1.br,
+                     'type_code': self.v1.type.code,
+                     'type_name': self.v1.type.name,
+                     'enable': self.v1.enable}}
+        res = get_vlan(req)
+        self.assertDictEqual(exp, res)
+
+    def test_get_vlan_list_err_args(self):
+        req = {'req_user': 0}
+        exp = {'res': False}
+        res = get_vlan_list(req)
+        self.assertDictContainsSubset(exp, res)
+
+    def test_get_vlan_list_err_args1(self):
+        req = {'req_user': self.u1}
+        exp = {'res': False}
+        res = get_vlan_list(req)
+        self.assertDictContainsSubset(exp, res)
+
+    def test_get_vlan_list_err_args2(self):
+        req = {'req_user': self.u1, 'group_id':-1}
+        exp = {'res': False}
+        res = get_vlan_list(req)
+        self.assertDictContainsSubset(exp, res)
+
+    def test_get_vlan_list_err_perm(self):
+        req = {'req_user': self.u1, 'group_id': self.g2.id}
+        exp = {'res': False}
+        res = get_vlan_list(req)
+        self.assertDictContainsSubset(exp, res)
+
+    def test_get_vlan_list_superuser(self):
+        req = {'req_user': self.u2, 'group_id': self.g1.id}
+        exp = {'res': True, 'list':[
+            {
+                'id': self.v1.id,
+                'vlan': self.v1.vlan,
+                'br': self.v1.br,
+                'type_code': self.v1.type.code,
+                'type': self.v1.type.name,
+                'enable': self.v1.enable,
+                'order': self.v1.order
+            }
+        ]}
+        res = get_vlan_list(req)
+        self.assertDictEqual(exp, res)
+    
+    def test_get_vlan_list_superuser1(self):
+        req = {'req_user': self.u2, 'group_id': self.g2.id}
+        exp = {'res': True, 'list':[
+            {
+                'id': self.v2.id,
+                'vlan': self.v2.vlan,
+                'br': self.v2.br,
+                'type_code': self.v2.type.code,
+                'type': self.v2.type.name,
+                'enable': self.v2.enable,
+                'order': self.v2.order
+            }
+        ]}
+        res = get_vlan_list(req)
+        self.assertDictEqual(exp, res)
+
+    def test_get_vlan_list(self):
+        req = {'req_user': self.u1, 'group_id': self.g1.id}
+        exp = {'res': True, 'list':[
+            {
+                'id': self.v1.id,
+                'vlan': self.v1.vlan,
+                'br': self.v1.br,
+                'type_code': self.v1.type.code,
+                'type': self.v1.type.name,
+                'enable': self.v1.enable,
+                'order': self.v1.order
+            }
+        ]}
+        res = get_vlan_list(req)
+        self.assertDictEqual(exp, res)
+
+    def test_get_vlan_type_list_err_args(self):
+        req = {'req_user': 0}
+        exp = {'res': False}
+        res = get_vlan_type_list(req)
+        self.assertDictContainsSubset(exp, res)
+
+    def test_get_vlan_type_list(self):
+        req = {'req_user': self.u1}
+        exp = {'res': True, 'list':[
+            {
+                'code': self.vt1.code,
+                'name': self.vt1.name,
+                'order': self.vt1.order
+            }
+        ]}
+        res = get_vlan_type_list(req)
+        self.assertDictEqual(exp, res)
         
-        res2 = get_vlan({'req_user': self.u1, 'vlan_id': self.v1.id})
-        vlan = self.v1
-        exp2 = {'res': True,
-                'info': {
-                     'id': vlan.id,
-                     'vlan': vlan.vlan,
-                     'br': vlan.br,
-                     'type_code': vlan.type.code,
-                     'type_name': vlan.type.name,
-                     'enable': vlan.enable}}
-        self.assertDictEqual(exp2, res2, "")
+
         
-        res3 = get_vlan({'req_user': self.u1, 'vlan_id': self.v2.id})
-        exp3 = {'res': False}
-        self.assertDictContainsSubset(exp3, res3, "")
-        
-        res4 = get_vlan({'req_user': self.u2, 'vlan_id': self.v2.id})
-        vlan = self.v2
-        exp4 = {'res': True,
-                'info': {
-                     'id': vlan.id,
-                     'vlan': vlan.vlan,
-                     'br': vlan.br,
-                     'type_code': vlan.type.code,
-                     'type_name': vlan.type.name,
-                     'enable': vlan.enable}}
-        self.assertDictEqual(exp4, res4, "")

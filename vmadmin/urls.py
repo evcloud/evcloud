@@ -1,6 +1,7 @@
 from django.conf.urls import include, url
 from .vm_views import *
 from .gpu_views import *
+from .volume_views import *
 
 urlpatterns = [
 #     url(r'^(?P<url>.+)', root),
@@ -19,6 +20,13 @@ urlpatterns = [
     url(r'^gpu/list/$', gpu_list_view),
     url(r'^gpu/mount/$', gpu_mount_view),
     url(r'^gpu/umount/$', gpu_umount_ajax),
-    url(r'^gpu/detail/$', gpu_detail_view),
+    # url(r'^gpu/detail/$', gpu_detail_view),
     url(r'^gpu/edit_remarks/$', gpu_edit_remarks_ajax),
+
+    url(r'^volume/list/$', volume_list_view),
+    url(r'^volume/create/$', volume_create_view),
+    url(r'^volume/mount/$', volume_mount_ceph_view),
+    url(r'^volume/delete/$', volume_delete_ajax),
+    url(r'^volume/edit_remarks/$', volume_edit_remarks_ajax),
+    url(r'^volume/umount/$', volume_umount_ceph_ajax),
 ]

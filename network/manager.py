@@ -53,19 +53,21 @@ class NetManager(object):
         if mac:
             return mac[0].mac
             
+        res = None
         with transaction.atomic():
             mac = MacIP.objects.select_for_update().filter(vlan = vlan, vmid='', enable=True)
             if mac:
                 mac = mac[0]
                 mac.vmid = vmid
                 mac.save()
+                res = mac.mac
             else:
                 self.error = 'no valid mac'
-                return None
-        return mac.mac
+        return res
     
     def claim_mac(self, mac, vmid):
         if settings.DEBUG: print('netmanager filter claim_mac: ', mac, vmid)
+        res = True
         with transaction.atomic():
             if type(mac) == MacIP:
                 obj = mac
@@ -78,16 +80,22 @@ class NetManager(object):
                 obj.vmid = vmid
                 obj.save()
             else:
-                return False
-        return True
+                res = False
+        return res
 
     def release(self, mac, vmid):
         if settings.DEBUG: print('release mac:', mac, vmid) 
-        macipobj = MacIP.objects.filter(mac=mac, vmid=vmid, enable=True)
-        for m in macipobj:
-            if settings.DEBUG: print('set null', m.mac)
-            m.vmid = ''
-            m.save()
+        try:
+            with transaction.atomic():
+                macipobj = MacIP.objects.select_for_update().filter(mac=mac, vmid=vmid, enable=True)
+                macipobj = macipobj[0]    
+                if settings.DEBUG: print('set null', macipobj.mac)
+                macipobj.vmid = ''
+                macipobj.save()
+        except Exception as e:
+            print(e)
+            return False
+        return True
 
     def get_mac_by_vmid(self, vmid):
         macip = MacIP.objects.filter(vmid = vmid)

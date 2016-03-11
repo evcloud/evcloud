@@ -32,6 +32,13 @@ class GPUAPI(object):
             ret_list.append(GPU(db=db))
         return ret_list
 
+    def get_gpu_list_by_group_id(self, group_id):
+        db_list = DBGPU.objects.filter(host__group_id = group_id)
+        ret_list = []
+        for db in db_list:
+            ret_list.append(GPU(db=db))
+        return ret_list
+
     def get_gpu_by_id(self, gpu_id):
         db = DBGPU.objects.filter(pk = gpu_id)
         if not db.exists():
@@ -44,6 +51,13 @@ class GPUAPI(object):
             raise Error(ERR_GPU_ADDRESS)
         return GPU(db=db[0])
 
+    def get_gpu_list_by_vm_uuid(self, vm_uuid):
+        db_list = DBGPU.objects.filter(vm = vm_uuid)
+        ret_list = []
+        for db in db_list:
+            ret_list.append(GPU(db=db))
+        return ret_list
+        
     def set_remarks(self, gpu_id, content):
         gpu = self.get_gpu_by_id(gpu_id)
         return gpu.set_remarks(content)
@@ -53,10 +67,10 @@ class GPUAPI(object):
         vm = self.vm_api.get_vm_by_uuid(vm_id)
         if vm.host_id != gpu.host_id:
             return False
-        if self.vm_api.attach_device(vm_id, gpu.xml_desc):
-            if gpu.mount(vm_id):
+        if gpu.mount(vm_id):
+            if self.vm_api.attach_device(vm_id, gpu.xml_desc):
                 return True
-            self.vm_api.detach_device(vm_id, gpu.xml_desc)
+            gpu.umount()
         return False
 
     def umount(self, gpu_id):
@@ -65,10 +79,10 @@ class GPUAPI(object):
             vm = self.vm_api.get_vm_by_uuid(gpu.vm)
             if vm and vm.host_id != gpu.host_id:
                 return False
-            if gpu.umount():
-                if self.vm_api.detach_device(vm.uuid, gpu.xml_desc):
+            if self.vm_api.detach_device(vm.uuid, gpu.xml_desc):
+                if gpu.umount():
                     return True
-                gpu.mount(vm.uuid)
+                self.vm_api.attach_device(vm.uuid, gpu.xml_desc)
         else:
             if gpu.umount():
                 return True

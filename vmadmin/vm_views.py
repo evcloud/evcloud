@@ -178,6 +178,18 @@ def vm_create_view(req):
             dicts['group_list'] = group_dic['list']
         else:
             dicts['group_list'] = []
+
+        #获取宿主机列表
+        hosts = {}
+        for g in dicts['group_list']:
+            host_dic = api_host_get_list({'req_user': req.user, 'group_id': g['id']})
+            if host_dic['res']:
+                # hosts[g['id']] = host_dic['list']
+                hosts[g['id']] = []
+                for host in host_dic['list']:
+                    if host['enable']:
+                        hosts[g['id']].append(host)
+        dicts['hosts_json'] = json.dumps(hosts)
             
         #获取镜像列表
         image_dic = {}
@@ -236,6 +248,7 @@ def vm_create_view(req):
         #创建虚拟机
         if req.method == 'POST':
             arg_group = req.POST.get('group')
+            arg_host = req.POST.get('host')
             arg_image = req.POST.get('image')
             arg_net = req.POST.get('net')
             arg_vlan = req.POST.get('vlan')
@@ -254,6 +267,7 @@ def vm_create_view(req):
                     create_res = api_vm_create({
                         'req_user': req.user,
                         'group_id': arg_group,
+                        'host_id': arg_host,
                         'image_id': arg_image,
                         'net_type_id': arg_net,
                         'vlan_id': arg_vlan,
@@ -305,7 +319,11 @@ def vm_edit_view(req):
         dicts['remain_mem'] = host['mem_total'] - \
                               host['mem_allocated'] - \
                               host['mem_reserved']   
+        if dicts['remain_mem'] < 0:
+            dicts['remain_mem'] = 0
         dicts['remain_cpu'] = host['vcpu_total'] - host['vcpu_allocated']
+        if dicts['remain_cpu'] < 0:
+            dicts['remain_cpu'] = 0
     
     return render_to_response('vmadmin_edit.html', dicts, context_instance=RequestContext(req))
 
@@ -328,6 +346,7 @@ def vm_detail_view(req):
         vlan = api_net_get_vlan({'req_user': req.user, 'vlan_id': dicts['vmobj']['vlan_id']})
         if vlan['res']:
             dicts['vmobj']['br'] = vlan['info']['br'] 
+        
     else:
         if settings.DEBUG: print(vm_res['err'])
         return HttpResponseRedirect('../list/')

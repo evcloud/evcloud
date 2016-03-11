@@ -13,6 +13,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from .error import ERR_ARGS_DECORATOR, ERR_ARGS_REQUIRED, ERR_PROCESS, ERR_LOG, ERR_AUTH_NO_LOGIN
 from .error import Error
+from vmuser.api import API as UserAPI
 
 def get_args_from_get(req):
     '''从GET中获取所有参数'''
@@ -44,8 +45,10 @@ def check_args_exists(args, required_key):
 
 #################################################装饰器#################################################
 
-def args_required(required_keys):
+def args_required(required_keys=None):
     '''用于api函数的装饰器，检查被装饰函数的第一个参数时候包含指定参数'''
+    if not required_keys:
+        required_keys = []
     if type(required_keys) != list:
         required_keys = [required_keys]
     required_keys.append('req_user')
@@ -53,9 +56,10 @@ def args_required(required_keys):
         def handle_args(*args, **kwargs):
             if len(args) < 1 or type(args[0]) != dict:
                 return {'res': False, 'err': ERR_ARGS_DECORATOR}
-            
             exists, err = check_args_exists(args[0], required_keys)
             if not exists:
+                return {'res': False, 'err': ERR_ARGS_REQUIRED}
+            if not isinstance(args[0]['req_user'], User):
                 return {'res': False, 'err': ERR_ARGS_REQUIRED}
             return func(*args, **kwargs)
         
@@ -69,14 +73,12 @@ def catch_error(func):
         try:
             return func(*args, **kwargs)  
         except Error as e:
-            print(e)
+            # print(e.err)
             if settings.DEBUG: 
                 import traceback
                 print(traceback.format_exc())
-            
             return {'res': False, 'err': e.err} 
         except Exception as e:
-            print(e)
             if settings.DEBUG: 
                 import traceback
                 print(traceback.format_exc())
@@ -148,10 +150,10 @@ def login_required(func):
             session_id = req.POST.get('session_id')
             if settings.DEBUG: print('login required', session_id)
             if session_id:
-                from .auth import SESSION_KEY, IP_SESSION_KEY, get_session_by_id
-                session = get_session_by_id(session_id)
-                username = session.get(SESSION_KEY)
-                ip = session.get(IP_SESSION_KEY)
+                userapi = UserAPI()
+                session = userapi.get_session_by_id(session_id)
+                username = session.get(userapi.SESSION_KEY)
+                ip = session.get(userapi.IP_SESSION_KEY)
                 if settings.DEBUG: print('login required', username, ip)
                 if ip == req.META['REMOTE_ADDR']:
                     user = User.objects.get(username = username)

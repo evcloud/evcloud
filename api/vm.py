@@ -7,23 +7,30 @@
 #@desc:    虚拟机相关的API函数，每一个函数封装并实现一个API接口的功能。
 ########################################################################
 
-from compute.group import get_group
-from .tools import args_required, catch_error,print_process_time, api_log
+from .tools import args_required
+from .tools import catch_error
+from .tools import api_log
 
-from .error import (ERR_AUTH_PERM, ERR_VM_UUID, ERR_VM_DEFINE, ERR_VM_OP, ERR_GROUP_ID,
-                    ERR_VM_NO_OP, ERR_ARGS_VM_VCPU, ERR_ARGS_VM_MEM,ERR_ARGS_VM_EDIT_NONE,
-                    ERR_VM_EDIT_REMARKS, ERR_VM_EDIT, ERR_VM_MIGRATE, 
-                    ERR_ARGS_VM_CREATE_NO_VLANTYPE, ERR_VM_EDIT_LIVING)
+from .error import ERR_AUTH_PERM
+from .error import ERR_VM_UUID
+from .error import ERR_VM_DEFINE
+from .error import ERR_VM_OP
+from .error import ERR_VM_NO_OP
+from .error import ERR_VM_EDIT
+from .error import ERR_VM_MIGRATE
 from .error import Error
-from compute.vm import VM, create_vm, get_vm, migrate_vm, get_vms
-from compute.host import get_host
+
+from compute.api import VmAPI
+from compute.api import GroupAPI
+from compute.api import HostAPI
 
 @api_log
 @catch_error
 @args_required('uuid')
 def get(args):
     '''获取虚拟机详细信息'''
-    vm = get_vm(args['uuid'])
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
     if not vm:
         return {'res': False, 'err': ERR_VM_UUID}
     
@@ -72,13 +79,14 @@ def get(args):
 def get_list(args):
     '''获取虚拟机列表'''
     ret_list = []
-    group = get_group(args['group_id'])
-    if not group:
-        return {'res': False, 'err': ERR_GROUP_ID}
-
+    api = VmAPI()
+    group_api = GroupAPI()
+    group = group_api.get_group_by_id(args['group_id'])
     if not group.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
-    vm_list = get_vms(args['group_id'], order = '-create_time')
+
+    vm_list = api.get_vm_list_by_group_id(args['group_id'], order = '-create_time')
+
     for vm in vm_list:
         if vm.create_time:
             create_time = vm.create_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -106,30 +114,30 @@ def get_list(args):
     
 @api_log
 @catch_error
-@args_required(['group_id', 'image_id', 'vcpu', 'mem'])
+@args_required(['image_id', 'vcpu', 'mem'])
 def create(args):
     '''创建虚拟机'''
     if 'net_type_id' not in args and 'vlan_id' not in args:
-        return {'res': False, 'err': ERR_ARGS_VM_CREATE_NO_VLANTYPE}
-    
+        return {'res': False, 'err': ERR_VM_CREATE_ARGS_VLAN}
+
+    if 'group_id' not in args and 'host_id' not in args:
+        return {'res': False, 'err': ERR_VM_CREATE_ARGS_HOST}
+   
+    optional_args = ['group_id', 'host_id', 'net_type_id', 'vlan_id', 'diskname', 'remarks']
+
     kwargs = {}
+
+    for field in optional_args:
+        if field in args:
+            kwargs[field] = args[field]
     
-    if 'net_type_id' in args:
-        kwargs['net_type_id'] = args['net_type_id']
-    
-    if 'vlan_id' in args:
-        kwargs['vlan_id'] = args['vlan_id']
-    
-    if 'diskname' in args:
-        kwargs['diskname'] = args['diskname']
-        
-    if 'remarks' in args:
-        kwargs['remarks'] = args['remarks']
-    
-    vm = create_vm(args['req_user'].username, args['group_id'], args['image_id'], args['vcpu'], args['mem'],**kwargs)
+    api = VmAPI()
+    vm = api.create_vm(args['image_id'], args['vcpu'], args['mem'], **kwargs)
+   
     if vm == False:
         return {'res': False, 'err': ERR_VM_DEFINE}
     
+    vm.set_creator(args['req_user'].username)
     vm.start()
     uuid = vm.uuid
     return {'res':True,'uuid':uuid}
@@ -139,7 +147,8 @@ def create(args):
 @args_required('uuid')
 def status(args):
     '''获取虚拟机状态'''
-    vm = get_vm(args['uuid'])
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
     if not vm:
         return {'res': False, 'err': ERR_VM_UUID}
     if not vm.managed_by(args['req_user']):
@@ -152,30 +161,35 @@ def status(args):
 @args_required(['uuid', 'op'])
 def op(args):
     '''虚拟机操作'''
-    vm = get_vm(args['uuid'])
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
     if not vm:
         return {'res': False, 'err': ERR_VM_UUID}
     if not vm.can_operate_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
-    
-    #虚拟机操作类型。 key,操作代码； value,VM对象中对应处理函数名称
-    op_list = {
-        'start': 'start', 
-        'reboot': 'reboot', 
-        'shutdown': 'shutdown', 
-        'poweroff': 'poweroff', 
-        'delete': 'delete',
-        'reset': 'reset'}
-    
-    if args['op'] in op_list:
-        try:
-            res = getattr(vm, op_list[args['op']]).__call__()
-        except Error as e:
-            return {'res': False, 'err': e.err}
-        except Exception as e:
-            return {'res': False, 'err': ERR_VM_OP}
-    else:
-        return {'res': False, 'err': ERR_VM_NO_OP}
+
+    if args['op'] == 'delete':
+        res = api.delete_vm(args['uuid'])
+    elif args['op'] == 'reset':
+        res = api.reset_vm(args['uuid'])
+    else:   
+        #虚拟机操作类型。 key,操作代码； value,VM对象中对应处理函数名称
+        op_list = {
+            'start': 'start', 
+            'reboot': 'reboot', 
+            'shutdown': 'shutdown', 
+            'poweroff': 'poweroff'}
+        
+        if args['op'] in op_list:
+            try:
+                res = getattr(vm, op_list[args['op']]).__call__()
+            except Error as e:
+                return {'res': False, 'err': e.err}
+            except Exception as e:
+                raise e
+                return {'res': False, 'err': ERR_VM_OP}
+        else:
+            return {'res': False, 'err': ERR_VM_NO_OP}
     if res:
         return {'res':res}
     return {'res': res, 'err': ERR_VM_OP}
@@ -185,62 +199,28 @@ def op(args):
 @args_required(['uuid'])
 def edit(args):
     '''虚拟机参数修改'''
-    vm = get_vm(args['uuid'])
-    if not vm:
-        return {'res': False, 'err': ERR_VM_UUID}
-    if not vm.can_operate_by(args['req_user']):
-        return {'res': False, 'err': ERR_AUTH_PERM}
-    
-
-    #参数校验
-    vcpu = False
-    mem  = False
-    remarks = False
+    vcpu = None
     if 'vcpu' in args:
-        vcpu = args['vcpu']
         try:
-            vcpu = int(vcpu)
-        except:
-            return {'res': False, 'err': ERR_ARGS_VM_VCPU}
-        
-    if 'mem' in args:
-        mem = args['mem']
-        try:
-            mem = int(mem)
-        except:
-            return {'res': False, 'err': ERR_ARGS_VM_MEM}
+            vcpu = int(args['vcpu'])
+        except: pass
     
+    mem = None
+    if 'mem' in args:
+        try:
+            mem = int(args['mem'])
+        except: pass
+    
+    remarks = None
     if 'remarks' in args:
         remarks = args['remarks']
 
-    if vcpu == False and mem == False and remarks == False:
-        return {'res': False, 'err': ERR_ARGS_VM_EDIT_NONE}
-    
-    if remarks != False:
-        res = vm.set_remarks(remarks)
-        if not res:
-            return {'res': False, 'err': ERR_VM_EDIT_REMARKS}
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
+    if not vm.can_operate_by(args['req_user']):
+        return {'res': False, 'err': ERR_AUTH_PERM}
+    res = api.edit_vm(args['uuid'], vcpu, mem, remarks)
 
-    if vcpu or mem: 
-        if vm.status == VM.VIR_DOMAIN_RUNNING:
-            return {'res': False, 'err': ERR_VM_EDIT_LIVING}
-        if vcpu:
-            can_set, err = vm.can_set_vcpu(vcpu)
-            if not can_set:
-                return {'res': False, 'err': ERR_VM_EDIT}
-        if mem:
-            can_set, err = vm.can_set_mem(mem)
-            if not can_set:
-                return {'res': False, 'err': ERR_VM_EDIT}
-            
-        if vcpu:
-            res = vm.set_vcpu(vcpu)
-            if res and mem:
-                res = vm.set_mem(mem)
-                if not res:
-                    vm.unset_vcpu(vcpu)
-        else:
-            res = vm.set_mem(mem)
     if res:
         return {'res': True}
     else:
@@ -251,14 +231,16 @@ def edit(args):
 @args_required(['uuid', 'host_id'])
 def migrate(args):
     #被迁移虚拟机校验
-    vm = get_vm(args['uuid'])
+    api = VmAPI()
+    host_api = HostAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
     if not vm:
         return {'res': False, 'err': ERR_VM_UUID}
     if not vm.can_operate_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
     
     #目标主机校验
-    host = get_host(args['host_id'])
+    host = host_api.get_host_by_id(args['host_id'])
     if not host.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
     
@@ -269,7 +251,7 @@ def migrate(args):
     if vm.host_id == host.id:
         return {'res': False, 'err': ERR_VM_MIGRATE}
     
-    res = migrate_vm(args['uuid'], args['host_id'])
+    res = api.migrate_vm(args['uuid'], args['host_id'])
     if res:
         return {'res': True}
     return {'res': False, 'err': ERR_VM_MIGRATE}

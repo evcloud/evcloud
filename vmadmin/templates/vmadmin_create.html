@@ -41,6 +41,34 @@
             </select>
         </div>
     </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label" style="font-weight: 200;">宿主机</label>
+        <div class="col-sm-9">
+            <select name="host" class="form-control" style="width:400px">
+            </select>
+        </div>
+    </div>
+    <script type="text/javascript">
+    (function(){
+        var hosts = {{hosts_json|safe}};
+        set_host();
+        
+        $("select[name='group']").change(set_host);
+        
+        function set_host() {
+            var group_id = $('select[name="group"]').val();
+            var options = '<option value=""><自动分配></option>';
+            for (var i in hosts[group_id]) {
+                options += '<option value="'+hosts[group_id][i]['id']+'">'+hosts[group_id][i]['ipv4']
+                        + '(cpu:'+hosts[group_id][i]['vcpu_allocated']+'/'+hosts[group_id][i]['vcpu_total']
+                        + ', mem:'+(hosts[group_id][i]['mem_allocated']+hosts[group_id][i]['mem_reserved'])
+                        + 'MB/'+hosts[group_id][i]['mem_total']+'MB'
+                        + ', num:'+hosts[group_id][i]['vm_created']+'/'+hosts[group_id][i]['vm_limit']+')</opction>';
+            }
+            $("select[name='host']").html(options);
+        }
+    })();
+    </script>
 
     <div class="form-group">
         <label class="col-sm-3 control-label">镜像</label>
@@ -102,7 +130,7 @@
     	function set_vlan() {
         	var type = $("select[name='net']").val();
     		var group_id = $('select[name="group"]').val();
-    		var options = '<option value=""><随机选择></option>';
+    		var options = '<option value=""><自动分配></option>';
     		vlan_list = vlans[group_id][type]
     		for (var i in vlan_list) {
     			options += '<option value="'+vlan_list[i]['id']+'">'+vlan_list[i]['vlan']+'</opction>';

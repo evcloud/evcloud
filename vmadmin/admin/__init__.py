@@ -60,3 +60,11 @@ from .device_admin import DBGPUAdmin
 admin_site.register(DBGPU, DBGPUAdmin)
 
 
+from volume.models import DBCephVolume
+from volume.models import DBCephQuota
+from .volume_admin import CephVolumeAdmin
+from .volume_admin import CephQuotaAdmin
+admin_site.register(DBCephVolume, CephVolumeAdmin)
+admin_site.register(DBCephQuota, CephQuotaAdmin)
+
+

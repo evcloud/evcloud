@@ -4,36 +4,16 @@ from django.contrib.auth.models import User
 from compute.models import Center, Group
 from ..center import get_list
 
+from .tools import create_user, create_group, create_center
+
+
+
 class CenterTest(TestCase):
     def setUp(self):
-        u1 = User()
-        u1.username = 'apitest'
-        u1.is_active = True
-        u1.api_user = True
-        u1.save()
-        self.u1 = u1
-        
-        c1 = Center()
-        c1.name = '测试中心'
-        c1.location = '北京'
-        c1.desc = '备注'
-        c1.save()
-        self.c1 = c1
-        
-        g1 = Group()
-        g1.center = c1
-        g1.name = '测试'
-        g1.desc = '测试'
-        g1.save()
-        g1.admin_user.add(u1)
-        self.g1 = g1
-        
-        c2 = Center()
-        c2.name = '测试中心2'
-        c2.location = '北京2'
-        c2.desc = '备注2'
-        c2.save()
-        self.c2 = c2
+        self.u1 = create_user('apitest')        
+        self.c1 = create_center('测试中心', '北京', '备注')
+        self.g1 = create_group(self.c1, '测试', '测试', [self.u1])
+        self.c2 = create_center('测试中心2', '北京', '备注2')        
         
     def test_get_list(self):
         res = get_list({'req_user': self.u1})
@@ -42,8 +22,11 @@ class CenterTest(TestCase):
                                             {'id': self.c1.id, 
                                              'name': self.c1.name, 
                                              'location': self.c1.location, 
-                                             'desc': self.c1.desc}
-                                            ]}, 
-                                    '')
+                                             'desc': self.c1.desc,
+                                             'order': 0}
+                                            ]})
         res2 = get_list({})
-        self.assertDictContainsSubset({'res': False}, res2, '')
+        self.assertDictContainsSubset({'res': False}, res2)
+
+        res3 = get_list({'req_user': 'test'})
+        self.assertDictContainsSubset({'res': False}, res3)

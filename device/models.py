@@ -15,7 +15,7 @@ class DBGPU(models.Model):
 
     class Meta:
         verbose_name = 'GPU'
-        verbose_name_plural = 'GPU' 
+        verbose_name_plural = '1_GPU' 
 
 
 

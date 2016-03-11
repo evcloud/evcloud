@@ -1,7 +1,6 @@
 #coding=utf-8
 from django.db import models
 from storage.models import CephPool
-from storage.ceph import get_cephpool
 app_label = 'image'
 
 class Xml(models.Model):
@@ -62,7 +61,8 @@ class Image(models.Model):
 
     def save(self):
         try:
-            cephpool = get_cephpool(self.cephpool_id)
+            from storage.api import CephStorageAPI
+            cephpool = CephStorageAPI().get_pool_by_id(self.cephpool_id)
             if cephpool:
                 if not cephpool.exists(self.snap):
                     create_success = cephpool.create_snap(self.snap)

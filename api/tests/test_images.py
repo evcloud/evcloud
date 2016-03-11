@@ -6,186 +6,154 @@ from image.models import *
 from storage.models import *
 from ..images import get_list, get
 
+from .tools import create_user, create_superuser, create_center, create_group
+from .tools import create_ceph_host, create_ceph_image_pool
+from .tools import create_xml, create_imagetype, create_image
 class ImageTest(TestCase):
     def setUp(self):
-        u1 = User()
-        u1.username = 'apiuser'
-        u1.is_active = True
-        u1.api_user = True
-        u1.save()
-        self.u1 = u1
+        self.u1 = create_user('apiuser')
+        self.u2 = create_superuser('superuser')
         
-        u2 = User()
-        u2.username = 'superuser'
-        u2.is_active = True
-        u2.is_superuser = True
-        u2.api_user = True
-        u2.save()
-        self.u2 = u2
+        self.c1 = create_center('测试中心1', '位置1', '备注1')
+        self.c2 = create_center('测试中心2', '位置2', '备注2')
         
-        c1 = Center()
-        c1.name = '测试中心1'
-        c1.location = '位置1'
-        c1.desc = '备注1'
-        c1.save()
-        self.c1 = c1
+        self.g1 = create_group(self.c1, '测试集群1', '备注1', [self.u1])
+        self.g2 = create_group(self.c1, '测试集群1', '备注2')
         
-        c2 = Center()
-        c2.name = '测试中心2'
-        c2.location = '位置2'
-        c2.desc = '备注2'
-        c2.save()
-        self.c2 = c2
+        self.ch1 = create_ceph_host(self.c1, '0.0.0.0', 6789, '1111111111111')
+        self.cp1 = create_ceph_image_pool(self.ch1, 'vmpool')
         
-        g1 = Group()
-        g1.center = c1
-        g1.name = '测试集群1'
-        g1.desc = '备注1'
-        g1.save()
-        g1.admin_user.add(u1)
-        self.g1 = g1
+        self.ch2 = create_ceph_host(self.c2, '0.0.0.1', 6789, '222222222222')
+        self.cp2 = create_ceph_image_pool(self.ch2, 'vmpool')
         
-        g2 = Group()
-        g2.center = c1
-        g2.name = '测试集群2'
-        g2.desc = '备注2'
-        g2.save()
-        self.g2 = g2
-        
-        ch1 = CephHost()
-        ch1.center = c1
-        ch1.host = '0.0.0.0'
-        ch1.port = 6789
-        ch1.uuid = '11111111111111'
-        ch1.save()
-        
-        cp1 = CephPool()
-        cp1.host = ch1
-        cp1.pool = 'vmpool'
-        cp1.type = 1
-        cp1.save()
-        self.cp1 = cp1
-        
-        ch2 = CephHost()
-        ch2.center = c2
-        ch2.host = '0.0.0.0'
-        ch2.port = 6789
-        ch2.uuid = '11111111111111'
-        ch2.save()
-        
-        cp2 = CephPool()
-        cp2.host = ch2
-        cp2.pool = 'vmpool'
-        cp2.type = 1
-        cp2.save()
-        self.cp2 = cp2
-        
-        it1 = ImageType()
-        it1.code = 'code1'
-        it1.name = 'imagetype1'
-        it1.save()
-        
-        x1 = Xml()
-        x1.name = 'linux'
-        x1.xml = ''
-        x1.save()
-        
-        i1 = Image()
-        i1.cephpool = cp1
-        i1.name = 'image1'
-        i1.version = 'v0.1'
-        i1.snap = 'image1@1111'
-        i1.desc = ''
-        i1.xml = x1
-        i1.type = it1
-        i1.enable = True
-        i1.save()
-        self.i1 = i1
-        
-        i2 = Image()
-        i2.cephpool = cp2
-        i2.name = 'image2'
-        i2.version = 'v0.2'
-        i2.snap = 'image1@222'
-        i2.desc = ''
-        i2.xml = x1
-        i2.type = it1
-        i2.enable = True
-        i2.save()
-        self.i2 = i2
-        
+        it1 = create_imagetype('imagetype1')
+        x1 = create_xml('linux', '')
+
+        self.i1 = create_image(self.cp1, x1, it1, 'image1', 'v0.1', 'image@1111')
+        self.i2 = create_image(self.cp2, x1, it1, 'image2', 'v0.2', 'image2@2222')
+
+    def test_get_err_args(self):
+        req = {'req_user': None}
+        exp = {'res': False}
+        res = get(req)
+        self.assertDictContainsSubset(exp, res)
+
+        req1 = {'req_user': self.u1, 'image_id': -1}
+        res1 = get(req1)
+        self.assertDictContainsSubset(exp, res1)
+
+        req2 = {'req_user': self.u1}
+        res2 = get(req2)
+        self.assertDictContainsSubset(exp, res2)
+
+    def test_get_err_perm(self):
+        req = {'req_user': self.u1, 'image_id':self.i2.id}
+        exp = {'res': False}
+        res = get(req)
+        self.assertDictContainsSubset(exp, res)
+
+    def test_get_superuser(self):
+        req = {'req_user': self.u2, 'image_id': self.i1.id}
+        exp = {'res': True, 'info':{
+            'id':       self.i1.id,
+            'ceph_id':  self.i1.cephpool_id,
+            'name':     self.i1.name,
+            'version':  self.i1.version,
+            'snap':     self.i1.snap,
+            'type':     self.i1.type.name,
+            'desc':     self.i1.desc
+        }}
+        res = get(req)
+        self.assertDictEqual(exp, res)
+
+        req1 = {'req_user': self.u2, 'image_id': self.i2.id}
+        exp1 = {'res': True, 'info':{
+            'id':       self.i2.id,
+            'ceph_id':  self.i2.cephpool_id,
+            'name':     self.i2.name,
+            'version':  self.i2.version,
+            'snap':     self.i2.snap,
+            'type':     self.i2.type.name,
+            'desc':     self.i2.desc
+        }}
+        res1 = get(req1)
+        self.assertDictEqual(exp1, res1)
+
     def test_get(self):
-        res1 = get({'req_user': self.u1})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1, "")
-        
-        res2 = get({'req_user': self.u1, 'image_id': self.i1.id})
-        image = self.i1
-        exp2 = {
-            'res': True,
-            'info': {
-                'id': image.id,
-                'ceph_id': image.cephpool.id,
-                'name': image.name,
-                'version': image.version,
-                'snap': image.snap,
-                'type': image.type.name,
-                'desc': image.desc 
-            }}
-        self.assertDictEqual(exp2, res2, "")
-        
-        res3 = get({'req_user': self.u1, 'image_id': self.i2.id})
-        exp3 = {'res': False}
-        self.assertDictContainsSubset(exp3, res3, "")
-        
-        res4 = get({'req_user': self.u2, 'image_id': self.i2.id})
-        image = self.i2
-        exp4 = {
-            'res': True,
-            'info': {
-                'id': image.id,
-                'ceph_id': image.cephpool.id,
-                'name': image.name,
-                'version': image.version,
-                'snap': image.snap,
-                'type': image.type.name,
-                'desc': image.desc 
-            }}
-        self.assertDictEqual(exp4, res4, "")
-        
+        req = {'req_user': self.u1, 'image_id': self.i1.id}
+        exp = {'res': True, 'info':{
+            'id':       self.i1.id,
+            'ceph_id':  self.i1.cephpool_id,
+            'name':     self.i1.name,
+            'version':  self.i1.version,
+            'snap':     self.i1.snap,
+            'type':     self.i1.type.name,
+            'desc':     self.i1.desc
+        }}
+        res = get(req)
+        self.assertDictEqual(exp, res)
+
+    def test_get_list_err_args(self):
+        req = {'req_user': None, 'ceph_id': self.cp1.id}
+        exp = {'res': False}
+        res = get_list(req)
+        self.assertDictContainsSubset(exp, res)
+
+        req1 = {'req_user': self.u1}
+        res1 = get_list(req1)
+        self.assertDictContainsSubset(exp, res1)
+
+        req2 = {'req_user': self.u1, 'ceph_id':-1}
+        res2 = get_list(req2)
+        self.assertDictContainsSubset(exp, res2)
+
+    def test_get_list_err_perm(self):
+        req = {'req_user': self.u1, 'ceph_id': self.cp2.id}
+        exp = {'res': False}
+        res = get_list(req)
+        self.assertDictContainsSubset(exp, res)
+
+    def test_get_list_superuser(self):
+        req = {'req_user': self.u2, 'ceph_id': self.cp1.id}
+        exp = {'res':True, 'list':[
+            {
+            'id':   self.i1.id,
+            'ceph_id': self.i1.cephpool_id,
+            'name': self.i1.name,
+            'version': self.i1.version,
+            'type': self.i1.type.name,
+            'order': self.i1.order
+            }
+        ]}
+        res = get_list(req)
+        self.assertDictEqual(exp, res)
+
+        req1 = {'req_user': self.u2, 'ceph_id': self.cp2.id}
+        exp1 = {'res':True, 'list':[
+            {
+            'id':   self.i2.id,
+            'ceph_id': self.i2.cephpool_id,
+            'name': self.i2.name,
+            'version': self.i2.version,
+            'type': self.i2.type.name,
+            'order': self.i2.order
+            }
+        ]}
+        res1 = get_list(req1)
+        self.assertDictEqual(exp1, res1)
+
     def test_get_list(self):
-        res1 = get_list({'req_user': self.u1})
-        exp1 = {'res': False}
-        self.assertDictContainsSubset(exp1, res1, "")
+        req = {'req_user': self.u1, 'ceph_id': self.cp1.id}
+        exp = {'res':True, 'list':[
+            {
+            'id':   self.i1.id,
+            'ceph_id': self.i1.cephpool_id,
+            'name': self.i1.name,
+            'version': self.i1.version,
+            'type': self.i1.type.name,
+            'order': self.i1.order
+            }
+        ]}
+        res = get_list(req)
+        self.assertDictEqual(exp, res)
         
-        res2 = get_list({'req_user': self.u1, 'ceph_id': self.cp1.id})
-        image = self.i1
-        exp2 = {'res': True,
-                'list': [
-                    {
-                    'id':   image.id,
-                    'ceph_id': image.cephpool.id,
-                    'name': image.name,
-                    'version': image.version,
-                    'type': image.type.name
-                    }
-                ]}
-        self.assertDictEqual(exp2, res2, "")
-        
-        res3 = get_list({'req_user': self.u1, 'ceph_id': self.cp2.id})
-        exp3 = {'res': False}
-        self.assertDictContainsSubset(exp3, res3, "")
-        
-        res4 = get_list({'req_user': self.u2, 'ceph_id': self.cp2.id})
-        image = self.i2
-        exp4 = {'res': True,
-                'list': [
-                    {
-                    'id':   image.id,
-                    'ceph_id': image.cephpool.id,
-                    'name': image.name,
-                    'version': image.version,
-                    'type': image.type.name
-                    }
-                ]}
-        self.assertDictEqual(exp4, res4, "")
