@@ -1,8 +1,8 @@
 <uwsgi>  
     <socket>127.0.0.1:3033</socket>  
-    <chdir>/root/run/vmmanager2</chdir>  
-    <pythonpath>/root/run/vmmanager2</pythonpath>  
+    <chdir>/path-to-project/</chdir>  
+    <pythonpath>/path-to-project/</pythonpath>  
     <module>conf.wsgi</module>  
-    <daemonize>/var/log/uwsgi/vmmanager2.uwsgi.log</daemonize>  
+    <daemonize>/var/log/uwsgi/evcloud.uwsgi.log</daemonize>  
     <reload-mercy>8</reload-mercy>
 </uwsgi> 

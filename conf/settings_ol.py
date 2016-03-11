@@ -148,10 +148,9 @@ EMAIL_HOST = 'mail.cnic.cn'
 EMAIL_HOST_USER = '***@cnic.cn'
 EMAIL_HOST_PASSWORD = '****'
 
-SERVER_EMAIL = 'helpdesk@cnic.cn'
+SERVER_EMAIL = '***@cnic.cn'
 ADMINS = (
     ('fubo', 'fubo@cnic.cn'),
-    # ('lzx', 'lzxddz@cnic.cn'),
 )
 
 SESSION_COOKIE_AGE = 86400

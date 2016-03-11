@@ -4,8 +4,7 @@
 #@author:   bobfu
 #@email:    fubo@cnic.cn
 #@date:     2015-10-19
-#@desc:    novnc token管理模块。完成读写novnc的token配置文件，使用单例模式
-#			防止并发写文件操作导致数据不同步。			
+#@desc:    novnc token管理模块。完成读写novnc的token配置文件			
 ########################################################################
 
 import os, uuid
