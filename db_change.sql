@@ -36,3 +36,52 @@ ALTER TABLE `image_image`
 
 ALTER TABLE `storage_cephhost`
     ADD COLUMN `username` VARCHAR(100) NOT NULL AFTER `uuid`;
+
+#---------------------------------
+
+ALTER TABLE `storage_cephpool`
+    ADD COLUMN `enable` tinyint(1) NOT NULL DEFAULT 1;
+
+
+ALTER TABLE `storage_cephpool`
+    ADD COLUMN `remarks` longtext;
+
+
+
+#-------------------------------
+ALTER TABLE `compute_vm`
+    ADD COLUMN `ceph_id` INT(11) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `ceph_host` VARCHAR(100) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `ceph_pool` VARCHAR(100) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `ceph_uuid` VARCHAR(100) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `ceph_port` INT(11) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `ceph_username` VARCHAR(100) NOT NULL;
+
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `vlan_id` INT(11) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `ipv4` VARCHAR(100) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `vlan_name` VARCHAR(100) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `mac` VARCHAR(100) NOT NULL;
+
+ALTER TABLE `compute_vm`
+    ADD COLUMN `br` VARCHAR(100) NOT NULL;
+
+update compute_vm a, image_image b, storage_cephpool c, storage_cephhost d set a.ceph_id = b.cephpool_id, a.ceph_host = d.host, a.ceph_pool=c.pool, a.ceph_uuid=d.uuid, a.ceph_port=d.port, a.ceph_username=d.username where a.image_id=b.id and b.cephpool_id=c.id and c.host_id=d.id;
+update compute_vm a, network_macip b, network_vlan c set a.vlan_id = c.id, a.ipv4=b.ipv4, a.vlan_name=c.vlan, a.mac=b.mac, a.br=c.br where a.uuid = b.vmid and b.vlan_id = c.id;

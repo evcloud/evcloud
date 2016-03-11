@@ -70,8 +70,23 @@ class Vm(models.Model):
     deleted     = models.BooleanField()
     creator     = models.CharField(max_length=200, null=True, blank=True)
     create_time = models.DateTimeField(auto_now_add=True)
+    remarks = models.TextField(default='', null=True, blank=True)
+
+    ceph_id     = models.IntegerField()
+    ceph_host   = models.CharField(max_length=100)
+    ceph_pool   = models.CharField(max_length=100)
+    ceph_uuid   = models.CharField(max_length=100)
+    ceph_port   = models.IntegerField()
+    ceph_username=models.CharField(max_length=100)
+
+    vlan_id     = models.IntegerField()
+    ipv4        = models.CharField(max_length=100)
+    vlan_name   = models.CharField(max_length=100)
+    mac         = models.CharField(max_length=100)
+    br          = models.CharField(max_length=100)
+
     
-    remarks = models.TextField(default='')
+    
     
     def __str__(self):
         return self.name
@@ -101,7 +116,7 @@ class VmArchive(models.Model):
     vlan    = models.GenericIPAddressField(null=True, blank=True)
     br      = models.CharField(max_length=50, null=True, blank=True)
 
-    remarks = models.TextField(default='')
+    remarks = models.TextField(default='', null=True, blank=True)
     
     archive_time = models.DateTimeField(auto_now_add=True)
     

@@ -49,7 +49,7 @@ INSTALLED_APPS = (
     'utils',
     'reports',
     'vmuser',
-    # 'volume',
+    'volume',
     'device',
 )
 
@@ -94,7 +94,7 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'vmmanager_dev',
+        'NAME': 'evcloud_dev',
     	'USER': 'root',
     	'PASSWORD': '',
     	'HOST': '127.0.0.1',

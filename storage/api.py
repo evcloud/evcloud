@@ -1,30 +1,25 @@
 #coding=utf-8
+from .manager import CephManager
+from api.error import Error
+from api.error import ERR_CEPHPOOL_ID
 
-from .models import CephPool as DBCephPool
-from .ceph import CephPoolData
-from .ceph_manager import get_cephpool_list_by_center_id
-from api.error import Error, ERR_CEPHPOOL_ID
 
 class CephStorageAPI(object):
-    def __init__(self):
+    def __init__(self, manager=None):
+        if manager:
+            self.manager = manager
+        else:
+            self.manager = CephManager()
         super().__init__()
     
     def get_pool_list_by_center_id(self, center_id):
-        return self.get_cephpool_list_by_center_id(center_id)
+        return self.manager.get_pool_list_by_center_id(center_id)
 
     def get_pool_by_id(self, cephpool_id):
-        cephpool = DBCephPool.objects.filter(id = cephpool_id)
-        if not cephpool.exists():
-            raise Error(ERR_CEPHPOOL_ID)
-        return self._get_ceph_data(cephpool[0])
+        return self.manager.get_pool_by_id(cephpool_id)
 
-    def _get_ceph_data(self, pool):
-        if not type(pool) == DBCephPool:
-            return False
-        
-        p = CephPoolData(pool)
-        
-        return p
+    def get_volume_pool_by_center_id(self, center_id):
+        return self.manager.get_volume_pool_by_center_id(center_id)
 
     def clone(self, cephpool_id, src, dst):
         cephpool = self.get_pool_by_id(cephpool_id)

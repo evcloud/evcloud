@@ -1,7 +1,7 @@
 #coding=utf-8
 from django.conf import settings
-from ..models import Host
-from .host import Host as VMHost
+from ..models import Host as DBHost
+from .host import Host
 import subprocess
 import importlib
     
@@ -24,11 +24,11 @@ class HostManager(object):
              
     def list(self, *args, **wargs):
         '''获取宿主机列表'''
-        hosts = Host.objects.filter(wargs)
+        hosts = DBHost.objects.filter(wargs)
         return hosts
     
     def available_hosts(self, group_id):
-        hosts = [h for h in Host.objects.filter(group_id = group_id, enable=True) 
+        hosts = [h for h in DBHost.objects.filter(group_id = group_id, enable=True) 
                  if h.vm_created < h.vm_limit 
                  and h.mem_allocated < h.mem_total - h.mem_reserved]
         return hosts
@@ -64,29 +64,30 @@ class HostManager(object):
                 res = self.claim(best_host, vcpu, mem)
                 if res == True:
                     return best_host
+                return False
             return best_host
         return False
     
     def check_host(self, host):
-        if type(host) == VMHost:
+        if type(host) == Host:
             return host
         elif type(host) == Host:
-            return VMHost(host)
+            return Host(host)
         else:
             host_obj = None
             try:
-                host_obj = Host.objects.get(id = host)
+                host_obj = DBHost.objects.get(id = host)
             except: pass
             
             if not host_obj:
                 try:
-                    host_obj = Host.objects.get(ipv4 = host)
+                    host_obj = DBHost.objects.get(ipv4 = host)
                 except: pass
             
             if not host_obj:
                 self.error = 'host error.'
                 return False
-            return VMHost(host_obj)
+            return Host(host_obj)
         
     def claim(self, host, vcpu, mem, vm_num = 1, fake=False):
         if settings.DEBUG: print('host manager claim resource: ', host, vcpu, mem, vm_num, fake) 
@@ -103,7 +104,7 @@ class HostManager(object):
             return True
             
     def release(self, host, vcpu, mem, vm_num = 1, fake=False):
-        if settings.DEBUG: print(type(host), Host)
+        if settings.DEBUG: print('释放宿主机资源', host, vcpu, mem, vm_num, fake)
         host = self.check_host(host)
         if not host:
             return False
@@ -117,9 +118,9 @@ class HostManager(object):
     
     def host_alive(self, host_ip, times = 1):
         try:
-            host = Host.objects.get(ipv4 = host_ip)
+            host = DBHost.objects.get(ipv4 = host_ip)
         except:
             self.error = 'host_ip error.'
             return False
-        return VMHost(host).alive(times)
+        return Host(host).alive(times)
         

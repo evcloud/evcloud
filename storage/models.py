@@ -4,6 +4,9 @@ from compute.models import Center
 
 app_label = 'storage'
 
+CEPH_IMAGE_POOL_FLAG = 1
+CEPH_VOLUME_POOL_FLAG = 2
+
 class CephHost(models.Model):
     center = models.ForeignKey(Center)
     host = models.GenericIPAddressField()
@@ -22,12 +25,14 @@ class CephHost(models.Model):
 
 class CephPool(models.Model):
     ceph_pool_type = (
-    (1, 'Image Pool'),
-    (2, 'Volume Pool'),
+    (CEPH_IMAGE_POOL_FLAG, 'Image Pool'),
+    (CEPH_VOLUME_POOL_FLAG, 'Volume Pool'),
     )
     host= models.ForeignKey(CephHost)
     pool = models.CharField(max_length=100)
     type = models.IntegerField(choices = ceph_pool_type)
+    enable = models.BooleanField(default=True)
+    remarks = models.TextField(null=True, blank=True)
     
     def __str__(self):
         return self.host.host + '_' + self.pool    

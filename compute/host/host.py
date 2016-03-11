@@ -43,7 +43,7 @@ class Host(object):
         return False
             
     def claim(self, vcpu, mem, vm_num = 1, fake=False):
-        if settings.DEBUG:print('claim resource', vcpu, mem)
+        if settings.DEBUG: print('[host]', '宿主机获取资源', vcpu, mem, vm_num, fake)
         if type(vcpu) != int or type(mem) != int or type(vm_num) != int:
             try:
                 vcpu = int(vcpu)
@@ -59,33 +59,33 @@ class Host(object):
             self.error = 'args error.'
             return False
 
-        with transaction.atomic():
-            self._db_fresh()
-#             if self.db_obj.vcpu_allocated + vcpu > self.db_obj.vcpu_total:
-#                 self.error = 'vcpu not enough.'
-#                 return False
-            if self.db_obj.mem_allocated + self.db_obj.mem_reserved + mem > self.db_obj.mem_total:
-                self.error = 'mem not enough.'
-                return False 
-            if self.db_obj.vm_created + vm_num > self.db_obj.vm_limit:
-                self.error = 'exceed vm limit.'
-                return False
-            
-            if fake == True:
-                return True
-            try:
-                self.db_obj.vcpu_allocated += vcpu
-                self.db_obj.mem_allocated += mem
-                self.db_obj.vm_created += vm_num
-                self.db_obj.save()
-            except Exception as e:
-                if settings.DEBUG: print('host claim.', e.message)  
-                self.error = e.message
-                return False
-            return True
+        res = True
+        try:
+            with transaction.atomic():
+                db = ModelHost.objects.select_for_update().get(pk=self.db_obj.pk)
+                if settings.DEBUG: print('[host]', db.vcpu_allocated, db.mem_allocated, db.vm_created)
+                if db.mem_allocated + db.mem_reserved + mem > db.mem_total:
+                    self.error = 'mem not enough.'
+                    res = False
+
+                if res and db.vm_created + vm_num > db.vm_limit:
+                    self.error = 'exceed vm limit.'
+                    res = False
+                
+                if res and fake != True:
+                    db.vcpu_allocated += vcpu
+                    db.mem_allocated += mem
+                    db.vm_created += vm_num
+                    db.save()
+                    if settings.DEBUG: print('[host]', db.vcpu_allocated, db.mem_allocated, db.vm_created)
+        except Exception as e:
+            if settings.DEBUG: print('host claim.', e.message)  
+            self.error = e.message
+            res = False
+        return res
 
     def release(self, vcpu, mem, vm_num = 1, fake=False):
-        if settings.DEBUG: print('release resource', vcpu, mem)
+        if settings.DEBUG: print('[host]', '宿主机释放资源', vcpu, mem, vm_num, fake)
         if type(vcpu) != int or type(mem) != int or type(vm_num) != int:
             try:
                 vcpu = int(vcpu)
@@ -102,22 +102,26 @@ class Host(object):
         if fake == True:
             return True
         
-        with transaction.atomic():
-            self._db_fresh()
-            self.db_obj.vcpu_allocated -= vcpu
-            self.db_obj.mem_allocated -= mem
-            self.db_obj.vm_created -= vm_num
-            if self.db_obj.vcpu_allocated < 0:
-                self.db_obj.vcpu_allocated = 0
-            if self.db_obj.mem_allocated < 0:
-                self.db_obj.mem_allocated = 0
-            if self.db_obj.vm_created < 0:
-                self.db_obj.vm_created = 0
-            try:
-                self.db_obj.save()
-            except Exception as e:
-                self.error = e.message 
-                return False
+        
+        try:
+            with transaction.atomic():
+                db = ModelHost.objects.select_for_update().get(pk=self.db_obj.pk)
+                if settings.DEBUG: print('[host]', db.vcpu_allocated, db.mem_allocated, db.vm_created)
+                db.vcpu_allocated -= vcpu
+                db.mem_allocated -= mem
+                db.vm_created -= vm_num
+                if db.vcpu_allocated < 0:
+                    db.vcpu_allocated = 0
+                if db.mem_allocated < 0:
+                    db.mem_allocated = 0
+                if db.vm_created < 0:
+                    db.vm_created = 0
+                db.save()
+                if settings.DEBUG: print('[host]', db.vcpu_allocated, db.mem_allocated, db.vm_created)
+        except Exception as e:
+            if settings.DEBUG: print('[host]', '宿主机释放资源操作失败', e)
+            self.error = e.message 
+            return False
         return True
     
     def managed_by(self, user):
@@ -145,7 +149,14 @@ class Host(object):
     def get_pci_device_list(self):
         cmd = 'ssh %s lspci' % self.ipv4
         res, lines = subprocess.getstatusoutput(cmd)
-        print(lines)
+        if settings.DEBUG: print(lines)
         if res == 0:
             return True
         return False  
+
+
+    def exceed_vm_limit(self):
+        return self.vm_created >= self.vm_limit
+
+    def exceed_mem_limit(self, mem=0):
+        return self.mem_allocated + int(mem) >= self.mem_total - self.mem_reserved

@@ -16,9 +16,9 @@ var VM_STATUS_CN = {
     5: '关机',
     6: '崩溃',
     7: '暂停',
-    8: '故障1',  //libvirt预留状态码
-    9: '故障2',  //宿主机连接失败
-    10: '故障3'  //虚拟机丢失
+    8: '故障',  //libvirt预留状态码
+    9: '宿主机故障',  //宿主机连接失败
+    10: '云主机故障'  //虚拟机丢失
 }
 
 var VM_STATUS_LABEL = {
@@ -159,7 +159,7 @@ function vm_delete(url, vmid){
 		},
 		function(data){},
 		function(data){
-			get_status(window.vm_status_url , vmid);
+			// get_status(window.vm_status_url , vmid);
 			$("#" + window.vm_task_tag + vmid).html("");}
 		);
 }

@@ -15,41 +15,16 @@
 import subprocess
 
 from .models import CephPool as ModelCephPool
+from .models import CEPH_IMAGE_POOL_FLAG
+from .models import CEPH_VOLUME_POOL_FLAG
 
-from compute.group import has_center_perm
 from django.contrib.auth.models import User
 
-#即将删除
-def get_cephpools(center_id):
-    pool_list = ModelCephPool.objects.filter(host__center_id = center_id)
-    ret_list = []
-    
-    for pool in pool_list:
-        p = _get_ceph_data(pool)
-        if p:
-            ret_list.append(p)
-
-    return ret_list
-
-#即将删除
-def get_cephpool(cephpool_id):
-    print(1)
-    cephpool = ModelCephPool.objects.filter(id = cephpool_id)
-    print(cephpool)
-    if not cephpool.exists():
-        return False
-    return _get_ceph_data(cephpool[0])
-
-#即将删除
-def _get_ceph_data(pool):
-    if not type(pool) == ModelCephPool:
-        return False
-    
-    p = CephPoolData(pool)
-    return p
 
 
 class CephPool(object):
+    CEPH_IMAGE_POOL_FLAG = CEPH_IMAGE_POOL_FLAG
+    CEPH_VOLUME_POOL_FLAG = CEPH_VOLUME_POOL_FLAG
     
     def __init__(self, host, pool):
         self._ceph_host = host
@@ -64,6 +39,7 @@ class CephPool(object):
             'src':src, 
             'dst':dst
         }
+        # print(cmd)
         res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
@@ -173,10 +149,13 @@ class CephPoolData(CephPool):
         self.port = self.db_obj.host.port 
         self.uuid = self.db_obj.host.uuid
         self.username = self.db_obj.host.username
+        self.enable = self.db_obj.enable
+        self.remarks = self.db_obj.remarks
     
     def managed_by(self, user):
         if user.is_superuser:
             return True
-        return has_center_perm(user, self.center_id)
+        from compute.api import GroupAPI
+        return GroupAPI().has_center_perm(user, self.center_id)
        
 
