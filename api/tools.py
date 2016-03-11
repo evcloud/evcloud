@@ -59,8 +59,8 @@ def args_required(required_keys=None):
             exists, err = check_args_exists(args[0], required_keys)
             if not exists:
                 return {'res': False, 'err': ERR_ARGS_REQUIRED}
-            if not isinstance(args[0]['req_user'], User):
-                return {'res': False, 'err': ERR_ARGS_REQUIRED}
+            # if not isinstance(args[0]['req_user'], User):
+            #     return {'res': False, 'err': ERR_ARGS_REQUIRED}
             return func(*args, **kwargs)
         
         handle_args.__name__ = func.__name__
@@ -134,7 +134,7 @@ def api_log(func):
                         log.error = error
                     log.save()
                 except Exception as e:
-                    pass
+                    print('[api_log error]', res)
 
             return res   
         except Exception as e:
