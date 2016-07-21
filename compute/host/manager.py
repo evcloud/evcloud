@@ -4,6 +4,10 @@ from ..models import Host as DBHost
 from .host import Host
 import subprocess
 import importlib
+
+from api.error import Error
+from api.error import ERR_HOST_ID
+from api.error import ERR_HOST_IPV4
     
 
 class HostManager(object):
@@ -123,4 +127,28 @@ class HostManager(object):
             self.error = 'host_ip error.'
             return False
         return Host(host).alive(times)
-        
+
+    def get_host_by_id(self, host_id):
+        db = DBHost.objects.filter(id = host_id)
+        if not db.exists():
+            raise Error(ERR_HOST_ID)
+        return Host(db[0])
+
+    def get_host_by_ipv4(self, host_ipv4):
+        db = DBHost.objects.filter(ipv4 = host_ipv4)
+        if not db.exists():
+            raise Error(ERR_HOST_IPV4)
+        return Host(db[0])          
+
+    def get_vlan_id_list_of_host(self, host_id):
+        host = DBHost.objects.filter(id = host_id)
+        if not host.exists():
+            raise Error(ERR_HOST_ID)
+        return [v.id for v in host[0].vlan.all()]
+
+    def get_host_list_by_group_id(self, group_id):
+        hosts = DBHost.objects.filter(group_id = group_id)
+        ret_list = []
+        for host in hosts:
+            ret_list.append(Host(host))
+        return ret_list

@@ -8,8 +8,8 @@ class ImageTypeAdmin(VMModelAdmin):
 
 class ImageAdmin(VMModelAdmin):
     list_display_links = ('name',)
-    list_display = ('cephpool', 'name', 'version', 'snap', 'desc', 'xml', 'enable', 'type', 'order')
-    list_filter = ['cephpool', 'name', 'enable', 'type']
+    list_display = ( 'cephpool', 'name', 'version', 'snap', 'desc', 'xml', 'enable', 'type', 'order')
+    list_filter = ['cephpool__host__center__name', 'cephpool__host', 'cephpool', 'name', 'enable', 'type']
     search_fields = ['version', 'snap', 'desc']
     ordering = ('order',)
  

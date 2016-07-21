@@ -50,8 +50,11 @@ def get_list(args):
 
     if not cephpool.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
-    
-    image_list = image_api.get_image_list_by_pool_id(args['ceph_id'])
+    if 'enable' in args:
+        enable = args['enable']
+    else:
+        enable = None
+    image_list = image_api.get_image_list_by_pool_id(args['ceph_id'], enable)
     for image in image_list:
         ret_list.append({
             'id':   image.id,

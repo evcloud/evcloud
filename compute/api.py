@@ -1,24 +1,11 @@
 #coding=utf-8
-from .models import Center as DBCenter
-from .models import Group as DBGroup
-from .models import Vm as DBVm
-from .models import Host as DBHost
-from .center import Center
-from .group import Group
+from django.conf import settings
+
 from vmuser.api import API as UserAPI
-from .vm.vm import VM
-
-from api.error import Error
-from api.error import ERR_VM_ID
-from api.error import ERR_HOST_ID
-from api.error import ERR_HOST_IPV4
-from api.error import ERR_GROUP_ID
-from .host.manager import HostManager
-from .host.host import Host
-
 from network.api import NetworkAPI
 from image.api import ImageAPI
-from .vm.manager import VMManager
+
+from api.error import Error
 from api.error import ERR_VM_CREATE_ARGS_VLAN
 from api.error import ERR_VM_CREATE_ARGS_HOST
 from api.error import ERR_VM_HOST_FILTER
@@ -31,100 +18,67 @@ from api.error import ERR_VM_EDIT_LIVING
 from api.error import ERR_VM_MIGRATE_LIVING
 from api.error import ERR_VM_DEL_GPU_MOUNTED
 from api.error import ERR_VM_DEL_VOL_MOUNTED
+from api.error import ERR_IMAGE_ID
+from api.error import ERR_VLAN_FILTER_NONE
+from api.error import ERR_HOST_FILTER_NONE
 
-from django.conf import settings
+from .vm.vm import VM
+from .vm.manager import VMManager
 
-
+from .manager import CenterManager
+from .manager import GroupManager
+from .host.manager import HostManager
 
 class CenterAPI(object):
+    def __init__(self, manager=None):
+        if not manager:
+            self.manager = CenterManager()
+        else:
+            self.manager = manager
 
     def center_id_exists(self, center_id):
-        return DBCenter.objects.filter(pk=center_id).exists()
+        return self.manager.center_id_exists(center_id)
 
     def get_center_by_id(self, center_id):
-        center = DBCenter.objects.filter(id = center_id)
-        if not center.exists():
-            return False
-        center = center[0]
-        return self._get_center_data(center)
+        return self.manager.get_center_by_id(center_id)
 
     def get_center_list(self):
-        centers = DBCenter.objects.all().order_by('order')
-        ret_list = []
-        for center in centers:
-            ret_list.append(self._get_center_data(center))
-        return ret_list
+        return self.manager.get_center_list()
 
     def get_center_list_in_perm(self, user):
-        centers = DBCenter.objects.all().order_by('order')
-        ret_list = []
-        for center in centers:
-            c = self._get_center_data(center)
-            if c.managed_by(user):
-                ret_list.append(c)
-        return ret_list        
-
-    def _get_center_data(self, center):
-        if type(center) != DBCenter:
-            return False
-        return Center(center)
+        return self.manager.get_center_list_in_perm(user)
 
 
 class GroupAPI(object):
-
-    def __init__(self, user_api=None):
+    def __init__(self, manager=None, user_api=None):
         if not user_api:
             self.user_api = UserAPI()
         else:
             self.user_api = user_api
+        if not manager:
+            self.manager = GroupManager()
+        else:
+            self.manager = manager
 
     def get_group_list_in_perm(self, username, center_id = None):
         user = self.user_api.get_db_user_by_username(username)
         if self.user_api.is_superuser(user):
-            if center_id == None:
-                groups = DBGroup.objects.all()
-            else:
-                groups = DBGroup.objects.filter(center_id = center_id)
+            return self.manager.get_group_list(center_id)
         else:
-            if center_id == None:
-                groups = DBGroup.objects.filter(admin_user = user)
-            else:
-                groups = DBGroup.objects.filter(admin_user = user, center_id = center_id)
-        groups = groups.order_by('order')
-        ret_list = []
-        for group in groups:
-            ret_list.append(self._get_group_data(group))
-        return ret_list
+            return self.manager.get_group_list_by_user(user, center_id)
 
     def get_group_list(self, center_id = None):
-        if center_id == None:
-            groups = DBGroup.objects.filter()
-        else:
-            groups = DBGroup.objects.filter(center_id = center_id)
-        groups = groups.order_by('order')
-        ret_list = []
-        for group in groups:
-            ret_list.append(self._get_group_data(group))
-        return ret_list
+        return self.manager.get_group_list(center_id)
 
     def get_group_by_id(self, group_id):
-        group = DBGroup.objects.filter(id = group_id)
-        if not group.exists():
-            raise Error(ERR_GROUP_ID)
-        return self._get_group_data(group[0])
+        return self.manager.get_group_by_id(group_id)
 
             
     def has_center_perm(self, username, center_id):
         user = self.user_api.get_db_user_by_username(username)
         '''对指定center有部分或全部管理权，即对该分中心中的 某个集群有管理权,则返回True'''
-        return DBGroup.objects.filter(admin_user = user, center_id = center_id).exists()
+        return self.manager.has_center_perm(user, center_id)
 
-
-    #--------------------------------------------------------
-    def _get_group_data(self, group):
-        if not type(group) == DBGroup:
-            return False
-        return Group(group)
 
 class VmAPI(object):
     def __init__(self, manager=None, user_api=None, network_api=None, image_api=None, group_api=None, host_api=None):
@@ -193,6 +147,10 @@ class VmAPI(object):
         if not diskname:
             diskname = vm_uuid
 
+        image = self.image_api.get_image_by_id(image_id)
+        if not image.enable:
+            raise Error(ERR_IMAGE_ID)
+
         image_info = self.image_api.get_image_info_by_id(image_id)
 
         if host_id:
@@ -204,8 +162,11 @@ class VmAPI(object):
         
         available_host_list = []
         for host in host_list:
-            if not host.exceed_vm_limit() and not host.exceed_mem_limit(mem):
+            if host.enable and not host.exceed_vm_limit() and not host.exceed_mem_limit(mem):
                 available_host_list.append(host)
+
+        if not available_host_list:
+            raise Error(ERR_HOST_FILTER_NONE)
         
         if  settings.DEBUG: print('[create_vm]', '可用主机列表', available_host_list)
 
@@ -215,6 +176,14 @@ class VmAPI(object):
             vlan_list = self.network_api.get_vlan_list_by_type_id(net_type_id)
         else:
             raise Error(ERR_VM_CREATE_ARGS_VLAN)
+
+        available_vlan_list = []
+        for vlan in vlan_list:
+            if vlan.enable and vlan.has_free_ip():
+                available_vlan_list.append(vlan)
+
+        if not available_vlan_list:
+            raise Error(ERR_VLAN_FILTER_NONE)
 
         if settings.DEBUG: print('[create_vm]', '网段列表', vlan_list)
 
@@ -229,7 +198,7 @@ class VmAPI(object):
 
             if host.alive():
                 host_available_vlan_id_list = self.host_api.get_vlan_id_list_of_host(host.id)
-                for vlan in vlan_list:
+                for vlan in available_vlan_list:
                     try:
                         if not vlan.id in host_available_vlan_id_list:
                             continue
@@ -246,7 +215,7 @@ class VmAPI(object):
                                 disk_created = True
                             else:
                                 raise Error(ERR_VM_CREATE_DISK)
-                            image_info = self.image_api.get_image_info_by_id(image_id)
+                            # image_info = self.image_api.get_image_info_by_id(image_id)
 
                             xml_tpl = self.image_api.get_xml_tpl(image_id)
                             xml_desc = xml_tpl % {
@@ -497,26 +466,17 @@ class HostAPI(object):
             self.manager = manager
 
     def get_host_by_id(self, host_id):
-        db = DBHost.objects.filter(id = host_id)
-        if not db.exists():
-            raise Error(ERR_HOST_ID)
-        return Host(db[0])
+        return self.manager.get_host_by_id(host_id)
 
     def get_host_by_ipv4(self, host_ipv4):
-        db = DBHost.objects.filter(ipv4 = host_ipv4)
-        if not db.exists():
-            raise Error(ERR_HOST_IPV4)
-        return Host(db[0])
+        return self.manager.get_host_by_ipv4(host_ipv4)
 
     def get_pci_device_list_from_host(self, host_ip):
-        host = self.get_host_by_ipv4(host_ip)
+        host = self.manager.get_host_by_ipv4(host_ip)
         return host.get_pci_device_list()
 
     def get_vlan_id_list_of_host(self, host_id):
-        host = DBHost.objects.filter(id = host_id)
-        if not host.exists():
-            raise Error(ERR_HOST_ID)
-        return [v.id for v in host[0].vlan.all()]
+        return self.manager.get_vlan_id_list_of_host(host_id)
 
     def host_alive(self, host_ip):
         '''主机是否能ping通'''
@@ -539,9 +499,5 @@ class HostAPI(object):
         return self.manager.check_host(host)
 
     def get_host_list_by_group_id(self, group_id):
-        hosts = DBHost.objects.filter(group_id = group_id)
-        ret_list = []
-        for host in hosts:
-            ret_list.append(Host(host))
-        return ret_list
+        return self.manager.get_host_list_by_group_id(group_id)
     

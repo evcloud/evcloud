@@ -1,16 +1,22 @@
 #coding=utf-8
+from datetime import datetime
+
 from django.contrib.auth.models import User
 
-from api.error import (ERR_DISK_INIT, ERR_DISK_ARCHIVE, ERR_CEPH_ID,
-                       ERR_IMAGE_INFO, ERR_IMAGE_CEPHHOST, ERR_IMAGE_CEPHPOOL) 
 from api.error import Error
-
-from .manager import ImageManager
-from .models import Image as ModelImage
-from .models import ImageType
+from api.error import ERR_DISK_INIT
+from api.error import ERR_DISK_ARCHIVE
+from api.error import ERR_CEPH_ID
+from api.error import ERR_IMAGE_INFO
+from api.error import ERR_IMAGE_CEPHHOST
+from api.error import ERR_IMAGE_CEPHPOOL
 
 from storage.api import CephStorageAPI
-from datetime import datetime
+
+from .manager import ImageManager
+
+
+
 
 class ImageAPI(object):
     def __init__(self, manager=None, storage_api=None):
@@ -98,8 +104,8 @@ class ImageAPI(object):
     def get_image_by_id(self, image_id):
         return self.manager.get_image_by_id(image_id)
 
-    def get_image_list_by_pool_id(self, pool_id):
-        return self.manager.get_image_list_by_pool_id(pool_id)
+    def get_image_list_by_pool_id(self, pool_id, enable=None):
+        return self.manager.get_image_list_by_pool_id(pool_id, enable)
 
     def get_image_type_list(self):
         return self.manager.get_image_type_list()

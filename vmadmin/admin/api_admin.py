@@ -4,9 +4,10 @@ from compute.models import *
 
 class LogAdmin(VMModelAdmin):
     list_display = ('user', 'op', 'start_time', 'finish_time', 'result', 'error', 'from_trd_part', 'args')
-    list_filter = ['user','op', 'result', 'from_trd_part']
+    list_filter = [ 'result', 'from_trd_part','op','user']
     ordering = ('-start_time',)
     readonly_fields = ('user', 'op', 'start_time', 'finish_time', 'result', 'error', 'from_trd_part', 'args')
+    search_fields = ('error', 'args')
     list_display_links = ()
     
     def has_add_permission(self, request):

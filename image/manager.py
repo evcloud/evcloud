@@ -16,8 +16,17 @@ class ImageManager(object):
             raise Error(ERR_IMAGE_ID)
         return Image(image[0])
 
-    def get_image_list_by_pool_id(self, pool_id):
-        image_list = DBImage.objects.filter(cephpool_id = pool_id).order_by('order')
+    def get_image_list_by_pool_id(self, pool_id, enable=None):
+        image_list = DBImage.objects.filter(cephpool_id = pool_id)
+        if enable == True:
+            print(image_list)
+            a = image_list
+            image_list = image_list.filter(enable=True)
+            b = image_list
+            print(set(a).difference(b))
+        elif enable == False:
+            image_list = image_list.filter(enable=False)
+        image_list = image_list.order_by('order')
         ret_list = []
         for image in image_list:
             ret_list.append(Image(image))

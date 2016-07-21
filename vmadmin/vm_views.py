@@ -196,7 +196,7 @@ def vm_create_view(req):
         cephpool_dic = api_ceph_get_list({'req_user': req.user, 'center_id': arg_center})
         if cephpool_dic['res']:            
             for cephpool in cephpool_dic['list']:
-                image_res = api_image_get_list({'req_user': req.user, 'ceph_id': cephpool['id']})
+                image_res = api_image_get_list({'req_user': req.user, 'ceph_id': cephpool['id'], 'enable': True})
                 if image_res['res']:
                     for image in image_res['list']:
                         if image['type'] in image_dic:
@@ -235,13 +235,13 @@ def vm_create_view(req):
                         vlans[group['id']][vlan['type_code']].append(vlan)
 
         #VLAN_type sorting
-        vlan_type_list_info = api_net_get_vlan_type_list()
+        vlan_type_list_info = api_net_get_vlan_type_list({'req_user': req.user})
         if vlan_type_list_info['res']:
             vlan_type_list = [(t['code'], t['name']) for t in vlan_type_list_info['list'] if t['code'] in vlan_type_dic]
         else:
             vlan_type_list = [(t[0], t[1]) for t in list(vlan_type_dic.items())]
         dicts['vlan_type_list'] = vlan_type_list
-
+        print(vlan_type_list_info)
         dicts['vlans_json'] = json.dumps(vlans)
         
         

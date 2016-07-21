@@ -108,7 +108,7 @@ ERROR_CN = {
     ERR_CENTER_ID           : '分中心ID错误',
     ERR_VM_NAME             : '虚拟机名称错误',
     ERR_VLAN_TYPE_ID        : '网络类型ID错误',
-    ERR_VLAN_FILTER_NONE    : '无可用网段',
+    ERR_VLAN_FILTER_NONE    : '无可用网段或IP地址用尽',
     ERR_HOST_FILTER_NONE    : '无满足要求的宿主机',
     ERR_VM_MIGRATE_DIFF_CEPH: '不能跨ceph集群迁移',
     ERR_VM_MIGRATE_LIVING   : '运行状态不能迁移',

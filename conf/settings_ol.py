@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '5o5^f^_-a7%$w#$)-1g9-(t-$nkog_ro@-ymq)jg^41#foo@y3'
+SECRET_KEY = 'xxxxfdsfsfsdfxxfsafdasfasdfsdfxfsfsdf'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -94,10 +94,10 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'evcloud',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
+        'NAME': 'dbname',
+        'USER': 'username',
+        'PASSWORD': 'pwd',
+        'HOST': 'dbhost',
         'PORT': '3306',
         'TEST': {
             'CHARSET': "utf8",
@@ -150,7 +150,7 @@ EMAIL_HOST_PASSWORD = '****'
 
 SERVER_EMAIL = '***@cnic.cn'
 ADMINS = (
-    ('fubo', 'fubo@cnic.cn'),
+    ('admin', 'admin@email.cn'),
 )
 
 SESSION_COOKIE_AGE = 86400

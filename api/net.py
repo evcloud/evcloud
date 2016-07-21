@@ -41,7 +41,9 @@ def get_vlan_list(args=None):
                 'type_code': vlan.type_code,
                 'type': vlan.type_name,
                 'enable': vlan.enable,
-                'order': vlan.order
+                'order': vlan.order,
+                'ip_count': vlan.ip_count,
+                'ip_used': vlan.ip_used
                 })
         return {'res': True, 'list': vlan_list}
     return {'res': False, 'err': ERR_VLAN_NO_FIND}
@@ -65,13 +67,14 @@ def get_vlan(args=None):
                      'br': vlan.br,
                      'type_code': vlan.type_code,
                      'type_name': vlan.type_name,
-                     'enable': vlan.enable}}
+                     'enable': vlan.enable,
+                    'ip_count': vlan.ip_count,
+                    'ip_used': vlan.ip_used}}
 
 @api_log
 @catch_error
 @args_required()
 def get_vlan_type_list(args=None):
-    print(111)
     network_api = NetworkAPI()
     try:
         vlan_type_list = network_api.get_vlan_type_list()
