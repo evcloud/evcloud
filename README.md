@@ -18,25 +18,25 @@ EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳�
 
 # [开发环境]
 ## [系统软件环境准备]
-     dnf install fping nginx subversion mariadb-server
-     dnf install gcc gcc-c++ python3-devel mariadb-devel libvirt libvirt-devel redhat-rpm-config 
+    dnf install fping nginx subversion mariadb-server
+    dnf install gcc gcc-c++ python3-devel mariadb-devel libvirt libvirt-devel redhat-rpm-config 
 ## [python3环境准备]
-     pip3 install mysqlclient libvirt-python
-     pip3 install django-oauth-toolkit coreapi    
-     pip3 install python-dateutil lxml numpy
-     pip3 install django==1.11.10 django-oauth-toolkit coreapi 
-     pip3 install djangorestframework==3.7.7
+    pip3 install mysqlclient libvirt-python
+    pip3 install django-oauth-toolkit coreapi    
+    pip3 install python-dateutil lxml numpy
+    pip3 install django==1.11.10 django-oauth-toolkit coreapi 
+    pip3 install djangorestframework==3.7.7
 ## [mysql and nginx]
-     systemctl start mariadb
-     ln -s conf/nginx.conf /etc/nginx/conf.d/evcloud.conf
-     systemctl start nginx
+    systemctl start mariadb
+    ln -s conf/nginx.conf /etc/nginx/conf.d/evcloud.conf
+    systemctl start nginx
 ## [novnc server]
-     cd /home/nginx
-     mkdir novnc_token
-     touch novnc_token/vnc_tokens
-     cat run_novnc.sh 
-     ps aux | grep "/usr/bin/websockify 0.0.0.0:8080 --daemon" | awk '{print "kill -9 " $2}' | sh
-     websockify 0.0.0.0:8080 --daemon --web=/usr/share/novnc --token-plugin=TokenFile --token-source=/home/nginx/novnc_tokens/
+    cd /home/nginx
+    mkdir novnc_token
+    touch novnc_token/vnc_tokens
+    cat run_novnc.sh 
+    ps aux | grep "/usr/bin/websockify 0.0.0.0:8080 --daemon" | awk '{print "kill -9 " $2}' | sh
+    websockify 0.0.0.0:8080 --daemon --web=/usr/share/novnc --token-plugin=TokenFile --token-source=/home/nginx/novnc_tokens/
 
 # [Change Log]
 
