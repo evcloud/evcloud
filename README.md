@@ -10,13 +10,7 @@ EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳�
 
 ![image](https://github.com/bobff/ev-cloud/raw/master/static/images/page2.png)
 
-# [启动与调试运行]
-    python3 manage.py runserver 0.0.0.0:81 --settings=conf.settings_ol
-    python3 manage.py shell --settings=conf.settings_ol
-    web管理系统：   初始管理员用户名：evcloud 密码：  evcloud
-    数据库：evcloud 用户名：root    口令：  evcloud
-
-# [开发环境]
+# [开发环境、调试与运行]
 ## 系统软件环境准备
     dnf install fping nginx subversion mariadb-server
     dnf install gcc gcc-c++ python3-devel mariadb-devel libvirt libvirt-devel redhat-rpm-config 
@@ -37,7 +31,15 @@ EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳�
     cat run_novnc.sh 
     ps aux | grep "/usr/bin/websockify 0.0.0.0:8080 --daemon" | awk '{print "kill -9 " $2}' | sh
     websockify 0.0.0.0:8080 --daemon --web=/usr/share/novnc --token-plugin=TokenFile --token-source=/home/nginx/novnc_tokens/
-
+    
+## 调试运行
+    python3 manage.py runserver 0.0.0.0:81 --settings=conf.settings_ol
+    python3 manage.py shell --settings=conf.settings_ol
+    web管理系统：   初始管理员用户名：evcloud 密码：  evcloud
+    数据库：evcloud 用户名：root    口令：  evcloud
+    
+## uwsgi生产环境启动、重启与关闭    
+    
 # [Change Log]
 
 evcloud_1.2
