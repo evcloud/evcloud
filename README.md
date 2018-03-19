@@ -1,7 +1,7 @@
 # [功能描述]
 EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。
 # [项目主页]
-    http://ev.5ink.org(http://ev.5ink.org)
+    http://ev.5ink.org
 # [作者列表与联系方式]
     fubo,lzx,hai
     ink@cnic.cn
@@ -17,22 +17,22 @@ EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳�
     数据库：evcloud 用户名：root    口令：  evcloud
 
 # [开发环境]
-###### 系统软件环境准备
+## 系统软件环境准备
 dnf install fping nginx subversion mariadb-server
 dnf install gcc gcc-c++ python3-devel mariadb-devel libvirt libvirt-devel redhat-rpm-config 
-###### python3环境准备
+## python3环境准备
 pip3 install mysqlclient libvirt-python
 pip3 install django-oauth-toolkit coreapi
 pip3 install python-dateutil lxml numpy
 pip3 install django==1.11.10 django-oauth-toolkit coreapi 
 pip3 install djangorestframework==3.7.7
 
-##### mysql and nginx
+## mysql and nginx
 systemctl start mariadb
 ln -s conf/nginx.conf /etc/nginx/conf.d/evcloud.conf
 systemctl start nginx
 
-##### novnc server
+## novnc server
 cd /home/nginx
 mkdir novnc_token
 touch novnc_token/vnc_tokens
