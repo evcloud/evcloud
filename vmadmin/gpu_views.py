@@ -1,6 +1,7 @@
 #coding=utf-8
 import json
 from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
@@ -33,7 +34,8 @@ def gpu_list_view(req):
     if gpu_info['res']:
         ret_list+=gpu_info['list']
     dicts['p'] = get_page(ret_list, req)
-    return render_to_response('vmadmin_gpu_list.html', dicts, context_instance=RequestContext(req))
+    #return render_to_response('vmadmin_gpu_list.html', dicts, context_instance=RequestContext(req))
+    return render(req, 'vmadmin_gpu_list.html',dicts)
 
     # def gpu_list_view(req):
     # dicts = {}

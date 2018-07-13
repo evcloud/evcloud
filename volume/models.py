@@ -21,6 +21,7 @@ class AbsDBVolume(models.Model):
     dev = models.CharField(max_length=100, null=True, blank=True)
     enable = models.BooleanField(default=True)
 
+
 class DBCephVolume(AbsDBVolume):
     '''ceph块'''
     cephpool = models.ForeignKey(CephPool)
@@ -32,15 +33,41 @@ class DBCephVolume(AbsDBVolume):
         verbose_name = 'Ceph云硬盘'
         verbose_name_plural = '1_Ceph云硬盘'
 
+    def size_g(self):
+        if self.size is None:
+            return None
+        return self.size / 1024
+    size_g.short_description = '容量(GB)'
+
+
 class DBCephQuota(models.Model):
-    group = models.OneToOneField(Group, verbose_name='集群', null=True, blank=True, unique=True, 
-        help_text='此字段为空时表示全局默认设置')
+    '''
+    计算集群在指定存储卷上可申请的存储容量限额，total集群总容量限额，volume对应单块云硬盘容量限额
+    '''
+    group = models.ForeignKey(Group, verbose_name='计算集群', null=True, blank=True,  
+        help_text='')
+    cephpool = models.ForeignKey(CephPool, verbose_name='存储卷', null=True, blank=True,  
+        help_text='')
     total = models.IntegerField('集群总容量', help_text='单位MB')
     volume = models.IntegerField('云硬盘容量', help_text='单位MB')
     
     class Meta:
         verbose_name = 'Ceph云硬盘配额'
         verbose_name_plural = '2_Ceph云硬盘配额'
+        unique_together = ('group', 'cephpool')
+    
+    def total_g(self):
+        if self.total is None:
+            return None
+        return self.total / 1024
+    total_g.short_description = '集群总容量(GB)'
+    
+    def volume_g(self):
+        if self.volume is None:
+            return None
+        return self.volume / 1024
+    volume_g.short_description = '云硬盘最大容量(GB)'
+
 
 # VOLUME_OPERATION_CREATE = 0
 # VOLUME_OPERATION_MOUNT  = 1

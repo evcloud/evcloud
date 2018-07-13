@@ -1,5 +1,5 @@
 #coding=utf-8
-import uuid, json, libxml2
+import uuid, json
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseRedirect
@@ -62,8 +62,8 @@ def alloclist(request):
     dicts['r_alloc_c'] = r_alloc_c1
     dicts['r_alloc_g'] = r_alloc_g1
     dicts['r_alloc_h'] = r_alloc_h1
-    #return render(request, 'reports_alloclist.html',dicts)
-    return render_to_response('reports_alloc_list.html', dicts, context_instance=RequestContext(request))
+    return render(request, 'reports_alloc_list.html',dicts)
+    #return render_to_response('reports_alloc_list.html', dicts, context_instance=RequestContext(request))
 
 def alloc_center(request):
     r_alloc_c = _get_alloc_center(request)
@@ -96,8 +96,8 @@ def alloc_center(request):
     chart_cpu={"title":"分中心资源分配统计：CPU","xaxis":x,"yaxis":cpu_y,"xtitle":"分中心","ytitle":"cpu(核)"}
     chart_mem={"title":"分中心资源分配统计：内存","xaxis":x,"yaxis":mem_y,"xtitle":"分中心","ytitle":"mem(GB)"}
     dicts={"chart_name":"center","chart_cpu":chart_cpu,"chart_mem":chart_mem,"r_alloc_c":r_alloc_c1}
-    #return render(request,'reports_center.html',dicts)
-    return render_to_response('reports_alloc_center.html', dicts, context_instance=RequestContext(request))
+    return render(request,'reports_alloc_center.html',dicts)
+    #return render_to_response('reports_alloc_center.html', dicts, context_instance=RequestContext(request))
 
 def alloc_group(request):
     r_alloc_g = _get_alloc_group(request)
@@ -129,8 +129,8 @@ def alloc_group(request):
     chart_cpu={"title":"主机组资源分配统计：CPU","xaxis":x,"yaxis":cpu_y,"xtitle":"主机组","ytitle":"cpu(核)"}
     chart_mem={"title":"主机组资源分配统计：内存","xaxis":x,"yaxis":mem_y,"xtitle":"主机组","ytitle":"mem(GB)"}
     dicts={"chart_name":"center","chart_cpu":chart_cpu,"chart_mem":chart_mem,"r_alloc_g":r_alloc_g1}
-    #return render(request,'reports_group.html',dicts)
-    return render_to_response('reports_alloc_group.html', dicts, context_instance=RequestContext(request))
+    return render(request,'reports_alloc_group.html',dicts)
+    #return render_to_response('reports_alloc_group.html', dicts, context_instance=RequestContext(request))
 
 
 

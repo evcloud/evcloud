@@ -31,7 +31,7 @@ class Group(models.Model):
 
     def __str__(self):
         return self.name   
-#     
+        
     class Meta:
         verbose_name = '集群'
         verbose_name_plural = '2_集群' 
@@ -61,7 +61,7 @@ class Vm(models.Model):
     host        = models.ForeignKey(Host)
     image_id    = models.IntegerField(null=True, blank=True)
     image_snap  = models.CharField(max_length=200)
-    image  = models.CharField(max_length=100)
+    image  = models.CharField(max_length=100) #image_name
     uuid        = models.CharField(max_length=100, unique=True)
     name        = models.CharField(max_length=VM_NAME_LEN_LIMIT)
     vcpu        = models.IntegerField()
@@ -72,7 +72,7 @@ class Vm(models.Model):
     create_time = models.DateTimeField(auto_now_add=True)
     remarks = models.TextField(default='', null=True, blank=True)
 
-    ceph_id     = models.IntegerField()
+    ceph_id     = models.IntegerField() #image的ceph_pool_id
     ceph_host   = models.CharField(max_length=100)
     ceph_pool   = models.CharField(max_length=100)
     ceph_uuid   = models.CharField(max_length=100)

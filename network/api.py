@@ -56,12 +56,13 @@ class NetworkAPI(object):
     def vlan_filter(self, vlans, claim=False, vmid=None):
         return self.manager.filter(vlans, claim, vmid)
 
-    def mac_claim(self, vlan_id, vmid):
-        return self.manager.claim(vlan_id, vmid)
+    def mac_claim(self, vlan_id, vmid, ipv4=None):
+        """ 传入ipv4 则申请指定的ip资源 """
+        return self.manager.claim(vlan_id, vmid, ipv4=ipv4)
 
     def mac_release(self, mac, vmid):
         return self.manager.release(mac, vmid)
-
+    
     def get_vlan_type_list(self):
         type_list = VlanType.objects.all().order_by('order')
         ret_list = []
@@ -72,3 +73,13 @@ class NetworkAPI(object):
                 'order': t.order
                 })
         return ret_list
+
+    def set_vlan_remarks(self, vlan_id,content):
+        vlan = DBVlan.objects.filter(id = vlan_id)
+        if not vlan.exists():
+            return False
+        try:
+            vlan.update(remarks = content)
+        except:
+            return False
+        return True

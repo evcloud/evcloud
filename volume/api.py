@@ -1,5 +1,6 @@
 #coding=utf-8
-from storage.api import CephStorageAPI
+from datetime import datetime
+from storage.api import StorageAPI
 from vmuser.api import API as UserAPI
 from compute.api import VmAPI
 from compute.api import GroupAPI
@@ -16,14 +17,15 @@ from api.error import ERR_VOLUME_QUOTA_V
 from .manager import CephManager
 from .quota import CephQuota
 
-class CephVolumeAPI(object):
+
+class VolumeAPI(object):
     def __init__(self, manager=None, storage_api=None, vm_api=None, group_api=None, quota=None):
         if not manager:
             self.manager = CephManager()
         else:
             self.manager = manager
         if not storage_api:
-            self.storage_api = CephStorageAPI()
+            self.storage_api = StorageAPI()
         else:
             self.storage_api = storage_api
         if not vm_api:
@@ -41,17 +43,14 @@ class CephVolumeAPI(object):
 
         super().__init__()
 
-    def create(self, group_id, size):
-        group = self.group_api.get_group_by_id(group_id)
-        if not self.quota.group_quota_validate(group_id, size):
-            raise Error(ERR_VOLUME_QUOTA_G)
-        if not self.quota.volume_quota_validate(group_id, size):
-            raise Error(ERR_VOLUME_QUOTA_V)
-        cephpool = self.storage_api.get_volume_pool_by_center_id(group.center_id)
+    def create(self, pool_id, size, group_id=None):
+        cephpool = self.storage_api.get_pool_by_id(pool_id)
         if not cephpool:
             raise Error(ERR_VOLUME_CREATE_NOPOOL)
+
         if type(size) != int or size <= 0:
             raise Error(ERR_INT_VOLUME_SIZE)
+
         return self.manager.create_volume(cephpool, size, group_id)
 
     def delete(self, volume_id, force=False):
@@ -59,7 +58,7 @@ class CephVolumeAPI(object):
         if volume.vm:
             raise Error(ERR_DEL_MOUNTED_VOLUME)
         cephpool_id = volume.cephpool_id
-        tmp_volume_name = 'x_' + volume_id
+        tmp_volume_name = 'x_{}_{}'.format(datetime.now().strftime("%Y%m%d%H%M%S"), volume_id)
         if self.storage_api.mv(cephpool_id, volume_id, tmp_volume_name):
             if not volume.delete():
                 self.storage_api.mv(cephpool_id, tmp_volume_name, volume_id)
@@ -74,9 +73,11 @@ class CephVolumeAPI(object):
         
     def resize(self, volume_id, size):
         volume = self.get_volume_by_id(volume_id)
-        if not self.quota.group_quota_validate(volume.group_id, size, volume.size):
+        #if not self.quota.group_quota_validate(volume.group_id, size, volume.size):
+        if not self.quota.group_pool_quota_validate(volume.group_id, volume.cephpool_id, size, volume.size):
             raise Error(ERR_VOLUME_QUOTA_G)
-        if not self.quota.volume_quota_validate(volume.group_id, size):
+        # if not self.quota.volume_quota_validate(volume.group_id, size):
+        if not self.quota.volume_pool_quota_validate(volume.group_id, volume.cephpool_id, size):
             raise Error(ERR_VOLUME_QUOTA_V)
         if self.storage_api.resize(volume.cephpool_id, volume.id, size):
             return volume.resize(size)
@@ -88,8 +89,6 @@ class CephVolumeAPI(object):
         cephpool = self.storage_api.get_pool_by_id(volume.cephpool_id)
 
         xml = volume.xml_tpl % {
-            'type': 'network',
-            'device': 'disk',
             'driver': 'qemu',
             'auth_user': cephpool.username,
             'auth_type': 'ceph',

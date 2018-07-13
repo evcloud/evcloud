@@ -1,6 +1,11 @@
 {%extends 'vmadmin_base.html'%}
 {%block base%}
 
+<style>
+    .form-control-horizontal {
+        display: inline-block;
+    }
+</style>
 <form id="form" role="form"  class="form-horizontal"  method="post" action="" 
 	onsubmit ="getElementById('form_btn').disabled=true;getElementById('form_btn').value='正在创建';return true;">
       <script type="text/javascript">
@@ -11,10 +16,17 @@
             else
                 $("#form_btn").attr('disabled', false);
           }
-          function set_num() {
-                var max_num = window.vm_num_limit_by_ip;
-                if (max_num > window.vm_num_limit_by_host)
-                    max_num = window.vm_num_limit_by_host;
+            function set_num() {
+                // 指定了ip,只能创建一个
+                var selected_ipv4 = $("select[name='ip']").val();
+                if (selected_ipv4) {
+                    var max_num = 1;
+                } else {
+                    var max_num = window.vm_num_limit_by_ip;
+                    if (max_num > window.vm_num_limit_by_host)
+                        max_num = window.vm_num_limit_by_host;
+                }
+                
                 var num_options = '';
                 var i = 1;
                 while (i <= max_num) {
@@ -146,15 +158,17 @@
     <div class="form-group">
         <label class="col-sm-3 control-label" style="font-weight: 200;">网络</label>
         <div class="col-sm-9">
-            <select name="vlan" class="form-control" style="width:200px">
-            </select>
+            <select name="vlan" class="form-control form-control-horizontal" style="width:200px; display:inline-block"></select>
+            <select name="ip" class="form-control form-control-horizontal" style="width:200px; display:none;"></select>
         </div>
     </div>
     <script type="text/javascript">
     (function(){
     	var vlans = {{vlans_json|safe}};
+        var vlan_ip_dic = {{vlan_ip_json|safe}};
     	set_vlan();
-    	
+    	set_ip();
+
     	$("select[name='net']").change(set_vlan);
     	$('select[name="group"]').change(set_vlan);
     	
@@ -167,6 +181,7 @@
     			options += '<option value="'+vlan_list[i]['id']+'">'+vlan_list[i]['vlan']+'(IP地址:'+ vlan_list[i]['ip_used'] +'/' + vlan_list[i]['ip_count']+')</opction>';
     		}
     		$("select[name='vlan']").html(options);
+            set_ip();
     	}
 
         limit_num();
@@ -174,6 +189,7 @@
         $('select[name="group"]').change(limit_num);
         $("select[name='net']").change(limit_num);
         $("select[name='vlan']").change(limit_num);
+        $("select[name='ip']").change(limit_num);
         
         function limit_num() {
             window.vm_num_limit_by_ip = get_limit_num_by_ip();
@@ -204,12 +220,48 @@
                     break;
                 }
             }
-            return max_num;
-            
+            return max_num; 
         }
+
+        $("select[name='vlan']").change(set_ip);
+        function set_ip() {
+            // 填充ip字段的选项
+            var num =  $("select[name='num']").val();  // 要创建虚拟机数量
+            var vlan = $("select[name='vlan']").val();
+            if (num == 1 && vlan) {
+                var options = '<option value=""><自动分配IP地址></option>';
+                if (vlan_ip_dic[vlan] instanceof Array) {
+                    for (var i=0; i<vlan_ip_dic[vlan].length; ++i) {
+                        options += '<option value="'+vlan_ip_dic[vlan][i]+'">'+vlan_ip_dic[vlan][i]+'</option>';
+                    }
+                }
+                $("select[name='ip']").html(options);
+                $("select[name='ip']").show();
+            } else {
+                $("select[name='ip']").html("");
+                $("select[name='ip']").val("");
+                $("select[name='ip']").hide();
+            }
+        }
+
     })();
        
     </script>
+
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label">创建数量</label>
+        <div class="col-sm-9">
+        
+        <select name="num" class="form-control" style="width:100px">
+        	<option value=1>1</option>
+        	<option value=2>2</option>
+        	<option value=3>3</option>
+        	<option value=4>4</option>
+        	<option value=5>5</option>
+        </select>
+        <font style="color:red"><span id="num_limit"></span></font>
+        </div>
+    </div>
 
     <div class="form-group">
         <label for="content" class="col-sm-3 control-label">CPU数</label>
@@ -305,20 +357,7 @@
         })();
         </script>
     </div>
-    <div class="form-group">
-        <label for="content" class="col-sm-3 control-label">创建数量</label>
-        <div class="col-sm-9">
-        
-        <select name="num" class="form-control" style="width:100px">
-        	<option value=1>1</option>
-        	<option value=2>2</option>
-        	<option value=3>3</option>
-        	<option value=4>4</option>
-        	<option value=5>5</option>
-        </select>
-        <font style="color:red"><span id="num_limit"></span></font>
-        </div>
-    </div>
+    
     <div class="form-group">
         <label for="content" class="col-sm-3 control-label" style="font-weight: 200;">备注</label>
         <div class="col-sm-9">

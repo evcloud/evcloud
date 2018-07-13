@@ -123,7 +123,7 @@ def create(args):
     if 'group_id' not in args and 'host_id' not in args:
         return {'res': False, 'err': ERR_VM_CREATE_ARGS_HOST}
    
-    optional_args = ['group_id', 'host_id', 'net_type_id', 'vlan_id', 'diskname', 'remarks']
+    optional_args = ['group_id', 'host_id', 'net_type_id', 'vlan_id', 'diskname', 'remarks', 'ipv4']
 
     kwargs = {}
 
@@ -138,7 +138,7 @@ def create(args):
         return {'res': False, 'err': ERR_VM_DEFINE}
     
     vm.set_creator(args['req_user'].username)
-    vm.start()
+    # vm.start()
     uuid = vm.uuid
     return {'res':True,'uuid':uuid}
 
@@ -170,6 +170,8 @@ def op(args):
 
     if args['op'] == 'delete':
         res = api.delete_vm(args['uuid'])
+    elif args['op'] == 'delete_force':
+        res = api.delete_vm(args['uuid'], force=True)
     elif args['op'] == 'reset':
         res = api.reset_vm(args['uuid'])
     else:   

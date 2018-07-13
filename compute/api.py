@@ -5,22 +5,7 @@ from vmuser.api import API as UserAPI
 from network.api import NetworkAPI
 from image.api import ImageAPI
 
-from api.error import Error
-from api.error import ERR_VM_CREATE_ARGS_VLAN
-from api.error import ERR_VM_CREATE_ARGS_HOST
-from api.error import ERR_VM_HOST_FILTER
-from api.error import ERR_VM_CREATE_DB
-from api.error import ERR_VM_CREATE_DISK
-from api.error import ERR_VM_VCPU
-from api.error import ERR_VM_MEM
-from api.error import ERR_VM_RESET_LIVING
-from api.error import ERR_VM_EDIT_LIVING
-from api.error import ERR_VM_MIGRATE_LIVING
-from api.error import ERR_VM_DEL_GPU_MOUNTED
-from api.error import ERR_VM_DEL_VOL_MOUNTED
-from api.error import ERR_IMAGE_ID
-from api.error import ERR_VLAN_FILTER_NONE
-from api.error import ERR_HOST_FILTER_NONE
+from api.error import *
 
 from .vm.vm import VM
 from .vm.manager import VMManager
@@ -73,9 +58,14 @@ class GroupAPI(object):
     def get_group_by_id(self, group_id):
         return self.manager.get_group_by_id(group_id)
 
-            
     def has_center_perm(self, username, center_id):
-        user = self.user_api.get_db_user_by_username(username)
+        # Stupid import  TODO
+        print(111, username)
+        from vmuser.models import User
+        if not isinstance(username, User) and type(username) is str:
+            user = self.user_api.get_db_user_by_username(username)
+        else:
+            user = username
         '''对指定center有部分或全部管理权，即对该分中心中的 某个集群有管理权,则返回True'''
         return self.manager.has_center_perm(user, center_id)
 
@@ -129,7 +119,7 @@ class VmAPI(object):
         return vm.set_creator(str(username))
 
     def create_vm(self, image_id, vcpu, mem, group_id=None, host_id=None,
-        net_type_id=None, vlan_id=None, diskname=None, vm_uuid=None, remarks=None):
+        net_type_id=None, vlan_id=None, diskname=None, vm_uuid=None, remarks=None, ipv4=None):
         '''
         参数说明：
             image_id, vcpu, mem 为必要参数。
@@ -196,102 +186,107 @@ class VmAPI(object):
                 raise Error(ERR_VM_HOST_FILTER)
             available_host_list.remove(host)
 
-            if host.alive():
-                host_available_vlan_id_list = self.host_api.get_vlan_id_list_of_host(host.id)
-                for vlan in available_vlan_list:
-                    try:
-                        if not vlan.id in host_available_vlan_id_list:
-                            continue
-                        if settings.DEBUG: print('[create_vm]', '开始创建', host, vlan)
-                        mac_claimed = False
-                        disk_created = False
+            if not host.alive():
+                raise Error(ERR_HOST_CONNECTION)
 
-                        mac = self.network_api.mac_claim(vlan.id, vm_uuid)
-                        if mac:
-                            mac_claimed = True
-                        
-                        if mac_claimed:
-                            if self.image_api.init_disk(image_id, diskname):
-                                disk_created = True
-                            else:
-                                raise Error(ERR_VM_CREATE_DISK)
-                            # image_info = self.image_api.get_image_info_by_id(image_id)
+            host_available_vlan_id_list = self.host_api.get_vlan_id_list_of_host(host.id)
+            if not host_available_vlan_id_list:
+                raise Error(ERR_VLAN_FILTER_NONE)
 
-                            xml_tpl = self.image_api.get_xml_tpl(image_id)
-                            xml_desc = xml_tpl % {
-                                'name': vm_uuid,
-                                'uuid': vm_uuid,
-                                'mem': mem,
-                                'vcpu': vcpu,
-                                'ceph_uuid': image_info['ceph_uuid'],
-                                'ceph_pool': image_info['ceph_pool'],
-                                'diskname': diskname,
-                                'ceph_host': image_info['ceph_host'],
-                                'ceph_port': image_info['ceph_port'],
-                                'ceph_username': image_info['ceph_username'],
-                                'mac': mac,
-                                'bridge': vlan.br
-                            }
+            for vlan in available_vlan_list:
+                try:
+                    if not vlan.id in host_available_vlan_id_list:
+                        continue
+                    if settings.DEBUG: print('[create_vm]', '开始创建', host, vlan)
+                    mac_claimed = False
+                    disk_created = False
 
-                            net_info = self.network_api.get_net_info_by_vmuuid(vm_uuid)
+                    mac = self.network_api.mac_claim(vlan.id, vm_uuid, ipv4=ipv4)
+                    if mac:
+                        mac_claimed = True
+                    
+                    if mac_claimed:
+                        if self.image_api.init_disk(image_id, diskname):
+                            disk_created = True
+                        else:
+                            raise Error(ERR_VM_CREATE_DISK)
+                        # image_info = self.image_api.get_image_info_by_id(image_id)
 
-                            db = self.manager.create_vm_db({
-                                'host_id': host.id,
-                                'image_id': image_id,
-                                'image_snap': image_info['image_snap'],
-                                'image': image_info['image_name'],
-                                'uuid': vm_uuid,
-                                'name': vm_uuid,
-                                'mem': mem,
-                                'vcpu': vcpu,
-                                'disk': diskname,
-                                'remarks': remarks,
-                                'ceph_id': image_info['ceph_id'],
-                                'ceph_host': image_info['ceph_host'],
-                                'ceph_pool': image_info['ceph_pool'],
-                                'ceph_uuid': image_info['ceph_uuid'],
-                                'ceph_port': image_info['ceph_port'],
-                                'ceph_username': image_info['ceph_username'],
-                                'vlan_id': net_info['vlan_id'],
-                                'vlan_name': net_info['vlan_name'],
-                                'ipv4': net_info['ipv4'],
-                                'mac': net_info['mac'],
-                                'br': net_info['br']
-                                })
+                        xml_tpl = self.image_api.get_xml_tpl(image_id)
+                        xml_desc = xml_tpl % {
+                            'name': vm_uuid,
+                            'uuid': vm_uuid,
+                            'mem': mem,
+                            'vcpu': vcpu,
+                            'ceph_uuid': image_info['ceph_uuid'],
+                            'ceph_pool': image_info['ceph_pool'],
+                            'diskname': diskname,
+                            'ceph_host': image_info['ceph_host'],
+                            'ceph_port': image_info['ceph_port'],
+                            'ceph_username': image_info['ceph_username'],
+                            'mac': mac,
+                            'bridge': vlan.br
+                        }
 
-                            if db:
-                                dom = self.manager.define(host.ipv4, xml_desc)                    
-                                return VM(db)
-                            else:
-                                raise Error(ERR_VM_CREATE_DB)
-                    except Error as e:
-                        if settings.DEBUG: print('[create_vm]', '创建失败','mac_claimed', mac_claimed, 
-                            'disk_created', disk_created)
-                        if mac_claimed:
-                            mac_released = self.network_api.mac_release(mac, vm_uuid)
-                            if settings.DEBUG: print('[create_vm]', 'IP地址释放', mac_released)
-                        if disk_created:
-                            disk_deleted = self.image_api.rm_disk(image_id, diskname)
-                            if settings.DEBUG: print('[create_vm]', '磁盘释放', disk_deleted)
-                        if settings.DEBUG: print(e)
-                        raise e
-                    except Exception as e:
-                        if settings.DEBUG: print('[create_vm]', '创建失败', 'mac_claimed', mac_claimed, 
-                            'disk_created', disk_created)
-                        
-                        if mac_claimed:
-                            mac_released = self.network_api.mac_release(mac, vm_uuid)
-                            if settings.DEBUG: print('[create_vm]', 'IP地址释放', mac_released)
-                        if disk_created:
-                            disk_deleted = self.image_api.rm_disk(image_id, diskname)
-                            if settings.DEBUG: print('[create_vm]', '磁盘释放', disk_deleted)
-                        if settings.DEBUG: print(e)
+                        net_info = self.network_api.get_net_info_by_vmuuid(vm_uuid)
+
+                        db = self.manager.create_vm_db({
+                            'host_id': host.id,
+                            'image_id': image_id,
+                            'image_snap': image_info['image_snap'],
+                            'image': image_info['image_name'],
+                            'uuid': vm_uuid,
+                            'name': vm_uuid,
+                            'mem': mem,
+                            'vcpu': vcpu,
+                            'disk': diskname,
+                            'remarks': remarks,
+                            'ceph_id': image_info['ceph_id'],
+                            'ceph_host': image_info['ceph_host'],
+                            'ceph_pool': image_info['ceph_pool'],
+                            'ceph_uuid': image_info['ceph_uuid'],
+                            'ceph_port': image_info['ceph_port'],
+                            'ceph_username': image_info['ceph_username'],
+                            'vlan_id': net_info['vlan_id'],
+                            'vlan_name': net_info['vlan_name'],
+                            'ipv4': net_info['ipv4'],
+                            'mac': net_info['mac'],
+                            'br': net_info['br']
+                            })
+
+                        if db:
+                            dom = self.manager.define(host.ipv4, xml_desc)                    
+                            return VM(db)
+                        else:
+                            raise Error(ERR_VM_CREATE_DB)
+                except Error as e:
+                    if settings.DEBUG: print('[create_vm]', '创建失败','mac_claimed', mac_claimed, 
+                        'disk_created', disk_created)
+                    if mac_claimed:
+                        mac_released = self.network_api.mac_release(mac, vm_uuid)
+                        if settings.DEBUG: print('[create_vm]', 'IP地址释放', mac_released)
+                    if disk_created:
+                        disk_deleted = self.image_api.rm_disk(image_id, diskname)
+                        if settings.DEBUG: print('[create_vm]', '磁盘释放', disk_deleted)
+                    if settings.DEBUG: print(e)
+                    raise e
+                except Exception as e:
+                    if settings.DEBUG: print('[create_vm]', '创建失败', 'mac_claimed', mac_claimed, 
+                        'disk_created', disk_created)
+                    
+                    if mac_claimed:
+                        mac_released = self.network_api.mac_release(mac, vm_uuid)
+                        if settings.DEBUG: print('[create_vm]', 'IP地址释放', mac_released)
+                    if disk_created:
+                        disk_deleted = self.image_api.rm_disk(image_id, diskname)
+                        if settings.DEBUG: print('[create_vm]', '磁盘释放', disk_deleted)
+                    if settings.DEBUG: print(e)
             
             host_released = self.host_api.host_release(host, vcpu, mem)
             if settings.DEBUG: print('[create_vm]', '释放宿主机资源', host_released)
         return False
     
-    def delete_vm(self, vm_uuid):
+    def delete_vm(self, vm_uuid, force=False):
         vm = self.manager.get_vm_by_uuid(vm_uuid)
         image_id = vm.image_id
         diskname = vm.disk
@@ -299,31 +294,37 @@ class VmAPI(object):
         vcpu = vm.vcpu
         mem = vm.mem
         mac = vm.mac
+        ceph_pool_id = vm.ceph_id
         
         from device.api import GPUAPI
-        from volume.api import CephVolumeAPI
+        from volume.api import VolumeAPI
         
-        gpuapi = GPUAPI()
-        if len(gpuapi.get_gpu_list_by_vm_uuid(vm_uuid)) > 0:
-            raise Error(ERR_VM_DEL_GPU_MOUNTED)
+        try:
+            gpuapi = GPUAPI()
+            if len(gpuapi.get_gpu_list_by_vm_uuid(vm_uuid)) > 0:
+                raise Error(ERR_VM_DEL_GPU_MOUNTED)
 
-        volumeapi = CephVolumeAPI()
-        if len(volumeapi.get_volume_list_by_vm_uuid(vm_uuid)) > 0:
-            raise Error(ERR_VM_DEL_VOL_MOUNTED)
+            volumeapi = VolumeAPI()
+            if len(volumeapi.get_volume_list_by_vm_uuid(vm_uuid)) > 0:
+                raise Error(ERR_VM_DEL_VOL_MOUNTED)
 
-        deletion_permitted = False
-
-
-
-        archive_disk_name = ''
-        if self.image_api.disk_exists(image_id, diskname):
-            archive_disk_name = self.image_api.archive_disk(image_id, diskname)
-            if archive_disk_name != False:
+            deletion_permitted = False
+            
+            archive_disk_name = ''
+            if self.image_api.disk_exists(image_id, diskname,cephpool_id=ceph_pool_id):
+                archive_disk_name = self.image_api.archive_disk(image_id, diskname,cephpool_id=ceph_pool_id)
+                if archive_disk_name != False:
+                    deletion_permitted = True
+            else:
                 deletion_permitted = True
-        else:
-            deletion_permitted = True
+        except Exception as e:
+            if not force:  # 不强制删除的话抛出异常
+                raise e
+            else:  # 强制删除，不管其他操作是否成功，都删除虚拟机记录
+                deletion_permitted = True
+
         if deletion_permitted:
-            if vm.delete(archive_disk_name):
+            if vm.delete(archive_disk_name, force=force):
                 if not self.host_api.host_release(host_id, vcpu, mem):
                     print('[delete_vm]', '释放宿主机资源失败')
                 if not self.network_api.mac_release(mac, vm_uuid):
@@ -452,7 +453,6 @@ class VmAPI(object):
                 self.host_api.host_release(host_id, vm.vcpu, vm.mem, 1)
 
         return False
-
 
 class HostAPI(object):
     def __init__(self, user_api=None, manager=None):

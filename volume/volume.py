@@ -127,7 +127,7 @@ class CephVolume(object):
 
     @property
     def group_name(self):
-        return self._db.group
+        return self._db.group.name
     
     
     @property
@@ -163,8 +163,9 @@ class CephVolume(object):
 
     @property
     def xml_tpl(self):
-        return '''
-<disk type='%(type)s' device='%(device)s'>
+        if self._db.cephpool.host.backend == self._db.cephpool.host.CEPH:
+            return '''
+<disk type='network' device='disk'>
       <driver name='%(driver)s'/>
       <auth username='%(auth_user)s'>
         <secret type='%(auth_type)s' uuid='%(auth_uuid)s'/>
@@ -174,6 +175,14 @@ class CephVolume(object):
       </source>
         <target dev='%(dev)s' bus='virtio'/>   
 </disk>
+'''
+        else:
+            return '''
+<disk type='block' device='disk'>
+    <driver name='qemu' type='qcow2'/>
+   <source dev='%(pool)s/%(name)s'/>
+   <target dev='%(dev)s' bus='virtio'/>
+</disk>            
 '''
   
     def managed_by(self, user):

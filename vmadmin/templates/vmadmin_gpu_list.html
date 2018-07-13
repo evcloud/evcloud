@@ -28,7 +28,7 @@
             <select name="group" class="form-control">
                 <option value="">--</option>
                 {%for g in group_list%}
-                <option value="{{g.id}}" {%if g.id = request.GET.group|add:0 %} selected {%endif%}>{{g.name}}</option>
+                <option value="{{g.id}}" {%if g.id == request.GET.group|add:0 %} selected {%endif%}>{{g.name}}</option>
                 {%endfor%}
             </select>
             <script type="text/javascript">

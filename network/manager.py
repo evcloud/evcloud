@@ -40,7 +40,7 @@ class NetManager(object):
         return None
     
     error = ''
-    def claim(self, vlan, vmid):
+    def claim(self, vlan, vmid, ipv4=None):
         if settings.DEBUG: print('netmanager claim: ', vlan, vmid)
         if type(vlan) != Vlan:
             vlan = Vlan.objects.filter(pk = vlan)
@@ -50,12 +50,17 @@ class NetManager(object):
             vlan = vlan[0]
 
         mac = MacIP.objects.filter(vlan = vlan, vmid = vmid, enable=True)
+        if ipv4 is not None:
+            mac = mac.filter(ipv4=ipv4)
+
         if mac:
             return mac[0].mac
             
         res = None
         with transaction.atomic():
             mac = MacIP.objects.select_for_update().filter(vlan = vlan, vmid='', enable=True)
+            if ipv4 is not None:
+                mac = mac.filter(ipv4=ipv4)
             if mac:
                 mac = mac[0]
                 mac.vmid = vmid

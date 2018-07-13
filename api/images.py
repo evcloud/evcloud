@@ -13,7 +13,7 @@ from .tools import api_log
 from .error import ERR_AUTH_PERM
 
 from image.api import ImageAPI
-from storage.api import CephStorageAPI
+from storage.api import StorageAPI
 
 @api_log
 @catch_error
@@ -44,16 +44,18 @@ def get(args):
 def get_list(args):
     '''获取镜像列表'''
     ret_list = []
-    storage_api = CephStorageAPI()
+    storage_api = StorageAPI()
     image_api = ImageAPI()
     cephpool = storage_api.get_pool_by_id(args['ceph_id'])
 
     if not cephpool.managed_by(args['req_user']):
         return {'res': False, 'err': ERR_AUTH_PERM}
-    if 'enable' in args:
-        enable = args['enable']
-    else:
-        enable = None
+    # if 'enable' in args:
+    #     enable = args['enable']
+    # else:
+    #     enable = None
+    # 非得改接口……
+    enable = True 
     image_list = image_api.get_image_list_by_pool_id(args['ceph_id'], enable)
     for image in image_list:
         ret_list.append({

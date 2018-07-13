@@ -1,7 +1,6 @@
 #coding=utf-8
 import uuid
 import json
-import libxml2
 import re
 from django.shortcuts import render
 from django.shortcuts import render_to_response
@@ -32,8 +31,10 @@ from api.ceph import get_list as api_ceph_get_list
 from api.net import get_vlan_list as api_net_get_vlan_list
 from api.net import get_vlan as api_net_get_vlan
 from api.net import get_vlan_type_list as api_net_get_vlan_type_list
+from api.net import get_vlan_ip_list as api_net_get_vlan_ip_list
 from api.vnc import open as api_vnc_open
 from api.error import ERROR_CN
+from api.volume import get_list as api_volume_get_list
 
 from .view_tools import get_vm_list_by_center
 from .view_tools import vm_list_sort
@@ -54,6 +55,7 @@ def vm_list_view(req):
     arg_host = req.GET.get('host')
     arg_ip = req.GET.get('ip')
     arg_creator = req.GET.get('creator')
+    arg_text = req.GET.get('text')
     
     #参数校验
     if arg_center:
@@ -73,6 +75,8 @@ def vm_list_view(req):
             arg_host = None
     if arg_ip:
         arg_ip = arg_ip.strip()
+    if arg_text:
+        arg_text = arg_text.strip() 
     
     #获取分中心列表
     center_info = api_center_get_list({'req_user': req.user})
@@ -139,26 +143,29 @@ def vm_list_view(req):
     
     #根据ip地址筛选
     if arg_ip:
-        i = 0
-        l = len(vm_list)
-        while True:
-            if i >= l:
-                break
-            if vm_list[i]['ipv4'].find(arg_ip) == -1:
-                del(vm_list[i])
-                l -= 1
-            else:
-                i += 1
+        for i in range(len(vm_list)-1,-1,-1): #反向循环，删除列表中不合要求项 by hai
+            if vm_list[i]['ipv4'].find(arg_ip) == -1: del(vm_list[i])
+
+    #根据 主机编号-ip-备注 综合筛选
+    if arg_text:
+        for i in range(len(vm_list)-1,-1,-1): #反向循环，删除列表中不合要求项 
+            if vm_list[i]['ipv4'].find(arg_text) == -1: 
+                if vm_list[i]['remarks'].find(arg_text) == -1: 
+                    if vm_list[i]['uuid'].find(arg_text) == -1: 
+                        del(vm_list[i])
     
     vm_list = vm_list_sort(vm_list)
     
     dicts['p'] = get_page(vm_list, req)
     for vm in dicts['p'].object_list:
         vm['can_operate'] = req.user.is_superuser or vm['creator'] == req.user.username
+        res = api_volume_get_list({'req_user': req.user, 'vm_uuid': vm['uuid']})
+        if res['res']:
+            vm['volumes'] = res['list']
+        else:
+            vm['volumes'] = []
 
-    return render_to_response('vmadmin_list.html', dicts, context_instance=RequestContext(req))
-
-
+    return render(req, 'vmadmin_list.html', dicts)
 
 @login_required
 def vm_create_view(req):
@@ -212,13 +219,13 @@ def vm_create_view(req):
         for image_type in image_type_list:
             if image_type in image_dic:
                 image_list_ordered.append((image_type, image_list_sort(image_dic[image_type])))
-                 
         
         dicts['image_list_ordered'] = image_list_ordered
         
         #获取网络类型
         vlan_type_dic = {}
         vlans = {}
+        vlan_ip_dic = {}
         for group in dicts['group_list']:
             if group['id'] not in vlans:
                 vlans[group['id']] = {}
@@ -233,6 +240,11 @@ def vm_create_view(req):
                         vlans[group['id']][vlan['type_code']] = [vlan]
                     else:
                         vlans[group['id']][vlan['type_code']].append(vlan)
+                    
+                    macip_info = api_net_get_vlan_ip_list({'vlan_id':vlan['id'], 'req_user': req.user})
+                    if macip_info['res']:
+                        vlan_ip_dic[vlan['id']] = [macip['ipv4'] for macip in macip_info['list'] 
+                            if (macip['vmid'] == "" or macip['vmid'] is None) and macip['enable'] is True]
 
         #VLAN_type sorting
         vlan_type_list_info = api_net_get_vlan_type_list({'req_user': req.user})
@@ -243,7 +255,9 @@ def vm_create_view(req):
         dicts['vlan_type_list'] = vlan_type_list
         print(vlan_type_list_info)
         dicts['vlans_json'] = json.dumps(vlans)
-        
+
+        # 各个vlan的可用ip列表
+        dicts['vlan_ip_json'] = json.dumps(vlan_ip_dic)
         
         #创建虚拟机
         if req.method == 'POST':
@@ -252,6 +266,7 @@ def vm_create_view(req):
             arg_image = req.POST.get('image')
             arg_net = req.POST.get('net')
             arg_vlan = req.POST.get('vlan')
+            arg_ip = req.POST.get('ip')
             arg_vcpu = req.POST.get('vcpu')
             arg_mem = req.POST.get('mem')
             arg_num = req.POST.get('num')
@@ -263,6 +278,8 @@ def vm_create_view(req):
                 and arg_vcpu and arg_vcpu.isdigit() 
                 and arg_mem and arg_mem.isdigit() 
                 and arg_num and arg_num.isdigit()):
+                if int(arg_num) > 1:
+                    arg_ip = None
                 for i in range(int(arg_num)):
                     create_res = api_vm_create({
                         'req_user': req.user,
@@ -273,16 +290,20 @@ def vm_create_view(req):
                         'vlan_id': arg_vlan,
                         'vcpu': arg_vcpu,
                         'mem': arg_mem,
-                        'remarks': arg_remarks})
+                        'remarks': arg_remarks,
+                        'ipv4': arg_ip or None})
                     if create_res['res'] == False:
                         if create_res['err'] in ERROR_CN:
                             create_res['error'] = ERROR_CN[create_res['err']]
+                        else:
+                            create_res['error'] = create_res['err']
                     res.append(create_res)
                 dicts['res'] = res
             else:
                 dicts['error'] = '参数错误。'
             
-    return render_to_response('vmadmin_create.html', dicts, context_instance=RequestContext(req))
+    #return render_to_response('vmadmin_create.html', dicts, context_instance=RequestContext(req))
+    return render(req,'vmadmin_create.html', dicts)
 
 @login_required
 def vm_edit_view(req):
@@ -325,7 +346,8 @@ def vm_edit_view(req):
         if dicts['remain_cpu'] < 0:
             dicts['remain_cpu'] = 0
     
-    return render_to_response('vmadmin_edit.html', dicts, context_instance=RequestContext(req))
+    #return render_to_response('vmadmin_edit.html', dicts, context_instance=RequestContext(req))
+    return render(req,'vmadmin_edit.html', dicts)
 
 @login_required
 def vm_vnc_view(req):
@@ -345,12 +367,24 @@ def vm_detail_view(req):
         dicts['vmobj'] = vm_res['info']
         vlan = api_net_get_vlan({'req_user': req.user, 'vlan_id': dicts['vmobj']['vlan_id']})
         if vlan['res']:
-            dicts['vmobj']['br'] = vlan['info']['br'] 
+            dicts['vmobj']['br'] = vlan['info']['br']
+
+        # 添加操作功能和挂载云硬盘 2018-07-12 yanghao
+        dicts['vmobj']['can_operate'] = req.user.is_superuser or dicts['vmobj']['center_name'] == req.user.username
+
+        from api.volume import get_volume_available
+        volume_info = get_volume_available({'req_user': req.user,'group_id':dicts['vmobj']['group_id'],'vm_uuid':dicts['vmobj']['uuid']})
+        # volume_info = api_volume_get_list({'req_user': req.user,'group_id':dicts['vmobj']['group_id']})
+        ret_list = []
+        if volume_info['res']:
+            ret_list += volume_info['list']
+        dicts['p'] = get_page(ret_list, req)
         
     else:
         if settings.DEBUG: print(vm_res['err'])
         return HttpResponseRedirect('../list/')
-    return render_to_response('vmadmin_detail.html', dicts, context_instance=RequestContext(req))
+    return render(req,'vmadmin_detail.html', dicts)
+    #return render_to_response('vmadmin_detail.html', dicts, context_instance=RequestContext(req))
 
 @login_required   
 def vm_migrate_view(req):
@@ -388,7 +422,7 @@ def vm_migrate_view(req):
                     host['group_name'] = group['name']
                     host_list.append(host)
         dicts['host_list'] = host_list
-    return render_to_response('vmadmin_migrate.html', dicts, context_instance=RequestContext(req))
+    return render(req,'vmadmin_migrate.html', dicts)
 
 @login_required
 def vm_status_ajax(req):
@@ -412,6 +446,22 @@ def vm_op_ajax(req):
     if not res['res'] and res['err'] in ERROR_CN:
         res['error'] = ERROR_CN[res['err']]
     return HttpResponse(json.dumps(res), content_type='application/json')
+
+@login_required
+def vm_batch_op_ajax(req):
+    vmid_list = req.POST.getlist('vmid_list[]')
+    op = req.POST.get('op')
+    res_list = []
+    for vmid in vmid_list:
+        res = api_vm_op({
+            'req_user': req.user,
+            'uuid': vmid,
+            'op': op})
+        if not res['res'] and res['err'] in ERROR_CN:
+            res['error'] = ERROR_CN[res['err']]
+        res['vmid'] = vmid
+        res_list.append(res)
+    return HttpResponse(json.dumps(res_list), content_type='application/json')
 
 @login_required
 def vm_edit_remarks_ajax(req):

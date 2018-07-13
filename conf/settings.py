@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
+import os, sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'xxxxfdsfsfsdfxxfsafdasfasdfsdfxfsfsdf'
+SECRET_KEY = '5o5^f^_-a7%$w#$)-1g9-(t-$nkog_ro@-ymq)jg^41#foo@y3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -38,6 +38,11 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'oauth2_provider',
+    # 'corsheaders',
+    'rest_framework',
+
     'conf',
     'compute',
     'image',
@@ -53,7 +58,7 @@ INSTALLED_APPS = (
     'device',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,10 +67,25 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    # 'corsheaders.middleware.CorsMiddleware',
  #   'django.middleware.transaction.TransactionMiddleware',
+    'oauth2_provider.middleware.OAuth2TokenMiddleware',
 )
 
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
+# AUTHENTICATION_BACKENDS = (
+#     'oauth2_provider.backends.OAuth2Backend',
+#     'django.contrib.auth.backends.ModelBackend',
+# )
+
 ROOT_URLCONF = 'urls'
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 TEMPLATES = [
     {
@@ -93,16 +113,8 @@ WSGI_APPLICATION = 'conf.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'dbname',
-    	'USER': 'username',
-    	'PASSWORD': 'pwd',
-    	'HOST': 'dbhost',
-    	'PORT': '3306',
-        'TEST': {
-            'CHARSET': "utf8",
-            'COLLATION': "utf8_general_ci",
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'evcloud.sqlite3',
     }
 }
 
@@ -120,23 +132,50 @@ USE_L10N = True
 
 USE_TZ = False
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.8/howto/static-files/
-
 STATIC_URL = '/static/'
-STATICFILES_DIRS = (  
-    os.path.join(BASE_DIR, 'static'),  
-)  
+STATIC_LIB_URL = '/static/lib/'
+
+CKEDITOR_JQUERY_URL = STATIC_LIB_URL + 'jquery/jquery.2.1.1.min.js'
+
+AUTH_USER_MODEL = 'account.User'
+
 # STATIC_ROOT = './static/'
 
-TEMPLATE_CONTEXT_PROCESSORS=(
-    "django.core.context_processors.request",
-    "django.contrib.auth.context_processors.auth",
-)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR + '/templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.static',
+            ],
+        },
+    },
+]
+
 
 NOVNC_PORT = 8080
-NOVNC_TOKEN_FILE_PATH = '../novnc/vnc_tokens'
+NOVNC_TOKEN_FILE_PATH = '/novnc_tokens/vnc_token'
 VNCSERVER_BASE_PORT = 5900
 
 HOST_FILTER_STRATEGY = 'compute.host.ram_filter'
+
+AUTH_USER_MODEL = 'auth.User'
+
+try:
+    from .settings_local import *
+    print('LOCAL SETTINGS LOADED!!')
+except ImportError:
+    print('LOCAL SETTINGS MISSING!!!')
+    pass

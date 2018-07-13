@@ -61,8 +61,8 @@ class Image(models.Model):
 
     def save(self):
         try:
-            from storage.api import CephStorageAPI
-            cephpool = CephStorageAPI().get_pool_by_id(self.cephpool_id)
+            from storage.api import StorageAPI
+            cephpool = StorageAPI().get_pool_by_id(self.cephpool_id)
             if cephpool:
                 if not cephpool.exists(self.snap):
                     create_success = cephpool.create_snap(self.snap)

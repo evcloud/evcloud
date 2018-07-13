@@ -13,101 +13,267 @@
 	  padding:20px;
 	  box-shadow: none;
 	}
+    .row_style{
+        padding: 20px 0px;
+        border-bottom: 1px solid #ddd;
+    }
+.fontstyle{
+    font-size: 16px;
+    {#font-weight: bold;#}
+}
 </style>
 <h3></h3>
-<div role="form" class="form-horizontal" > 
-<div class="detail">
 
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">Name</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.name}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">Center</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.center_name}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">Group</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.group_name}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">Host</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.host_ipv4}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">Image</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.image}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">cpu</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.vcpu}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">memory</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.mem|sizeformat:'MB'}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">Creator</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.creator}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">create time</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.create_time}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">vlan</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.vlan_name}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">br</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.br}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">mac</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.mac}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">ipv4</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.ipv4}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">ceph host</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.ceph_host}}</span>
-	    </div>
-	</div>
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">ceph pool</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{vmobj.ceph_pool}}</span>
-	    </div>
-	</div>
+<div role="form" class="form-horizontal" >
+<div style="text-align:center;font-size: 18px;font-weight: bold">
+    {{vmobj.name}}
+
+    {% with vmobj as vm %}
+        {% include 'common/vm_opreration.html' %}
+
+    {% endwith %}
+</div>
+
+<div class="detail">
+    <div class="row" style="margin-top: 20px;margin-bottom: 30px;text-align: center;">
+        <div class="col-md-2"></div>
+        <div class="col-md-2">创建者：{{vmobj.creator}}</div>
+        <div class="col-md-3">创建时间：{{vmobj.create_time}}</div>
+        <div class="col-md-2">IP：{{vmobj.ipv4}}</div>
+        <div class="col-md-2"></div>
+    </div>
+
+    <div class="row row_style">
+        <div class="col-md-2 fontstyle">位置信息</div>
+        <div class="col-md-10">
+            <div class="col-md-4">所属分中心：{{vmobj.center_name}}</div>
+            <div class="col-md-4">所属集群：{{vmobj.group_name}}</div>
+            <div class="col-md-4">宿主机IP：{{vmobj.host_ipv4}}</div>
+        </div>
+    </div>
+
+
+    <div class="row row_style">
+        <div class="col-md-2 fontstyle">配置信息</div>
+        <div class="col-md-10">
+            <div class="col-md-4">cpu：{{vmobj.vcpu}}</div>
+            <div class="col-md-4">memory：{{vmobj.mem|sizeformat:'MB'}}</div>
+            <div class="col-md-4">mac：{{vmobj.mac}}</div>
+            <div class="col-md-4">vlan：{{vmobj.vlan_name}}</div>
+            <div class="col-md-4">br：{{vmobj.br}}</div>
+        </div>
+    </div>
+
+    <div class="row row_style">
+        <div class="col-md-2 fontstyle">镜像信息</div>
+        <div class="col-md-10">
+            <div class="col-md-4">Image：{{vmobj.image}}</div>
+            <div class="col-md-4">ceph host：{{vmobj.ceph_host}}</div>
+            <div class="col-md-4">ceph pool：{{vmobj.ceph_pool}}</div>
+        </div>
+    </div>
+
+<div class="row row_style" style="margin-top: 40px;">
+
+        <div class="col-md-12 fontstyle" style="margin-bottom: 5px;">
+            云硬盘信息<button type="button" class="btn btn-xs btn-primary" style="float:right" onclick="window.location.href='../../volume/create/'">创建CEPH云硬盘<img style="margin-top: -3px" alt="True" src="/static/admin/img/tooltag-add.png"></button>
+        </div>
+        <div class="col-md-12">
+        <table class="table">
+                <tr>
+                    <th>编号</th>
+                    <th>用户</th>
+                    <th>集群</th>
+                    <th>创建时间</th>
+                    <th>容量</th>
+                    <th>云主机编号</th>
+                    <th>挂载时间</th>
+                    <th>状态</th>
+                    <th width="180px">备注</th>
+                    <th width="120px"></th>
+                </tr>
+        {%for volume in p.object_list%}
+        <tr id="tr_{{volume.id}}" onmouseover="show_remarks_pen('{{volume.id}}')" onmouseout="hide_remarks_pen('{{volume.id}}')">
+            <td title="{{volume.id}}">{{volume.id|slice:":8"}}</td>
+            <td>{{volume.user_name}}</td>
+            <td>{{volume.group_name}}</td>
+            <td>{{volume.create_time|date:'Y-m-d H:i:s'}}</td>
+            <td>{{volume.size|sizeformat:'MB'}}</td>
+            <td>{{volume.vm|slice:":8"|default_if_none:''}}</td>
+            <td>{{volume.attach_time|date:'Y-m-d H:i:s'}}</td>
+            <td>
+            {%if volume.enable%}<img alt="True" src="/static/admin/img/icon-yes.gif">{%else%}<img alt="False" src="/static/admin/img/icon-no.gif">{%endif%}	</td>
+            <td>
+                <div id="remarks_{{volume.id}}_show">
+                    <span id="remarks_{{volume.id}}_span" style="padding-right:18px" >{{volume.remarks|default_if_none:''}}</span>
+                    <a href="javascript:void(0)" id="remarks_{{volume.id}}_pen" onclick="edit_remarks('{{volume.id}}')" title="修改备注" style="display:none"> <span class="glyphicon glyphicon-pencil" aria-hidden="true" ></span></a>
+                </div>
+                <div id="remarks_{{volume.id}}_edit" style="display:none">
+                    <textarea id="remarks_{{volume.id}}">{{volume.remarks|default_if_none:''}}</textarea>
+                    <a href="javascript:void(0)" title="保存备注"  onclick="save_remarks('{{volume.id}}')"> <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span></a>
+                </div>
+            </td>
+            <td>
+                {%if volume.enable%}
+                    {%if volume.vm%}
+                    <button type="button" class="btn btn-xs btn-warning" onclick="if(confirm('确定卸载？'))volume_umount('{{volume.id}}')">卸载</button>
+                    <script type="text/javascript">
+                        function volume_umount(volume_id) {
+                            $.ajax({
+                                url: '/vmadmin/volume/umount/',
+                                type: 'post',
+                                data: {
+                                    'volume_id': volume_id,
+                                },
+                                success:function(data){
+                                    if (data.res){
+                                        window.location.reload();
+                                    } else {
+                                        alert(data.error);
+                                    }
+                                }
+
+                            }, 'json');
+                        }
+                        </script>
+                    {%else%}
+
+                        <button type="button" class="btn btn-xs btn-primary" onclick="volume_mount('{{volume.id}}','{{ vmobj.uuid }}')">挂载</button>
+
+                        <script type="text/javascript">
+                        function volume_mount(volume_id,vm_uuid) {
+                            $.ajax({
+                                url: '/vmadmin/volume/mount_ajax/',
+                                type: 'post',
+                                data: {
+                                    'volume_id': volume_id,
+                                    'vm_uuid':vm_uuid
+                                },
+                                success:function(data){
+                                    alert(data.alert_msg);
+                                    if (data.res){
+                                        window.location.reload();
+                                    } else {
+                                        //alert(data.alert_msg);
+                                    }
+                                }
+
+                            }, 'json');
+                        }
+                        </script>
+
+                    {%endif%}
+                {%endif%}
+
+                {%if not volume.vm%}
+                    <button type="button" class="btn btn-xs btn-danger" onclick="if(confirm('确定删除？'))volume_delete('{{volume.id}}')">删除</button>
+                <script type="text/javascript">
+                    function volume_delete(volume_id) {
+                        $.ajax({
+                            url: '/vmadmin/volume/delete/',
+                            type: 'post',
+                            data: {
+                                'volume_id': volume_id,
+                            },
+                            success:function(data){
+                                if (data.res){
+                                    window.location.reload();
+                                } else {
+                                    alert(data.error);
+                                }
+                            },
+                            complete:function() {
+                                $("#remarks_" + volume_id + "_show").show();
+                                $("#remarks_" + volume_id + "_edit").hide();
+                            }
+
+                        }, 'json');
+                    }
+                    </script>
+                {%endif%}
+
+            </td>
+        </tr>
+        {%endfor%}
+
+        </table>
+
+          {%if p.page_range%}
+          <div class="panel-footer">
+          <div align="right">
+            <ul class="pagination" style="margin:0;">
+                  {% if p.has_previous %}
+                  <li><a href="{{p.link}}{{ p.previous_page_number }}">&laquo;</a></li>
+                  {%else%}
+                  <li class="disabled"><span>&laquo;</span></li>
+                  {% endif %}
+                  {% if p.num_cur_page !=  p.start_page%}
+                  <li><a href="{{p.link}}{{p.start_page}}">first</a></li>
+                  {%else%}
+                  <li class="disabled"><span>first</span></li>
+                  {%endif%}
+
+                   {%for num in p.page_range%}
+                   {%if num == p.num_cur_page%}
+                  <li class="active"><span>{{num}}</span></li>
+                   {%else%}
+                  <li><a href="{{p.link}}{{num}}">{{num}}</a></li>
+                {%endif%}
+                  {%endfor%}
+
+                   {% if p.num_cur_page != p.end_page%}
+                  <li><a href="{{p.link}}{{p.end_page}}">last</a></li>
+                   {%else%}
+                  <li class="disabled"><span>last</span></li>
+                  {%endif%}
+                  {% if p.has_next %}
+                  <li><a href="{{p.link}}{{ p.next_page_number }}">&raquo;</a></li>  {%else%}
+                  <li class="disabled"><span>&raquo;</span></li>
+                   {% endif %}
+                </ul></div>
+            </div>
+          {%endif%}
+    <script type="text/javascript">
+	function edit_remarks(volume_id) {
+		$("#remarks_" + volume_id + "_show").hide();
+		$("#remarks_" + volume_id + "_edit").show();
+	}
+	function save_remarks(volume_id) {
+		var remarks = $("#remarks_" + volume_id).val();
+		$.ajax({
+			url: '/vmadmin/volume/edit_remarks/',
+			type: 'post',
+			data: {
+				'volume_id': volume_id,
+				'remarks': remarks,
+			},
+			success:function(data){
+				if (data.res){
+					$("#remarks_"+volume_id+"_span").text(remarks);
+				} else {
+					alert(data.error);
+				}
+			},
+			complete:function() {
+				$("#remarks_" + volume_id + "_show").show();
+				$("#remarks_" + volume_id + "_edit").hide();
+			}
+
+		}, 'json');
+	}
+	function show_remarks_pen(volume_id){
+		$("#remarks_" + volume_id + "_pen").show();
+		$("#remarks_" + volume_id + "_span").css('padding-right','0px');
+	}
+	function hide_remarks_pen(volume_id){
+		$("#remarks_" + volume_id + "_pen").hide();
+		$("#remarks_" + volume_id + "_span").css('padding-right','18px');
+	}
+
+
+</script>
+</div>
+</div>
 </div>
 <div class="detail">
 	{%for k,v in vminfo.items%}
@@ -121,4 +287,5 @@
 	{%endfor%}
 </div>
 </div>
+
 {%endblock%}

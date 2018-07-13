@@ -7,10 +7,7 @@
 #
 
 ###############################################
-# name: storage模块接口函数
-# author: bobfu
-# email: fubo@cnic.cn
-# time: 2015-12-03
+# name: storage模块接口函数# author: bobfu# email: fubo@cnic.cn# time: 2015-12-03
 ###############################################
 import subprocess
 

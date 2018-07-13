@@ -145,14 +145,23 @@ function vm_start(url, vmid){
 		);
 }
 
-function vm_delete(url, vmid){
+function vm_delete(url, vmid,need_refresh){
+
 	if(!confirm('确定删除虚拟机？'))
 		return;
 	$("#" + window.vm_task_tag + vmid).html(VM_TASK_CN["delete"]);
 	action(url, vmid, 'delete',
 		function(data){
 			if (data.res == true) {
-				$("#tr_" + vmid).remove();
+				if(need_refresh === 'false'){
+					$("#tr_" + vmid).remove();
+					$("#next_tr_" + vmid).remove();
+
+				}else {
+					window.location.reload();
+				}
+
+
 			} else {
 				alert('删除失败： ' + data.error);
 			}
@@ -162,6 +171,32 @@ function vm_delete(url, vmid){
 			// get_status(window.vm_status_url , vmid);
 			$("#" + window.vm_task_tag + vmid).html("");}
 		);
+}
+
+function vm_delete_force(url, vmid,need_refresh) {
+	if (!confirm('强制删除虚拟机记录，是否确定？'))
+		return;
+	$("#" + window.vm_task_tag + vmid).html(VM_TASK_CN["delete"]);
+	action(url, vmid, 'delete_force',
+		function (data) {
+			if (data.res == true) {
+				if(need_refresh === 'false'){
+					$("#tr_" + vmid).remove();
+					$("#next_tr_" + vmid).remove();
+
+				}else {
+					window.location.reload();
+				}
+			} else {
+				alert('删除失败： ' + data.error);
+			}
+		},
+		function (data) { },
+		function (data) {
+			// get_status(window.vm_status_url , vmid);
+			$("#" + window.vm_task_tag + vmid).html("");
+		}
+	);
 }
 
 function vm_reset(url, vmid){
@@ -182,4 +217,21 @@ function vm_reset(url, vmid){
 			$("#" + window.vm_task_tag + vmid).html("");
 		}
 		);
+}
+
+
+//批量操作: by lzx 20180712
+function batch_action(url, vmid_list, action, success_callback, error_callback, complete_callback) {
+	$.ajax({
+		url: url,
+		type: 'post',
+		data: {
+			'vmid_list': vmid_list,
+			'op': action,
+		},
+		success:success_callback,
+		error: error_callback,
+		complete:complete_callback
+		
+	}, 'json');
 }

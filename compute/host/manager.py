@@ -75,7 +75,7 @@ class HostManager(object):
     def check_host(self, host):
         if type(host) == Host:
             return host
-        elif type(host) == Host:
+        elif type(host) == DBHost:
             return Host(host)
         else:
             host_obj = None

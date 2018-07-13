@@ -10,7 +10,8 @@ import time,datetime
 
 #database
 dbhost='127.0.0.1'
-dbname='vmmanager_2'
+#dbname='vmmanager_2'
+dbname='evcloud'
 username='root'
 password=''
 tbname_host='compute_host'

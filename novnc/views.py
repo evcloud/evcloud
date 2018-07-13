@@ -1,6 +1,7 @@
 #coding=utf-8
 from django.http import  HttpResponse
 from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template.context import RequestContext
 from django.conf import settings
 from novnc.vnc import VNC
@@ -26,4 +27,5 @@ def vnc_view(req):
             'vncid': vncid
             }
         
-        return render_to_response('novnc.html', dic, context_instance=RequestContext(req)) 
+        #return render_to_response('novnc.html', dic, context_instance=RequestContext(req)) 
+        return render(req, 'novnc.html', dic)

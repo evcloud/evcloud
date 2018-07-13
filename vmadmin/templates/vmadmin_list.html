@@ -31,7 +31,7 @@
             <select name="group" class="form-control">
                 <option value="">--</option>
                 {%for g in group_list%}
-                <option value="{{g.id}}" {%if g.id = request.GET.group|add:0 %} selected {%endif%}>{{g.name}}</option>
+                <option value="{{g.id}}" {%if g.id == request.GET.group|add:0 %} selected {%endif%}>{{g.name}}</option>
                 {%endfor%}
             </select>
             <script type="text/javascript">
@@ -66,10 +66,14 @@
 				this.form.submit();
 			})
 			</script>
-			
+			  <!--
             <span class="input-group-addon">IP地址</span>
             <input type="text" class="form-control" name="ip" value="{{request.GET.ip}}" />
-
+          		
+			<span class="input-group-addon">文本</span>-->
+						<span class="input-group-addon"></span>
+            <input type="text" class="form-control" name="text" value="{{request.GET.text}}" placeholder="搜 UUID、IP、备注" />
+			
 
             <span class="input-group-addon"></span>
             <input style="color: #fff;background-color: #3071a9;border-color: #285e8e;" 
@@ -78,31 +82,35 @@
         </div>
      </form>
 
-<table class="table">
+<table class="table" style="word-wrap:break-word;word-break:break-all;">
 	<tr>
-		<th>云主机编号</th>
-		<th>宿主机</th>
-		<th>镜像</th>
-		<th>IP地址</th>
-		<th>配置</th>
+		<th></th>
+		<th width="120px">IP地址</th>
+    	<th width="170px">创建者</th>
+		<th width="180px">镜像</th>
+		<th width="120px">CPU/MEM</th>
+		<th>云硬盘</th>
+		<th width="180px">备注</th>
 		<th>状态</th>
 		<th>任务</th>
-    	<th>创建者</th>
-		<th width="180px">备注</th>
 		<th width="120px"></th>
 	</tr>
 {%for vm in p.object_list%}
 <tr id="tr_{{vm.uuid}}" onmouseover="show_remarks_pen('{{vm.uuid}}')" onmouseout="hide_remarks_pen('{{vm.uuid}}')">
-	<td><a href="/vmadmin/vm/detail/?vmid={{vm.uuid}}" title="{{vm.uuid}}">{{vm.uuid|slice:":8"}}</a></td>
-	<td>{{vm.host_ipv4}}</td>
-	<td>{{vm.image}}</td>
-	<td>{{vm.ipv4}}</td>
-	<td>CPU: {{vm.vcpu}} 个<br>MEM: {{vm.mem|sizeformat:'MB'}}</td>
-	
-	<td><span id="vm_status_{{vm.uuid}}"><img src="/static/images/loading34.gif" width="43px" /></span></td>
-	<td><span id="vm_task_{{vm.uuid}}"></span></td>
+	<td rowspan="2"><input type="checkbox" value="{{vm.uuid}}" name="select_vm"></td>
+	<td><a href="/vmadmin/vm/detail/?vmid={{vm.uuid}}"><b>{{vm.ipv4}}</b></a></td>
   	<td>{{vm.creator}}</td>
+	<td>{{vm.image}}</td>
+	
 	<td>
+        {{vm.vcpu}} / {{vm.mem|sizeformat:'MB'}}        
+    </td>
+	<td rowspan="2">
+        {% for v in vm.volumes %}
+            {{ v.dev }} {{ v.size|sizeformat:'MB' }} <br>
+        {% endfor %}
+	</td>
+	<td rowspan="2">
 		<div id="remarks_{{vm.uuid}}_show">
 			<span id="remarks_{{vm.uuid}}_span" style="padding-right:18px" >{{vm.remarks|default_if_none:''}}</span>
 			<a href="javascript:void(0)" id="remarks_{{vm.uuid}}_pen" onclick="edit_remarks('{{vm.uuid}}')" title="修改备注" style="display:none"> <span class="glyphicon glyphicon-pencil" aria-hidden="true" ></span></a>
@@ -112,40 +120,32 @@
 			<a href="javascript:void(0)" title="保存备注"  onclick="save_remarks('{{vm.uuid}}')"> <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span></a>
 		</div>
 	</td>
-	<td>
-    <div class="btn-group">
-      <button type="button" class="btn btn-sm btn-success" onclick="window.open('/vmadmin/vm/vnc/?vmid={{vm.uuid}}')">远程桌面</button>
-      <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <span class="caret"></span>
-        <span class="sr-only">Toggle Dropdown</span>
-      </button>
-      <ul class="dropdown-menu" style="min-width: 0px;">
-      {%if vm.can_operate%}
-          <li><button class="btn btn-xs btn-primary" style="width:100px;margin-top:2px" onclick="vm_start('/vmadmin/vm/op/', '{{vm.uuid}}')">开机</button></li>
-	      <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_reboot('/vmadmin/vm/op/','{{vm.uuid}}')">软重启</button></li>
-	      <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_shutdown('/vmadmin/vm/op/','{{vm.uuid}}')">软关机</button></li>
-	      <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_poweroff('/vmadmin/vm/op/','{{vm.uuid}}')">关闭电源</button></li>
-	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/edit/?vmid={{vm.uuid}}'">修改配置</button></li>
-	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/migrate/?vmid={{vm.uuid}}'">关机迁移</button></li>
-	      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="vm_reset('/vmadmin/vm/op/','{{vm.uuid}}')">系统初始化</button></li>
-	      <li><button class="btn btn-xs btn-danger" style="width:100px;margin-top:2px" onclick="vm_delete('/vmadmin/vm/op/','{{vm.uuid}}')">删除</button></li>
-      {%else%}
-      	  <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">开机</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">软重启</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">软关机</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">关闭电源</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">修改配置</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">关机迁移</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">系统初始化</button></li>
-	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">删除</button></li>
-      {%endif%}
-      </ul>
-    </div>
-
+	<td rowspan="2"><span id="vm_status_{{vm.uuid}}"><img src="/static/images/loading34.gif" width="43px" /></span></td>
+	<td rowspan="2"><span id="vm_task_{{vm.uuid}}"></span></td>
+	
+	<td rowspan="2">
+        {% with need_refresh='false' %}
+            {% include 'common/vm_opreration.html' %}
+        {% endwith %}
 	</td>
 </tr>
+<tr id="next_tr_{{vm.uuid}}">
+	<td style="border-top: none;"></td>
+	<td colspan="3" style="border-top: none;">ID: {{vm.uuid}}&nbsp;&nbsp;宿主机: {{vm.host_ipv4}}</td>
+</tr>
 {%endfor%}
-
+{% if p.object_list%}
+<tr title="批量操作">
+	<td><input type="checkbox" id="select_all" ></td>
+	<td colspan="9">
+		<button class="btn btn-xs btn-primary" onclick="batch_btn_click('start')">开机</button>
+		<button class="btn btn-xs btn-warning" onclick="batch_btn_click('shutdown')">正常关机</button>
+		<button class="btn btn-xs btn-warning" onclick="batch_btn_click('poweroff')">强制断电</button>
+		<button class="btn btn-xs btn-danger" onclick="batch_btn_click('delete')">删除</button>
+		<button class="btn btn-xs btn-danger" onclick="batch_btn_click('delete_force')">强制删除</button>
+	</td>
+</tr>
+{% endif %}
 </table>
 
   </div>
@@ -188,6 +188,30 @@
     </div>
    	{%endif%}
 </div>
+
+<div class="modal" id="spin_modal" tabindex="-1" role="dialog" aria-labelledby="spin_modal_title">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="spin_modal_title"></h4>
+      </div>
+      <div class="modal-body">
+        <div class="progress" id="spin_process_div">
+		  <div class="progress-bar progress-bar-striped active" style="width: 100%"></div>
+		</div>
+		<div id="spin_finished_div" hidden="hidden">
+		  	执行完成！
+		</div>
+      </div>
+      <div class="modal-footer" id="spin_modal_ft">
+        <button type="button" class="btn btn-default" onclick="close_spin_modal()">关闭</button>
+        <!-- 
+        <button type="button" class="btn btn-primary" id="spin_confirm_btn" hidden="hidden">确定</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="text/javascript">
 	function edit_remarks(vmid) {
 		$("#remarks_" + vmid + "_show").hide();
@@ -230,5 +254,112 @@
 	window.vm_task_tag =  'vm_task_';
   	window.vm_status_url = '/vmadmin/vm/status/';
 	update_status(window.vm_status_url , vmids, 600000);
+
+	//by lzx :20180713
+	var vmips = { {%for vm in p.object_list%}"{{vm.uuid}}":"{{vm.ipv4}}",{%endfor%} };
+	$("#select_all").click(function () {
+        if (this.checked) {
+            $("input[name='select_vm']").prop("checked", true);
+            $("input[name='select_vm']").parent().parent().addClass("selected-tr");
+            $("input[name='select_vm']").parent().parent().next().addClass("selected-tr");
+        } else {
+            $("input[name='select_vm']").prop("checked", false);
+            $("input[name='select_vm']").parent().parent().removeClass("selected-tr");
+            $("input[name='select_vm']").parent().parent().next().removeClass("selected-tr");
+        }
+    });
+	$("input[name='select_vm']").click(function() {
+		if(!this.checked){
+			$("#select_all").prop("checked",false);
+		}
+	});
+	$("input[name='select_vm']").change(function(){
+		if(this.checked){
+			$(this).parent().parent().addClass("selected-tr");
+            $("input[name='select_vm']").parent().parent().next().addClass("selected-tr");
+		}
+		else{
+			$(this).parent().parent().removeClass("selected-tr");
+            $("input[name='select_vm']").parent().parent().next().removeClass("selected-tr");
+		}
+	});
+
+	function batch_btn_click(op) {
+		var vmid_list =[];
+		$("input[name='select_vm']:checked").each(function() {
+			vmid_list.push($(this).val());
+		});
+		if(vmid_list.length==0){
+			alert("请选择需要执行操作的云主机！");
+			return;
+		}
+
+		var op_list = ["shutdown","poweroff","start","delete","delete_force"];
+		var op_name = {"shutdown":"关机","poweroff":"断电","start":"开机","delete":"删除","delete_force":"强制删除"};
+		if(op_list.indexOf(op)<0){
+			alert("不支持此操作！");
+			return;
+		}
+		var t_text = "确定执行批量操作: "+op_name[op]+"?";
+		if(!confirm(t_text))
+			return;
+
+		init_spin_modal(op_name[op]);
+		$('#spin_modal').modal({'backdrop':'static','keyboard':false,'show':true});
+		var url = '/vmadmin/vm/batch_op/';
+		batch_action(url,vmid_list,op,
+			function(data){
+				var tmp_tbl = $("<table class='table'><tr><th>VM</th><th>结果</th></tr></table>");
+				for(var i in data){
+					var tmp_tr = $("<tr></tr>");
+					tmp_tr.append($("<td/>").html(vmips[data[i].vmid]+'<br>('+data[i].vmid+')'));
+					if(data[i].res){
+						tmp_tr.append($("<td/>").text("成功"));
+					}
+					else{
+						if(data[i].error){
+							tmp_tr.append($("<td/>").text("失败："+data[i].error));
+						}else{
+							tmp_tr.append($("<td/>").text("失败："+data[i].err));
+						}
+					}
+					tmp_tbl.append(tmp_tr);
+				}
+				update_spin_modal(tmp_tbl);
+			},
+			function(req){
+				console.log(req)
+				var tmp_div=$("<div><h3 style='color:red;'>失败</h3><br></div>");
+				tmp_div.append($("<strong/>").text("返回状态码："+req.status));
+				tmp_div.append($("<p style='font-size:12px;'/>").text("错误信息："+req.responseText));
+				update_spin_modal(tmp_div);
+			}
+			);
+
+	}
+
+	function init_spin_modal(op_name) {
+		$("#spin_modal_title").text(op_name);
+		$("#spin_process_div").show();
+		$("#spin_finished_div").hide();
+		$("#spin_modal_ft").hide();
+	}
+	function update_spin_modal(content_html) {
+		$("#spin_process_div").hide();
+		$("#spin_finished_div").html(content_html);		
+		$("#spin_finished_div").show();		
+		$("#spin_modal_ft").show();
+	}
+	function close_spin_modal() {
+		$('#spin_modal').modal('hide');
+		window.location.reload();		
+	}
 </script>
+
+<style type="text/css">
+		.selected-tr{
+			background-color: #f5f5f5;
+		}
+</style>
+
 {%endblock%}

@@ -1,10 +1,10 @@
 # [总体介绍]
 EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。
 ## 项目主页
-    http://vm.dcloud.cn
+    http://ev.5ink.org
 ## 作者与联系方式
-    张海明，付波，刘忠新，杨浩
-    zhhaim@foxmail.com
+    fubo,lzx,hai
+    ink@cnic.cn
 ## 界面截图
 ![image](https://github.com/bobff/ev-cloud/raw/master/static/images/page1.png)
 
@@ -16,21 +16,20 @@ EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳�
     dnf install gcc gcc-c++ python3-devel mariadb-devel libvirt libvirt-devel redhat-rpm-config 
 ## python3环境准备
     pip3 install mysqlclient libvirt-python
-    pip3 install django-oauth-toolkit coreapi    
     pip3 install python-dateutil lxml numpy
-    pip3 install django==1.11.10 django-oauth-toolkit coreapi 
-    pip3 install djangorestframework==3.7.7
+    pip3 install django-oauth-toolkit coreapi djangorestframework==3.7.7 
+    pip3 install uwsgi django==1.11.13 
 ## mysql and nginx
     systemctl start mariadb
     ln -s conf/nginx.conf /etc/nginx/conf.d/evcloud.conf
     systemctl start nginx
 ## novnc server
-    cd /home/nginx
+    cd /home
     mkdir novnc_token
     touch novnc_token/vnc_tokens
     cat run_novnc.sh 
     ps aux | grep "/usr/bin/websockify 0.0.0.0:8080 --daemon" | awk '{print "kill -9 " $2}' | sh
-    websockify 0.0.0.0:8080 --daemon --web=/usr/share/novnc --token-plugin=TokenFile --token-source=/home/nginx/novnc_tokens/
+    websockify 0.0.0.0:8080 --daemon --web=/usr/share/novnc --token-plugin=TokenFile --token-source=/home/novnc_tokens/
     
 ## 调试运行
     python3 manage.py runserver 0.0.0.0:81 --settings=conf.settings_ol
@@ -45,3 +44,4 @@ EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳�
 evcloud_1.2
 
 * 创建云主机页面前端检查宿主机创建云主机数量，宿主机内存和IP地址等资源是否能满足要求
+

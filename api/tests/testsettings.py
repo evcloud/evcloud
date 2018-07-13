@@ -1,14 +1,14 @@
-TEST_HOST = '192.168.50.11'
+TEST_HOST = '127.0.0.1' #'192.168.50.11'
 TEST_HOST_2 = '127.0.0.1'
-TEST_CEPH = {'host': '192.168.50.11',
+TEST_CEPH = {'host': '127.0.0.1',#'192.168.50.11',
              'pool': 'vm',
              'port': 6789,
-             'uuid': '00000000-2016-0120-1058-192168088008'}
-TEST_IMAGE = '0000_demo_centos_6_cuda@20160121'
-TEST_VLAN = '10.0.60.0'
-TEST_BR = 'br1'
-TEST_MAC = 'C8:00:60:00:01:53'
-TEST_IP = '10.0.60.153'
+             'uuid': 'b1b874e4-ab2f-427b-9393-33be24fa7810'}
+TEST_IMAGE = '0000_demo_winxp@20180629'
+TEST_VLAN = '10.10.20.0'
+TEST_BR = 'br_local'
+TEST_MAC = 'C8:00:A0:A0:B0:77'
+TEST_IP = '10.10.20.119'
 TEST_XML = '''
 <domain type='kvm'>
   <name>%(name)s</name>

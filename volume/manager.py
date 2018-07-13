@@ -8,9 +8,10 @@ from api.error import ERR_CEPH_CREATE
 from .volume import CephVolume
 
 class CephManager(object):
-    def create_volume(self, cephpool, size, group_id, volume_id=None):
+    def create_volume(self, cephpool, size, group_id=None, volume_id=None):
         if not volume_id:
             volume_id = str(uuid.uuid4())
+        print(cephpool, volume_id, size)
         create_success = cephpool.create(volume_id, size)
         if create_success:
             try:

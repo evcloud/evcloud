@@ -1,6 +1,6 @@
 #coding=utf-8
 from django.core.management.base import BaseCommand 
-from ...api import CephVolumeAPI
+from ...api import VolumeAPI
 
 class Command(BaseCommand):
     # def add_arguments(self, parser):
@@ -9,7 +9,7 @@ class Command(BaseCommand):
     #     parser.add_argument('num', type=int)
 
     def handle(self, *args, **options):
-        api = CephVolumeAPI()
+        api = VolumeAPI()
         for v in api.get_volume_list():
             print(v.id, v.size, v.vm, v.attach_time)
 

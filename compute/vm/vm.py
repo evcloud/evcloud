@@ -292,22 +292,31 @@ class VM(VMData, VirtManager):
         return False
     
         
-    def delete(self, archive_disk_name=None):
-        if self.domain_exists(self.host_ipv4, self.uuid):
-            dom = self.get_domain(self.host_ipv4, self.uuid)
-            try:
-                dom.destroy()
-            except:
-                pass
-            dom.undefine()
+    def delete(self, archive_disk_name=None, force=False):
+        try:
             if self.domain_exists(self.host_ipv4, self.uuid):
-                res = False
+                dom = self.get_domain(self.host_ipv4, self.uuid)
+                try:
+                    dom.destroy()
+                except:
+                    pass
+                dom.undefine()
+                if self.domain_exists(self.host_ipv4, self.uuid):
+                    res = False
+                else:
+                    res = True
             else:
                 res = True
-        else:
-            res = True
-        
-        if res and not self.domain_exists(self.host_ipv4, self.uuid):
+        except Exception as e:
+            import traceback 
+            traceback.print_exc()
+
+            if force:
+                res = True 
+            else:
+                raise e    
+                
+        if force or (res and not self.domain_exists(self.host_ipv4, self.uuid)):
             try:
                 archive = VmArchive()
                 archive.center_id  = self.db_obj.host.group.center.pk

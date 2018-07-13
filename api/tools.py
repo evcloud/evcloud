@@ -78,12 +78,12 @@ def catch_error(func):
                 import traceback
                 print(traceback.format_exc())
             return {'res': False, 'err': e.err} 
-        except Exception as e:
-            if settings.DEBUG: 
-                import traceback
-                print(traceback.format_exc())
-            
-            return {'res': False, 'err':ERR_PROCESS}
+        # except Exception as e:
+        #     if settings.DEBUG:
+        #         import traceback
+        #         print(traceback.format_exc())
+        #
+        #     return {'res': False, 'err':ERR_PROCESS}
         
     handle_args.__name__ = func.__name__
     handle_args.__module__ = func.__module__
@@ -138,7 +138,8 @@ def api_log(func):
 
             return res   
         except Exception as e:
-            return {'res': False, 'err': ERR_LOG}
+            print(e)
+            return {'res': False, 'err': str(e)}
     handle_args.__name__ = func.__name__
     handle_args.__module__ = func.__module__
     return handle_args

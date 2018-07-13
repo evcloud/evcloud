@@ -4,7 +4,7 @@
 <div class="panel panel-default">
   <div class="panel-heading">
     <h2 class="panel-title"><strong>云硬盘列表</strong>
-    <button type="button" class="btn btn-xs btn-primary" style="float:right" onclick="window.location.href='../create/'">创建云硬盘<img style="margin-top: -3px" alt="True" src="/static/admin/img/tooltag-add.png"></button>
+    <button type="button" class="btn btn-xs btn-primary" style="float:right" onclick="window.location.href='../create/'">创建CEPH云硬盘<img style="margin-top: -3px" alt="True" src="/static/admin/img/tooltag-add.png"></button>
 
     </h2>
   </div>
@@ -31,7 +31,7 @@
             <select name="group" class="form-control">
                 <option value="">--</option>
                 {%for g in group_list%}
-                <option value="{{g.id}}" {%if g.id = request.GET.group|add:0 %} selected {%endif%}>{{g.name}}</option>
+                <option value="{{g.id}}" {%if g.id == request.GET.group|add:0 %} selected {%endif%}>{{g.name}}</option>
                 {%endfor%}
             </select>
             <script type="text/javascript">

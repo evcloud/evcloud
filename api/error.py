@@ -74,6 +74,7 @@ ERR_VM_DEL_GPU_MOUNTED  = '50036'
 ERR_VM_DEL_VOL_MOUNTED  = '50037'
 ERR_MOUNT_RUNNING = '50038'
 ERR_UMOUNT_RUNNING = '50039'
+ERR_VLAN_EDIT_REMARKS    = '50040'
 
 ERR_USERNAME            = '60001'
 ERR_USER_DB             = '60002'
@@ -162,6 +163,7 @@ ERROR_CN = {
     ERR_VM_DEL_VOL_MOUNTED  : '云主机删除失败，有云硬盘未卸载',
     ERR_MOUNT_RUNNING       : '运行中的云主机不能进行挂载操作',
     ERR_UMOUNT_RUNNING      : '运行中的云主机不能进行卸载操作',
+    ERR_VLAN_EDIT_REMARKS   : '网段备注修改失败',    
 
     ERR_USERNAME            : '有户名有误',
     ERR_USER_DB             : 'DBUser对象有误',
@@ -176,39 +178,6 @@ ERROR_CN = {
     ERR_DEL_MOUNTED_VOLUME  : '不能删除已挂载VOLUME',
 }
 
-STRERR_EN = {
-    ERR_ARGS_DECORATOR:     'decorator args_required can not used here.',
-    ERR_ARGS_REQUIRED:      'args not exists.',
-    ERR_PROCESS:            'processing error.',
-    ERR_LOG:                'log error.',
-    ERR_AUTH_NO_LOGIN:      'user not login.',
-    ERR_AUTH_LOGIN:         'login error.',
-    ERR_AUTH_LOGOUT:        'logout error.',
-    ERR_AUTH_PERM:          'permission error.',
-    ERR_GROUP_ID:           'group id error.',
-    ERR_HOST_ID:            'host id error.',
-    ERR_IMAGE_ID:           'image id error.',
-    ERR_CEPH_ID:            'ceph id error.',
-    ERR_VLAN_NO_FIND:       'vlan not find.',
-    ERR_VLAN_ID:            'vlan id error.',
-    ERR_VM_UUID:            'vm uuid error.',
-    ERR_VM_DEFINE:          'vm define error.',
-    ERR_VM_OP:              'vm opperation error.',
-    ERR_VM_NO_OP:           'op name error.',
-    ERR_ARGS_VM_VCPU:       'vm args vcpu error.',
-    ERR_ARGS_VM_MEM:        'vm args memory error.',
-    ERR_ARGS_VM_EDIT_NONE:  'no args error.',
-    ERR_VM_EDIT_REMARKS:    'edit remarks of vm error.',
-    ERR_VM_EDIT:            'edit vm error.',
-    ERR_VM_MIGRATE:         'migrate error.',
-    ERR_ARGS_VM_CREATE_NO_VLANTYPE: 'net_type_id or vlan_id required.',
-    ERR_DISK_INIT:          'init disk error.',
-    ERR_DISK_ARCHIVE:       'archive disk error.',
-    ERR_DISK_NAME:          'disk name error.',
-    ERR_IMAGE_INFO:         'get image info error.',
-    ERR_IMAGE_CEPHHOST:     'get ceph host error.',
-    ERR_IMAGE_CEPHPOOL:     'get ceph pool error.'
-}
 
 class Error(Exception):
     err = ''

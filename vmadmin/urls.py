@@ -2,6 +2,7 @@ from django.conf.urls import include, url
 from .vm_views import *
 from .gpu_views import *
 from .volume_views import *
+from .net_views import *
 
 urlpatterns = [
 #     url(r'^(?P<url>.+)', root),
@@ -15,6 +16,7 @@ urlpatterns = [
     url(r'^vm/detail/$', vm_detail_view),
     url(r'^vm/status/$', vm_status_ajax),
     url(r'^vm/op/$', vm_op_ajax),
+    url(r'^vm/batch_op/$', vm_batch_op_ajax),
     url(r'^vm/edit_remarks/$', vm_edit_remarks_ajax),
 
     url(r'^gpu/list/$', gpu_list_view),
@@ -26,7 +28,17 @@ urlpatterns = [
     url(r'^volume/list/$', volume_list_view),
     url(r'^volume/create/$', volume_create_view),
     url(r'^volume/mount/$', volume_mount_ceph_view),
+    url(r'^volume/mount_ajax/$', volume_mount_ceph_ajax),
     url(r'^volume/delete/$', volume_delete_ajax),
     url(r'^volume/edit_remarks/$', volume_edit_remarks_ajax),
     url(r'^volume/umount/$', volume_umount_ceph_ajax),
+    url(r'^volume/vm/create/$', volume_vm_create_view),
+    url(r'^volume/cephpool_list/$', volume_cephpool_list_ajax),
+
+    url(r'^net/vlan/list/$', net_vlan_list_view),
+    url(r'^net/vlan/edit_remarks/$', net_vlan_edit_remarks_ajax),
+    url(r'^net/vlan/ip/list/$', net_vlan_ip_list_view),
+    url(r'^net/vlan/ip/batch_create/$', net_batch_create_macip),
+    url(r'^net/vlan/ip/conf_file/$', net_vlan_conf_file_view),
+
 ]
