@@ -1,12 +1,9 @@
 # [总体介绍]
 EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。
-## 项目主页
-    http://ev.5ink.org
 ## 作者与联系方式
     zhhaim@foxmail.com
 ## 界面截图
 ![image](http://vm.dcloud.cn/static/docs/images/page1.png)
-
 ![image](http://vm.dcloud.cn/static/docs/images/page2.png)
 
 # [开发环境、调试与运行]
