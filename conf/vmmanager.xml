@@ -1,8 +1,0 @@
-<uwsgi>  
-    <socket>ip:port</socket>  
-    <chdir>/project-path</chdir>  
-    <pythonpath>/project-path</pythonpath>  
-    <module>conf.wsgi</module>  
-    <daemonize>/var/log/uwsgi/vmmanager2.uwsgi.log</daemonize>  
-    <reload-mercy>8</reload-mercy>
-</uwsgi> 

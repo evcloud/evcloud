@@ -1,8 +1,0 @@
-<uwsgi>  
-    <socket>127.0.0.1:3033</socket>  
-    <chdir>/home/nginx/evcloud</chdir>  
-    <pythonpath>/home/nginx/evcloud</pythonpath>  
-    <module>conf.wsgi</module>  
-    <daemonize>/var/log/nginx/evcloud.uwsgi.log</daemonize>  
-    <reload-mercy>8</reload-mercy>
-</uwsgi> 
