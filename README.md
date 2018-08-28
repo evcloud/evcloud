@@ -5,9 +5,9 @@
 >    https://github.com/evcloud/evcloud_server
 
 ## 界面截图
-![image](images/page1.png)
+![image](https://github.com/evcloud/evcloud_server/blob/master/static/images/page1.png)
 
-![image](images/page2.png)
+![image](https://github.com/evcloud/evcloud_server/blob/master/static/images/page2.png)
 
 # [开发环境、调试与运行]
 ## 系统软件环境准备
