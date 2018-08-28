@@ -1,0 +1,155 @@
+{%extends 'vmadmin_base.html'%}
+{%load  sizeformat static %}
+{%block base%}
+<style type="text/css">
+	.detail {
+	  margin-right: 0;
+	  margin-left: 0;
+	  /*background-color: #fff;*/
+	  border-color: #080808;
+	  border-width: 1px;
+	  border-radius: 4px 4px 0 0;
+	  /*-webkit-box-shadow: none;*/
+	  padding:20px;
+	  box-shadow: none;
+	}
+</style>
+
+<script type="text/javascript">
+ //  	window.vm_status_url = '/vmadmin/vm/status/';
+	// window.vm_status_tag  = 'vm_status_';
+	// update_status(window.vm_status_url , ['{{vmobj.uuid}}'], 600000);
+</script>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h2 class="panel-title">
+    	<strong>挂载云硬盘</strong>
+    </h2>
+  </div>
+  <div class="panel-body">
+	<div role="form" class="form-horizontal">
+		<div class="form-group">
+			<label for="name"  class="col-sm-3 control-label">云硬盘ID</label>
+			<div class="col-sm-9">
+				<input name="volume_id" type="hidden" class="form-value" value="{{volume.id}}" />
+				<span class="form-value">{{volume.id}}</span>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="name"  class="col-sm-3 control-label">创建时间</label>
+			<div class="col-sm-9">
+				<span class="form-value">{{volume.create_time}}</span>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="name" class="col-sm-3 control-label">云硬盘容量</label>
+			<div class="col-sm-9">
+				<span class="form-value">{{volume.size|sizeformat:'MB'}}</span>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="name"  class="col-sm-3 control-label">备注</label>
+			<div class="col-sm-9">
+				
+				<span class="form-value">{{volume.remarks|default_if_none:'--'}}</span>
+				
+			</div>
+		</div>
+		{% if volume.vm %}
+		<div class="form-group">
+			<label for="name" class="col-sm-3 control-label">已挂载到云主机</label>
+			<div class="col-sm-9">
+		
+				<span class="form-value">{{volume.vm}}</span>
+		
+			</div>
+		</div>
+		{% endif %}
+	</div>
+	 {% if not volume.vm %}
+	<h4>可挂载云主机列表</h4>
+	<table  id="vm-table">
+		<thead>
+		<tr>
+			<th>编号</th>
+			<th>宿主机</th>
+			<th>镜像</th>
+			<th>IP地址</th>
+			<th>配置</th>
+			<th>创建者</th>
+			<th>状态</th>
+			<th>已挂载</th>
+			<th>备注</th>
+			<th></th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for v in vm_list %}
+		<tr>
+			<td>{{v.uuid|slice:":8"}}</td>
+			<td>{{v.host_ipv4}}</td>
+			<td>{{v.image}}</td>
+			<td>{{v.ipv4}}</td>
+			<td>
+				CPU:{{v.vcpu}}<br>
+				MEM:{{v.mem|sizeformat:"MB"}}
+			</td>
+			<td>{{v.creator}}</td>
+			<td><span id="vm_status_{{v.uuid}}"><img src="/static/images/loading34.gif" width="43px" /></span></td>
+			<td>
+				{% for vv in v.volumes %}
+				<span style="white-space:nowrap;">{{ vv.dev }}  {{vv.size|sizeformat:"MB"}}</span>
+				{% endfor %}
+			</td>
+			<td>{{v.remarks}}</td>
+			<td>
+				<form method="post"> {% csrf_token %}
+					<input name="volume_id" type="hidden" value="{{volume.id}}" />
+					<input name="vm_uuid" type="hidden" value="{{v.uuid}}" />
+					<input type="submit" value="挂载" />
+				</form>
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	<link rel="stylesheet" href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}" />
+	<script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
+	<script>
+		$(document).ready(function () {
+			$('#vm-table').DataTable({
+				"dom": '<"top"f>t',
+				"paging": false,
+				"ordering": false,
+				"info": false
+			} );
+		});
+		// 异步更新云主机状态
+		(function(){
+			var vmids = [{%for vm in vm_list %}"{{vm.uuid}}", {% endfor %}];
+			window.vm_status_tag = 'vm_status_';
+			window.vm_task_tag = 'vm_task_';
+			window.vm_status_url = '/vmadmin/vm/status/';
+			update_status(window.vm_status_url, vmids, 600000);
+		})();
+	</script>
+	{% endif %}
+	</div>
+	<div class="panel-footer">
+	  <div align="right">
+	
+        	<input id="form_btn" type="button" class="btn btn-default" onclick="window.location.href='../list/'" value="返回" />
+           	
+        </div>
+    </div>
+
+</div>
+<script type="text/javascript">
+{%if alert_msg%}
+alert('{{alert_msg}}');
+{%endif%}
+
+</script>
+{%endblock%}

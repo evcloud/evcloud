@@ -1,0 +1,130 @@
+{%extends 'vmadmin_base.html'%} {%block base%}
+
+<form id="form" role="form" class="form-horizontal" method="post" action="">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title"><strong>创建云硬盘</strong></h3>
+        </div>
+        <div class="panel-body">
+
+
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="name" class="col-sm-3 control-label">分中心</label>
+                <div class="col-sm-9">
+                    <div style="padding-bottom:10px">
+                        {%for center in center_list%}
+                        <input type="button" class="btn 
+                {%if request.GET.center %} 
+                    {%if request.GET.center|add:0 == center.id%} btn-info {%endif%} 
+                {%else%} 
+                    {%if forloop.first%}btn-info{%endif%}{%endif%}" value="{{center.name}}" onclick="javascript:window.location.href='?center={{center.id}}'"> {%endfor%}
+                    </div>
+                    <!-- <select name='center' class="form-control" style="width:200px">
+				{%for center in centers%}
+				<option value="{{center.pk}}" >{{center.name}}</option>
+				{%endfor%}
+			</select> -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-3 control-label">集群</label>
+                <div class="col-sm-9">
+                    <select name="group" class="form-control" style="width:400px">
+            {%for g in group_list%}
+            <option value="{{g.id}}">{{g.name}}</option>
+            {%endfor%}
+            </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-3 control-label">存储卷</label>
+                <div class="col-sm-9">
+                    <select name="pool" class="form-control" style="width:400px">
+            {% comment %}
+                {%for p in pool_list%}
+                <option value="{{p.id}}">[{{p.host}}] {{p.pool}}</option>
+                {%endfor%}
+            {% endcomment %}
+            </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="content" class="col-sm-3 control-label">容量</label>
+                <div class="col-sm-9">
+                    <input required name="size" type="integer" class="form-control" value="1" style="width:200px;display:inline">GB
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="content" class="col-sm-3 control-label" style="font-weight: 200;">备注</label>
+                <div class="col-sm-9">
+                    <textarea rows="" cols="" name="remarks" class="form-control" style="width:75%"></textarea>
+
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="content" class="col-sm-3 control-label"></label>
+                <div class="col-sm-9">
+
+
+                </div>
+            </div>
+
+        </div>
+        <div class="panel-footer">
+            <div align="right">
+                <button id="form_btn_mount" type="botton" class="btn btn-primary" style="width:150px">创建并挂载</button>
+                <button id="form_btn" type="botton" class="btn btn-primary" style="width:150px">创建</button>
+                <input name="go_to_mount" type="hidden" value="" />
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+    $("#form_btn_mount").click(function() {
+        $("#form").find('[name=go_to_mount]').val('1');
+        $(this).disabled = true;
+        $("#form").submit();
+    })
+    $("#form_btn").click(function() {
+        $("#form").find('[name=go_to_mount]').val('0');
+        $(this).disabled = true;
+        $("#form").submit();
+    })
+
+    function init_pool_select() {
+        $("select[name=pool]").empty();
+        var group_id = $("select[name=group]").val();
+        $.ajax({
+            url: "/vmadmin/volume/cephpool_list/",
+            type: 'get',
+            data: {
+                'group_id': group_id,
+            },
+            cache: false,
+            success: function(data) {
+                if (data.res == true) {
+                    for (var i in data.list) {
+                        var p = data.list[i];
+                        var op_str = "<option value=\"" + p.id + "\">[" + p.host + "] " + p.pool + "</option>";
+                        $("select[name=pool]").append(op_str);
+                    }
+                }
+            },
+        }, 'json');
+    }
+    init_pool_select();
+    $("select[name=group]").change(function() {
+        init_pool_select();
+    });
+</script>
+
+{%if alert_msg%}
+<script type="text/javascript">
+    alert('{{alert_msg}}');
+</script>
+{%endif%} {%endblock%}

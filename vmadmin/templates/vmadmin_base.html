@@ -1,0 +1,153 @@
+{% load i18n admin_static %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>云主机平台</title>
+    
+  
+    {% block extrastyle %}{% endblock %}
+  	{% block extrahead %}{% endblock %}
+    {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
+    <!-- Bootstrap -->
+    <link href="/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/js/csrf.js"></script>
+    <script src="/static/js/vm.js"></script>
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="http://cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+      <style type="text/css">
+/* Hide for mobile, show later */
+/*.sidebar {
+  display: none;
+}
+@media (min-width: 768px) {*/
+  .sidebar {
+    position: fixed;
+    top: 51px;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: block;
+    padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    background-color: #f5f5f5;
+    border-right: 1px solid #eee;
+  }
+/*}*/
+
+/* Sidebar navigation */
+.nav-sidebar {
+  margin-right: -21px; /* 20px padding + 1px border */
+  margin-bottom: 20px;
+  margin-left: -20px;
+}
+.nav-sidebar > li > a {
+  padding-right: 20px;
+  padding-left: 20px;
+}
+.nav-sidebar > .active > a,
+.nav-sidebar > .active > a:hover,
+.nav-sidebar > .active > a:focus {
+  color: #fff;
+  background-color: #428bca;
+}
+
+.navbar-inverse {
+  background-color: #000676;
+  border-color: #A5AFF2;
+}
+
+.form-value {
+    display: block;
+    width: 100%;
+    height: 34px;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+    background-color: none;
+    background-image: none;
+    /*border: 1px solid #ccc;*/
+    border-radius: 4px;
+   }
+ .navbar{
+ height:52px;
+ }
+
+</style>
+{%block head%}
+{%endblock head%}
+</head>
+    <body class="{% block bodyclass %}{% endblock %}">
+        <div class="navbar  navbar-inverse navbar-fixed-top" role="navigation" >
+            <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/vmadmin/"><strong>云主机平台</strong></a>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li id="first_list"><a href="/vmadmin/vm/list/">云主机列表</a></li>
+                    <li id="first_create"><a href="/vmadmin/vm/create/">创建云主机</a></li>
+                    <li id="first_volume"><a href="/vmadmin/volume/list/">云硬盘</a></li>
+                    <li id="first_gpu"><a href="/vmadmin/gpu/list/">GPU</a></li>
+                    <li id="first_gpu"><a href="/vmadmin/net/vlan/list/">网络</a></li>
+                    {% if request.user.is_superuser %}
+                    <li><a href="/admin/">后台管理</a></li>                    
+                    {% endif%}
+                    <li><a href="/reports/">统计报表</a></li> 
+
+                </ul>
+                <ul class="nav navbar-nav pull-right">
+                    <li> <a href="#">{{request.user}}</a></li>
+                    <li class=""> <a href="/accounts/logout/?next=/vmadmin/">退出</a></li>
+                </ul>
+            </div><!--/.nav-collapse -->
+            </div>
+        </div>
+        {%block bigmain%}
+        <div class="jumbotron" style="min-height:580px; padding-bottom:0">
+            <div class="container" >
+            <h1></h1>
+            {%block base%}
+			{%endblock%}
+            </div>
+        </div>
+        {%endblock bigmain%}
+
+        <div class="footer-bottom">
+            <ul class="list-inline text-center">
+                <li>本平台由EVcloud提供支持 
+                    <a  href="https://github.com/evcloud/evcloud_server/" target="_blank" title="项目源码">
+                        <svg height="32" class="octicon octicon-mark-github" viewBox="0 0 16 16" version="1.1" width="32" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+<script>
+        // 消息弹窗
+    var message = "";
+    {%for msg in messages%}
+        message += "{{msg}}<br/>";
+    {%endfor%}
+    if(message) alert(message);
+</script>
+</body>
+</html>

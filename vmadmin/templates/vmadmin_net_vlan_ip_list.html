@@ -1,0 +1,74 @@
+{%extends 'vmadmin_base.html'%}
+{%load  sizeformat%}
+{%block base%}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h2 class="panel-title"><strong>{%if vlan_info%}{{vlan_info.vlan|default_if_none:''}}{%endif%} | IP列表</strong>
+    <a class="btn btn-xs btn-primary" style="float:right" href="../conf_file/?vlan={{request.GET.vlan|default_if_none:''}}">导出配置文件</a>
+    </h2>
+  </div>
+  <div class="panel-body">
+  
+<table class="table" style="word-wrap:break-word;word-break:break-all;">
+	<tr>
+		<th>编号</th>
+		<th>IP</th>
+		<th>MAC</th>
+		<th>主机编号</th>
+		<th>状态</th>
+	</tr>
+{%for macip in p.object_list%}
+<tr>
+	<td>{{macip.id}}</td>
+	<td>{{macip.ipv4}}</td>
+	<td>{{macip.mac}}</td>
+	<td>{{macip.vmid|default_if_none:''}}</td>	
+	<td>
+	{%if macip.enable%}<img alt="True" src="/static/admin/img/icon-yes.gif">{%else%}<img alt="False" src="/static/admin/img/icon-no.gif">{%endif%}	</td>	
+	
+</tr>
+{%endfor%}
+
+</table>
+
+  </div>
+  {%if p.page_range%}
+  <div class="panel-footer">
+  <div align="right">
+	<ul class="pagination" style="margin:0;">
+	      {% if p.has_previous %}
+	      <li><a href="{{p.link}}{{ p.previous_page_number }}">&laquo;</a></li>
+	      {%else%}
+	      <li class="disabled"><span>&laquo;</span></li>
+	      {% endif %}
+	      {% if p.num_cur_page !=  p.start_page%}
+	      <li><a href="{{p.link}}{{p.start_page}}">first</a></li>
+	      {%else%}
+	      <li class="disabled"><span>first</span></li>
+	      {%endif%}
+	
+	      {%for num in p.page_range%}
+	       {%if num == p.num_cur_page%}
+	      <li class="active"><span>{{num}}</span></li>
+	       {%else%}
+	      <li><a href="{{p.link}}{{num}}">{{num}}</a></li>
+	       {%endif%}
+	      {%endfor%}
+	
+	       {% if p.num_cur_page != p.end_page%}
+	      <li><a href="{{p.link}}{{p.end_page}}">last</a></li>
+	       {%else%}
+	      <li class="disabled"><span>last</span></li>
+	      {%endif%}
+	      {% if p.has_next %}
+	      <li><a href="{{p.link}}{{ p.next_page_number }}">&raquo;</a></li>  
+	      {%else%}
+	      <li class="disabled"><span>&raquo;</span></li>
+	      {% endif %}
+	    </ul></div>
+    </div>
+    {%endif%}
+
+</div>
+
+{%endblock%}

@@ -1,0 +1,98 @@
+{% extends "vmadmin_base.html" %}
+{% load i18n admin_static %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/dashboard.css" %}" />{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block base %}
+<div  class="col-xs-8">
+
+{% if app_list %}
+
+    {% for app in app_list %}
+    <div role="tablist" aria-multiselectable="true">
+    <div class="panel panel-default" style="margin-bottom:5px">
+	    <div class="panel-heading" role="tab" id="heading{{ forloop.counter }}">
+	      <h4 class="panel-title">
+	        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapse{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse{{ forloop.counter }}">
+	          {{ app.name }}
+	        </a>
+	      </h4>
+	    </div>
+	    <div id="collapse{{ forloop.counter }}" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading{{ forloop.counter }}">
+	      <div class="panel-body">
+	        <table class="table-condensed table-hover" width="100%">
+		        {% for model in app.models %}
+		            <tr>
+		            {% if model.admin_url %}
+		                <th width="80%"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+		            {% else %}
+		                <th scope="row">{{ model.name }}</th>
+		            {% endif %}
+		
+		            {% if model.add_url %}
+		                <td width="10%"><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+		            {% else %}
+		                <td>&nbsp;</td>
+		            {% endif %}
+		
+		            {% if model.admin_url %}
+		                <td width="10%"><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+		            {% else %}
+		                <td>&nbsp;</td>
+		            {% endif %}
+		            </tr>
+		        {% endfor %}
+		     </table>
+	      </div>
+	    </div>
+	  </div>
+	</div> 
+    {% endfor %}
+    
+{% else %}
+    <p>{% trans "You don't have permission to edit anything." %}</p>
+{% endif %}
+</div>
+<div class="col-xs-4">
+<div class="panel panel-default" style="margin-bottom:5px">
+	<div class="panel-heading" role="tab" id="heading{{ forloop.counter }}">
+		<h3>{% trans 'Recent Actions' %}</h3>
+	</div>
+	<div id="collapse{{ forloop.counter }}" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="heading{{ forloop.counter }}">
+		<div style="margin:10px">
+        <h4>{% trans 'My Actions' %}</h4>
+            {% load log %}
+            {% get_admin_log 10 as admin_log for_user user %}
+            {% if not admin_log %}
+            <p>{% trans 'None available' %}</p>
+            {% else %}
+            <ul class="actionlist">
+            {% for entry in admin_log %}
+            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                {% if entry.is_deletion or not entry.get_admin_url %}
+                    {{ entry.object_repr }}
+                {% else %}
+                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                {% endif %}
+                <br/>
+                {% if entry.content_type %}
+                    <span class="mini quiet">{% filter capfirst %}{{ entry.content_type }}{% endfilter %}</span>
+                {% else %}
+                    <span class="mini quiet">{% trans 'Unknown content' %}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+    </div>
+	</div>
+</div>
+    
+</div>
+{% endblock %}

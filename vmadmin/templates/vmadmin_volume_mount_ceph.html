@@ -1,0 +1,173 @@
+{%extends 'vmadmin_base.html'%}
+{%load  sizeformat static %}
+{%block base%}
+<style type="text/css">
+	.detail {
+	  margin-right: 0;
+	  margin-left: 0;
+	  /*background-color: #fff;*/
+	  border-color: #080808;
+	  border-width: 1px;
+	  border-radius: 4px 4px 0 0;
+	  /*-webkit-box-shadow: none;*/
+	  padding:20px;
+	  box-shadow: none;
+	}
+</style>
+
+<script type="text/javascript">
+ //  	window.vm_status_url = '/vmadmin/vm/status/';
+	// window.vm_status_tag  = 'vm_status_';
+	// update_status(window.vm_status_url , ['{{vmobj.uuid}}'], 600000);
+</script>
+           	
+<form id="form" role="form"  class="form-horizontal"  method="post" action="" 
+	onsubmit ="getElementById('form_btn').disabled=true;getElementById('form_btn').value='处理中...';return true;">
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h2 class="panel-title">
+    	<strong>挂载云硬盘</strong>
+    </h2>
+  </div>
+  <div class="panel-body">
+
+    {% csrf_token %}
+
+	{% if volume %}
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">云硬盘ID</label>
+	    <div class="col-sm-9">
+	    	<input name="volume_id" type="hidden" class="form-value" value="{{volume.id}}" />
+	    	<span class="form-value">{{volume.id}}</span>
+	    </div>
+	</div>
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">云硬盘容量</label>
+	    <div class="col-sm-9">
+	    	<span class="form-value">{{volume.size|sizeformat:'MB'}}</span>
+	    </div>
+	</div>
+	{% if volume.remarks %}
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">备注</label>
+	    <div class="col-sm-9">
+	    	
+	    	<span class="form-value">{{volume.remarks|default_if_none:''}}</span>
+	    	
+	    </div>
+	</div>
+	{% endif %}
+	<table  id="vm-table">
+		<thead>
+		<tr>
+			<th>云主机编号</th>
+			<th>宿主机</th>
+			<th>镜像</th>
+			<th>IP地址</th>
+			<th>配置</th>
+			<th>创建者</th>
+			<th>状态</th>
+			<th>备注</th>
+			<th></th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for v in vm_list %}
+		<tr>
+			<td>{{v.uuid|slice:":8"}}</td>
+			<td>{{v.host_ipv4}}</td>
+			<td>{{v.image}}</td>
+			<td>{{v.ipv4}}</td>
+			<td>
+				CPU:{{v.vcpu}}<br>
+				MEM:{{v.mem|sizeformat:"MB"}}
+			</td>
+			<td>{{v.creator}}</td>
+			<td><span id="vm_status_{{v.uuid}}"><img src="/static/images/loading34.gif" width="43px" /></span></td>
+			<td>{{v.remarks}}</td>
+			<td>
+				<form>
+					<input name="volume_id" type="hidden" value="{{volume.id}}" />
+					<input name="vm_uuid" type="hidden" value="{{v.uuid}}" />
+					<input type="submit" value="挂载" />
+				</form>
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	<link rel="stylesheet" href="//cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" />
+	<script src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+	<script>
+		$(document).ready(function () {
+			$('#vm-table').DataTable({
+				"paging": false,
+				"ordering": false,
+				"info": false
+			} );
+		});
+		// 异步更新云主机状态
+		(function(){
+			var vmids = [{%for vm in vm_list %}"{{vm.uuid}}", {% endfor %}];
+			window.vm_status_tag = 'vm_status_';
+			window.vm_task_tag = 'vm_task_';
+			window.vm_status_url = '/vmadmin/vm/status/';
+			update_status(window.vm_status_url, vmids, 600000);
+		})();
+	</script>
+	{%endif%}
+
+	{%if vm%}
+
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">云主机编号</label>
+	    <div class="col-sm-9">
+	    	<input name="vm_uuid" type="hidden" class="form-value" value="{{vm.uuid}}">
+	    	<span class="form-value">{{vm.uuid}}</span>
+	    </div>
+	</div>
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">已挂载云硬盘</label>
+	    <div class="col-sm-9">
+	    	{%for v in vm.volumes%}
+	    	<span class="form-value">{{v.id}}</span>
+	    	{%endfor%}
+	    </div>
+	</div>
+	<div class="form-group">
+	    <label for="name"  class="col-sm-3 control-label">云硬盘</label>
+	    <div class="col-sm-9">
+	    	<select name="volume_id" class="form-control"  style="width:400px" >
+                {%for v in volume_list%}
+                <option value="{{v.id}}">{{v.id}} {{v.size}}MB</option>
+                {%endfor%}
+            </select>
+	    </div>
+	</div>
+
+	{%endif%}
+
+	</div>
+	<div class="panel-footer">
+	  <div align="right">
+	
+	{%if not volume or not volume.vm%}
+        	
+        	<input id="form_btn" type="submit" class="btn btn-primary" value="挂载" />
+	{%endif%}
+        	<input id="form_btn" type="button" class="btn btn-default" onclick="window.location.href='../list/'" value="返回" />
+           	
+        </div>
+    </div>
+
+</div>
+</form>
+<script type="text/javascript">
+{%if alert_msg%}
+alert('{{alert_msg}}');
+{%endif%}
+
+</script>
+{%endblock%}

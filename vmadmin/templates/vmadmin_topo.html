@@ -1,0 +1,24 @@
+{%for center in centers%}
+{{center}}<br>
+	{%for group in center.group_set.all%}
+	|-{{group}}<br>
+		{%for host in group.host_set.all%}
+		&nbsp;|-{{host}}
+			{%for vlan in host.vlan.all%}
+			{{vlan.br}}
+			{%endfor%}
+			<br>
+			{%for vm in host.vm_set.all%}
+			&nbsp;&nbsp;|-{{vm}}<br>
+			{%endfor%}
+		{%endfor%}
+	{%endfor%}
+{%endfor%}
+
+<br>
+{%for ceph in cephs%}
+{{ceph}}<br>
+	{%for image in ceph.image_set.all%}
+	|-{{image}} {{image.xml}}<br>
+	{%endfor%}
+{%endfor%}

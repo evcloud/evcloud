@@ -1,0 +1,531 @@
+{%extends 'vmadmin_base.html'%}
+{%block base%}
+
+<style>
+    .form-control-horizontal {
+        display: inline-block;
+    }
+</style>
+<form id="form" role="form"  class="form-horizontal"  method="post" action="" 
+	onsubmit ="getElementById('form_btn').disabled=true;getElementById('form_btn').value='正在创建';return true;">
+      <script type="text/javascript">
+        window.limit_num = 5;
+          function update_from_btn() {
+            if (window.vm_num_limit_by_host == 0 || window.vm_num_limit_by_ip == 0)
+                $("#form_btn").attr('disabled', true);
+            else
+                $("#form_btn").attr('disabled', false);
+          }
+            function set_num() {
+                // 指定了ip,只能创建一个
+                var selected_ipv4 = $("select[name='ip']").val();
+                if (selected_ipv4) {
+                    var max_num = 1;
+                } else {
+                    var max_num = window.vm_num_limit_by_ip;
+                    if (max_num > window.vm_num_limit_by_host)
+                        max_num = window.vm_num_limit_by_host;
+                }
+                
+                var num_options = '';
+                var i = 1;
+                while (i <= max_num) {
+                    num_options += '<option value=' + i + '>' + i + '</option>';
+                    i += 1;
+                    if (i > 5)
+                        break;
+                }
+                $("select[name='num']").html(num_options);
+          }
+
+      </script>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title"><strong>创建云主机</strong></h3>
+  </div>
+  <div class="panel-body">
+
+
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="name" class="col-sm-3 control-label">分中心</label>
+        <div class="col-sm-9">
+            <div style="padding-bottom:10px">
+            {%for center in center_list%}
+               <input type="button" class="btn 
+                {%if request.GET.center %} 
+                    {%if request.GET.center|add:0 == center.id%} btn-info {%endif%} 
+                {%else%} 
+                    {%if forloop.first%}btn-info{%endif%}{%endif%}" value="{{center.name}}" onclick="javascript:window.location.href='?center={{center.id}}'">
+            {%endfor%}
+            </div>
+            <!-- <select name='center' class="form-control" style="width:200px">
+				{%for center in centers%}
+				<option value="{{center.pk}}" >{{center.name}}</option>
+				{%endfor%}
+			</select> -->
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">集群</label>
+        <div class="col-sm-9">
+            <select name="group" class="form-control" style="width:400px">
+            {%for group in group_list%}
+            <option value="{{group.id}}">{{group.name}}</option>
+            {%endfor%}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label" style="font-weight: 200;">宿主机</label>
+        <div class="col-sm-9">
+            <select name="host" class="form-control" style="width:400px">
+            </select>
+        </div>
+    </div>
+    <script type="text/javascript">
+    var hosts = {{hosts_json|safe}};
+    for (var group_id in hosts) {
+        for (var i in hosts[group_id]) {
+            hosts[group_id][i]['mem_remained'] = hosts[group_id][i]['mem_total'] - hosts[group_id][i]['mem_reserved'] - hosts[group_id][i]['mem_allocated'];
+        }
+    }
+    var func_set_host;//供全局调用 by lzx:20180717
+    (function(){
+        
+        set_host();
+        
+        $("select[name='group']").change(set_host);
+        
+        function set_host() {
+            var group_id = $('select[name="group"]').val();
+            var options = '<option value=""><自动分配></option>';
+            for (var i in hosts[group_id]) {
+                options += '<option value="'+hosts[group_id][i]['id']+'">'+hosts[group_id][i]['ipv4']
+                        + '(cpu:'+hosts[group_id][i]['vcpu_allocated']+'/'+hosts[group_id][i]['vcpu_total']
+                        + ', mem:'+(hosts[group_id][i]['mem_allocated']+hosts[group_id][i]['mem_reserved'])
+                        + 'MB/'+hosts[group_id][i]['mem_total']+'MB'
+                        + ', num:'+hosts[group_id][i]['vm_created']+'/'+hosts[group_id][i]['vm_limit']+')</opction>';
+            }
+            $("select[name='host']").html(options);
+        }
+        func_set_host = set_host;
+        
+    })();
+    </script>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">镜像</label>
+        <div class="col-sm-9">
+            <div style="padding-bottom:10px">
+            {%for item in image_list_ordered%}
+               <input id="itype_{{forloop.counter}}" type="button" class="btn itype {%if forloop.first%}btn-info{%endif%}" value="{{item.0}}">
+            {%endfor%}
+            </div>
+            {%for item in image_list_ordered%}
+                <select id="images_{{forloop.counter}}"  class="form-control images" 
+                {%if forloop.first%}style="width:400px" name='image'{%else%}style="width:400px; display: none;"{%endif%}>
+                    {%for image in item.1%}
+                    <option value="{{image.id}}">{{image.name}} {{image.version}}</option>
+                    {%endfor%}
+                </select>
+            {%endfor%}
+        </div>
+    </div>
+    <script type="text/javascript">
+        $("input[id^='itype_']").click(function (){
+            var id = this.id.substr(6);
+            $(".itype").removeClass('btn-info');
+            $(this).addClass('btn-info');
+            $(".images").each(function(){
+                $(this).hide();
+                this.name = '';
+            });
+            $("#images_" + id).show();
+            $("#images_" + id)[0].name = 'image';
+        })
+    </script>
+
+    <div class="form-group">
+        <label class="col-sm-3 control-label">网络类型</label>
+        <div class="col-sm-9">
+            <select name="net" class="form-control" style="width:200px">
+                {%for vtype in vlan_type_list%}
+                <option value="{{vtype.0}}">{{vtype.1}}</option>
+                {%endfor%}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label" style="font-weight: 200;">网络</label>
+        <div class="col-sm-9">
+            <select name="vlan" class="form-control form-control-horizontal" style="width:200px; display:inline-block"></select>
+            <select name="ip" class="form-control form-control-horizontal" style="width:200px; display:none;"></select>
+        </div>
+    </div>
+    <script type="text/javascript">
+    var func_set_vlan;//供全局调用 by lzx:20180717
+    var func_set_ip;//供全局调用 by lzx:20180717
+    var func_limit_num;//供全局调用 by lzx:20180717
+    (function(){
+    	var vlans = {{vlans_json|safe}};
+        var vlan_ip_dic = {{vlan_ip_json|safe}};
+    	set_vlan();
+    	set_ip();
+
+    	$("select[name='net']").change(set_vlan);
+    	$('select[name="group"]').change(set_vlan);
+    	
+    	function set_vlan() {
+        	var type = $("select[name='net']").val();
+    		var group_id = $('select[name="group"]').val();
+    		var options = '<option value=""><自动分配></option>';
+    		vlan_list = vlans[group_id][type];
+    		for (var i in vlan_list) {
+    			options += '<option value="'+vlan_list[i]['id']+'">'+vlan_list[i]['vlan']+'(IP地址:'+ vlan_list[i]['ip_used'] +'/' + vlan_list[i]['ip_count']+')</opction>';
+    		}
+    		$("select[name='vlan']").html(options);
+            set_ip();
+    	}
+        func_set_vlan = set_vlan;
+
+        limit_num();
+
+        $('select[name="group"]').change(limit_num);
+        $("select[name='net']").change(limit_num);
+        $("select[name='vlan']").change(limit_num);
+        $("select[name='ip']").change(limit_num);
+        
+        function limit_num() {
+            window.vm_num_limit_by_ip = get_limit_num_by_ip();
+            
+            set_num();
+
+            $(".ip_alert").remove();
+            if (window.vm_num_limit_by_ip == 0) {
+                $(this).parent().append('<span class="ip_alert"><font style="color:red;font-size:12px">IP地址不足！</font></span>');
+            }
+            update_from_btn();
+        }
+        func_limit_num = limit_num;
+
+        function get_limit_num_by_ip() {
+            var type = $("select[name='net']").val();
+            var vlan = $("select[name='vlan']").val();
+            var group_id = $('select[name="group"]').val();
+            var vlan_list = vlans[group_id][type];
+            var max_num = 0;
+            if (vlan == "") {
+                for (var i in vlan_list) {
+                    max_num += vlan_list[i]['ip_count'] - vlan_list[i]['ip_used'];
+                }
+            } else {
+                for (var i in vlan_list) {
+                    if (vlan != vlan_list[i]['id']) continue;
+                    max_num += vlan_list[i]['ip_count'] - vlan_list[i]['ip_used'];
+                    break;
+                }
+            }
+            return max_num; 
+        }
+
+        $("select[name='vlan']").change(set_ip);
+        function set_ip() {
+            // 填充ip字段的选项
+            var num =  $("select[name='num']").val();  // 要创建虚拟机数量
+            var vlan = $("select[name='vlan']").val();
+            if (num == 1 && vlan) {
+                var options = '<option value=""><自动分配IP地址></option>';
+                if (vlan_ip_dic[vlan] instanceof Array) {
+                    for (var i=0; i<vlan_ip_dic[vlan].length; ++i) {
+                        options += '<option value="'+vlan_ip_dic[vlan][i]+'">'+vlan_ip_dic[vlan][i]+'</option>';
+                    }
+                }
+                $("select[name='ip']").html(options);
+                $("select[name='ip']").show();
+            } else {
+                $("select[name='ip']").html("");
+                $("select[name='ip']").val("");
+                $("select[name='ip']").hide();
+            }
+        }
+        func_set_ip = set_ip;
+
+    })();
+       
+    </script>
+
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label">创建数量</label>
+        <div class="col-sm-9">
+        
+        <select name="num" class="form-control" style="width:100px">
+        	<option value=1>1</option>
+        	<option value=2>2</option>
+        	<option value=3>3</option>
+        	<option value=4>4</option>
+        	<option value=5>5</option>
+        </select>
+        <font style="color:red"><span id="num_limit"></span></font>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label">CPU数</label>
+        <div class="col-sm-9">
+        <input required name="vcpu" type="integer" class="form-control" value="2" style="width:200px;display:inline">个<span style="display: block"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label">内存大小</label>
+        <div class="col-sm-9">
+        <input required name="mem" type="integer" class="form-control" value="2048" style="width:200px;display:inline"><span style="display:inline">MB</span><span style="display: block"></span>
+        </div>
+        <script type="text/javascript">
+        (function(){
+
+            $("input[name='mem']").change(limit_num);
+            $("select[name='group']").change(limit_num);
+            $("select[name='host']").change(limit_num);
+            limit_num();
+            function limit_num() {
+                var limit_by_mem = get_limit_num_by_mem();
+                var limit_by_created_num = get_limit_num_by_created_num();
+                if (limit_by_mem > limit_by_created_num) {
+                    var max_num = limit_by_created_num;
+                } else {
+                    var max_num = limit_by_mem;
+                }
+                window.vm_num_limit_by_host = max_num;
+                set_num();
+
+                $(".host_alert").remove();
+                if (max_num == 0) {
+                    if (limit_by_mem > limit_by_created_num) {
+                        $(this).parent().append('<span class="host_alert"><font style="color:red;font-size:12px">云主机创建数量达到上限！</font></span>');
+                    } else {
+                        $(this).parent().append('<span class="host_alert"><font style="color:red;font-size:12px">宿主机剩余内存不足！</font></span>');
+                    }
+                }
+                update_from_btn();
+
+            }
+
+            function get_limit_num_by_mem() {
+                var max_num = 0;
+                var group_id = $('select[name="group"]').val();
+                var host_id = $('select[name="host"]').val();
+                var mem = $('input[name="mem"]').val();
+                mem = Number(mem);
+                if (mem <= 0) {
+                    return 999999999999;
+                }
+                if (host_id == "") {
+                    for (var i in hosts[group_id]) {
+                        var remain = hosts[group_id][i]['mem_remained'];
+                        while (remain >= mem) {
+                            remain -= mem;
+                            max_num += 1;
+                        }
+                    }
+                } else {
+                    for (var i in hosts[group_id]) {
+                        if (hosts[group_id][i]['id'] != host_id) continue;
+
+                        var remain = hosts[group_id][i]['mem_remained'];
+                        while (remain >= mem) {
+                            remain -= mem;
+                            max_num += 1;
+                        }
+                        break;
+                    }
+                }
+                return max_num;
+            }
+            function get_limit_num_by_created_num() {
+                var max_num = 0;
+                var group_id = $('select[name="group"]').val();
+                var host_id = $('select[name="host"]').val();
+                if (host_id == "") {
+                    for (var i in hosts[group_id]) {
+                        max_num += hosts[group_id][i]['vm_limit'] - hosts[group_id][i]['vm_created'];
+                        
+                    }
+                } else {
+                    for (var i in hosts[group_id]) {
+                        if (hosts[group_id][i]['id'] != host_id) continue;
+
+                        max_num += hosts[group_id][i]['vm_limit'] - hosts[group_id][i]['vm_created'];
+                        break;
+                    }
+                }
+                return max_num;
+            }
+        })();
+        </script>
+    </div>
+    
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label" style="font-weight: 200;">备注</label>
+        <div class="col-sm-9">
+			<textarea rows="" cols="" name="remarks" class="form-control" style="width:75%"></textarea>
+           
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="content" class="col-sm-3 control-label"></label>
+        <div class="col-sm-9">
+            
+           
+        </div>
+    </div>
+
+</div>
+  <div class="panel-footer">
+	  <div align="right">
+	  <input id="form_btn" type="submit" class="btn btn-primary" value="创建" style="width:150px"/>
+	  </div>
+  </div>
+</div>
+</form>
+
+
+{%if res%}
+
+<!-- 模态框（Modal） -->
+<div id="result_div" class="modal fade" id="myModal" tabindex="-1" role="dialog" 
+   aria-labelledby="myModalLabel" aria-hidden="true">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-header">
+            <button type="button" class="close" 
+               data-dismiss="modal" aria-hidden="true">
+                  &times;
+            </button>
+            <h4 class="modal-title" id="myModalLabel">
+               创建结果
+            </h4>
+         </div>
+         <div class="modal-body">
+            <table class="table">
+                <tr>
+                    <th></th><th>结果</th><th>云主机编号</th><th>信息</th>
+                </tr>
+            {%for r in res%}
+                <tr>
+                    <td>{{forloop.counter}}</td>
+                    <td>{%if r.res%}成功{%else%}失败{%endif%}</td>
+                    <td>{{r.uuid}}</td>
+                    <td>{{r.error}}</td>
+                </tr>
+            {%endfor%}
+            
+            </table>
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-default" 
+               data-dismiss="modal">关闭
+            </button>
+            <button type="button" class="btn btn-primary" onclick="javascript:window.location.href='../'">
+               查看云主机列表
+            </button>
+         </div>
+      </div><!-- /.modal-content -->
+</div><!-- /.modal -->
+<script type="text/javascript">
+    $("#result_div").modal();
+</script>
+{%endif%}
+
+
+
+{%if error%}
+<!-- <div class="panel panel-warning">
+  <div class="panel-heading">
+    <h3 class="panel-title">创建失败</h3>
+  </div>
+  <div class="panel-body">
+	{{error}}
+</div>
+</div> -->
+
+<!-- 模态框（Modal） -->
+<div id="error_div" class="modal fade" id="myModal" tabindex="-1" role="dialog" 
+   aria-labelledby="myModalLabel" aria-hidden="true">
+   <div class="modal-dialog">
+      <div class="modal-content">
+         <div class="modal-header">
+            <button type="button" class="close" 
+               data-dismiss="modal" aria-hidden="true">
+                  &times;
+            </button>
+            <h4 class="modal-title" id="myModalLabel">
+               创建失败
+            </h4>
+         </div>
+         <div class="modal-body">
+            {{error}}
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-default" 
+               data-dismiss="modal">关闭
+            </button>
+         </div>
+      </div><!-- /.modal-content -->
+</div><!-- /.modal -->
+<script type="text/javascript">
+    $("#error_div").modal();
+</script>
+
+{%endif%}  
+
+{% if request.method == 'POST'%}
+<script type="text/javascript">
+        (function(){
+            var posted_data = {{posted_data_json|safe}};
+            if(!posted_data){
+                return;
+            }
+            if(posted_data['group']){              
+                $("select[name='group']").find("option[value='"+posted_data['group']+"']").attr("selected",true);
+                //此处无法触发select的change事件，需要显示调用相关函数
+                func_set_host();
+                func_set_vlan();                
+            }
+            if(posted_data['host']){
+                $("select[name='host']").find("option[value='"+posted_data['host']+"']").attr("selected",true);
+            }
+            if(posted_data['image']){
+                var image_item = $("select[id^='images_']").find("option[value='"+posted_data['image']+"']");
+                if(image_item.length>0){
+                    var image_eid = image_item.parent().attr('id');
+                    var itype_eid = image_eid.replace("images","itype");
+                    $("#"+itype_eid).click();
+                    image_item.attr("selected",true);
+                }
+            }
+
+            if(posted_data['net']){
+                $("select[name='net']").find("option[value='"+posted_data['net']+"']").attr("selected",true);
+                func_set_vlan();
+            }
+            if(posted_data['vlan']){
+                $("select[name='vlan']").find("option[value='"+posted_data['vlan']+"']").attr("selected",true);
+                func_set_ip();
+            }
+                
+            if(posted_data['num'])
+                $("select[name='num']").find("option[value='"+posted_data['num']+"']").attr("selected",true);
+            if(posted_data['vcpu'])
+                $("input[name='vcpu']").val(posted_data['vcpu']);
+            if(posted_data['mem'])
+                $("input[name='mem']").val(posted_data['mem']);
+            if(posted_data['remarks'])
+                $("textarea[name='remarks']").text(posted_data['remarks']);
+            
+            func_limit_num();
+        })();
+        </script>
+{% endif %}
+{%endblock%}
