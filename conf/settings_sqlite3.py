@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '5o5^f^_-a7%$w#$)-1g9-(t-$nkog_ro@-ymq)jg^41#foo@y3'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -137,7 +137,12 @@ CKEDITOR_JQUERY_URL = STATIC_LIB_URL + 'jquery/jquery.2.1.1.min.js'
 
 AUTH_USER_MODEL = 'account.User'
 
-STATIC_ROOT = './static/'
+#当DEBUG==False或执行collectstatic时，需要STATIC_ROOT
+#当DEBUG=True时，将STATIC_ROOT注掉
+#STATIC_ROOT = './static/' 
+
+#执行collectstatic时，把STATICFILES_DIRS中与STATIC_ROOT相同的路径注掉；
+#因为collectstatic时，django会查找STATICFILES_DIRS中所有路径下的静态文件集合到STATIC_ROOT目录下，从而导致死循环；
 STATICFILES_DIRS = [
         os.path.join(BASE_DIR, "static"),
     ]
