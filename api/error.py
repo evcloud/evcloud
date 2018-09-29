@@ -33,6 +33,10 @@ ERR_VM_CREATE_ARGS_HOST = '40040'
 ERR_VM_CREATE_ARGS_VLAN = '40041'
 ERR_VM_VCPU             = '40042'
 ERR_VM_MEM              = '40043'
+ERR_DISKSNAP_ID         = '40044'
+ERR_VM_CREATE_SNAP_LIVING     = '40045'
+ERR_VM_MIGRATE_SAME_HOST= '40046'
+
 
 ERR_ARGS_DECORATOR      = '50001'
 ERR_PROCESS             = '50002'
@@ -72,9 +76,13 @@ ERR_VM_CREATE_DB        = '50034'
 ERR_VM_CREATE_DISK      = '50035'
 ERR_VM_DEL_GPU_MOUNTED  = '50036'
 ERR_VM_DEL_VOL_MOUNTED  = '50037'
-ERR_MOUNT_RUNNING = '50038'
-ERR_UMOUNT_RUNNING = '50039'
-ERR_VLAN_EDIT_REMARKS    = '50040'
+ERR_MOUNT_RUNNING       = '50038'
+ERR_UMOUNT_RUNNING      = '50039'
+ERR_VLAN_EDIT_REMARKS   = '50040'
+ERR_VM_RESET            = '50041'
+ERR_VM_CREATE_SNAP      = '50042'
+ERR_VM_ROLLBACK_SNAP    = '50043'
+ERR_VM_EDIT_REMARKS     = '50044'
 
 ERR_USERNAME            = '60001'
 ERR_USER_DB             = '60002'
@@ -122,6 +130,9 @@ ERROR_CN = {
     ERR_VM_CREATE_ARGS_VLAN : '云主机创建参数错误，必须指定网段或网络类型',
     ERR_VM_VCPU             : '云主机参数错误，VCPU必须为正整数',
     ERR_VM_MEM              : '云主机参数错误，MEM必须为正整数',
+    ERR_DISKSNAP_ID         : '虚拟机快照ID错误',
+    ERR_VM_CREATE_SNAP_LIVING : '运行状态不能执行快照回滚',
+    ERR_VM_MIGRATE_SAME_HOST  : '迁移的目标宿主机不能是原宿主机',
 
     ERR_ARGS_DECORATOR      : '装饰器使用有误',
     ERR_PROCESS             : '处理失败',
@@ -163,7 +174,11 @@ ERROR_CN = {
     ERR_VM_DEL_VOL_MOUNTED  : '云主机删除失败，有云硬盘未卸载',
     ERR_MOUNT_RUNNING       : '运行中的云主机不能进行挂载操作',
     ERR_UMOUNT_RUNNING      : '运行中的云主机不能进行卸载操作',
-    ERR_VLAN_EDIT_REMARKS   : '网段备注修改失败',    
+    ERR_VLAN_EDIT_REMARKS   : '网段备注修改失败', 
+    ERR_VM_RESET            : '虚拟机重置镜像失败', 
+    ERR_VM_CREATE_SNAP      : '虚拟机快照创建失败',
+    ERR_VM_ROLLBACK_SNAP    : '虚拟机快照回滚失败',
+    ERR_VM_EDIT_REMARKS     : '虚拟机快照备注修改失败',    
 
     ERR_USERNAME            : '有户名有误',
     ERR_USER_DB             : 'DBUser对象有误',

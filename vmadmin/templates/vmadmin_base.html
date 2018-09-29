@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>云主机平台</title>
+    <title>{{request.site_conf.name}}</title>
     
   
     {% block extrastyle %}{% endblock %}
@@ -58,12 +58,17 @@
 .nav-sidebar > .active > a:hover,
 .nav-sidebar > .active > a:focus {
   color: #fff;
-  background-color: #428bca;
+  background-color: #00055b;
 }
 
-.navbar-inverse {
+.navbar-inverse,
+.navbar-inverse > .container {
   background-color: #000676;
   border-color: #A5AFF2;
+}
+.navbar-inverse .navbar-nav>.active>a,
+.navbar-inverse .navbar-nav>.open>a{
+    background-color:#010544;
 }
 
 .form-value {
@@ -83,6 +88,10 @@
  height:52px;
  }
 
+ ul.dropdown-menu>li{
+    list-style-type: none !important;
+ }
+
 </style>
 {%block head%}
 {%endblock head%}
@@ -97,20 +106,26 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="/vmadmin/"><strong>云主机平台</strong></a>
+                <a class="navbar-brand" href="/vmadmin/"><strong>{{request.site_conf.name}}</strong></a>
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
-                    <li id="first_list"><a href="/vmadmin/vm/list/">云主机列表</a></li>
-                    <li id="first_create"><a href="/vmadmin/vm/create/">创建云主机</a></li>
-                    <li id="first_volume"><a href="/vmadmin/volume/list/">云硬盘</a></li>
-                    <li id="first_gpu"><a href="/vmadmin/gpu/list/">GPU</a></li>
-                    <li id="first_gpu"><a href="/vmadmin/net/vlan/list/">网络</a></li>
+                    <li id="nav_vm_list"><a href="/vmadmin/vm/list/">云主机列表</a></li>
+                    <li id="nav_vm_create"><a href="/vmadmin/vm/create/">创建云主机</a></li>
+                    <li id="nav_volume"><a href="/vmadmin/volume/list/">云硬盘</a></li>
                     {% if request.user.is_superuser %}
-                    <li><a href="/admin/">后台管理</a></li>                    
+                    <li id="nav_admin"><a href="/admin/">后台管理</a></li>                    
                     {% endif%}
-                    <li><a href="/reports/">统计报表</a></li> 
-
+                    <li id="nav_more" class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" >更多<span class="caret"></span></a>
+                      <ul class="dropdown-menu">
+                        <li><a href="/vmadmin/gpu/list/">GPU</a></li>
+                        <li><a href="/vmadmin/net/vlan/list/">网络</a></li>
+                        <li><a href="/vmadmin/monitoring/host_error/list/">高可用</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li><a href="/reports/">统计报表</a></li> 
+                      </ul>
+                    </li>
                 </ul>
                 <ul class="nav navbar-nav pull-right">
                     <li> <a href="#">{{request.user}}</a></li>
@@ -142,6 +157,43 @@
     
     <!-- Include all compiled plugins (below), or include individual files as needed -->
 <script>
+
+    function GetUrlRelativePath()
+　　{
+　　　　var url = document.location.toString();
+　　　　var arrUrl = url.split("//");
+
+　　　　var start = arrUrl[1].indexOf("/");
+　　　　var relUrl = arrUrl[1].substring(start);//stop省略，截取从start开始到结尾的所有字符
+
+　　　　if(relUrl.indexOf("?") != -1){
+　　　　　　relUrl = relUrl.split("?")[0];
+　　　　}
+　　　　return relUrl;
+　　}
+    
+    //设置导航菜单active
+    var rel_url = GetUrlRelativePath();
+    
+    if(rel_url.startsWith("/vmadmin/vm/list/")){
+        $("#nav_vm_list").addClass("active");
+    }
+    else if(rel_url.startsWith("/vmadmin/vm/create/")){
+        $("#nav_vm_create").addClass("active");
+    }
+    else if(rel_url.startsWith("/vmadmin/volume/")){
+        $("#nav_volume").addClass("active");
+    }
+    else if(rel_url.startsWith("/admin/")){
+        $("#nav_admin").addClass("active");
+    }
+    else if(rel_url.startsWith("/vmadmin/gpu/") || 
+        rel_url.startsWith("/vmadmin/net/") ||
+        rel_url.startsWith("/vmadmin/monitoring/")||
+        rel_url.startsWith("/reports/")){
+        $("#nav_more").addClass("active");
+    }
+
         // 消息弹窗
     var message = "";
     {%for msg in messages%}

@@ -27,6 +27,10 @@ class Host(object):
         self.vm_created = db_obj.vm_created
         self.enable = db_obj.enable
         self.desc = db_obj.desc
+
+        self.ipmi_host = db_obj.ipmi_host
+        self.ipmi_user = db_obj.ipmi_user
+        self.ipmi_password = db_obj.ipmi_password
         
         self.vlans = [vlan.vlan for vlan in db_obj.vlan.all()]
         self.vlan_types = [(vlan.type.code, vlan.type.name) for vlan in db_obj.vlan.all()]
@@ -160,3 +164,26 @@ class Host(object):
 
     def exceed_mem_limit(self, mem=0):
         return self.mem_allocated + int(mem) >= self.mem_total - self.mem_reserved
+
+
+    def power_off_by_ipmi(self):
+        if self.ipmi_host and self.ipmi_user and self.ipmi_password:
+            cmd = "ipmitool -I lan -H %(host)s -U %(user)s -P '%(password)s' power off" %{
+                'host':self.ipmi_host, 
+                'user':self.ipmi_user, 
+                'password':self.ipmi_password }
+            res, lines = subprocess.getstatusoutput(cmd)
+            if settings.DEBUG: print(lines)
+            if res == 0:
+                return True
+        return False  
+
+
+    def set_enable(self,enable=True):
+        try:
+            self.db_obj.enable = enable
+            self.db_obj.save(update_fields=['enable'])
+            return True
+        except Exception as e:
+            if settings.DEBUG: print(e)
+        return False

@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = (
+    'django_crontab',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,7 +57,12 @@ INSTALLED_APPS = (
     'vmuser',
     'volume',
     'device',
+    'monitoring',
 )
+
+CRONJOBS = [
+    ('*/5 * * * *', 'monitoring.cron.run_ha_monitoring', '>> /var/log/nginx/evcloud_run_ha_monitoring.log'),  # 每分钟执行一次
+]
 
 MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',

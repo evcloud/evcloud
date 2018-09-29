@@ -63,7 +63,6 @@ class CephVolume(object):
             self._db.remarks = content
             self._db.save()
         except:
-            print(111111111111)
             return False
         return True
 
@@ -165,26 +164,42 @@ class CephVolume(object):
     def xml_tpl(self):
         if self._db.cephpool.host.backend == self._db.cephpool.host.CEPH:
             return '''
-<disk type='network' device='disk'>
-      <driver name='%(driver)s'/>
-      <auth username='%(auth_user)s'>
-        <secret type='%(auth_type)s' uuid='%(auth_uuid)s'/>
-      </auth>
-      <source protocol='%(source_protocol)s' name='%(pool)s/%(name)s'>
-        <!--<host name='%(host)s' port='%(port)s'/>-->
-        %(hosts_xml)s
-      </source>
-        <target dev='%(dev)s' bus='virtio'/>   
-</disk>
-'''
+                    <disk type='network' device='disk'>
+                          <driver name='%(driver)s'/>
+                          <auth username='%(auth_user)s'>
+                            <secret type='%(auth_type)s' uuid='%(auth_uuid)s'/>
+                          </auth>
+                          <source protocol='%(source_protocol)s' name='%(pool)s/%(name)s'>
+                            <!--<host name='%(host)s' port='%(port)s'/>-->
+                            %(hosts_xml)s
+                          </source>
+                            <target dev='%(dev)s' bus='virtio'/>   
+                    </disk>
+                    '''
         else:
             return '''
-<disk type='block' device='disk'>
-    <driver name='qemu' type='qcow2'/>
-   <source dev='%(pool)s/%(name)s'/>
-   <target dev='%(dev)s' bus='virtio'/>
-</disk>            
-'''
+                    <disk type='block' device='disk'>
+                        <driver name='qemu' type='qcow2'/>
+                       <source dev='%(pool)s/%(name)s'/>
+                       <target dev='%(dev)s' bus='virtio'/>
+                    </disk>            
+                '''
+    @property
+    def xml_desc(self):
+        xml = self.xml_tpl % {
+            'driver': 'qemu',
+            'auth_user': self._db.cephpool.host.username,
+            'auth_type': 'ceph',
+            'auth_uuid': self._db.cephpool.host.uuid,
+            'source_protocol': 'rbd',
+            'pool': self._db.cephpool.pool,
+            'name': self.id,
+            'host': self._db.cephpool.host.host,
+            'port': self._db.cephpool.host.port,
+            'hosts_xml': self._db.cephpool.host.hosts_xml,
+            'dev': self.dev
+        }
+        return xml
   
     def managed_by(self, user):
         if user.is_superuser:

@@ -23,7 +23,7 @@ class HostAdmin(VMModelAdmin):
     readonly_fields = ('vcpu_allocated', 'mem_allocated', 'vm_created')
   
 class VmAdmin(VMModelAdmin):
-    list_display = ('host', 'name', 'image', 'vcpu', 'mem', 'creator')
+    list_display = ('host', 'name', 'image', 'vcpu', 'mem', 'creator', 'ha_monitored')
     list_filter = ['host__group__center__name', 'host__group__name', 'creator',]
     readonly_fields = ('host', 'image_id', 'image_snap', 'image',
                        'uuid', 'name', 'vcpu', 'mem', 'disk', 'deleted',
@@ -38,6 +38,28 @@ class VmArchiveAdmin(VMModelAdmin):
     readonly_fields = ('center_id', 'center_name', 'group_id', 'group_name', 'host_id', 'host_ipv4', 
         'ceph_host', 'ceph_pool', 'image_id', 'image_snap', 'name', 'uuid', 'vcpu', 'mem', 'disk', 
         'mac', 'ipv4', 'vlan', 'br', 'remarks', 'archive_time', 'create_time', 'creator')
+
+    search_fields = list_display
+    list_display_links = ()
+    
+    def has_add_permission(self, request):
+        return False
+    
+#     def has_change_permission(self, request, obj=None):
+#         return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+    actions_on_top = False
+    actions_on_bottom = False
+    actions_selection_counter = False
+
+
+class MigrateLogAdmin(VMModelAdmin):
+    list_display = ('vmid','src_host_ipv4','dst_host_ipv4','migrate_time','result','error','src_undefined' )
+    list_filter = ['vmid','src_host_ipv4','dst_host_ipv4','result','src_undefined']
+    ordering = ('-migrate_time',)
+    readonly_fields = ('vmid','src_host_ipv4','dst_host_ipv4','migrate_time','result','error',)
 
     search_fields = list_display
     list_display_links = ()

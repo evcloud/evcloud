@@ -100,8 +100,8 @@ class VmAPI(object):
     def get_vm_by_uuid(self, vm_uuid):
         return self.manager.get_vm_by_uuid(vm_uuid)
 
-    def get_vm_list_by_group_id(self, group_id, host_id=None, order=None):
-        return self.manager.get_vm_list_by_group_id(group_id, host_id, order)
+    def get_vm_list_by_group_id(self, group_id, host_id=None, order=None,ha_monitored=None):
+        return self.manager.get_vm_list_by_group_id(group_id, host_id, order, ha_monitored)   
 
     def vm_uuid_exists(self, vm_uuid):
         return self.manager.vm_uuid_exists(vm_uuid)
@@ -117,6 +117,11 @@ class VmAPI(object):
     def set_creator(self, vm_uuid, username):
         vm = self.manager.get_vm_by_uuid(vm_uuid)
         return vm.set_creator(str(username))
+
+    def set_ha_monitored(self, vm_uuid, ha_monitored=True):
+        '''设置虚拟机的[高可用]属性'''
+        vm = self.manager.get_vm_by_uuid(vm_uuid)
+        return vm.set_ha_monitored(ha_monitored)
 
     def create_vm(self, image_id, vcpu, mem, group_id=None, host_id=None,
         net_type_id=None, vlan_id=None, diskname=None, vm_uuid=None, remarks=None, ipv4=None):
@@ -343,19 +348,19 @@ class VmAPI(object):
                 return True
         return False
 
-    def reset_vm(self, vm_uuid):
-        vm = self.manager.get_vm_by_uuid(vm_uuid)
-        if vm.is_running():
-            raise Error(ERR_VM_RESET_LIVING)
-        archive_disk_name = self.image_api.archive_disk(vm.image_id, vm.disk)
-        if archive_disk_name != False:
-            init_disk_success = self.image_api.init_disk(vm.image_id, vm.disk)
-            if init_disk_success:
-                if vm.start():
-                    return True
-                self.image_api.rm_disk(vm.image_id, vm.disk)
-            self.image_api.restore_disk(vm.image_id, archive_disk_name)
-        return False 
+    # def reset_vm(self, vm_uuid):
+    #     vm = self.manager.get_vm_by_uuid(vm_uuid)
+    #     if vm.is_running():
+    #         raise Error(ERR_VM_RESET_LIVING)
+    #     archive_disk_name = self.image_api.archive_disk(vm.image_id, vm.disk)
+    #     if archive_disk_name != False:
+    #         init_disk_success = self.image_api.init_disk(vm.image_id, vm.disk)
+    #         if init_disk_success:
+    #             if vm.start():
+    #                 return True
+    #             self.image_api.rm_disk(vm.image_id, vm.disk)
+    #         self.image_api.restore_disk(vm.image_id, archive_disk_name)
+    #     return False 
 
     def edit_vm(self, vm_uuid, vcpu=None, mem=None, remarks=None):
         vm = self.get_vm_by_uuid(vm_uuid)
@@ -422,6 +427,18 @@ class VmAPI(object):
         #参数验证
         vm = self.manager.get_vm_by_uuid(vm_uuid)
         host = self.host_api.get_host_by_id(host_id)
+        src_host_alive = host.alive()
+
+        from device.api import GPUAPI
+        from volume.api import VolumeAPI        
+        gpuapi = GPUAPI()
+        volumeapi = VolumeAPI()
+        gpu_list = gpuapi.get_gpu_list_by_vm_uuid(vm_uuid)
+        if len(gpu_list) > 0:
+            raise Error(ERR_VM_MIGRATE) #挂载gpu的无法迁移 @ by lzx 20180912
+        volume_list = volumeapi.get_volume_list_by_vm_uuid(vm_uuid)
+        if len(volume_list) > 0 and vm.group_id != host.group_id:
+             raise Error(ERR_VM_MIGRATE) #挂载的云硬盘和host不在同一个group下
 
         #判断是否在同一个center
         if vm.center_id != host.center_id:
@@ -436,34 +453,221 @@ class VmAPI(object):
 
         xml_tpl = self.image_api.get_xml_tpl(vm.image_id)
         xml_desc = xml_tpl % {
-            'name': vm_uuid,
-            'uuid': vm_uuid,
-            'mem': vm.mem,
-            'vcpu': vm.vcpu,
-            'ceph_uuid': image_info['ceph_uuid'],
-            'ceph_pool': image_info['ceph_pool'],
-            'diskname': vm.disk,
-            'ceph_host': image_info['ceph_host'],
-            'ceph_port': image_info['ceph_port'],
-            'ceph_username': image_info['ceph_username'],
-            'mac': vm.mac,
-            'bridge': vm.br
-        }
+                            'name': vm_uuid,
+                            'uuid': vm_uuid,
+                            'mem': vm.mem,
+                            'vcpu': vm.vcpu,
+                            'ceph_uuid': image_info['ceph_uuid'],
+                            'ceph_pool': image_info['ceph_pool'],
+                            'diskname': vm.disk,
+                            'ceph_host': image_info['ceph_host'],
+                            'ceph_port': image_info['ceph_port'],
+                            'ceph_username': image_info['ceph_username'],
+                            'ceph_hosts_xml': image_info['ceph_hosts_xml'],
+                            'mac': vm.mac,
+                            'bridge': vm.br
+                        }
 
+        migrate_res = False
         if self.host_api.host_claim(host_id, vm.vcpu, vm.mem, 1):
             try:
-                old_host_id = vm.host_id
-                if self.manager.migrate(vm_uuid, host_id, host.ipv4, xml_desc):
-                    self.host_api.host_release(old_host_id, vm.vcpu, vm.mem, 1)
-                    return True 
+                if src_host_alive:
+                    for gpu1 in gpu_list:
+                        r1 = vm.detach_device(gpu1.xml_desc)
+                        if settings.DEBUG: print('[migrate_vm]', 'detach gpu ', gpu1.id, r1)
+                    for volume1 in volume_list:
+                        r1 = vm.detach_device(volume1.xml_desc)
+                        if settings.DEBUG: print('[migrate_vm]', 'detach volume ', volume1.id, r1)
+
+                old_host_id = vm.host_id                
+                if self.manager.migrate(vm_uuid, host_id, host.ipv4, xml_desc,old_host_alive=src_host_alive):
+                    migrate_res = True
+                    old_res = self.host_api.host_release(old_host_id, vm.vcpu, vm.mem, 1)
+                    if settings.DEBUG: print('[migrate_vm]', '释放原宿主机资源 ', old_res)
+                    #重新attach device
+                    for gpu1 in gpu_list:
+                        r1 = vm.attach_device(gpu1.xml_desc)
+                        if settings.DEBUG: print('[migrate_vm]', 'attach gpu ', gpu1.id, r1)                
+                    for volume1 in volume_list:
+                        r1 = vm.attach_device(volume1.xml_desc)
+                        if settings.DEBUG: print('[migrate_vm]', 'attach volume ', volume1.id, r1)
             except Exception as e:
-                self.host_api.host_release(host_id, vm.vcpu, vm.mem, 1)
                 if type(e) == Error:
                     raise e
-            else:
-                self.host_api.host_release(host_id, vm.vcpu, vm.mem, 1)
+            finally:
+                if not migrate_res:
+                    new_res = self.host_api.host_release(host_id, vm.vcpu, vm.mem, 1)
+                    if settings.DEBUG: print('[migrate_vm]', '迁移失败,释放新宿主机资源 ', new_res)
 
-        return False
+
+        return migrate_res
+
+    def reset_vm(self,vm_uuid,new_image_id=None):
+        vm = self.manager.get_vm_by_uuid(vm_uuid)
+        if new_image_id == None:
+            new_image_id = vm.image_id
+        host = vm.host
+        old_image_id = vm.image_id
+        old_diskname = vm.disk
+        old_ceph_pool_id = vm.ceph_id
+
+        if vm.is_running():
+            raise Error(ERR_VM_RESET_LIVING)
+
+        new_image_info = self.image_api.get_image_info_by_id(new_image_id)
+        if not new_image_info:
+            raise Error(ERR_IMAGE_INFO)
+
+        from device.api import GPUAPI
+        from volume.api import VolumeAPI        
+        gpuapi = GPUAPI()
+        volumeapi = VolumeAPI()        
+        gpu_list = gpuapi.get_gpu_list_by_vm_uuid(vm_uuid)
+        volume_list = volumeapi.get_volume_list_by_vm_uuid(vm_uuid)
+
+        archive_disk_name = ''
+        old_image_dict={ 'image_id': old_image_id,
+                      'image_snap': vm.image_snap,
+                      'image_name': vm.image,
+                      'ceph_id': vm.ceph_id,
+                      'ceph_host': vm.ceph_host,
+                      'ceph_pool': vm.ceph_pool,
+                      'ceph_uuid': vm.ceph_uuid,
+                      'ceph_port': vm.ceph_port,
+                      'ceph_username': vm.ceph_username }
+        old_xml_desc = vm.xml_desc
+
+        res = False
+        try:
+            #先detach设备（gpu,volume）
+            for gpu1 in gpu_list:
+                r1 = vm.detach_device(gpu1.xml_desc)
+                if settings.DEBUG: print('[reset_vm]', 'detach gpu ', gpu1.id, r1)
+            for volume1 in volume_list:
+                r1 = vm.detach_device(volume1.xml_desc)
+                if settings.DEBUG: print('[reset_vm]', 'detach volume ', volume1.id, r1)
+
+            #dom的destroy和undefine操作
+            dom_undefine_res = False
+            if self.manager.domain_exists(vm.host_ipv4, vm.uuid):
+                dom = self.manager.get_domain(vm.host_ipv4, vm.uuid)
+                try:
+                    dom.destroy()
+                except:
+                    pass
+                dom.undefine()
+            if not self.manager.domain_exists(vm.host_ipv4, vm.uuid):
+                dom_undefine_res = True
+            if dom_undefine_res:
+                archive_disk_name = self.image_api.archive_disk(old_image_id, vm.disk)
+
+            if archive_disk_name :
+                init_disk_success = False
+                if dom_undefine_res:
+                    init_disk_success = self.image_api.init_disk(new_image_id, vm.disk)
+                if init_disk_success:
+                    #更新vm_db相关image信息
+                    vm.db_obj.image_id = new_image_id
+                    vm.db_obj.image_snap = new_image_info['image_snap']
+                    vm.db_obj.image = new_image_info['image_name']
+                    vm.db_obj.ceph_id = new_image_info['ceph_id']
+                    vm.db_obj.ceph_host = new_image_info['ceph_host']
+                    vm.db_obj.ceph_pool = new_image_info['ceph_pool']
+                    vm.db_obj.ceph_uuid = new_image_info['ceph_uuid']
+                    vm.db_obj.ceph_port = new_image_info['ceph_port']
+                    vm.db_obj.ceph_username = new_image_info['ceph_username']
+                    
+                    vm.db_obj.save()
+
+                    xml_tpl = self.image_api.get_xml_tpl(new_image_id)
+                    xml_desc = xml_tpl % {
+                            'name': vm.uuid,
+                            'uuid': vm.uuid,
+                            'mem':  vm.mem,
+                            'vcpu': vm.vcpu,
+                            'ceph_uuid': new_image_info['ceph_uuid'],
+                            'ceph_pool': new_image_info['ceph_pool'],
+                            'diskname': vm.disk,
+                            'ceph_host': new_image_info['ceph_host'],
+                            'ceph_port': new_image_info['ceph_port'],
+                            'ceph_username': new_image_info['ceph_username'],
+                            'ceph_hosts_xml': new_image_info['ceph_hosts_xml'],
+                            'mac': vm.mac,
+                            'bridge': vm.br
+                        }
+                    dom = self.manager.define(host.ipv4, xml_desc)                    
+                    res = True
+        except Exception as e:
+            if settings.DEBUG: print('[reset_vm]', '重置镜像失败', e)
+            res = False
+            if archive_disk_name: #已经归档成功，重新恢复
+                self.image_api.restore_disk(vm.image_id, archive_disk_name)
+                
+                vm.db_obj.image_id = old_image_dict['image_id']
+                vm.db_obj.image_snap = old_image_dict['image_snap']
+                vm.db_obj.image = old_image_dict['image_name']
+                vm.db_obj.ceph_id = old_image_dict['ceph_id']
+                vm.db_obj.ceph_host = old_image_dict['ceph_host']
+                vm.db_obj.ceph_pool = old_image_dict['ceph_pool']
+                vm.db_obj.ceph_uuid = old_image_dict['ceph_uuid']
+                vm.db_obj.ceph_port = old_image_dict['ceph_port']
+                vm.db_obj.ceph_username = old_image_dict['ceph_username']
+                vm.db_obj.save()
+
+                dom = self.manager.define(host.ipv4, old_xml_desc)
+            if settings.DEBUG: print('[reset_vm]', '回滚成功')
+        finally:
+            for gpu1 in gpu_list:
+                r1 = vm.attach_device(gpu1.xml_desc)
+                if settings.DEBUG: print('[reset_vm]', 'attach gpu ', gpu1.id, r1)                
+            for volume1 in volume_list:
+                r1 = vm.attach_device(volume1.xml_desc)
+                if settings.DEBUG: print('[reset_vm]', 'attach volume ', volume1.id, r1)
+
+        return res
+
+
+    def get_vm_disk_snap_list(self,vm_uuid):
+        vm = self.manager.get_vm_by_uuid(vm_uuid)
+        return self.image_api.get_disk_snap_list_by_disk(vm.disk)
+
+    def create_vm_disk_snap(self,vm_uuid,remarks=None):
+        vm = self.manager.get_vm_by_uuid(vm_uuid)
+        res = self.image_api.create_disk_snap(vm.ceph_id,vm.disk,vm.image_id,vm_uuid,remarks=remarks)
+        if res:
+            return True
+        else:
+            return False
+
+    def rollback_vm_disk_snap(self,vm_uuid,snap_id):
+        vm = self.manager.get_vm_by_uuid(vm_uuid)
+        if vm.is_running():
+            if settings.DEBUG: print('[rollback_vm_disk_snap]', '运行状态无法回滚') 
+            raise Error(ERR_VM_CREATE_SNAP_LIVING)
+        if settings.DEBUG: print('[rollback_vm_disk_snap]', '快照回滚：开始执行') 
+        res = self.image_api.rollback_disk_snap(vm.disk,snap_id)
+        if settings.DEBUG: print('[rollback_vm_disk_snap]', '快照回滚：结束',res)         
+        if res:
+            return True
+        else:
+            return False
+
+    def delete_vm_disk_snap(self,vm_uuid,snap_id):
+        vm = self.manager.get_vm_by_uuid(vm_uuid)
+        res = self.image_api.delete_disk_snap_by_id(vm.disk,snap_id)
+        if settings.DEBUG: print('[delete_vm_disk_snap]', '快照删除',res)         
+        if res:
+            return True
+        else:
+            return False
+
+    def set_vm_disk_snap_remarks(self,vm_uuid,snap_id,remarks=None):
+        vm = self.manager.get_vm_by_uuid(vm_uuid)
+        res = self.image_api.set_disk_snap_remarks(vm.disk,snap_id,remarks)       
+        if res:
+            return True
+        else:
+            return False
 
 class HostAPI(object):
     def __init__(self, user_api=None, manager=None):
@@ -511,4 +715,14 @@ class HostAPI(object):
 
     def get_host_list_by_group_id(self, group_id):
         return self.manager.get_host_list_by_group_id(group_id)
+
+    def host_power_off_by_ipmi(self,host_id):
+        '''通过ipmi将宿主机断电'''
+        host = self.manager.get_host_by_id(host_id)
+        return host.power_off_by_ipmi()
+
+    def disable_host(self,host_id):
+        '''将宿主机设置为不可用'''
+        host = self.manager.get_host_by_id(host_id)
+        return host.set_enable(enable=False)
     

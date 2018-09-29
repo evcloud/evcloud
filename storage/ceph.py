@@ -81,29 +81,7 @@ class CephPool(object):
                 if l > 0:
                     return True
             except: pass
-        return False
-
-    def create_snap(self, name):
-        cmd = 'ssh %(ceph_host)s rbd snap create %(ceph_pool)s/%(name)s' % {
-            'ceph_host':self._ceph_host, 
-            'ceph_pool':self._ceph_pool,
-            'name':name
-        }
-        res, lines = subprocess.getstatusoutput(cmd)
-        if res == 0:
-            return True
-        return False        
-    
-    def protect_snap(self, name):
-        cmd = 'ssh %(ceph_host)s rbd snap protect %(ceph_pool)s/%(name)s' % {
-            'ceph_host':self._ceph_host, 
-            'ceph_pool':self._ceph_pool,
-            'name':name
-        }
-        res, lines = subprocess.getstatusoutput(cmd)
-        if res == 0:
-            return True
-        return False     
+        return False    
 
     def create(self, name, size):
         cmd = 'ssh %(ceph_host)s rbd create %(name)s --size %(size)d --pool %(ceph_pool)s' % {
@@ -127,7 +105,69 @@ class CephPool(object):
         res, lines = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
-        return False  
+        return False        
+
+    def create_snap(self, name):
+        cmd = 'ssh %(ceph_host)s rbd snap create %(ceph_pool)s/%(name)s' % {
+            'ceph_host':self._ceph_host, 
+            'ceph_pool':self._ceph_pool,
+            'name':name
+        }
+        res, lines = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            return True
+        return False        
+    
+    def protect_snap(self, name):
+        cmd = 'ssh %(ceph_host)s rbd snap protect %(ceph_pool)s/%(name)s' % {
+            'ceph_host':self._ceph_host, 
+            'ceph_pool':self._ceph_pool,
+            'name':name
+        }
+        res, lines = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            return True
+        return False     
+
+    def rollback_snap(self, name):
+        cmd = 'ssh %(ceph_host)s rbd snap rollback %(ceph_pool)s/%(name)s' % {
+            'ceph_host':self._ceph_host, 
+            'ceph_pool':self._ceph_pool,
+            'name':name
+        }
+        res, lines = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            return True
+        return False
+
+    def snap_exist(self, name):
+        image, snap = name.split("@")
+        cmd = 'ssh %(ceph_host)s rbd snap ls %(ceph_pool)s/%(image)s | grep ^%(snap)s$ | wc -l' % {
+            'ceph_host':self._ceph_host, 
+            'ceph_pool':self._ceph_pool,
+            'image':image,
+            'snap':snap
+        }
+        res, lines = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            try:
+                l = int(lines)
+                if l > 0:
+                    return True
+            except: pass
+        return False
+
+    def rm_snap(self, name):
+        cmd = 'ssh %(ceph_host)s rbd snap rm %(ceph_pool)s/%(name)s' % {
+            'ceph_host':self._ceph_host, 
+            'ceph_pool':self._ceph_pool,
+            'name':name
+        }
+        res, info = subprocess.getstatusoutput(cmd)
+        if res == 0:
+            return True
+        self.error = info
+        return False 
 
 class CephPoolData(CephPool):
     def __init__(self, obj):

@@ -116,7 +116,7 @@ def get_volume_available(args):
 @catch_error
 @args_required(['size'])
 def create(args):  # TODO: 乱
-    backend = args.get('backend', 'CEPH')
+    backend = 'CEPH' #args.get('backend', 'CEPH')
     host_id = args.get('host_id')
     size = args.get('size')
     req_user = args['req_user']
@@ -137,22 +137,22 @@ def create(args):  # TODO: 乱
             pool = storage_api.get_pool_by_id(pool_id)
         else:
             pool = storage_api.get_volume_pool_by_center_id(group.center_id)
-    elif backend == 'GFS':
-        host = HostAPI().get_host_by_id(host_id)
-        if not host.managed_by(req_user):
-            err = '无权限操作'
-            res = False
-        group_id = host.group_id
+    # elif backend == 'GFS':
+    #     host = HostAPI().get_host_by_id(host_id)
+    #     if not host.managed_by(req_user):
+    #         err = '无权限操作'
+    #         res = False
+    #     group_id = host.group_id
 
-        # TODO: bad
-        from storage.models import CephHost, CephPool
-        h = CephHost.objects.filter(host=host.ipv4).first()
-        p = CephPool.objects.filter(host=h).first()
-        if p:
-            pool = storage_api.get_pool_by_id(p.id)
-        else:
-            err = '宿主机无存储资源池'
-            res = False
+    #     # TODO: bad
+    #     from storage.models import CephHost, CephPool
+    #     h = CephHost.objects.filter(host=host.ipv4).first()
+    #     p = CephPool.objects.filter(host=h).first()
+    #     if p:
+    #         pool = storage_api.get_pool_by_id(p.id)
+    #     else:
+    #         err = '宿主机无存储资源池'
+    #         res = False
     else:
         err = '存储后端参数有误'
         res = False

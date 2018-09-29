@@ -7,6 +7,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 from django.contrib.auth.decorators import login_required
 from .auth import staff_required
@@ -21,6 +22,12 @@ from api.vm import edit as api_vm_edit
 from api.vm import create as api_vm_create
 from api.vm import get as api_vm_get
 from api.vm import migrate as api_vm_migrate
+from api.vm import reset as api_vm_reset
+from api.vm import get_snap_list as api_vm_get_snap_list
+from api.vm import create_snap as api_vm_create_snap
+from api.vm import rollback_snap as api_vm_rollback_snap
+from api.vm import set_snap_remarks as api_vm_set_snap_remarks
+
 from api.center import get_list as api_center_get_list
 from api.group import get_list as api_group_get_list
 from api.host import get_list as api_host_get_list
@@ -379,7 +386,7 @@ def vm_detail_view(req):
             dicts['vmobj']['br'] = vlan['info']['br']
 
         # 添加操作功能和挂载云硬盘 2018-07-12 yanghao
-        dicts['vmobj']['can_operate'] = req.user.is_superuser or dicts['vmobj']['center_name'] == req.user.username
+        dicts['vmobj']['can_operate'] = req.user.is_superuser or dicts['vmobj']['creator'] == req.user.username
 
         from api.volume import get_volume_available
         volume_info = get_volume_available({'req_user': req.user,'group_id':dicts['vmobj']['group_id'],'vm_uuid':dicts['vmobj']['uuid']})
@@ -408,7 +415,8 @@ def vm_migrate_view(req):
             if migrate_res['res']:
                 dicts['result'] = '迁移成功。'
             else:
-                dicts['result'] = '迁移失败: %s' % migrate_res['err']
+                err_msg = ERROR_CN[migrate_res['err']] if  migrate_res['err'] in ERROR_CN else  migrate_res['err']
+                dicts['result'] = '迁移失败: %s' % err_msg
         else:
             dicts['result'] = '迁移失败：只能在关机状态迁移。'
             
@@ -417,7 +425,7 @@ def vm_migrate_view(req):
     if vm_res['res']:
         dicts['vmobj'] = vm_res['info']
     else:
-        return HttpResponseRedirect('../list/')
+        return HttpResponseRedirect(reverse("vm_list"))
     
     group_res = api_group_get_list({'req_user': req.user, 'center_id': dicts['vmobj']['center_id']})
     if group_res['res']:
@@ -432,6 +440,55 @@ def vm_migrate_view(req):
                     host_list.append(host)
         dicts['host_list'] = host_list
     return render(req,'vmadmin_migrate.html', dicts)
+
+
+@login_required   
+def vm_reset_view(req):
+    dicts = {}
+    arg_vmid = req.GET.get('vmid')
+    if req.method == 'POST':
+        arg_vmid = req.POST.get('vmid')
+        arg_image = req.POST.get('image')
+        status_res = api_vm_status({'req_user': req.user, 'uuid': arg_vmid})
+        if status_res['res'] and not status_res['status'] in (1, 2, 3, 7):
+            reset_res = api_vm_reset({'req_user': req.user, 'uuid': arg_vmid, 'image_id': arg_image})
+            if reset_res['res']:
+                dicts['result'] = '重置成功。'
+            else:
+                err_msg = ERROR_CN[reset_res['err']] if  reset_res['err'] in ERROR_CN else  reset_res['err']
+                dicts['result'] = '重置失败: %s' % err_msg
+                
+        else:
+            dicts['result'] = '重置失败：只能在关机状态重置。'
+            
+    vm_res = api_vm_get({'req_user': req.user, 'uuid': arg_vmid})
+    
+    if vm_res['res']:
+        dicts['vmobj'] = vm_res['info']
+    else:
+        return HttpResponseRedirect(reverse("vm_list"))
+    
+    image_res = api_image_get_list({'req_user': req.user, 'ceph_id': dicts['vmobj']['ceph_id'], 'enable': True})
+    image_dic = {}
+    if image_res['res']:
+        for image in image_res['list']:
+            if image['type'] in image_dic:
+                image_dic[image['type']].append(image)
+            else:
+                image_dic[image['type']] = [image]
+
+    image_type_list_info = api_image_get_type_list()
+    if image_type_list_info['res']:
+        image_type_list = [t['name'] for t in image_type_list_info['list']]
+    else:
+        image_type_list = list(image_dic.keys())
+    image_list_ordered = []
+    for image_type in image_type_list:
+        if image_type in image_dic:
+            image_list_ordered.append((image_type, image_list_sort(image_dic[image_type])))
+    dicts['image_list_ordered'] = image_list_ordered
+
+    return render(req,'vmadmin_reset.html', dicts)
 
 @login_required
 def vm_status_ajax(req):
@@ -479,6 +536,90 @@ def vm_edit_remarks_ajax(req):
     res = api_vm_edit({
                        'req_user': req.user,
                        'uuid': vmid, 
+                       'remarks': remarks})
+    if not res['res'] and res['err'] in ERROR_CN:
+        res['error'] = ERROR_CN[res['err']]
+    return HttpResponse(json.dumps(res), content_type='application/json')
+
+
+
+@login_required
+def vm_snap_create_view(req):
+    arg_vmid = req.GET.get('vmid')
+    obj_res = api_vm_get({'req_user': req.user, 'uuid': arg_vmid})
+    if obj_res['res']:
+        obj = obj_res['info']
+    else:
+        return HttpResponseRedirect('/vmadmin/vm/list/')
+
+    dicts = {}
+    if req.method == 'POST':
+        group_id = obj['group_id']
+        remarks = req.POST.get('remarks', None)
+        
+        create_res = api_vm_create_snap({'req_user': req.user,'uuid':arg_vmid,'remarks':remarks})
+
+        if create_res['res']:
+            dicts['alert_msg'] = "快照创建成功"
+        else:
+            err_msg = ERROR_CN[create_res['err']] if  create_res['err'] in ERROR_CN else  create_res['err']
+            dicts['alert_msg'] = '快照创建失败: %s' % err_msg
+
+    dicts['vmobj'] = obj
+
+    return render(req, 'vmadmin_snap_create.html', dicts)
+
+@login_required   
+def vm_snap_list_view(req):
+    dicts = {}
+    arg_vmid = req.GET.get('vmid',None)
+
+    vm_res = api_vm_get({'req_user': req.user, 'uuid': arg_vmid})
+    
+    if vm_res['res']:
+        dicts['vmobj'] = vm_res['info']
+    else:
+        return HttpResponseRedirect(reverse("vm_list"))
+    
+    snap_res = api_vm_get_snap_list({'req_user': req.user, 'uuid': dicts['vmobj']['uuid']})
+    
+    dicts['snap_list'] = []
+    if snap_res['res']:
+        dicts['snap_list'] = snap_res['list']
+
+    return render(req,'vmadmin_snap_list.html', dicts)
+
+
+@login_required
+def vm_snap_rollback_ajax_view(req):
+    vmid = req.POST.get('vmid', None)
+    snap_id = req.POST.get('snap_id', None)
+
+    dicts = {}
+    dicts['res'] = False
+    status_res = api_vm_status({'req_user': req.user, 'uuid': vmid})
+    if status_res['res'] and status_res['status'] != 1:
+        rollback_res = api_vm_rollback_snap({'req_user': req.user,'uuid': vmid,'snap_id': snap_id})
+        if rollback_res['res']:
+            dicts['res'] = True
+        else:
+            err_msg = ERROR_CN[rollback_res['err']] if  rollback_res['err'] in ERROR_CN else  rollback_res['err']
+            dicts['error'] = '快照回滚失败: %s' % err_msg            
+    else:
+        dicts['error'] = '快照回滚失败：只能在关机状态执行回滚操作。'
+    
+    return HttpResponse(json.dumps(dicts), content_type='application/json')
+
+
+@login_required
+def vm_snap_edit_remarks_ajax(req):
+    vmid = req.POST.get('vmid')
+    snap_id = req.POST.get('snap_id')
+    remarks = req.POST.get('remarks')
+    res = api_vm_set_snap_remarks({
+                       'req_user': req.user,
+                       'uuid': vmid, 
+                       'snap_id': snap_id, 
                        'remarks': remarks})
     if not res['res'] and res['err'] in ERROR_CN:
         res['error'] = ERROR_CN[res['err']]

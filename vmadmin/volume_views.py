@@ -259,7 +259,7 @@ def volume_mount_ceph_view(req):
     dicts['volume'] = volume
     dicts['vm'] = vm
     dicts['volume_list'] = volume_list
-    dicts['vm_list'] = vm_list
+    dicts['vm_list'] = [vm for vm in vm_list]
 
     if volume and volume['enable'] == False:
         dicts['alert_msg'] = '该设备不可用'
@@ -312,7 +312,7 @@ def volume_vm_create_view(req):
     if req.method == 'POST':
         size = req.POST.get('size', None)
         group_id = obj['group_id']
-        backend = req.POST.get('backend', 'GFS')
+        backend = req.POST.get('backend', 'CEPH')
         remarks = req.POST.get('remarks', None)
         if not size or not size.isdigit() or float(size) <= 0:
             dicts['alert_msg'] = '参数错误'
@@ -323,6 +323,11 @@ def volume_vm_create_view(req):
             'group_id': int(group_id),
             'size': size,
             'backend': backend})
+        if res['res']:#by lzx:2018-09-28
+            api_volume_set_remark({
+                'req_user': req.user,
+                'volume_id': res['volume_id'], 
+                'remarks': remarks})
 
         if res['res']:
             mount_res = api_volume_mount({'req_user': req.user, 'vm_uuid': vmid, 'volume_id': res['volume_id']})

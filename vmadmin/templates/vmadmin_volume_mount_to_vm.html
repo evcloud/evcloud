@@ -114,7 +114,6 @@
 		{% endfor %}
 		</tbody>
 	</table>
-
 	<link rel="stylesheet" href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}" />
 	<script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
 	<script>
@@ -132,6 +131,7 @@
 			window.vm_status_tag = 'vm_status_';
 			window.vm_task_tag = 'vm_task_';
 			window.vm_status_url = '/vmadmin/vm/status/';
+			console.log("XXX",vmids)
 			update_status(window.vm_status_url, vmids, 600000);
 		})();
 	</script>

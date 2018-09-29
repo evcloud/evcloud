@@ -18,6 +18,11 @@ from .error import ERR_VM_OP
 from .error import ERR_VM_NO_OP
 from .error import ERR_VM_EDIT
 from .error import ERR_VM_MIGRATE
+from .error import ERR_VM_RESET
+from .error import ERR_VM_CREATE_SNAP
+from .error import ERR_VM_ROLLBACK_SNAP
+from .error import ERR_VM_EDIT_REMARKS
+from .error import ERR_VM_MIGRATE_SAME_HOST
 from .error import Error
 
 from compute.api import VmAPI
@@ -67,8 +72,10 @@ def get(args):
         'ipv4':          vm.ipv4,
         
         'ceph_id':       vm.ceph_id,
-        'ceph_host':       vm.ceph_host,
-        'ceph_pool':       vm.ceph_pool
+        'ceph_host':     vm.ceph_host,
+        'ceph_pool':     vm.ceph_pool,
+
+        'ha_monitored':  vm.ha_monitored
     }
     return {'res': True, 'info': info}    
 
@@ -108,7 +115,8 @@ def get_list(args):
             'mem':          vm.mem,
             'creator':      vm.creator,
             'create_time':  create_time,
-            'remarks':      vm.remarks
+            'remarks':      vm.remarks,
+            'ha_monitored':  vm.ha_monitored
             })
     return {'res': True, 'list': ret_list}
     
@@ -251,11 +259,108 @@ def migrate(args):
         return {'res': False, 'err': ERR_AUTH_PERM}
     
     if vm.host_id == host.id:
-        return {'res': False, 'err': ERR_VM_MIGRATE}
+        return {'res': False, 'err': ERR_VM_MIGRATE_SAME_HOST}
     
     res = api.migrate_vm(args['uuid'], args['host_id'])
     if res:
         return {'res': True}
     return {'res': False, 'err': ERR_VM_MIGRATE}
 
+
+@api_log
+@catch_error
+@args_required(['uuid', 'image_id'])
+def reset(args):
+    #镜像重置
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
+    if not vm:
+        return {'res': False, 'err': ERR_VM_UUID}
+    if not vm.can_operate_by(args['req_user']):
+        return {'res': False, 'err': ERR_AUTH_PERM}
     
+    res = api.reset_vm(args['uuid'], args['image_id'])
+    if res:
+        return {'res': True}
+    return {'res': False, 'err': ERR_VM_RESET}
+
+@api_log
+@catch_error
+@args_required(['uuid'])
+def get_snap_list(args):
+    #虚拟机快照列表
+    ret_list = []
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
+    if not vm:
+        return {'res': False, 'err': ERR_VM_UUID}
+    if not vm.can_operate_by(args['req_user']):
+        return {'res': False, 'err': ERR_AUTH_PERM}
+    
+    res_list = api.get_vm_disk_snap_list(args['uuid'])
+    for snap in res_list:
+        ret_list.append({
+                'id':snap.id,
+                'fullname':snap.fullname,
+                'cephpool_id':snap.cephpool_id,
+                'disk': snap.disk,
+                'snap': snap.snap,
+                'create_time':snap.create_time,
+                'remarks':snap.remarks
+            })
+    
+    return {'res': True, 'list': ret_list}
+
+@api_log
+@catch_error
+@args_required(['uuid'])
+def create_snap(args):
+    #创建快照
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
+    if not vm:
+        return {'res': False, 'err': ERR_VM_UUID}
+    if not vm.can_operate_by(args['req_user']):
+        return {'res': False, 'err': ERR_AUTH_PERM}
+    remarks = ''
+    if "remarks" in args:
+        remarks = args['remarks']
+    res = api.create_vm_disk_snap(args['uuid'],remarks=remarks)
+    if res:
+        return {'res': True}
+    return {'res': False, 'err': ERR_VM_CREATE_SNAP}
+
+
+@api_log
+@catch_error
+@args_required(['uuid','snap_id'])
+def rollback_snap(args):
+    #回滚快照
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
+    if not vm:
+        return {'res': False, 'err': ERR_VM_UUID}
+    if not vm.can_operate_by(args['req_user']):
+        return {'res': False, 'err': ERR_AUTH_PERM}
+    
+    res = api.rollback_vm_disk_snap(args['uuid'],args['snap_id'])
+    if res:
+        return {'res': True}
+    return {'res': False, 'err': ERR_VM_ROLLBACK_SNAP}
+
+@api_log
+@catch_error
+@args_required(['uuid','snap_id','remarks'])
+def set_snap_remarks(args):
+    #设置快照备注
+    api = VmAPI()
+    vm = api.get_vm_by_uuid(args['uuid'])
+    if not vm:
+        return {'res': False, 'err': ERR_VM_UUID}
+    if not vm.can_operate_by(args['req_user']):
+        return {'res': False, 'err': ERR_AUTH_PERM}
+    
+    res = api.set_vm_disk_snap_remarks(args['uuid'],args['snap_id'],args['remarks'])
+    if res:
+        return {'res': True}
+    return {'res': False, 'err': ERR_VM_EDIT_REMARKS}

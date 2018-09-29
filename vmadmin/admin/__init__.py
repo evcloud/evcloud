@@ -20,13 +20,14 @@ admin_site.logout_template = None
 admin_site.password_change_template = None
 admin_site.password_change_done_template = None
 
-from compute.models import Center, Group, Host, Vm, VmArchive
-from .compute_admin import CenterAdmin, GroupAdmin, HostAdmin, VmAdmin, VmArchiveAdmin
+from compute.models import Center, Group, Host, Vm, VmArchive,MigrateLog
+from .compute_admin import CenterAdmin, GroupAdmin, HostAdmin, VmAdmin, VmArchiveAdmin,MigrateLogAdmin
 admin_site.register(Center, CenterAdmin)
 admin_site.register(Group, GroupAdmin)
 admin_site.register(Host, HostAdmin)
 admin_site.register(Vm, VmAdmin)
 admin_site.register(VmArchive, VmArchiveAdmin)
+admin_site.register(MigrateLog, MigrateLogAdmin)
 
 from image.models import ImageType, Image, Xml
 from .image_admin import ImageTypeAdmin, ImageAdmin, XmlAdmin
@@ -69,5 +70,16 @@ admin_site.register(DBCephVolume, CephVolumeAdmin)
 admin_site.register(DBCephQuota, CephQuotaAdmin)
 
 
+from monitoring.models import HostErrorLog,VmMigrateLog
+from .monitoring_admin import HostErrorLogAdmin,VmMigrateLogAdmin
+admin_site.register(HostErrorLog, HostErrorLogAdmin)
+admin_site.register(VmMigrateLog, VmMigrateLogAdmin)
+
+
 from django.contrib.auth.models import Group
 admin_site.unregister(Group)
+
+from vmadmin.models import SiteConfig
+from .vmadmin_admin import SiteConfigAdmin
+admin_site.register(SiteConfig, SiteConfigAdmin)
+

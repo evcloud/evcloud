@@ -44,11 +44,15 @@ class Host(models.Model):
     vcpu_allocated   = models.IntegerField(default=0)
     mem_total       = models.IntegerField(default=32768)
     mem_allocated   = models.IntegerField(default=0)
-    mem_reserved    = models.IntegerField(default=2038) 
+    mem_reserved    = models.IntegerField(default=2038)#系统要保留的内存空间
     vm_limit        = models.IntegerField(default=10)
     vm_created      = models.IntegerField(default=0)
     enable          = models.BooleanField(default=True)
     desc   = models.CharField(max_length = 200, null = True, blank = True)
+
+    ipmi_host = models.CharField(max_length=100,null=True,blank=True)
+    ipmi_user = models.CharField(max_length=100,null=True,blank=True)
+    ipmi_password  = models.CharField(max_length=100,null=True,blank=True)
     
     def __str__(self):
         return self.ipv4
@@ -66,7 +70,7 @@ class Vm(models.Model):
     name        = models.CharField(max_length=VM_NAME_LEN_LIMIT)
     vcpu        = models.IntegerField()
     mem         = models.IntegerField()
-    disk        = models.CharField(max_length=100)
+    disk        = models.CharField(max_length=100) #vm对应的ceph中的系统镜像名称
     deleted     = models.BooleanField()
     creator     = models.CharField(max_length=200, null=True, blank=True)
     create_time = models.DateTimeField(auto_now_add=True)
@@ -85,8 +89,8 @@ class Vm(models.Model):
     mac         = models.CharField(max_length=100)
     br          = models.CharField(max_length=100)
 
-    
-    
+    ha_monitored = models.BooleanField(default=False,help_text="标记是否在高可用模块监控列表中") 
+    #高可用的虚拟机,宿主机宕机后会做自动迁移 
     
     def __str__(self):
         return self.name
@@ -94,6 +98,7 @@ class Vm(models.Model):
     class Meta:
         verbose_name = '虚拟机'
         verbose_name_plural = '4_虚拟机'
+
 
 class VmArchive(models.Model):
     center_id   = models.IntegerField(null=True, blank=True)
@@ -125,12 +130,17 @@ class VmArchive(models.Model):
 
     class Meta:
         verbose_name = '虚拟机归档记录'
-        verbose_name_plural = '5_虚拟机归档表'
+        verbose_name_plural = '6_虚拟机归档表'
 
 class MigrateLog(models.Model):
     vmid = models.CharField(max_length=100)
     src_host_ipv4 = models.GenericIPAddressField()
     dst_host_ipv4 = models.GenericIPAddressField()
     migrate_time = models.DateTimeField(auto_now_add=True)
-    result = models.BooleanField()
+    result = models.BooleanField() 
     error = models.TextField(null=True, blank=True)
+    src_undefined = models.BooleanField(default=False,verbose_name="是否清理完源主机") # 源宿主机是否已经执行undefine操作
+    
+    class Meta:
+        verbose_name = '虚拟机迁移记录'
+        verbose_name_plural = '7_虚拟机迁移记录表'

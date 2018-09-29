@@ -76,6 +76,28 @@ class Image(models.Model):
             print('auto create snap error.')
         super(self.__class__, self).save()
 
+
+class DiskSnap(models.Model):
+    cephpool_id = models.IntegerField() 
+    disk = models.CharField(max_length=100) #对应vm中的disk
+    snap = models.CharField(max_length=100) #ceph中存储的实际snap名称(默认使用snap创建日期)
+    create_time = models.DateTimeField(auto_now_add=True)
+    remarks = models.TextField(default='', null=True, blank=True)
+
+    image_id = models.IntegerField(null=True, blank=True)    #冗余记录 
+    vm_uuid  = models.CharField(max_length=100, null=True, blank=True) #冗余记录
+
+    @property
+    def fullname(self):
+        return "%s@%s" %(self.disk,self.snap)
+
+    def __str__(self):
+        return self.fullname
+
+    class Meta:
+        verbose_name = '虚拟机系统盘快照'
+        verbose_name_plural = '4_虚拟机系统盘快照'
+
     
     
 

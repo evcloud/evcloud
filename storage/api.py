@@ -45,15 +45,7 @@ class StorageAPI(object):
     def exists(self, pool_id, name):
         pool = self.get_pool_by_id(pool_id)
         return pool.exists(name)
-
-    def create_snap(self, pool_id, name):
-        pool = self.get_pool_by_id(pool_id)
-        return pool.create_snap(name)
-
-    def protect_snap(self, pool_id, name):
-        pool = self.get_pool_by_id(pool_id)
-        return pool.protect_snap(name)
-
+    
     def create(self, pool_id, name, size):
         pool = self.get_pool_by_id(pool_id)
         return pool.create(name, size)
@@ -61,3 +53,45 @@ class StorageAPI(object):
     def resize(self, pool_id, name, size):
         pool = self.get_pool_by_id(pool_id)
         return pool.resize(name, size)
+
+    def create_snap(self, pool_id, name):
+        if not self._valid_snap_name(name):
+            return False
+        pool = self.get_pool_by_id(pool_id)
+        return pool.create_snap(name)
+
+    def protect_snap(self, pool_id, name):
+        if not self._valid_snap_name(name):
+            return False
+        pool = self.get_pool_by_id(pool_id)
+        return pool.protect_snap(name)
+
+    def rollback_snap(self, pool_id, name):
+        if not self._valid_snap_name(name):
+            return False
+        pool = self.get_pool_by_id(pool_id)
+        return pool.rollback_snap(name)
+
+    def snap_exist(self,pool_id,name):
+        if not self._valid_snap_name(name):
+            return False
+        pool = self.get_pool_by_id(pool_id)
+        return pool.snap_exist(name)
+
+    def rm_snap(self,pool_id,name):
+        if not self._valid_snap_name(name):
+            return False
+        pool = self.get_pool_by_id(pool_id)
+        if not pool.snap_exist(name):
+            return True
+        return pool.rm_snap(name)
+
+    def _valid_snap_name(self, snap_name):
+        try:
+            names = snap_name.split("@")
+            if len(names)==2 and len(names[0].strip())>0 and len(names[1].strip())>0 :
+                return True
+            else:
+                return False
+        except:
+            return False

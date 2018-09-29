@@ -201,6 +201,17 @@ class VMData(object):
             else:
                 self.db_obj = db
         return res
+
+    def set_ha_monitored(self, ha_monitored):
+        try:
+            if ha_monitored:
+                self.db_obj.ha_monitored = True
+            else:
+                self.db_obj.ha_monitored = False
+            self.db_obj.save(update_fields=['ha_monitored'])
+        except Exception as e:
+            return False
+        return True
     
 class VM(VMData, VirtManager):
     VIR_DOMAIN_NOSTATE  =   0   #no state
@@ -368,6 +379,9 @@ class VM(VMData, VirtManager):
             or self.status == VIR_DOMAIN_PMSUSPENDED):
             return True
         return False
+
+    def is_shutted_off(self):
+        return self.status == VIR_DOMAIN_SHUTOFF
 
     def _get_createxml_argv(self):
         ceph = self.db_obj.get_ceph()

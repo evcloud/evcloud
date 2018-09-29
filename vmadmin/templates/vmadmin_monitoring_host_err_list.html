@@ -1,0 +1,125 @@
+{%extends 'vmadmin_base.html'%}
+{%load  sizeformat%}
+{%block base%}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h2 class="panel-title"><strong>高可用-宿主机错误列表</strong>
+    <!--
+    <button type="button" class="btn btn-xs btn-primary" style="float:right" onclick="">创建VLAN<img style="margin-top: -3px" alt="True" src="/static/admin/img/tooltag-add.png"></button>
+	-->
+    </h2>
+  </div>
+  <div class="panel-body">
+  
+<table class="table" style="word-wrap:break-word;word-break:break-all;">
+	<tr>
+		<th>编号</th>
+		<th>宿主机IP</th>
+		<th>错误信息</th>
+		<th>日期时间</th>
+		<th>虚拟机迁移记录</th>
+		<th width="180px">备注</th>
+		<th width="120px"></th>
+	</tr>
+{%for log_tuple in p.object_list%}
+<tr id="tr_host_err_{{log_tuple.0.id}}" >
+	<td >{{log_tuple.0.id}}</td>
+	<td>{{log_tuple.0.host_ipv4}}</td>
+	<td>{{log_tuple.0.info | default_if_none:''}}</td>
+	<td>{{log_tuple.0.create_time|date:'Y-m-d H:i:s'}}</td>
+	<td>
+		<table>
+			{% for vm_log in log_tuple.1 %}
+			<tr>
+				<td title="虚拟机">{{vm_log.ipv4}}</td>
+				<td title="目标宿主机">to: {{vm_log.dst_host_ipv4}}</td>
+				<td title="迁移结果">{% if vm_log.migrate_res %}成功{% else %}失败{%endif%}</td>
+			</tr>
+			{% endfor %}
+		</table>			
+	</td>
+	<td></td>
+	<td></td>
+	
+</tr>
+{%endfor%}
+
+</table>
+
+  </div>
+  {%if p.page_range%}
+  <div class="panel-footer">
+  <div align="right">
+	<ul class="pagination" style="margin:0;">
+	      {% if p.has_previous %}
+	      <li><a href="{{p.link}}{{ p.previous_page_number }}">&laquo;</a></li>
+	      {%else%}
+	      <li class="disabled"><span>&laquo;</span></li>
+	      {% endif %}
+	      {% if p.num_cur_page !=  p.start_page%}
+	      <li><a href="{{p.link}}{{p.start_page}}">first</a></li>
+	      {%else%}
+	      <li class="disabled"><span>first</span></li>
+	      {%endif%}
+	
+	       {%for num in p.page_range%}
+	       {%if num == p.num_cur_page%}
+	      <li class="active"><span>{{num}}</span></li>
+	       {%else%}
+	      <li><a href="{{p.link}}{{num}}">{{num}}</a></li>
+	    {%endif%}
+	      {%endfor%}
+	
+	       {% if p.num_cur_page != p.end_page%}
+	      <li><a href="{{p.link}}{{p.end_page}}">last</a></li>
+	       {%else%}
+	      <li class="disabled"><span>last</span></li>
+	      {%endif%}
+	      {% if p.has_next %}
+	      <li><a href="{{p.link}}{{ p.next_page_number }}">&raquo;</a></li>  {%else%}
+	      <li class="disabled"><span>&raquo;</span></li>
+	       {% endif %}
+	    </ul></div>
+    </div>
+    {%endif%}
+</div>
+<script type="text/javascript">
+	function edit_remarks(vlan_id) {
+		$("#remarks_" + vlan_id + "_show").hide();
+		$("#remarks_" + vlan_id + "_edit").show();
+	}
+	function save_remarks(vlan_id) {
+		var remarks = $("#remarks_" + vlan_id).val();
+		$.ajax({
+			url: '/vmadmin/net/vlan/edit_remarks/',
+			type: 'post',
+			data: {
+				'vlan_id': vlan_id,
+				'remarks': remarks,
+			},
+			success:function(data){
+				if (data.res){
+					$("#remarks_"+vlan_id+"_span").text(remarks);
+				} else {
+					alert(data.error);
+				}
+			},
+			complete:function() {
+				$("#remarks_" + vlan_id + "_show").show();
+				$("#remarks_" + vlan_id + "_edit").hide();
+			}
+			
+		}, 'json');
+	}
+	function show_remarks_pen(vlan_id){
+		$("#remarks_" + vlan_id + "_pen").show();
+		$("#remarks_" + vlan_id + "_span").css('padding-right','0px');
+	}
+	function hide_remarks_pen(vlan_id){
+		$("#remarks_" + vlan_id + "_pen").hide();
+		$("#remarks_" + vlan_id + "_span").css('padding-right','18px');
+	}
+	
+
+</script>
+{%endblock%}

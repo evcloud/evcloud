@@ -1,11 +1,13 @@
 #coding=utf-8
 from .models import Image as DBImage
 from .models import ImageType
+from .models import DiskSnap as DBDiskSnap
 from .image import Image
+from .snap import DiskSnap
 from datetime import datetime
 from django.conf import settings
 
-from api.error import ERR_IMAGE_ID, ERR_DISK_NAME, Error
+from api.error import ERR_IMAGE_ID, ERR_DISK_NAME, Error,ERR_DISKSNAP_ID
 
 class ImageManager(object):
     error = ''
@@ -75,7 +77,48 @@ class ImageManager(object):
         image = image[0]
         return image.xml.xml
 
-    
 
-    
+    def create_disk_snap_db(self,cephpool_id,disk,snap,image_id,vm_uuid,remarks=None):
+        obj = DBDiskSnap()
+        obj.cephpool_id = cephpool_id
+        obj.disk = disk
+        obj.snap = snap
+        obj.image_id = image_id
+        obj.vm_uuid = vm_uuid
+        obj.remarks = remarks
+        obj.save()
+        return DiskSnap(obj)
+
+    def get_disk_snap_by_id(self, disk, snap_id):
+        objs = DBDiskSnap.objects.filter(id = snap_id,disk=disk)
+        if not objs.exists():
+            raise Error(ERR_DISKSNAP_ID)
+        return DiskSnap(objs[0])
+
+    def get_disk_snap_list_by_disk(self, disk):
+        objs = DBDiskSnap.objects.filter(disk = disk).order_by("-create_time")
+        ret_list = [DiskSnap(obj) for obj in objs]
+        return ret_list
+
+    def batch_update_disk_of_disk_snap(self,old_disk,new_disk):
+        '''磁盘归档时批量更新磁盘名称'''
+        try:
+            objs = DBDiskSnap.objects.filter(disk = old_disk)
+            if objs.exists():
+                objs.update(disk=new_disk)        
+            return True  
+        except Exception as e:
+            if settings.DEBUG: raise e 
+            return False
+
+    def batch_delete_disk_snap_db_by_disk(self,disk):
+        try:
+            objs = DBDiskSnap.objects.filter(disk = disk)
+            if objs.exists():
+                objs.delete() 
+            return True  
+        except Exception as e:
+            if settings.DEBUG: raise e 
+            return False
+
     

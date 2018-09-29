@@ -321,7 +321,6 @@
 				update_spin_modal(tmp_tbl);
 			},
 			function(req){
-				console.log(req)
 				var tmp_div=$("<div><h3 style='color:red;'>失败</h3><br></div>");
 				tmp_div.append($("<strong/>").text("返回状态码："+req.status));
 				tmp_div.append($("<p style='font-size:12px;'/>").text("错误信息："+req.responseText));
