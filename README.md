@@ -1,14 +1,16 @@
 # [总体介绍]
-EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。
-## 项目主页
-    http://ev.5ink.org
-## 作者与联系方式
-    fubo,lzx,hai
-    ink@cnic.cn
-## 界面截图
-![image](https://github.com/bobff/ev-cloud/raw/master/static/images/page1.png)
+> EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。
 
-![image](https://github.com/bobff/ev-cloud/raw/master/static/images/page2.png)
+## 项目主页
+>    https://github.com/evcloud/evcloud_server
+## 项目API服务页面
+>    http://vm.dcloud.cn/api/v2/docs/
+
+## 界面截图
+![image](https://github.com/evcloud/evcloud_server/blob/master/static/docs/images/page1.png)
+
+![image](https://github.com/evcloud/evcloud_server/blob/master/static/docs/images/page2.png)
+
 
 # [开发环境、调试与运行]
 ## 系统软件环境准备
