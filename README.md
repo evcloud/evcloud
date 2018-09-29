@@ -33,7 +33,7 @@ EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳�
     ps aux | grep "/usr/bin/websockify 0.0.0.0:8080 --daemon" | awk '{print "kill -9 " $2}' | sh
     websockify 0.0.0.0:8080 --daemon --web=/usr/share/novnc --token-plugin=TokenFile --token-source=/home/novnc/novnc_token/
 
-##根据选用的数据库设置配置文件：
+## 根据选用的数据库设置配置文件：
     进入conf目录：cd conf
     sqlite3数据库,请执行：ln -s settings_sqlite3.py settings.py；
     mariadb数据库，请执行：ln -s settings_mariadb.py settings.py；
