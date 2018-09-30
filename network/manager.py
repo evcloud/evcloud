@@ -92,7 +92,7 @@ class NetManager(object):
         if settings.DEBUG: print('release mac:', mac, vmid) 
         try:
             with transaction.atomic():
-                macipobj = MacIP.objects.select_for_update().filter(mac=mac, vmid=vmid, enable=True)
+                macipobj = MacIP.objects.select_for_update().filter(mac=mac, vmid=vmid)
                 macipobj = macipobj[0]    
                 if settings.DEBUG: print('set null', macipobj.mac)
                 macipobj.vmid = ''
