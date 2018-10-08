@@ -36,9 +36,9 @@
 
 {%if alert_msg%}
 <script type="text/javascript">
-    if(confirm('{{alert_msg}}')){
-        window.location.href='/vmadmin/vm/snap/list/?vmid={{vmobj.uuid}}';
-    }
+    alert('{{alert_msg}}');
+    window.location.href='/vmadmin/vm/detail/?vmid={{vmobj.uuid}}';
+    
 </script>
 {%endif%} 
 {%endblock%}

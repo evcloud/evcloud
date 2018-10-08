@@ -2,8 +2,8 @@
 {% load sizeformat %}
 {% load percentageformat %}
 {%block base%}
-    <h2>资源分配列表</h2>
-<h3>分中心资源分配列表</h3>
+    <h3>资源分配列表</h3>
+<h4>分中心资源分配列表</h4>
 {% if r_alloc_c %}
     <table class="table">
         <tr>
@@ -25,7 +25,7 @@
         <td>{{r.mem_total | sizeformat:'MB'}}</td>
         <td>{{r.mem_used | sizeformat:'MB'}}</td>
         <td>{{r.mem_used_rate | percentageformat}}</td> 
-        <td>{{r.hostcount}}</td> 
+        <td>{{r.host_count}}</td> 
     </tr>
 {%endfor%}
 </table>
@@ -33,7 +33,7 @@
     <b style="color: red">所在权限，无分中心数据</b>
 {% endif%}
 
-<h3>主机组资源分配列表</h3>
+<h4>主机组资源分配列表</h4>
 {% if r_alloc_g %}
 <table class="table">
     <tr>
@@ -57,7 +57,7 @@
 	<td>{{r.mem_total | sizeformat:'MB'}}</td>
 	<td>{{r.mem_used | sizeformat:'MB'}}</td>
 	<td>{{r.mem_used_rate | percentageformat}}</td> 
-    <td>{{r.hostcount}}</td> 
+    <td>{{r.host_count}}</td> 
 </tr>
 {%endfor%}
 </table>
@@ -65,7 +65,7 @@
     <b style="color: red">所在权限，无主机组数据</b>
 {% endif%}
 
-<h3>宿主机资源分配列表</h3>
+<h4>宿主机资源分配列表</h4>
 {% if r_alloc_h %}
 <table class="table">
     <tr>

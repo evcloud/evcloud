@@ -274,18 +274,18 @@
 </script>
 </div>
 </div>
-</div>
-<div class="detail">
-	{%for k,v in vminfo.items%}
-	<div class="form-group">
-	    <label for="name"  class="col-sm-3 control-label">{{k}}</label>
-	    <div class="col-sm-9">
-	        <span  class="form-value" >{{v}}</span>
-	    </div>
-	</div>
 
-	{%endfor%}
+<div class="row row_style"  style="margin-top: 40px;">
+    <div class="col-md-12 fontstyle" style="margin-bottom: 5px;">
+            系统快照信息<button type="button" class="btn btn-xs btn-primary" style="float:right" onclick="window.location.href='/vmadmin/vm/snap/create/?vmid={{vmobj.uuid}}'">创建系统快照<img style="margin-top: -3px" alt="True" src="/static/admin/img/tooltag-add.png"></button>
+    </div>
+    <div class="col-md-12">
+    {% include 'common/vm_snap_list.html' %}
+    </div>
 </div>
+
+</div>
+
 </div>
 
 {%endblock%}

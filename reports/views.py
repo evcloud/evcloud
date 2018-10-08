@@ -1,5 +1,4 @@
 #coding=utf-8
-import uuid, json
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 from django.http import HttpResponse, HttpResponseRedirect
@@ -23,66 +22,34 @@ def index(request):
     return HttpResponseRedirect('/reports/alloclist/')
 
 
-def alloclist(request):
-    r_alloc_c = _get_alloc_center(request)#.order_by('center_id')
-    r_alloc_g = _get_alloc_group(request)
-    r_alloc_h = _get_alloc_host(request)
+@login_required
+def alloclist(request):   
     dicts={}
-    r_alloc_c1=[]
-    r_alloc_g1=[]
-    r_alloc_h1=[]
-    if r_alloc_c != None:
-        for c in r_alloc_c:
-            r = 0
-            hostcount = 0
-            if c.mem_total != 0:
-                r = float(c.mem_allocated+c.mem_reserved)/c.mem_total
-                hostcount = _hostcount_center(c.center)
-            r_alloc_c1.append({
-                           'center_name':c.center_name,'vcpu_total':c.vcpu_total,'vcpu_allocated':c.vcpu_allocated,'vcpu_alloc_rate':c.vcpu_alloc_rate,
-                           'mem_total':c.mem_total,'mem_used':c.mem_allocated+c.mem_reserved,'mem_used_rate':r,'hostcount':hostcount})
-    if r_alloc_g != None:
-        for g in r_alloc_g:
-            r = 0
-            hostcount =0
-            if g.mem_total != 0:
-                r = float(g.mem_allocated+g.mem_reserved)/g.mem_total
-                hostcount = _hostcount_group(g.group)
-            r_alloc_g1.append({
-                           'group_name':g.group_name,'center_name':g.center.name,'vcpu_total':g.vcpu_total,'vcpu_allocated':g.vcpu_allocated,'vcpu_alloc_rate':g.vcpu_alloc_rate,
-                           'mem_total':g.mem_total,'mem_used':g.mem_allocated+g.mem_reserved,'mem_used_rate':r,'hostcount':hostcount})
-    if r_alloc_h != None:
-        for h in r_alloc_h:
-            r = 0
-            if h.mem_total != 0:
-                r = float(h.mem_allocated+h.mem_reserved)/h.mem_total
-            r_alloc_h1.append({
-                           'ipv4':h.ipv4,'group_name':h.group.name,'center_name':h.group.center.name,'vcpu_total':h.vcpu_total,'vcpu_allocated':h.vcpu_allocated,'vcpu_alloc_rate':h.vcpu_alloc_rate,
-                           'mem_total':h.mem_total,'mem_used':h.mem_allocated+h.mem_reserved,'mem_used_rate':r})
+
+    alloc_info = _get_alloc_info(request)
+    r_alloc_c1 = alloc_info['r_alloc_center']
+    r_alloc_g1 = alloc_info['r_alloc_group']
+    r_alloc_h1 = alloc_info['r_alloc_host']
+    
     dicts['r_alloc_c'] = r_alloc_c1
     dicts['r_alloc_g'] = r_alloc_g1
     dicts['r_alloc_h'] = r_alloc_h1
     return render(request, 'reports_alloc_list.html',dicts)
-    #return render_to_response('reports_alloc_list.html', dicts, context_instance=RequestContext(request))
 
+
+@login_required
 def alloc_center(request):
-    r_alloc_c = _get_alloc_center(request)
-    if r_alloc_c ==None:
+    if not request.user.is_superuser:
         dicts={}
         return render_to_response('reports_alloc_center.html', dicts, context_instance=RequestContext(request))
+
+    alloc_info = _get_alloc_info(request)
+    r_alloc_c1 = alloc_info['r_alloc_center']
+    
     x=[]
     cpu_y={"total":[],"allocated":[],"remainder":[]}
     mem_y={"total":[],"used":[],"remainder":[]}
-    r_alloc_c1=[]
-    for c in r_alloc_c:
-        r = 0
-        hostcount = 0
-        if c.mem_total != 0:
-            r = float(c.mem_allocated+c.mem_reserved)/c.mem_total
-            hostcount = _hostcount_center(c.center)
-        r_alloc_c1.append({
-                           'center_name':c.center_name,'vcpu_total':c.vcpu_total,'vcpu_allocated':c.vcpu_allocated,'vcpu_alloc_rate':c.vcpu_alloc_rate,
-                           'mem_total':c.mem_total,'mem_used':c.mem_allocated+c.mem_reserved,'mem_used_rate':r,'hostcount':hostcount})
+    
     for i in r_alloc_c1:
        x.append(i['center_name'])
        cpu_y["total"].append(i['vcpu_total'])
@@ -97,23 +64,17 @@ def alloc_center(request):
     chart_mem={"title":"分中心资源分配统计：内存","xaxis":x,"yaxis":mem_y,"xtitle":"分中心","ytitle":"mem(GB)"}
     dicts={"chart_name":"center","chart_cpu":chart_cpu,"chart_mem":chart_mem,"r_alloc_c":r_alloc_c1}
     return render(request,'reports_alloc_center.html',dicts)
-    #return render_to_response('reports_alloc_center.html', dicts, context_instance=RequestContext(request))
 
+
+@login_required
 def alloc_group(request):
-    r_alloc_g = _get_alloc_group(request)
-    if r_alloc_g ==None:
+    alloc_info = _get_alloc_info(request)
+    r_alloc_g1 = alloc_info['r_alloc_group']
+
+    if not r_alloc_g1:
         dicts={}
         return render_to_response('reports_alloc_group.html', dicts, context_instance=RequestContext(request))
-    r_alloc_g1=[]
-    for g in r_alloc_g:
-        r = 0
-        hostcount =0
-        if g.mem_total != 0:
-            r = float(g.mem_allocated+g.mem_reserved)/g.mem_total
-            hostcount = _hostcount_group(g.group)
-        r_alloc_g1.append({
-                           'group_name':g.group_name,'center_name':g.center.name,'vcpu_total':g.vcpu_total,'vcpu_allocated':g.vcpu_allocated,'vcpu_alloc_rate':g.vcpu_alloc_rate,
-                           'mem_total':g.mem_total,'mem_used':g.mem_allocated+g.mem_reserved,'mem_used_rate':r,'hostcount':hostcount})
+    
     x=[]
     cpu_y={"total":[],"allocated":[],"remainder":[]}
     mem_y={"total":[],"used":[],"remainder":[]}
@@ -130,48 +91,100 @@ def alloc_group(request):
     chart_mem={"title":"主机组资源分配统计：内存","xaxis":x,"yaxis":mem_y,"xtitle":"主机组","ytitle":"mem(GB)"}
     dicts={"chart_name":"center","chart_cpu":chart_cpu,"chart_mem":chart_mem,"r_alloc_g":r_alloc_g1}
     return render(request,'reports_alloc_group.html',dicts)
-    #return render_to_response('reports_alloc_group.html', dicts, context_instance=RequestContext(request))
+    
 
 
+def _get_alloc_info(request):
+    r_alloc_c = []
+    r_alloc_g = []
+    r_alloc_h = []   
 
-def _get_alloc_host(request):
-    res = None
-    if request.user.is_superuser:
-        res = Alloc_Host_Latest.objects.order_by('ipv4')
-    else:
-        res = Alloc_Host_Latest.objects.filter( host__group__admin_user = request.user)
-    if res.exists():
-        return res
-    else:
-        return None
+    centers = Center.objects.all()
+    for c in centers:
+        c_vcpu_total = 0
+        c_vcpu_allocated = 0
+        c_vcpu_alloc_rate = 0
+        c_mem_total = 0
+        c_mem_allocated = 0
+        c_mem_reserved = 0
+        c_mem_alloc_rate = 0
+        c_mem_used = 0
+        c_mem_used_rate = 0
+        c_host_count = 0
 
-def _get_alloc_group(request):
-    res = None
-    if request.user.is_superuser:
-        res = Alloc_Group_Latest.objects.all()#.group_by('center_id')
-    else:
-        res = Alloc_Group_Latest.objects.filter(group__admin_user = request.user)
-    if res.exists():
-        return res
-    else:
-        return None
+        if request.user.is_superuser:
+            groups = Group.objects.filter(center_id=c.id)
+        else:
+            groups = Group.objects.filter(admin_user_id=request.user.id, center_id=c.id)
+        for g in groups:            
+            g_vcpu_total = 0
+            g_vcpu_allocated = 0
+            g_vcpu_alloc_rate = 0
+            g_mem_total = 0
+            g_mem_allocated = 0
+            g_mem_reserved = 0
+            g_mem_alloc_rate = 0
+            g_mem_used = 0
+            g_mem_used_rate = 0
 
-def _get_alloc_center(request):
-    if request.user.is_superuser:
-        res = Alloc_Center_Latest.objects.all()#.order_by('center_id')
-        if res.exists():
-            return res
-    return None
+            hosts = Host.objects.filter(group_id = g.id)
+            for h in hosts:
+                vcpu_alloc_rate = 0
+                mem_alloc_rate = 0
+                h_mem_used = h.mem_allocated + h.mem_reserved
+                h_mem_used_rate = 0
+                if h.vcpu_total:
+                    vcpu_alloc_rate=h.vcpu_allocated / h.vcpu_total
+                if h.mem_total:
+                    mem_alloc_rate=h.mem_allocated / h.mem_total
+                    h_mem_used_rate = h_mem_used / h.mem_total  
+                d1 = {"ipv4":h.ipv4,"group_name":g.name,"center_name":c.name,
+                      "vcpu_total":h.vcpu_total,"vcpu_allocated":h.vcpu_allocated,"vcpu_alloc_rate":vcpu_alloc_rate,
+                      "mem_total":h.mem_total,"mem_allocated":h.mem_allocated,"mem_reserved":h.mem_reserved,"mem_alloc_rate":mem_alloc_rate,
+                      "mem_used":h_mem_used,"mem_used_rate":h_mem_used_rate}
+                r_alloc_h.append(d1)
+                #统计group
+                g_vcpu_total += h.vcpu_total
+                g_vcpu_allocated += h.vcpu_allocated
+                g_mem_total += h.mem_total
+                g_mem_allocated += h.mem_allocated
+                g_mem_reserved += h.mem_reserved
+            #end:for h in hosts
+            if g_vcpu_total:
+                g_vcpu_alloc_rate = g_vcpu_allocated / g_vcpu_total
+            if g_mem_total:
+                g_mem_alloc_rate = g_mem_allocated / g_mem_total
+                g_mem_used = g_mem_allocated + g_mem_reserved
+                g_mem_used_rate = g_mem_used / g_mem_total        
+            d1 = {  "group_name":g.name,"center_name":c.name,
+                    "vcpu_total":g_vcpu_total,"vcpu_allocated":g_vcpu_allocated,"vcpu_alloc_rate":g_vcpu_alloc_rate,
+                    "mem_total":g_mem_total,"mem_allocated":g_mem_allocated,"mem_reserved":g_mem_reserved,
+                    "mem_alloc_rate":g_mem_alloc_rate,"host_count":hosts.count(),
+                    "mem_used":g_mem_used,"mem_used_rate":g_mem_used_rate}
+            r_alloc_g.append(d1)
+            #统计center
+            c_vcpu_total += g_vcpu_total
+            c_vcpu_allocated += g_vcpu_allocated
+            c_mem_total += g_mem_total
+            c_mem_allocated += g_mem_allocated
+            c_mem_reserved += g_mem_reserved
+            c_host_count += hosts.count()
+        #end: for g in groups
+        if c_vcpu_total:
+            c_vcpu_alloc_rate = c_vcpu_allocated / c_vcpu_total
+        if c_mem_total:
+            c_mem_alloc_rate = c_mem_allocated / c_mem_total
+            c_mem_used = c_mem_allocated + c_mem_reserved
+            c_mem_used_rate = c_mem_used / c_mem_total
 
-def _hostcount_center(center1):
-    res = Alloc_Host_Latest.objects.filter(group__center = center1).count()
-    if res:
-        return res
-    return 0
+        d1 = {  "center_name":c.name,"vcpu_total":c_vcpu_total,"vcpu_allocated":c_vcpu_allocated,"vcpu_alloc_rate":c_vcpu_alloc_rate,
+                "mem_total":c_mem_total,"mem_allocated":c_mem_allocated,"mem_reserved":c_mem_reserved,
+                "mem_alloc_rate":c_mem_alloc_rate,"host_count":c_host_count,
+                "mem_used":c_mem_used,"mem_used_rate":c_mem_used_rate}
 
+        r_alloc_c.append(d1)
 
-def _hostcount_group(group1):
-    res = Alloc_Host_Latest.objects.filter(group = group1).count()
-    if res:
-        return res
-    return 0
+    if not request.user.is_superuser:
+        r_alloc_c = []
+
+    return {"r_alloc_center":r_alloc_c, "r_alloc_group":r_alloc_g,"r_alloc_host":r_alloc_h}

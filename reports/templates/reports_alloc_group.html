@@ -3,12 +3,10 @@
 {% load percentageformat %}
 {%block base%}
 
-<!-- 
-<script type="text/javascript" src="/static/js/vm_list.js"></script> -->
 <script type="text/javascript" src="/static/js/jquery.min.js"></script>
 <script type="text/javascript" src="/static/js/highcharts.js"></script>
 
-<h3>主机组资源分配列表</h3>
+<h4>主机组资源分配列表</h4>
 <hr/>
 {% if r_alloc_g %}
 <table class="table">
@@ -33,7 +31,7 @@
 	<td>{{r.mem_total | sizeformat:'MB'}}</td>
 	<td>{{r.mem_used | sizeformat:'MB'}}</td>
 	<td>{{r.mem_used_rate | percentageformat}}</td> 
-    <td>{{r.hostcount}}</td> 
+    <td>{{r.host_count}}</td> 
 </tr>
 {%endfor%}
 </table>

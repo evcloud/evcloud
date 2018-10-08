@@ -395,6 +395,12 @@ def vm_detail_view(req):
         if volume_info['res']:
             ret_list += volume_info['list']
         dicts['p'] = get_page(ret_list, req)
+
+        #添加 快照信息 2018-10-08 lzx
+        snap_res = api_vm_get_snap_list({'req_user': req.user, 'uuid': dicts['vmobj']['uuid']})    
+        dicts['snap_list'] = []
+        if snap_res['res']:
+            dicts['snap_list'] = snap_res['list']
         
     else:
         if settings.DEBUG: print(vm_res['err'])
@@ -569,25 +575,25 @@ def vm_snap_create_view(req):
 
     return render(req, 'vmadmin_snap_create.html', dicts)
 
-@login_required   
-def vm_snap_list_view(req):
-    dicts = {}
-    arg_vmid = req.GET.get('vmid',None)
+# @login_required   
+# def vm_snap_list_view(req):
+#     dicts = {}
+#     arg_vmid = req.GET.get('vmid',None)
 
-    vm_res = api_vm_get({'req_user': req.user, 'uuid': arg_vmid})
+#     vm_res = api_vm_get({'req_user': req.user, 'uuid': arg_vmid})
     
-    if vm_res['res']:
-        dicts['vmobj'] = vm_res['info']
-    else:
-        return HttpResponseRedirect(reverse("vm_list"))
+#     if vm_res['res']:
+#         dicts['vmobj'] = vm_res['info']
+#     else:
+#         return HttpResponseRedirect(reverse("vm_list"))
     
-    snap_res = api_vm_get_snap_list({'req_user': req.user, 'uuid': dicts['vmobj']['uuid']})
+#     snap_res = api_vm_get_snap_list({'req_user': req.user, 'uuid': dicts['vmobj']['uuid']})
     
-    dicts['snap_list'] = []
-    if snap_res['res']:
-        dicts['snap_list'] = snap_res['list']
+#     dicts['snap_list'] = []
+#     if snap_res['res']:
+#         dicts['snap_list'] = snap_res['list']
 
-    return render(req,'vmadmin_snap_list.html', dicts)
+#     return render(req,'vmadmin_snap_list.html', dicts)
 
 
 @login_required

@@ -1,0 +1,140 @@
+{%load  sizeformat%}
+   
+	<table class="table">
+		<tr>
+			<th>全名称</th>
+			<th>创建时间</th>
+			<th width="180px">备注</th>
+			<th width="120px"></th>
+		</tr>
+	{%for snap in snap_list%}
+		<tr onmouseover="show_snap_remarks_pen('{{snap.id}}')" onmouseout="hide_snap_remarks_pen('{{snap.id}}')">
+			<td>{{snap.fullname}}</td>
+			<td>{{snap.create_time|date:'Y-m-d H:i:s'}}</td>
+			
+			<td>
+				<div id="snap_remarks_{{snap.id}}_show">
+					<span id="snap_remarks_{{snap.id}}_span" style="padding-right:18px" >{{snap.remarks|default_if_none:''}}</span>
+					<a href="javascript:void(0)" id="snap_remarks_{{snap.id}}_pen" onclick="edit_snap_remarks('{{snap.id}}')" title="修改备注" style="display:none"> <span class="glyphicon glyphicon-pencil" aria-hidden="true" ></span></a>
+				</div>
+				<div id="snap_remarks_{{snap.id}}_edit" style="display:none">
+					<textarea id="snap_remarks_{{snap.id}}">{{snap.remarks|default_if_none:''}}</textarea>
+					<a href="javascript:void(0)" title="保存备注"  onclick="save_snap_remarks('{{snap.id}}')"> <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span></a>
+				</div>
+			</td>
+			<td>
+				<button id="rb_btn_{{snap.id}}" type="button" class="btn btn-xs btn-warning" onclick="rollback_snap({{snap.id}})">回滚</button>
+			</td>
+		</tr>
+	{%endfor%}
+
+	</table>
+
+<div class="modal" id="spin_modal" tabindex="-1" role="dialog" aria-labelledby="spin_modal_title">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="spin_modal_title"></h4>
+      </div>
+      <div class="modal-body">
+        <div class="progress" id="spin_process_div">
+		  <div class="progress-bar progress-bar-striped active" style="width: 100%"></div>
+		</div>
+		<div id="spin_finished_div" hidden="hidden">
+		  	执行完成！
+		</div>
+      </div>
+      <div class="modal-footer" id="spin_modal_ft">
+        <button type="button" class="btn btn-default" onclick="close_spin_modal()">关闭</button>
+        <!-- 
+        <button type="button" class="btn btn-primary" id="spin_confirm_btn" hidden="hidden">确定</button> -->
+      </div>
+    </div>
+  </div>
+</div>  
+
+<script type="text/javascript">
+	function rollback_snap(snap_id) {
+		if(confirm('确定回滚？')){
+			init_spin_modal("快照回滚");	
+
+			$.ajax({
+						url: '/vmadmin/vm/snap/rollback_ajax/',
+						type: 'post',
+						data: {
+							'vmid': "{{vmobj.uuid}}",
+							'snap_id': snap_id,
+						},
+						success:function(data){
+							var tmp_div = "";
+							if (data.res){
+								tmp_div=$("<div><h4>执行成功！</h4><br></div>");
+							} else {
+								tmp_div=$("<div><h4 style='color:red;'>失败</h4><br></div>");
+								tmp_div.append($("<p style='font-size:14px;'/>").text("错误信息："+data.error))
+							}
+							update_spin_modal(tmp_div);
+						}
+						
+					}, 'json');
+		}
+					
+	}	
+
+	function edit_snap_remarks(snap_id) {
+		$("#snap_remarks_" + snap_id + "_show").hide();
+		$("#snap_remarks_" + snap_id + "_edit").show();
+	}
+	function save_snap_remarks(snap_id) {
+		var remarks = $("#snap_remarks_" + snap_id).val();
+		$.ajax({
+			url: '/vmadmin/vm/snap/edit_remarks/',
+			type: 'post',
+			data: {
+				'vmid': "{{vmobj.uuid}}",
+				'snap_id': snap_id,
+				'remarks': remarks,
+			},
+			success:function(data){
+				if (data.res){
+					$("#snap_remarks_"+snap_id+"_span").text(remarks);
+				} else {
+					alert(data.error);
+				}
+			},
+			complete:function() {
+				$("#snap_remarks_" + snap_id + "_show").show();
+				$("#snap_remarks_" + snap_id + "_edit").hide();
+			}
+			
+		}, 'json');
+	}
+	function show_snap_remarks_pen(snap_id){
+		$("#snap_remarks_" + snap_id + "_pen").show();
+		$("#snap_remarks_" + snap_id + "_span").css('padding-right','0px');
+	}
+	function hide_snap_remarks_pen(snap_id){
+		$("#snap_remarks_" + snap_id + "_pen").hide();
+		$("#snap_remarks_" + snap_id + "_span").css('padding-right','18px');
+	}
+	
+
+	function init_spin_modal(op_name) {
+		$("#spin_modal_title").text(op_name);
+		$("#spin_process_div").show();
+		$("#spin_finished_div").hide();
+		$("#spin_modal_ft").hide();
+		$('#spin_modal').modal({'backdrop':'static','keyboard':false,'show':true});
+	}
+	function update_spin_modal(content_html) {
+		$("#spin_process_div").hide();
+		$("#spin_finished_div").html(content_html);		
+		$("#spin_finished_div").show();		
+		$("#spin_modal_ft").show();
+	}
+	function close_spin_modal() {
+		$('#spin_modal').modal('hide');
+		window.location.reload();		
+	}
+
+</script>

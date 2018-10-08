@@ -108,7 +108,9 @@ def try_migrate_vm(vm):
             ret['migrate_res'] = False
             err_msg = ""
             try:                
-                 ret['migrate_res'] = vm_api.migrate_vm(vm.uuid, dst_host.id)                   
+                ret['migrate_res'] = vm_api.migrate_vm(vm.uuid, dst_host.id)
+                vm_new = vm_api.get_vm_by_uuid(vm.uuid)
+                vm_new.start() #执行开机操作
             except Error as e:
                 if e.err in ERROR_CN:
                     err_msg = ERROR_CN[e.err]

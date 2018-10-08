@@ -21,7 +21,7 @@ urlpatterns = [
     url(r'^vm/batch_op/$', vm_batch_op_ajax),
     url(r'^vm/edit_remarks/$', vm_edit_remarks_ajax),
 
-    url(r'^vm/snap/list/$', vm_snap_list_view),
+    # url(r'^vm/snap/list/$', vm_snap_list_view),
     url(r'^vm/snap/create/$', vm_snap_create_view),
     url(r'^vm/snap/rollback_ajax/$', vm_snap_rollback_ajax_view),
     url(r'^vm/snap/edit_remarks/$', vm_snap_edit_remarks_ajax),
@@ -49,5 +49,5 @@ urlpatterns = [
     url(r'^net/vlan/ip/conf_file/$', net_vlan_conf_file_view),
 
     url(r'^monitoring/host_error/list/$', host_err_log_list_view),
-
+    
 ]
