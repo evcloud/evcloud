@@ -110,22 +110,15 @@
             </div>
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav">
-                    <li id="nav_vm_list"><a href="/vmadmin/vm/list/">云主机列表</a></li>
-                    <li id="nav_vm_create"><a href="/vmadmin/vm/create/">创建云主机</a></li>
+                    <li id="nav_vm_list"><a href="/vmadmin/vm/list/">云主机</a></li>
                     <li id="nav_volume"><a href="/vmadmin/volume/list/">云硬盘</a></li>
+                    <li id="nav_gpu"><a href="/vmadmin/gpu/list/">GPU</a></li>
+                    <li id="nav_network"><a href="/vmadmin/net/vlan/list/">网络</a></li>
+                    <li id="nav_host_error"><a href="/vmadmin/monitoring/host_error/list/">高可用</a></li>
                     {% if request.user.is_superuser %}
                     <li id="nav_admin"><a href="/admin/">后台管理</a></li>                    
                     {% endif%}
-                    <li id="nav_more" class="dropdown">
-                      <a href="#" class="dropdown-toggle" data-toggle="dropdown" >更多<span class="caret"></span></a>
-                      <ul class="dropdown-menu">
-                        <li><a href="/vmadmin/gpu/list/">GPU</a></li>
-                        <li><a href="/vmadmin/net/vlan/list/">网络</a></li>
-                        <li><a href="/vmadmin/monitoring/host_error/list/">高可用</a></li>
-                        <li role="separator" class="divider"></li>
-                        <li><a href="/reports/">统计报表</a></li> 
-                      </ul>
-                    </li>
+                    <li id="nav_reports"><a href="/reports/">统计报表</a></li>
                 </ul>
                 <ul class="nav navbar-nav pull-right">
                     <li> <a href="#">{{request.user}}</a></li>
@@ -175,14 +168,23 @@
     //设置导航菜单active
     var rel_url = GetUrlRelativePath();
     
-    if(rel_url.startsWith("/vmadmin/vm/list/")){
+    if(rel_url.startsWith("/vmadmin/vm/")){
         $("#nav_vm_list").addClass("active");
-    }
-    else if(rel_url.startsWith("/vmadmin/vm/create/")){
-        $("#nav_vm_create").addClass("active");
     }
     else if(rel_url.startsWith("/vmadmin/volume/")){
         $("#nav_volume").addClass("active");
+    }
+    else if(rel_url.startsWith("/vmadmin/gpu/")){
+        $("#nav_gpu").addClass("active");
+    }
+    else if(rel_url.startsWith("/vmadmin/net/vlan/")){
+        $("#nav_network").addClass("active");
+    }
+    else if(rel_url.startsWith("/vmadmin/monitoring/host_error/")){
+        $("#nav_host_error").addClass("active");
+    }
+    else if(rel_url.startsWith("/reports/")){
+        $("#nav_reports").addClass("active");
     }
     else if(rel_url.startsWith("/admin/")){
         $("#nav_admin").addClass("active");

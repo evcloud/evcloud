@@ -7,10 +7,7 @@
 #@desc:    novnc token管理模块。完成读写novnc的token配置文件			
 ########################################################################
 
-import os, uuid
-import subprocess
-from compute.models import Vm
-from compute.vm.vm import VM, VIR_DOMAIN_RUNNING
+
 from django.conf import settings
 
 import _thread

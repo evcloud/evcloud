@@ -1,5 +1,6 @@
 #coding=utf-8
 from .models import DBGPU
+from compute.models import Vm as DBVm
 from api.error import Error
 from api.error import ERR_GPU_ID
 from api.error import ERR_GPU_ADDRESS
@@ -15,7 +16,7 @@ class GPU(object):
                 self._db = DBGPU.objects.get(pk=db_id)
             except:
                 raise Error(ERR_GPU_ID)
-        
+
         address = self._db.address.split(':')
         if len(address) != 4:
             raise Error(ERR_GPU_ADDRESS)
@@ -39,8 +40,9 @@ class GPU(object):
         try:
             with transaction.atomic():
                 db = DBGPU.objects.select_for_update().get(pk = self._db.pk)
+                vm = DBVm.objects.get(uuid=vm_id)
                 if db.vm == None and db.enable == True:
-                    db.vm = vm_id
+                    db.vm = vm
                     db.attach_time = timezone.now()
                     db.save()
                     self._db = db
@@ -97,7 +99,10 @@ class GPU(object):
     @property
     def host_id(self):
         return self._db.host_id
-    
+
+    @property
+    def group_id(self):
+        return self._db.host.group_id
     
     @property
     def address(self):

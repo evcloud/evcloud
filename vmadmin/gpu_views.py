@@ -28,7 +28,7 @@ from api.vm import get as api_vm_get
 @login_required
 def gpu_list_view(req):
     dicts = {}
-    group_info = api_group_get_list({'req_user': req.user})
+    # group_info = api_group_get_list({'req_user': req.user})
     ret_list = []
     gpu_info = api_gpu_get_list({'req_user': req.user})
     if gpu_info['res']:
@@ -85,8 +85,8 @@ def gpu_mount_view(req):
             elif gpu['vm']:
                 dicts['alert_msg'] = '该设备已被占用'
             else:
-                vm = _get_vm_by_id(req.user, vm_id)
-                res = api_gpu_mount({'req_user': req.user, 'vm_id':vm_id, 'gpu_id':gpu_id})   
+                # vm = _get_vm_by_id(req.user, vm_id)
+                res = api_gpu_mount({'req_user': req.user, 'vm_id':vm_id, 'gpu_id':gpu_id})
                 if res['res']:
                     dicts['alert_msg'] = '挂载成功'
                 elif res['err'] in ERROR_CN:
@@ -144,7 +144,8 @@ def gpu_mount_view(req):
         if gpu and gpu['enable'] == False:
             dicts['alert_msg'] = '该设备不可用'
     
-    return render_to_response('vmadmin_gpu_mount.html', dicts, context_instance=RequestContext(req))    
+    # return render_to_response('vmadmin_gpu_mount.html', dicts, RequestContext(req))
+    return render(req, 'vmadmin_gpu_mount.html',dicts)
 
 @login_required
 def gpu_umount_ajax(req):

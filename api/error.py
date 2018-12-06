@@ -24,6 +24,8 @@ ERR_VLAN_FILTER_NONE    = '40021'
 ERR_HOST_FILTER_NONE    = '40022'
 ERR_VM_MIGRATE_DIFF_CEPH= '40023'
 ERR_VM_MIGRATE_LIVING   = '40024'
+ERR_VM_MIGRATE_WITHGPU  = '40025'
+ERR_VM_MIGRATE_WITHVOL  = '40026',
 ERR_HOST_CLAIM          = '40035'
 ERR_VM_RESET_LIVING     = '40036'
 ERR_VM_EDIT_LIVING      = '40037'
@@ -121,6 +123,8 @@ ERROR_CN = {
     ERR_HOST_FILTER_NONE    : '无满足要求的宿主机',
     ERR_VM_MIGRATE_DIFF_CEPH: '不能跨ceph集群迁移',
     ERR_VM_MIGRATE_LIVING   : '运行状态不能迁移',
+    ERR_VM_MIGRATE_WITHGPU  : '挂载GPU的虚拟机不能迁移',
+    ERR_VM_MIGRATE_WITHVOL  : '挂载云硬盘的虚拟机不能迁移',
     ERR_HOST_CLAIM          : '宿主机自愿申请失败',
     ERR_VM_RESET_LIVING     : '运行状态不能重置',
     ERR_VM_EDIT_LIVING      : '运行状态不能修改',

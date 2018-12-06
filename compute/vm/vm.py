@@ -13,20 +13,20 @@ from api.error import Error
 
 from ..manager import VirtManager
 
-VIR_DOMAIN_NOSTATE  =   0   #no state
-VIR_DOMAIN_RUNNING  =   1   #the domain is running
-VIR_DOMAIN_BLOCKED  =   2   #the domain is blocked on resource
-VIR_DOMAIN_PAUSED   =   3   #the domain is paused by user
-VIR_DOMAIN_SHUTDOWN =   4   #the domain is being shut down
-VIR_DOMAIN_SHUTOFF  =   5   #the domain is shut off
-VIR_DOMAIN_CRASHED  =   6   #the domain is crashed
-VIR_DOMAIN_PMSUSPENDED =7   #the domain is suspended by guest power management
-VIR_DOMAIN_LAST     =   8   #NB: this enum value will increase over time as new events are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
-VIR_DOMAIN_HOST_DOWN=   9   #host down
-VIR_DOMAIN_MISS     =   10  #vm miss
+VIR_DOMAIN_NOSTATE = 0  # no state
+VIR_DOMAIN_RUNNING = 1  # the domain is running
+VIR_DOMAIN_BLOCKED = 2  # the domain is blocked on resource
+VIR_DOMAIN_PAUSED = 3  # the domain is paused by user
+VIR_DOMAIN_SHUTDOWN = 4  # the domain is being shut down
+VIR_DOMAIN_SHUTOFF = 5  # the domain is shut off
+VIR_DOMAIN_CRASHED = 6  # the domain is crashed
+VIR_DOMAIN_PMSUSPENDED = 7  # the domain is suspended by guest power management
+VIR_DOMAIN_LAST = 8  # NB: this enum value will increase over time as new events are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
+VIR_DOMAIN_HOST_DOWN = 9  # host connect failed
+VIR_DOMAIN_MISS = 10  # vm miss
 
 VM_STATE = {
-    VIR_DOMAIN_NOSTATE:  'no state',
+    VIR_DOMAIN_NOSTATE: 'no state',
     VIR_DOMAIN_RUNNING: 'running',
     VIR_DOMAIN_BLOCKED: 'blocked',
     VIR_DOMAIN_PAUSED: 'paused',
@@ -35,7 +35,7 @@ VM_STATE = {
     VIR_DOMAIN_CRASHED: 'crashed',
     VIR_DOMAIN_PMSUSPENDED: 'suspended',
     VIR_DOMAIN_LAST: '',
-    VIR_DOMAIN_HOST_DOWN: 'host down',
+    VIR_DOMAIN_HOST_DOWN: 'host connect failed',
     VIR_DOMAIN_MISS: 'miss',
 }
 
@@ -214,32 +214,6 @@ class VMData(object):
         return True
     
 class VM(VMData, VirtManager):
-    VIR_DOMAIN_NOSTATE  =   0   #no state
-    VIR_DOMAIN_RUNNING  =   1   #the domain is running
-    VIR_DOMAIN_BLOCKED  =   2   #the domain is blocked on resource
-    VIR_DOMAIN_PAUSED   =   3   #the domain is paused by user
-    VIR_DOMAIN_SHUTDOWN =   4   #the domain is being shut down
-    VIR_DOMAIN_SHUTOFF  =   5   #the domain is shut off
-    VIR_DOMAIN_CRASHED  =   6   #the domain is crashed
-    VIR_DOMAIN_PMSUSPENDED =7   #the domain is suspended by guest power management
-    VIR_DOMAIN_LAST     =   8   #NB: this enum value will increase over time as new events are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
-    VIR_DOMAIN_HOST_DOWN=   9   #host down
-    VIR_DOMAIN_MISS     =   10  #vm miss
-    
-    VM_STATE = {
-        VIR_DOMAIN_NOSTATE:  'no state',
-        VIR_DOMAIN_RUNNING: 'running',
-        VIR_DOMAIN_BLOCKED: 'blocked',
-        VIR_DOMAIN_PAUSED: 'paused',
-        VIR_DOMAIN_SHUTDOWN: 'shut down',
-        VIR_DOMAIN_SHUTOFF: 'shut off',
-        VIR_DOMAIN_CRASHED: 'crashed',
-        VIR_DOMAIN_PMSUSPENDED: 'suspended',
-        VIR_DOMAIN_LAST: '',
-        VIR_DOMAIN_HOST_DOWN: 'host down',
-        VIR_DOMAIN_MISS: 'miss',
-    }
-
     def __init__(self, obj):
         self._conn = None
         self._vm= None
@@ -249,7 +223,11 @@ class VM(VMData, VirtManager):
         
         if type(obj) == DBVm:
             self.db_obj = obj
-#             if self.hostmanager.host_alive(self.db_obj.host.ipv4):
+            try:
+                self._conn = self._get_connection(self.db_obj.host.ipv4)
+                self.host_alive = True
+            except Exception:
+                pass
         else:
             raise RuntimeError('vm init error.')
 
@@ -267,7 +245,7 @@ class VM(VMData, VirtManager):
     @property
     def _connection(self):
         if not self._conn:
-            self._connect()
+            self._get_connection(self.db_obj.host.ipv4)
         return self._conn
 
     def _connect(self):
@@ -480,10 +458,11 @@ class VM(VMData, VirtManager):
         try:
             info = self._domain.info()
             return info[0]
-        except Exception as e:
-            if not self.host_alive:
+        except Exception:
+            if self.host_alive:
+                return VIR_DOMAIN_MISS
+            else:
                 return VIR_DOMAIN_HOST_DOWN
-            return VIR_DOMAIN_MISS
     
     def attach_device(self, xml):
         try:

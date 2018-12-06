@@ -7,43 +7,29 @@
       <ul class="dropdown-menu" style="min-width: 0px;">
       {%if vm.can_operate%}
           <li><button class="btn btn-xs btn-primary" style="width:100px;margin-top:2px" onclick="vm_start('/vmadmin/vm/op/', '{{vm.uuid}}')">开机</button></li>
-					<li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_poweroff('/vmadmin/vm/op/','{{vm.uuid}}')">强制断电</button></li>
+		  <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_shutdown('/vmadmin/vm/op/','{{vm.uuid}}')">关机</button></li>
+          <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_reboot('/vmadmin/vm/op/','{{vm.uuid}}')">软重启</button></li>
+          <li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_poweroff('/vmadmin/vm/op/','{{vm.uuid}}')">强制断电</button></li>
 	      <li><button class="btn btn-xs btn-danger" style="width:100px;margin-top:2px" onclick="vm_delete('/vmadmin/vm/op/','{{vm.uuid}}','{{ need_refresh }}')">删除</button></li>
+	      <li><button class="btn btn-xs btn-danger" style="width:100px;margin-top:2px" onclick="vm_delete_force('/vmadmin/vm/op/','{{vm.uuid}}','{{ need_refresh }}')">强制删除</button></li>
+		  <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/volume/vm/create/?vmid={{vm.uuid}}'">挂载磁盘</button></li>
+		  <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/edit/?vmid={{vm.uuid}}'">修改配置</button></li>
+		  <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/reset/?vmid={{vm.uuid}}'">重置镜像</button></li>
+          <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/migrate/?vmid={{vm.uuid}}'">关机迁移</button></li>
+          <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/snap/create/?vmid={{vm.uuid}}'">创建快照</button></li>
+		  <!-- <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="vm_reset('/vmadmin/vm/op/','{{vm.uuid}}')">系统初始化</button></li> -->
 
-	      <li class="divider"></li>
-	      <li class="dropdown-submenu">
-	      	<a class="btn btn-xs" tabindex="-1" href="javascript:;">其他操作</a>
-	      	<ul class="dropdown-menu" style="min-width: 0px;">
-	      		<li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_reboot('/vmadmin/vm/op/','{{vm.uuid}}')">软重启</button></li>
-		      	<li><button class="btn btn-xs btn-warning" style="width:100px;margin-top:2px" onclick="vm_shutdown('/vmadmin/vm/op/','{{vm.uuid}}')">正常关机</button></li>
-			      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/volume/vm/create/?vmid={{vm.uuid}}'">挂载磁盘</button></li>
-			      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/edit/?vmid={{vm.uuid}}'">修改配置</button></li>
-			      <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/reset/?vmid={{vm.uuid}}'">重置镜像</button></li>
-                  <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/migrate/?vmid={{vm.uuid}}'">关机迁移</button></li>
-                  <!-- <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/snap/create/?vmid={{vm.uuid}}'">创建快照</button></li> -->
-                  <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="javascript:window.location.href='/vmadmin/vm/snap/create/?vmid={{vm.uuid}}'">创建快照</button></li>
-			      <!-- <li><button class="btn btn-xs btn-info" style="width:100px;margin-top:2px" onclick="vm_reset('/vmadmin/vm/op/','{{vm.uuid}}')">系统初始化</button></li> -->
-	      		<li><button class="btn btn-xs btn-danger" style="width:100px;margin-top:2px" onclick="vm_delete_force('/vmadmin/vm/op/','{{vm.uuid}}','{{ need_refresh }}')">强制删除</button></li>
-	      	</ul>
-	      </li>
 
       {%else%}
       	  <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">开机</button></li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">关机</button></li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">软重启</button></li>
 	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">强制断电</button></li>
 	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">删除</button></li>
-
-	      <li class="divider"></li>
-	      <li class="dropdown-submenu">
-	      	<a class="btn btn-xs" tabindex="-1" href="javascript:;">其他操作</a>
-	      	<ul class="dropdown-menu" style="min-width: 0px;">
-	      		<li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">软重启</button></li>
-	      		<li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">正常关机</button></li>
-	      		<li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">修改配置</button></li>
-                <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">重置镜像</button></li>
-	      		<li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">关机迁移</button></li>
-	      		<!-- <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">系统初始化</button></li> -->
-	      	</ul>
-	      </li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">修改配置</button></li>
+          <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">重置镜像</button></li>
+	      <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">关机迁移</button></li>
+	      <!-- <li><button class="btn btn-xs" style="width:100px;margin-top:2px" onclick="alert('无权操作他人创建的云主机')">系统初始化</button></li> -->
       {%endif%}
 
       </ul>

@@ -20,14 +20,21 @@ from .error import ERR_VM_EDIT
 from .error import ERR_VM_MIGRATE
 from .error import ERR_VM_RESET
 from .error import ERR_VM_CREATE_SNAP
+from .error import ERR_VM_CREATE_ARGS_VLAN
+from .error import ERR_VM_CREATE_ARGS_HOST
 from .error import ERR_VM_ROLLBACK_SNAP
 from .error import ERR_VM_EDIT_REMARKS
 from .error import ERR_VM_MIGRATE_SAME_HOST
+from .error import ERR_VM_MIGRATE_DIFF_CEPH
+from .error import ERR_VM_MIGRATE_WITHGPU
+from .error import ERR_VM_MIGRATE_WITHVOL
 from .error import Error
 
 from compute.api import VmAPI
 from compute.api import GroupAPI
 from compute.api import HostAPI
+from device.api import GPUAPI
+from volume.api import VolumeAPI
 
 @api_log
 @catch_error
@@ -196,8 +203,7 @@ def op(args):
             except Error as e:
                 return {'res': False, 'err': e.err}
             except Exception as e:
-                raise e
-                return {'res': False, 'err': ERR_VM_OP}
+                return {'res': False, 'err': e}
         else:
             return {'res': False, 'err': ERR_VM_NO_OP}
     if res:
@@ -243,6 +249,8 @@ def migrate(args):
     #被迁移虚拟机校验
     api = VmAPI()
     host_api = HostAPI()
+    gpu_api = GPUAPI()
+    volume_api = VolumeAPI()
     vm = api.get_vm_by_uuid(args['uuid'])
     if not vm:
         return {'res': False, 'err': ERR_VM_UUID}
@@ -256,11 +264,22 @@ def migrate(args):
     
     #被迁移虚拟机与目标主机是否处于同一个分中心
     if not vm.center_id == host.center_id:
-        return {'res': False, 'err': ERR_AUTH_PERM}
-    
+        return {'res': False, 'err': ERR_VM_MIGRATE_DIFF_CEPH}
+
+    #检测目标主机是否为当前宿主机
     if vm.host_id == host.id:
         return {'res': False, 'err': ERR_VM_MIGRATE_SAME_HOST}
-    
+
+    #检测是否挂载GPU
+    gpu_list = gpu_api.get_gpu_list_by_vm_uuid(args['uuid'])
+    if len(gpu_list) > 0:
+        return {'res': False, 'err': ERR_VM_MIGRATE_WITHGPU}
+
+    #检测挂载云硬盘与目标主机是否在同一集群
+    volume_list = volume_api.get_volume_list_by_vm_uuid(args['uuid'])
+    if len(volume_list) > 0 and vm.group_id != host.group_id:
+        return {'res': False, 'err': ERR_VM_MIGRATE_WITHVOL}
+
     res = api.migrate_vm(args['uuid'], args['host_id'])
     if res:
         return {'res': True}

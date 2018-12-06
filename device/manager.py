@@ -26,7 +26,7 @@ class GPUManager(object):
         elif group_id:
             gpu_list = gpu_list.filter(host__group_id=group_id)
         elif vm_uuid:
-            gpu_list = gpu_list.filter(vm = vm_uuid)
+            gpu_list = gpu_list.filter(vm__uuid = vm_uuid)
         ret_list = []
         for gpu in gpu_list:
             ret_list.append(GPU(db=gpu))

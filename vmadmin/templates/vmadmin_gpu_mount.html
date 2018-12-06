@@ -69,7 +69,7 @@
 	    	{%else%}
 	         <select name="vm_id" class="form-control"  style="width:400px" >
                 {%for v in vm_list%}
-                <option value="{{v.uuid}}">{{v.name}}</option>
+                <option value="{{v.uuid}}">{{v.ipv4}}（{{v.name}}）</option>
                 {%endfor%}
             </select>
             {% endif %}

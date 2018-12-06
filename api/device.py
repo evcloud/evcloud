@@ -28,7 +28,7 @@ from .error import ERR_UMOUNT_RUNNING
 def get_gpu_list(args):
     group_api = GroupAPI()
     group_list = group_api.get_group_list_in_perm(args['req_user'])
-    
+
     gpu_api = GPUAPI()
     ret_list = []
 
@@ -45,30 +45,6 @@ def get_gpu_list(args):
                 'remarks': gpu.remarks})
     return {'res': True, 'list': ret_list}
 
-
-# @api_log
-# @catch_error
-# @args_required('host_id')
-# def get_gpu_list(args):
-#     host_api = HostAPI()
-#     host = host_api.get_host_by_id(args['host_id'])
-#     if not host.managed_by(args['req_user']):
-#         return {'res': False, 'err': ERR_AUTH_PERM}
-        
-#     gpu_api = GPUAPI()
-#     gpu_list = gpu_api.get_gpu_list_by_host_id(host.id)
-
-#     ret_list = []
-#     for gpu in gpu_list:
-#         ret_list.append({
-#             'id':   gpu.id,
-#             'host_ipv4': gpu.host_ipv4,
-#             'address': gpu.address,
-#             'vm': gpu.vm,
-#             'attach_time': gpu.attach_time,
-#             'enable': gpu.enable,
-#             'remarks': gpu.remarks})
-#     return {'res': True, 'list': ret_list}
 
 @api_log
 @catch_error

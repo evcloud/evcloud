@@ -26,7 +26,6 @@ from .vm import VM
 
 class VMManager(VirtManager):
     def __init__(self):
-        self.error = ''
         self.db_model = DBVm
 
     def create_vm_uuid(self):
@@ -49,43 +48,63 @@ class VMManager(VirtManager):
         vm = self.get_vm_by_uuid(vm_uuid)
         old_host_id = vm.host_id
         old_host_ipv4 = vm.host_ipv4
-        old_xml_desc = vm.xml_desc        
+        old_xml_desc = vm.xml_desc
 
         res = False
-        error = ''
         undefined = False
-        if not old_host_alive:
+        error = ""
+
+        if self.define(host_ipv4, xml_desc):
             if vm.set_host(host_id):
-                if self.define(host_ipv4, xml_desc):
-                    res = True
+                if old_host_alive:
+                    if self.undefine(old_host_ipv4, vm_uuid):
+                        res = True
+                        undefined = True
+                    else:
+                        error += '原宿主机删除虚拟机失败,'
+                        vm.set_host(old_host_id)
+                        self.undefine(host_ipv4, xml_desc)
                 else:
-                    error += '创建虚拟机失败,'
-                    if not vm.set_host(old_host_id):
-                        error += '数据库还原失败,'
-        elif self.undefine(old_host_ipv4, vm_uuid):
-            undefined = True
-            if vm.set_host(host_id):
-                if self.define(host_ipv4, xml_desc):
                     res = True
-                else:
-                    error += '创建虚拟机失败,'
-                    if not vm.set_host(old_host_id):
-                        error += '数据库还原失败,'
-                    if not self.define(old_host_ipv4, old_xml_desc):
-                        error += '重建虚拟机失败,'
             else:
                 error += '数据库修改失败,'
-                if not self.define(old_host_ipv4, old_xml_desc):
-                    error += '重建虚拟机失败,'
+                self.undefine(host_ipv4, xml_desc)
         else:
-            error += '删除虚拟机失败,'
-        
+            error += '创建虚拟机失败,'
+
+        # if not old_host_alive:
+        #     if vm.set_host(host_id):
+        #         if self.define(host_ipv4, xml_desc):
+        #             res = True
+        #         else:
+        #             error += '创建虚拟机失败,'
+        #             if not vm.set_host(old_host_id):
+        #                 error += '数据库还原失败,'
+        # elif self.undefine(old_host_ipv4, vm_uuid):
+        #     undefined = True
+        #     if vm.set_host(host_id):
+        #         if self.define(host_ipv4, xml_desc):
+        #             res = True
+        #         else:
+        #             error += '创建虚拟机失败,'
+        #             if not vm.set_host(old_host_id):
+        #                 error += '数据库还原失败,'
+        #             if not self.define(old_host_ipv4, old_xml_desc):
+        #                 error += '重建虚拟机失败,'
+        #     else:
+        #         error += '数据库修改失败,'
+        #         if not self.define(old_host_ipv4, old_xml_desc):
+        #             error += '重建虚拟机失败,'
+        # else:
+        #     error += '原宿主机删除虚拟机失败,'
+
+        print(error)
         #迁移日志
         log = MigrateLog()
         log.vmid = vm_uuid
         log.src_host_ipv4 = old_host_ipv4
         log.dst_host_ipv4 = host_ipv4   
-        log.error = self.error  
+        log.error = error
         log.result = res 
         log.src_undefined = undefined
         log.save()

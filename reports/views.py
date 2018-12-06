@@ -8,13 +8,6 @@ from .auth import staff_required
 
 
 from compute.models import Host, Center, Group, Vm
-# from .models import Alloc_Host, Alloc_Center, Alloc_Group, Alloc_Host_Latest, Alloc_Center_Latest, Alloc_Group_Latest
-# Create your views here.
-
-#from utils.page import get_page
-#from utils.views import AbsView
-#from utils.route import dispatch_url
-
 
 @login_required
 @staff_required

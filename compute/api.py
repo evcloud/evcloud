@@ -1,6 +1,6 @@
 #coding=utf-8
 from django.conf import settings
-
+from vmuser.models import User
 from vmuser.api import API as UserAPI
 from network.api import NetworkAPI
 from image.api import ImageAPI
@@ -59,9 +59,7 @@ class GroupAPI(object):
         return self.manager.get_group_by_id(group_id)
 
     def has_center_perm(self, username, center_id):
-        # Stupid import  TODO
-        print(111, username)
-        from vmuser.models import User
+
         if not isinstance(username, User) and type(username) is str:
             user = self.user_api.get_db_user_by_username(username)
         else:
@@ -219,6 +217,7 @@ class VmAPI(object):
                         # image_info = self.image_api.get_image_info_by_id(image_id)
 
                         xml_tpl = self.image_api.get_xml_tpl(image_id)
+                        print(xml_tpl)
                         xml_desc = xml_tpl % {
                             'name': vm_uuid,
                             'uuid': vm_uuid,
@@ -234,7 +233,7 @@ class VmAPI(object):
                             'mac': mac,
                             'bridge': vlan.br
                         }
-
+                        print(xml_desc)
                         net_info = self.network_api.get_net_info_by_vmuuid(vm_uuid)
 
                         vm_db = self.manager.create_vm_db({
@@ -311,10 +310,10 @@ class VmAPI(object):
         mem = vm.mem
         mac = vm.mac
         ceph_pool_id = vm.ceph_id
-        
+
         from device.api import GPUAPI
         from volume.api import VolumeAPI
-        
+        archive_disk_name = ''
         try:
             gpuapi = GPUAPI()
             if len(gpuapi.get_gpu_list_by_vm_uuid(vm_uuid)) > 0:
@@ -325,8 +324,7 @@ class VmAPI(object):
                 raise Error(ERR_VM_DEL_VOL_MOUNTED)
 
             deletion_permitted = False
-            
-            archive_disk_name = ''
+
             if self.image_api.disk_exists(image_id, diskname,cephpool_id=ceph_pool_id):
                 archive_disk_name = self.image_api.archive_disk(image_id, diskname,cephpool_id=ceph_pool_id)
                 if archive_disk_name != False:
@@ -427,18 +425,14 @@ class VmAPI(object):
         #参数验证
         vm = self.manager.get_vm_by_uuid(vm_uuid)
         host = self.host_api.get_host_by_id(host_id)
-        src_host_alive = host.alive()
+        src_host_alive = vm.host_alive
 
         from device.api import GPUAPI
-        from volume.api import VolumeAPI        
+        from volume.api import VolumeAPI
         gpuapi = GPUAPI()
         volumeapi = VolumeAPI()
         gpu_list = gpuapi.get_gpu_list_by_vm_uuid(vm_uuid)
-        if len(gpu_list) > 0:
-            raise Error(ERR_VM_MIGRATE) #挂载gpu的无法迁移 @ by lzx 20180912
         volume_list = volumeapi.get_volume_list_by_vm_uuid(vm_uuid)
-        if len(volume_list) > 0 and vm.group_id != host.group_id:
-             raise Error(ERR_VM_MIGRATE) #挂载的云硬盘和host不在同一个group下
 
         #判断是否在同一个center
         if vm.center_id != host.center_id:
@@ -484,10 +478,7 @@ class VmAPI(object):
                     migrate_res = True
                     old_res = self.host_api.host_release(old_host_id, vm.vcpu, vm.mem, 1)
                     if settings.DEBUG: print('[migrate_vm]', '释放原宿主机资源 ', old_res)
-                    #重新attach device
-                    for gpu1 in gpu_list:
-                        r1 = vm.attach_device(gpu1.xml_desc)
-                        if settings.DEBUG: print('[migrate_vm]', 'attach gpu ', gpu1.id, r1)                
+                    #重新attach device(只有云硬盘)
                     for volume1 in volume_list:
                         r1 = vm.attach_device(volume1.xml_desc)
                         if settings.DEBUG: print('[migrate_vm]', 'attach volume ', volume1.id, r1)
@@ -519,7 +510,7 @@ class VmAPI(object):
             raise Error(ERR_IMAGE_INFO)
 
         from device.api import GPUAPI
-        from volume.api import VolumeAPI        
+        from volume.api import VolumeAPI
         gpuapi = GPUAPI()
         volumeapi = VolumeAPI()        
         gpu_list = gpuapi.get_gpu_list_by_vm_uuid(vm_uuid)

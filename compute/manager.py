@@ -6,6 +6,7 @@ from api.error import ERR_HOST_CONNECTION
 from api.error import ERR_VM_UUID
 from api.error import ERR_VM_MISSING
 from api.error import ERR_GROUP_ID
+from api.error import ERR_VM_DEFINE
 import xml.dom.minidom
 
 from .models import Center as DBCenter
@@ -157,10 +158,11 @@ class VirtManager(object):
 
     def get_domain(self, host_ipv4, vm_uuid):
         conn = self._get_connection(host_ipv4)
-        for d in conn.listAllDomains():
-            if d.UUIDString() == vm_uuid:
-                return d
-        raise Error(ERR_VM_MISSING)
+        try:
+            d = conn.lookupByUUIDString(vm_uuid)
+            return d
+        except:
+            raise Error(ERR_VM_MISSING)
 
     def domain_exists(self, host_ipv4, vm_uuid):
         conn = self._get_connection(host_ipv4)

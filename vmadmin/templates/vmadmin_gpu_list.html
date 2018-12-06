@@ -80,7 +80,7 @@
 		<th>GPU编号</th>
 		<th>宿主机</th>
 		<th>GPU识别码</th>
-		<th>挂载云主机编号</th>
+		<th>挂载云主机</th>
 		<th>挂载时间</th>
 		<th>可用标识</th>
 		<th width="180px">备注</th>
@@ -91,7 +91,7 @@
 	<td>{{gpu.id}}</td>
 	<td>{{gpu.host_ipv4}}</td>
 	<td>{{gpu.address}}</td>
-	<td>{{gpu.vm|slice:":8"|default_if_none:''}}</td>
+	<td>{{gpu.vm.ipv4}}</td>
 	<td>{{gpu.attach_time|date:'Y-m-d H:i:s'}}</td>
 	<td>
 	{%if gpu.enable%}<img alt="True" src="/static/admin/img/icon-yes.gif">{%else%}<img alt="False" src="/static/admin/img/icon-no.gif">{%endif%}

@@ -9,10 +9,9 @@
 import os, uuid
 import subprocess
 from compute.models import Vm
-from compute.vm.vm import VM, VIR_DOMAIN_RUNNING
+from compute.vm.vm import VM
 from django.conf import settings
 from .token import TokenManager
-import cmd
 
 class VNC():
     instance = TokenManager.instance

@@ -54,6 +54,7 @@ class GPUAPI(object):
         vm = self.vm_api.get_vm_by_uuid(vm_id)
         if vm.host_id != gpu.host_id:
             return False
+
         if gpu.mount(vm_id):
             if self.vm_api.attach_device(vm_id, gpu.xml_desc):
                 return True
