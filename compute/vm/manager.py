@@ -48,7 +48,6 @@ class VMManager(VirtManager):
         vm = self.get_vm_by_uuid(vm_uuid)
         old_host_id = vm.host_id
         old_host_ipv4 = vm.host_ipv4
-        old_xml_desc = vm.xml_desc
 
         res = False
         undefined = False

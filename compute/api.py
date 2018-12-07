@@ -425,7 +425,7 @@ class VmAPI(object):
         #参数验证
         vm = self.manager.get_vm_by_uuid(vm_uuid)
         host = self.host_api.get_host_by_id(host_id)
-        src_host_alive = vm.host_alive
+        src_host_alive = vm.is_host_connected
 
         from device.api import GPUAPI
         from volume.api import VolumeAPI

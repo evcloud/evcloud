@@ -77,7 +77,7 @@ def catch_error(func):
             if settings.DEBUG: 
                 import traceback
                 print(traceback.format_exc())
-            return {'res': False, 'err': e.err} 
+            return {'res': False, 'err': e.err}
         # except Exception as e:
         #     if settings.DEBUG:
         #         import traceback

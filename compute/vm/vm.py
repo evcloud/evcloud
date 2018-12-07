@@ -217,17 +217,11 @@ class VM(VMData, VirtManager):
     def __init__(self, obj):
         self._conn = None
         self._vm= None
-        self.host_alive = False
         self.old_vcpu = None
         self.old_mem = None
         
         if type(obj) == DBVm:
             self.db_obj = obj
-            try:
-                self._conn = self._get_connection(self.db_obj.host.ipv4)
-                self.host_alive = True
-            except Exception:
-                pass
         else:
             raise RuntimeError('vm init error.')
 
@@ -243,10 +237,12 @@ class VM(VMData, VirtManager):
         return dom.XMLDesc()
 
     @property
-    def _connection(self):
-        if not self._conn:
-            self._get_connection(self.db_obj.host.ipv4)
-        return self._conn
+    def is_host_connected(self):
+        try:
+            self._conn = self._get_connection(self.db_obj.host.ipv4)
+            return True
+        except Exception:
+            return False
 
     def _connect(self):
         self._conn = self._get_connection(self.db_obj.host.ipv4)
@@ -459,7 +455,7 @@ class VM(VMData, VirtManager):
             info = self._domain.info()
             return info[0]
         except Exception:
-            if self.host_alive:
+            if self._conn:
                 return VIR_DOMAIN_MISS
             else:
                 return VIR_DOMAIN_HOST_DOWN

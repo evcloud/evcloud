@@ -124,7 +124,7 @@ class Host(object):
                 if settings.DEBUG: print('[host]', db.vcpu_allocated, db.mem_allocated, db.vm_created)
         except Exception as e:
             if settings.DEBUG: print('[host]', '宿主机释放资源操作失败', e)
-            self.error = e.message 
+            self.error = str(e)
             return False
         return True
     
