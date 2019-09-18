@@ -1,0 +1,10 @@
+*.py[cod]
+.idea
+/.vscode/
+*.sqlite3
+*__pycache__/
+/media/
+*.so
+*.log
+/collect_static/
+/django_site/security.py
