@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html lang="zh-hans">
+<head>
+    <title>登录 | Django 站点管理员</title>
+    <link rel="stylesheet" type="text/css" href="/static/admin/css/base.css">
+    <link rel="stylesheet" type="text/css" href="/static/admin/css/login.css">
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/admin/css/responsive.css">
+    <meta name="robots" content="NONE,NOARCHIVE">
+</head>
+<body class=" login"
+      data-admin-utc-offset="28800">
+
+<!-- Container -->
+<div id="container">
+    <!-- Header -->
+    <div id="header">
+        <div id="branding">
+            <h1 id="site-name">云主机平台EVCloud</h1>
+        </div>
+    </div>
+    <!-- END Header -->
+
+    <!-- Content -->
+    <div id="content" class="colM">
+        <div id="content-main">
+            {% if form.errors %}
+                <div class="errornote">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <form method="post" action="{% url 'login' %}" id="login-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <label class="required" for="id_username">用户名:</label> <input type="text" name="username" autofocus
+                                                                                  required id="id_username">
+                </div>
+                <div class="form-row">
+                    <label class="required" for="id_password">密码:</label> <input type="password" name="password"
+                                                                                 required id="id_password">
+                    <input type="hidden" name="next" value="{{request.GET.next}}">
+                    <input type="hidden" name="this_is_the_login_form" value="1" />
+                </div>
+                <div class="submit-row">
+                    <label>&nbsp;</label><input type="submit" value="登录">
+                </div>
+            </form>
+        </div>
+        <br class="clear">
+    </div>
+    <!-- END Content -->
+
+    <div id="footer"></div>
+</div>
+<!-- END Container -->
+
+</body>
+</html>

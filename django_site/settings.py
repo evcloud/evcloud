@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'vms',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -56,7 +57,7 @@ ROOT_URLCONF = 'django_site.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, '/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -130,6 +131,17 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'collect_static')
 SESSION_SAVE_EVERY_REQUEST = True #
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True #True：关闭浏览器，则Cookie失效。
 # SESSION_COOKIE_AGE=60*30   #30分钟
+
+#自定义用户模型
+AUTH_USER_MODEL = 'users.UserProfile'
+
+# 避免django把未以/结尾的url重定向到以/结尾的url
+# APPEND_SLASH=False
+
+#登陆url
+LOGIN_URL = '/accounts/login/'
+LOGOUT_URL = '/accounts/logout/'
+LOGIN_REDIRECT_URL = '/'    # 默认重定向url
 
 # 导入安全相关的settings
 from .security import *
