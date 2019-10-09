@@ -1,8 +1,12 @@
 import os
 
 from django.db import models
+from django.db.models import Q, F
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from utils.ceph.manages import RbdManager, RadosError
 
 
 #获取用户模型
@@ -30,22 +34,56 @@ class CephConfig(models.Model):
     def __str__(self):
         return self.name
 
-    def save(self, *args, **kwargs):
+    def get_config_file(self):
+        '''
+        ceph配置文件路径
+        :return: str
+        '''
+        if not self.config_file:
+            self._save_config_to_file()
+
+        return self.config_file
+
+    def get_keyring_file(self):
+        '''
+        ceph keyring文件路径
+        :return: str
+        '''
+        if not self.keyring_file:
+            self._save_config_to_file()
+
+        return self.keyring_file
+
+    def _save_config_to_file(self):
+        '''
+        ceph的配置内容保存到配置文件
+
+        :return:
+            True    # success
+            False   # failed
+        '''
         path = os.path.join(settings.BASE_DIR, 'data/ceph/conf/')
         if not self.config_file:
-            self.config_file  = os.path.join(path, f'{self.name}.conf')
+            self.config_file = os.path.join(path, f'{self.name}.conf')
         if not self.keyring_file:
             self.keyring_file = os.path.join(path, f'{self.name}.keyring')
 
-        # 目录路径不存在存在则创建
-        os.makedirs(path, exist_ok=True)
+        try:
+            # 目录路径不存在存在则创建
+            os.makedirs(path, exist_ok=True)
 
-        with open(self.config_file,'w') as f:
-            f.write(self.config)
+            with open(self.config_file, 'w') as f:
+                f.write(self.config)
 
-        with open(self.keyring_file,'w') as f:
-            f.write(self.keyring)
+            with open(self.keyring_file, 'w') as f:
+                f.write(self.keyring)
+        except Exception:
+            return False
 
+        return True
+
+    def save(self, *args, **kwargs):
+        self._save_config_to_file()
         super().save(*args, **kwargs)
 
 
@@ -176,8 +214,9 @@ class MacIP(models.Model):
     vlan = models.ForeignKey(to=Vlan, on_delete=models.SET_NULL, null=True, verbose_name='VLAN子网') # IP所属的vlan局域子网
     mac = models.CharField(verbose_name='MAC地址', max_length=17, unique=True)
     ipv4 = models.GenericIPAddressField(verbose_name='IP地址', unique=True)
-    enable = models.BooleanField(verbose_name='状态', default=True)
-    desc = models.TextField(verbose_name='备注说明')
+    used = models.BooleanField(verbose_name='被使用', default=False, help_text='是否已分配给虚拟机使用')
+    enable = models.BooleanField(verbose_name='开启使用', default=True, help_text='是否可以被分配使用')
+    desc = models.TextField(verbose_name='备注说明', default='', blank=True)
 
     def __str__(self):
         return self.ipv4
@@ -185,6 +224,71 @@ class MacIP(models.Model):
     class Meta:
         verbose_name = 'IP地址'
         verbose_name_plural = '07_IP地址'
+
+    def can_used(self):
+        '''
+        是否是自由的，可被使用的
+        :return:
+            True: 可使用
+            False: 已被使用，或未开启使用
+        '''
+        if not self.used and self.enable:
+            return True
+        return False
+
+    @classmethod
+    def get_all_free_ip_in_vlan(self, vlan_id:int):
+        '''
+        获取一个vlan子网中 未被使用的 可分配的 所有ip
+        :param vlan_id: 子网ID
+        :return:
+            QuerySet()
+        '''
+        return self.objects.filter(vlan=vlan_id, used=False, enable=True).all()
+
+    def set_in_used(self, auto_commit=True):
+        '''
+        设置ip被使用中
+
+        :param auto_commit: True:立即更新到数据库；False: 不更新到数据库
+        :return:
+            True    # 成功
+            False   # 失败
+        '''
+        if not auto_commit:
+            self.used = True
+            return True
+
+        try:
+            r = self.objects.filter(id=self.id, used=False).update(used=True)  # 乐观锁方式,
+        except Exception as e:
+            return False
+        if r > 0:  # 更新行数
+            self.used = True
+            return True
+
+        return False
+
+    def set_free(self, auto_commit=True):
+        '''
+        释放ip
+
+        :param auto_commit: True:立即更新到数据库；False: 不更新到数据库
+        :return:
+            True    # 成功
+            False   # 失败
+        '''
+        self.used = False
+        if not auto_commit:
+            return True
+
+        try:
+            self.save(update_fields=['used'])
+        except Exception as e:
+            return False
+
+        return True
+
 
 
 class Host(models.Model):
@@ -196,10 +300,10 @@ class Host(models.Model):
     '''
     id = models.AutoField(primary_key=True)
     group = models.ForeignKey(to=Group, on_delete=models.CASCADE, verbose_name='宿主机所属的组')
-    vlans = models.ManyToManyField(to=Vlan, verbose_name='VLAN子网') # 局域子网
+    vlans = models.ManyToManyField(to=Vlan, verbose_name='VLAN子网', related_name='vlan_hosts') # 局域子网
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
     vcpu_total = models.IntegerField(default=24, verbose_name='宿主机CPU总数')
-    vcpu_allocated = models.IntegerField(default=0, verbose_name='宿主机已分配CPU总数')
+    vcpu_allocated = models.IntegerField(default=0, verbose_name='已分配CPU总数')
     mem_total = models.IntegerField(default=32768, verbose_name='宿主机总内存大小')
     mem_allocated = models.IntegerField(default=0, verbose_name='宿主机已分配内存大小')
     mem_reserved = models.IntegerField(default=2038, verbose_name='宿主机要保留的内存空间大小')
@@ -218,6 +322,95 @@ class Host(models.Model):
     class Meta:
         verbose_name = '宿主机'
         verbose_name_plural = '06_宿主机'
+
+    def exceed_vm_limit(self):
+        '''
+        检查是否达到或超过的可创建宿主机的数量上限
+        :return:
+            True: 已到上限，
+            False: 未到上限
+        '''
+        return self.vm_created >= self.vm_limit
+
+    def exceed_mem_limit(self, mem:int):
+        '''
+        检查宿主机是否还有足够的内存可供使用
+        :param mem: 需要的内存大小
+        :return:
+            True: 没有足够的内存可用
+            False: 内存足够使用
+        '''
+        free_mem = self.mem_total - self.mem_reserved - self.mem_allocated
+        return  mem > free_mem
+
+    def exceed_vcpu_limit(self, vcpu:int):
+        '''
+        检查宿主机是否还有足够的cpu可供使用
+        :param vcpu: 需要的vcpu数量
+        :return:
+            True: 没有足够的vcpu可用
+            False: vcpu足够使用
+        '''
+        free_cpu = self.vcpu_total - self.vcpu_allocated
+        return  vcpu > free_cpu
+
+    def meet_needs(self, vcpu:int, mem:int):
+        '''
+        检查宿主机是否满足资源需求
+        :param vcpu: 需要的vcpu数量
+        :param mem: 需要的内存大小
+        :return:
+            True: 满足
+            False: 不满足
+        '''
+        # 可创建虚拟机数量限制
+        if self.exceed_vm_limit():
+            return False
+
+        # cpu是否满足
+        if self.exceed_vcpu_limit(vcpu=vcpu):
+            return False
+
+        # 内存是否满足
+        if self.exceed_mem_limit(mem=mem):
+            return False
+
+        return  True
+
+    def contains_vlan(self, vlan:Vlan):
+        '''
+        宿主机是否属于子网
+
+        :param host: 宿主机对象
+        :param vlan: 子网
+        :return:
+            True    # 属于
+            False   # 不属于
+        '''
+        if vlan in self.vlans.all():
+            return True
+
+        return False
+
+    def free(self, vcpu: int, mem: int):
+        '''
+        释放从宿主机申请的资源
+
+        :param vcpu: 要申请的cpu数
+        :param mem: 要申请的内存大小
+        :return:
+            True    # success
+            False   # failed
+        '''
+        # 释放资源
+        self.vcpu_allocated = F('vcpu_allocated') - vcpu
+        self.mem_allocated = F('mem_allocated') - mem
+        try:
+            self.save()
+        except Exception as e:
+            return False
+
+        return True
 
 
 class VmXmlTemplate(models.Model):
@@ -260,11 +453,12 @@ class Image(models.Model):
     name = models.CharField(verbose_name='镜像名称', max_length=100)
     version = models.CharField(verbose_name='系统版本信息', max_length=100)
     type = models.ForeignKey(to=ImageType, on_delete=models.CASCADE, verbose_name='类型')
+    ceph = models.ForeignKey(to=CephBackend, on_delete=models.CASCADE, verbose_name='CEPH存储后端')
     base_image = models.CharField(verbose_name='基础镜像', max_length=200, default='', help_text='用于创建镜像快照')
     enable = models.BooleanField(verbose_name='启用', default=True, help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
     create_newsnap = models.BooleanField('更新模板', default=False, help_text='''选中该选项，保存时会基于基础镜像"
            "创建新快照（以当前时间作为快照名称）,更新操作系统模板。新建snap时请确保基础镜像处于关机状态！''')  # 这个字段不需要持久化存储，用于获取用户页面选择
-    snap = models.CharField(verbose_name='当前生效镜像快照', max_length=200, default='')
+    snap = models.CharField(verbose_name='当前生效镜像快照', max_length=200, default='', blank=True, editable=True)
     xml_tpl = models.ForeignKey(VmXmlTemplate, on_delete=models.CASCADE, verbose_name='xml模板',
                                 help_text='使用此镜象创建虚拟机时要使用的XML模板，不同类型的镜像有不同的XML格式')
     create_time = models.DateTimeField(auto_now_add=True)
@@ -284,26 +478,47 @@ class Image(models.Model):
         return self.name + ' ' + self.version
 
     def save(self, *args, **kwargs):
+        # super().save(*args, **kwargs)
+        if self.create_newsnap:  # 用户选中创建snap复选框
+            self._create_snap()
+
         super().save(*args, **kwargs)
-        # if not self.create_newsnap:  # 用户没有选中创建snap复选框
-        #     super().save(*args, **kwargs)
-        #     return True
-        #
-        # ceph_pool = self.cephpool
-        # ceph_config_file = os.path.join(settings.BASE_DIR, ceph_pool.cephcluster.config_file)
-        # ceph_keyring_file = os.path.join(settings.BASE_DIR, ceph_pool.cephcluster.keyring_file)
-        # now_timestamp = timezone.localtime(timezone.now()).strftime("%Y%m%d_%H%M%S")
-        # new_snap_name = self.base_image + '@' + now_timestamp
-        # self.create_newsnap = False
-        # self.snap = new_snap_name
-        # try:
-        #     from ceph.cephfunction import create_snap
-        #     create_snap(ceph_config_file, ceph_keyring_file, ceph_pool.pool, new_snap_name);
-        # except:
-        #     self.snap = "ERROR_SNAP:  " + new_snap_name
-        #     self.enable = False
-        # finally:
-        #     super().save(*args, **kwargs)
+
+    def _create_snap(self):
+        '''
+        从基image创建快照snap，
+        :return:
+            True    # success
+            False   # failed
+        '''
+        ceph = self.ceph
+        if not ceph:
+            return False
+        pool_name = ceph.pool_name
+        config = ceph.ceph
+        if not config:
+            return False
+
+        config_file = config.get_config_file()
+        keyring_file = config.get_keyring_file()
+
+        now_timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        snap_name = f'{self.base_image}@{now_timestamp}'
+        self.create_newsnap = False
+        try:
+            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd.create_snap(image_name=self.base_image, snap_name=snap_name)
+        except RadosError as e:
+            self.enable = False
+            self.desc = f'创建快照{snap_name}失败：{str(e)}' + self.desc
+        except Exception as e:
+            self.enable = False
+            self.desc = f'创建快照{snap_name}失败：{str(e)}' + self.desc
+        else:
+            self.snap = snap_name
+            return True
+
+        return False
 
 
 class Vm(models.Model):
@@ -315,15 +530,14 @@ class Vm(models.Model):
     vcpu = models.IntegerField(verbose_name='CPU数')
     mem = models.IntegerField(verbose_name='内存大小')
     disk = models.CharField(verbose_name='系统盘名称', max_length=100, unique=True, help_text='vm自己的系统盘，保存于ceph中的rdb文件名称')
-    image = models.ForeignKey(to=Image, on_delete=models.SET_NULL, null=True, verbose_name='源镜像', help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
+    image = models.ForeignKey(to=Image, on_delete=models.CASCADE, verbose_name='源镜像', help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
     user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL, related_name='user_vms',  null=True)
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
 
-    host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, verbose_name='宿主机', null=True)
-    ceph = models.ForeignKey(to=CephBackend, on_delete=models.SET_NULL, verbose_name='CEPH存储后端', null=True)
+    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机', null=True)
     xml = models.TextField(verbose_name='虚拟机当前的XML', help_text='定义虚拟机的当前的XML内容')
-    mac_ip = models.ForeignKey(to=MacIP, on_delete=models.SET_NULL, related_name='ip_vm', verbose_name='MAC IP', null=True)
+    mac_ip = models.OneToOneField(to=MacIP, on_delete=models.CASCADE, related_name='ip_vm', verbose_name='MAC IP', null=True)
     deleted     = models.BooleanField(verbose_name='删除', default=False)
 
     def __str__(self):
@@ -332,3 +546,8 @@ class Vm(models.Model):
     class Meta:
         verbose_name = '虚拟机'
         verbose_name_plural = '11_虚拟机'
+
+    def get_uuid(self):
+        if isinstance(self.uuid, str):
+            return self.uuid
+        return self.uuid.hex
