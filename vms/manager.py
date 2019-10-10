@@ -6,7 +6,7 @@ from django.db.models import F
 
 from utils.ceph.manages import RadosError, RbdManager
 from .virt import VirtAPI
-from .models import (Center, Group, Host, Vm, Image, MacIP, Vlan, CephConfig)
+from .models import (Center, Group, Host, Vm, Image, MacIP, Vlan, CephCluster)
 from . import errors
 from .errors import VmError
 
@@ -152,15 +152,11 @@ class HostManager:
 
             # 宿主机是否满足资源需求
             if not host.meet_needs(vcpu=vcpu, mem=mem):
-                return None
+                raise VmError(msg='宿主机没有足够的资源')
 
             # 申请资源
-            host.vcpu_allocated = F('vcpu_allocated') + vcpu
-            host.mem_allocated = F('mem_allocated') + mem
-            try:
-                host.save()
-            except Exception as e:
-                raise VmError(msg=f'向宿主机申请资源时错误,{str(e)}')
+            if not host.claim(vcpu=vcpu, mem=mem):
+                raise VmError(msg='向宿主机申请资源时失败')
 
         return host
 
@@ -429,11 +425,11 @@ class VmAPI:
         '''
         return uuid.uuid4().hex
 
-    def get_rbd_manager(self, ceph:CephConfig, pool_name:str):
+    def get_rbd_manager(self, ceph:CephCluster, pool_name:str):
         '''
         获取一个rbd管理接口对象
 
-        :param ceph: ceph配置模型对象CephConfig()
+        :param ceph: ceph配置模型对象CephCluster()
         :param pool_name: pool名称
         :return:
             RbdManager()    # success
@@ -610,9 +606,10 @@ class VmAPI:
         host_list = self._get_host_list(vlan=vlan, host_id=host_id, group_id=group_id) # 宿主机
 
         vm_uuid = self.new_uuid_str()
-        ceph_backend = image.ceph
-        ceph_config = ceph_backend.ceph
-        rbd_manager = self.get_rbd_manager(ceph=ceph_config, pool_name=ceph_backend.pool_name)
+        ceph_pool = image.ceph_pool
+        pool_name = ceph_pool.pool_name
+        ceph_config = ceph_pool.ceph
+        rbd_manager = self.get_rbd_manager(ceph=ceph_config, pool_name=pool_name)
 
         try:
             macip = self._apply_for_macip(vlan=vlan, ipv4=ipv4)  # mac ip资源申请
@@ -627,13 +624,14 @@ class VmAPI:
 
             # 虚拟机xml
             xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
-            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph_backend.ceph.uuid,
-                ceph_pool=ceph_backend.pool_name, diskname=diskname, ceph_username=ceph_config.username,
+            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph_config.uuid,
+                ceph_pool=pool_name, diskname=diskname, ceph_username=ceph_config.username,
                 ceph_hosts_xml=ceph_config.hosts_xml, mac=macip.mac, bridge=vlan.br)
 
             # 创建虚拟机元数据
-            vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
+            vm = Vm(name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
                     remarks=remarks, host=host, mac_ip=macip,xml=xml_desc, image=image)
+            vm.uuid = vm_uuid
             vm.save()
 
             # 创建虚拟机

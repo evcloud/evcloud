@@ -12,7 +12,7 @@ from utils.ceph.manages import RbdManager, RadosError
 #获取用户模型
 User = get_user_model()
 
-class CephConfig(models.Model):
+class CephCluster(models.Model):
     '''
     Ceph集群相关配置信息的模型
     '''
@@ -87,47 +87,23 @@ class CephConfig(models.Model):
         super().save(*args, **kwargs)
 
 
-class CephBackend(models.Model):
+class CephPool(models.Model):
     '''
-    CEPH存储后端
+    CEPH pool
     '''
     id = models.AutoField(primary_key=True)
     pool_name = models.CharField(verbose_name='POOL名称', max_length=100)
-    ceph = models.ForeignKey(to=CephConfig, on_delete=models.CASCADE)
+    ceph = models.ForeignKey(to=CephCluster, on_delete=models.CASCADE)
+    enable = models.BooleanField(default=True, verbose_name='是否启用')
+    remarks = models.CharField(max_length=255, default='', blank=True, verbose_name='备注')
 
     class Meta:
         ordering = ('id',)
-        verbose_name = 'CEPH存储后端'
-        verbose_name_plural = '02_CEPH存储后端'
+        verbose_name = 'CEPH pool'
+        verbose_name_plural = '02_CEPH pool'
 
     def __str__(self):
         return f'ceph<{self.ceph.name}>@pool<{self.pool_name}>'
-
-
-# class StorageBackend(models.Model):
-#     '''
-#     存储后端相关信息的模型， Ceph, Local(宿主机)
-#     '''
-#     BACKEND_CEPH = 0
-#     BACKEND_LOCAL = 1
-#
-#     BACKEND_TYPE_CHOICES = (
-#         (BACKEND_CEPH, 'CEPH'),
-#         (BACKEND_LOCAL, 'LOCAL')
-#     )
-#
-#     id = models.AutoField(primary_key=True)
-#     name = models.CharField(verbose_name='名称', max_length=100, unique=True)
-#     # type = models.SmallIntegerField(verbose_name='类型', choices=BACKEND_TYPE_CHOICES, default=BACKEND_CEPH)
-#     backend = models.ForeignKey(to=CephBackend, on_delete=models.SET_NULL, null=True) # CEPH存储后端， 多对一关系
-#
-#     class Meta:
-#         ordering = ('id',)
-#         verbose_name = '存储后端'
-#         verbose_name_plural = '存储后端'
-#
-#     def __str__(self):
-#         return self.name
 
 
 class Center(models.Model):
@@ -139,8 +115,7 @@ class Center(models.Model):
     name = models.CharField(verbose_name='数据中心名称', max_length=100, unique=True)
     location = models.CharField(verbose_name='位置', max_length=100)
     desc = models.CharField(verbose_name='简介', max_length=200, default='', blank=True)
-    # backend = models.ForeignKey(to=StorageBackend, on_delete=models.SET_NULL, null=True) # 存储后端, 多对一关系
-    backends = models.ManyToManyField(to=CephBackend, verbose_name='存储后端')
+    ceph_clusters = models.ManyToManyField(to=CephCluster, verbose_name='存储后端')
 
     class Meta:
         ordering = ('id',)
@@ -392,12 +367,32 @@ class Host(models.Model):
 
         return False
 
+    def claim(self, vcpu: int, mem: int):
+        '''
+        从宿主机申请的资源
+
+        :param vcpu: 要申请的cpu数
+        :param mem: 要申请的内存大小
+        :return:
+            True    # success
+            False   # failed
+        '''
+        # 申请资源
+        self.vcpu_allocated = F('vcpu_allocated') + vcpu
+        self.mem_allocated = F('mem_allocated') + mem
+        try:
+            self.save()
+        except Exception as e:
+            return False
+
+        return True
+
     def free(self, vcpu: int, mem: int):
         '''
         释放从宿主机申请的资源
 
-        :param vcpu: 要申请的cpu数
-        :param mem: 要申请的内存大小
+        :param vcpu: 要释放的cpu数
+        :param mem: 要释放的内存大小
         :return:
             True    # success
             False   # failed
@@ -453,13 +448,13 @@ class Image(models.Model):
     name = models.CharField(verbose_name='镜像名称', max_length=100)
     version = models.CharField(verbose_name='系统版本信息', max_length=100)
     type = models.ForeignKey(to=ImageType, on_delete=models.CASCADE, verbose_name='类型')
-    ceph = models.ForeignKey(to=CephBackend, on_delete=models.CASCADE, verbose_name='CEPH存储后端')
+    ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.CASCADE, verbose_name='CEPH存储后端')
     base_image = models.CharField(verbose_name='基础镜像', max_length=200, default='', help_text='用于创建镜像快照')
     enable = models.BooleanField(verbose_name='启用', default=True, help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
     create_newsnap = models.BooleanField('更新模板', default=False, help_text='''选中该选项，保存时会基于基础镜像"
            "创建新快照（以当前时间作为快照名称）,更新操作系统模板。新建snap时请确保基础镜像处于关机状态！''')  # 这个字段不需要持久化存储，用于获取用户页面选择
     snap = models.CharField(verbose_name='当前生效镜像快照', max_length=200, default='', blank=True, editable=True)
-    xml_tpl = models.ForeignKey(VmXmlTemplate, on_delete=models.CASCADE, verbose_name='xml模板',
+    xml_tpl = models.ForeignKey(to=VmXmlTemplate, on_delete=models.CASCADE, verbose_name='xml模板',
                                 help_text='使用此镜象创建虚拟机时要使用的XML模板，不同类型的镜像有不同的XML格式')
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
@@ -491,11 +486,11 @@ class Image(models.Model):
             True    # success
             False   # failed
         '''
-        ceph = self.ceph
-        if not ceph:
+        ceph_pool = self.ceph_pool
+        if not ceph_pool:
             return False
-        pool_name = ceph.pool_name
-        config = ceph.ceph
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
         if not config:
             return False
 
@@ -535,10 +530,9 @@ class Vm(models.Model):
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
 
-    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机', null=True)
+    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机')
     xml = models.TextField(verbose_name='虚拟机当前的XML', help_text='定义虚拟机的当前的XML内容')
-    mac_ip = models.OneToOneField(to=MacIP, on_delete=models.CASCADE, related_name='ip_vm', verbose_name='MAC IP', null=True)
-    deleted     = models.BooleanField(verbose_name='删除', default=False)
+    mac_ip = models.OneToOneField(to=MacIP, on_delete=models.CASCADE, related_name='ip_vm', verbose_name='MAC IP')
 
     def __str__(self):
         return self.name

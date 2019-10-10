@@ -1,18 +1,18 @@
 from django.contrib import admin
 
-from .models import (Center, CephBackend, CephConfig, Group, Host, Vlan, MacIP, VmXmlTemplate, Image, ImageType, Vm)
+from .models import (Center, CephPool, CephCluster, Group, Host, Vlan, MacIP, VmXmlTemplate, Image, ImageType, Vm)
 # Register your models here.
 
-@admin.register(CephConfig)
-class CephConfigAdmin(admin.ModelAdmin):
+@admin.register(CephCluster)
+class CephClusterAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
     list_display = ( 'id', 'name', 'uuid', 'config_file','keyring_file', 'hosts_xml', 'username')
     # list_filter = ['name']
     search_fields = ['name', 'hosts_xml']
 
 
-@admin.register(CephBackend)
-class CephBackendAdmin(admin.ModelAdmin):
+@admin.register(CephPool)
+class CephPoolAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'pool_name')
     list_display = ( 'id', 'pool_name', 'ceph')
     # list_filter = ['ceph']
@@ -22,16 +22,16 @@ class CephBackendAdmin(admin.ModelAdmin):
 @admin.register(Center)
 class CenterAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
-    list_display = ( 'id', 'name', 'location', 'desc','backends_list')
+    list_display = ( 'id', 'name', 'location', 'desc','ceph_clusters_list')
     list_filter = ['location']
     search_fields = ['name', 'location']
-    filter_horizontal = ['backends']
+    filter_horizontal = ['ceph_clusters']
 
     # 显示多对多字段, 定义一个方法，遍历，然后用列表返回
     # Field producer_country
-    def backends_list(self, obj):
-        return [str(item) for item in obj.backends.all()]
-    backends_list.short_description = '存储后端'  # admin后台此字段表列显示名称，等价于模型字段verbose_name参数
+    def ceph_clusters_list(self, obj):
+        return [str(item) for item in obj.ceph_clusters.all()]
+    ceph_clusters_list.short_description = 'CEPH集群'  # admin后台此字段表列显示名称，等价于模型字段verbose_name参数
 
 
 @admin.register(Group)
