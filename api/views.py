@@ -40,59 +40,103 @@ class CustomAutoSchema(AutoSchema):
 class VmsViewSet(viewsets.GenericViewSet):
     '''
     虚拟机类视图
+
+    list:
+        虚拟机列表
+
+        >> http code 200:
+        {
+          "count": 2,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "uuid": "4c0cdba7fe97405bac174baa03f3d036",
+              "name": "4c0cdba7fe97405bac174baa03f3d036",
+              "vcpu": 2,
+              "mem": 2048,
+              "disk": "4c0cdba7fe97405bac174baa03f3d036",
+              "host": "10.100.50.121",
+              "mac_ip": "10.107.50.252",
+              "user": {
+                "id": 3,
+                "username": "test"
+              },
+              "create_time": "2019-10-11 07:03:44"
+            },
+          ]
+        }
+
+    create:
+        创建虚拟机
+
+        >> http code 201: 创建成功
+        {
+          "code": 201,
+          "code_text": "创建成功",
+          "data": { },              # 请求时提交的数据
+          "vm": {
+            "uuid": "4c0cdba7fe97405bac174baa03f3d036",
+            "name": "4c0cdba7fe97405bac174baa03f3d036",
+            "vcpu": 2,
+            "mem": 2048,
+            "disk": "4c0cdba7fe97405bac174baa03f3d036",
+            "host": "10.100.50.121",
+            "mac_ip": "10.107.50.252",
+            "user": {
+              "id": 3,
+              "username": "test"
+            },
+            "create_time": "2019-10-11 07:03:44"
+          }
+        }
+        >> http code 200: 创建失败
+        {
+          "code": 201,
+          "code_text": "创建失败",
+          "data": { },              # 请求时提交的数据
+        }
+        >>Http Code: 状态码400：请求数据有误;
+            {
+                'code': 400,
+                'code_text': '请求数据有误'
+            }
+
+    destroy:
+        删除虚拟机
+
+        >>Http Code: 状态码204：删除成功，NO_CONTENT；
+        >>Http Code: 状态码200：请求成功，未能成功删除虚拟机;
+            {
+                'code': 200,
+                'code_text': '删除虚拟机失败'
+            }
+        >>Http Code: 状态码400：文件路径参数有误：对应参数错误信息;
+            {
+                'code': 400,
+                'code_text': '参数有误'
+            }
+        >>Http Code: 状态码404：找不到资源;
+        >>Http Code: 状态码500：服务器内部错误;
+
     '''
     permission_classes = [IsAuthenticated,]
     pagination_class = LimitOffsetPagination
+    lookup_field = 'uuid'
+    lookup_value_regex = '.+'
 
     # api docs
     schema = CustomAutoSchema(
         manual_fields={
-            # 'create': [
-            #     coreapi.Field(
-            #         name='image_id',
-            #         location='form',
-            #         required=True,
-            #         schema=coreschema.Integer(description='系统镜像id')
-            #     ),
-            #     coreapi.Field(
-            #         name='vcpu',
-            #         location='form',
-            #         required=True,
-            #         schema=coreschema.Integer(description='cpu数')
-            #     ),
-            #     coreapi.Field(
-            #         name='mem',
-            #         location='form',
-            #         required=True,
-            #         schema=coreschema.Integer(description='内存大小')
-            #     ),
-            #     coreapi.Field(
-            #         name='vlan_id',
-            #         location='form',
-            #         required=True,
-            #         schema=coreschema.Integer(description='子网id')
-            #     ),
-            #     coreapi.Field(
-            #         name='group_id',
-            #         location='form',
-            #         required=False,
-            #         schema=coreschema.Integer(description='宿主机组id'),
-            #         description='group_id or host_id required.'
-            #     ),
-            #     coreapi.Field(
-            #         name='host_id',
-            #         location='form',
-            #         required=False,
-            #         schema=coreschema.Integer(description='宿主机id'),
-            #         description='group_id or host_id required.'
-            #     ),
-            #     coreapi.Field(
-            #         name='remarks',
-            #         location='form',
-            #         required=False,
-            #         schema=coreschema.String(description='备注信息')
-            #     ),
-            # ],
+            'destroy': [
+                coreapi.Field(
+                    name='force',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Boolean(description='强制删除'),
+                    description='true:强制删除'
+                ),
+            ]
         }
     )
 
@@ -113,22 +157,7 @@ class VmsViewSet(viewsets.GenericViewSet):
     def create(self, request, *args, **kwargs):
         code_text = ''
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid(raise_exception=False):
-            validated_data = serializer.validated_data
-            api = VmAPI()
-            try:
-                vm = api.create_vm(user=request.user, **validated_data)
-            except VmError as e:
-                code_text = str(e)
-            else:
-                return Response(data={
-                    'code': 201,
-                    'code_text': '创建成功',
-                    'data': request.data,
-                    'vm': serializers.VmSerializer(vm).data
-                }, status=status.HTTP_201_CREATED)
-
-        if not code_text:
+        if not serializer.is_valid(raise_exception=False):
             code_text = '参数验证有误'
             try:
                 for _, err_list in serializer.errors.items():
@@ -136,12 +165,44 @@ class VmsViewSet(viewsets.GenericViewSet):
             except:
                 pass
 
-        data = {
-            'code': 400,
-            'code_text': code_text,
-            'data': serializer.data,
-        }
-        return Response(data, status=status.HTTP_400_BAD_REQUEST)
+            data = {
+                'code': 400,
+                'code_text': code_text,
+                'data': serializer.data,
+            }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+        api = VmAPI()
+        try:
+            vm = api.create_vm(user=request.user, **validated_data)
+        except VmError as e:
+            data = {
+                'code': 200,
+                'code_text': str(e),
+                'data': serializer.data,
+            }
+            return Response(data, status=status.HTTP_200_OK)
+
+        return Response(data={
+            'code': 201,
+            'code_text': '创建成功',
+            'data': request.data,
+            'vm': serializers.VmSerializer(vm).data
+        }, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        force = request.query_params.get('force', '').lower()
+        force = True if force == 'true' else False
+
+        api = VmAPI()
+        try:
+             api.delete_vm(user=request.user, vm_uuid=vm_uuid, force=force)
+        except VmError as e:
+            return Response(data={'code': 200, 'code_text': f'删除失败，{str(e)}'}, status=status.HTTP_200_OK)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_serializer_class(self):
         """

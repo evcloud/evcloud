@@ -2,7 +2,7 @@ import uuid
 import os
 
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Q
 
 from utils.ceph.manages import RadosError, RbdManager
 from .virt import VirtAPI
@@ -35,7 +35,7 @@ class CenterManager:
             raise VmError(code=errors.ERR_CENTER_ID, msg='分中心ID参数有误')
 
         try:
-            return Center.objects.filter(id=id).first()
+            return Center.objects.filter(id=center_id).first()
         except Exception as e:
             raise VmError(msg=f'查询分中心时错误,{str(e)}')
 
@@ -58,7 +58,7 @@ class GroupManager:
             raise VmError(code=errors.ERR_GROUP_ID, msg='宿主机组ID参数有误')
 
         try:
-            return Group.objects.filter(id=id).first()
+            return Group.objects.filter(id=group_id).first()
         except Exception as e:
             raise VmError(msg=f'查询宿主机组时错误,{str(e)}')
 
@@ -292,7 +292,7 @@ class MacIPManager:
             raise VmError(code=errors.ERR_MACIP_ID, msg='MacIP ID参数有误')
 
         try:
-            return MacIP.objects.filter(id=id).first()
+            return MacIP.objects.filter(id=macip_id).first()
         except Exception as e:
             raise VmError(msg=f'查询MacIP时错误,{str(e)}')
 
@@ -356,11 +356,8 @@ class MacIPManager:
             if not ip:
                 return False
 
-            if ip.used == False:
-                return True
-
-            ip.used = False
-            ip.save()
+            if not ip.set_free():
+                return False
 
         return True
 
@@ -371,17 +368,17 @@ class VmManager(VirtAPI):
     虚拟机元数据管理器
     '''
 
-    def get_vm_by_id(self, id: int):
+    def get_vm_by_uuid(self, uuid:str):
         '''
-        通过id获取虚拟机元数据
+        通过uuid获取虚拟机元数据
 
-        :param id: 虚拟机id
+        :param uuid: 虚拟机uuid hex字符串
         :return:
             Vm() # success
             None    #不存在或发生错误
         '''
         try:
-            return Vm.objects.filter(id=id).first()
+            return Vm.objects.filter(uuid=uuid).first()
         except Exception as e:
             pass
 
@@ -492,7 +489,7 @@ class VmAPI:
 
         return vlan
 
-    def _get_host_list(self, vlan:Vlan, host_id=None, group_id=None):
+    def _get_host_list(self, vlan:Vlan, user, host_id=None, group_id=None):
         '''
         获取属于vlan子网的指定宿主机列表
 
@@ -513,11 +510,19 @@ class VmAPI:
                 h = self._host_manager.get_host_by_id(host_id)
             except VmError as e:
                 raise e
-
+            # 用户访问宿主机权限检查
+            if not h.user_has_perms(user=user):
+                raise VmError(msg='当前用户没有指定宿主机的访问权限')
             # 宿主机存在, 并符合子网要求
             if h and h.contains_vlan(vlan):
                 host_list.append(h)
         elif group_id:
+            group = self._group_manager.get_group_by_id(group_id=group_id)
+            if not group:
+                raise VmError(msg='指定宿主机组不存在')
+            # 用户访问宿主机组权限检查
+            if not group.user_has_perms(user=user):
+                raise VmError(msg='当前用户没有指定宿主机的访问权限')
             try:
                 host_list = self._host_manager.get_hosts_by_group_and_vlan(group_or_id=group_id, vlan=vlan)
             except VmError as e:
@@ -603,7 +608,7 @@ class VmAPI:
 
         image = self._get_image(image_id)    # 镜像
         vlan = self._get_vlan(vlan_id)      # 局域子网
-        host_list = self._get_host_list(vlan=vlan, host_id=host_id, group_id=group_id) # 宿主机
+        host_list = self._get_host_list(vlan=vlan, host_id=host_id, group_id=group_id, user=user) # 宿主机
 
         vm_uuid = self.new_uuid_str()
         ceph_pool = image.ceph_pool
@@ -629,9 +634,8 @@ class VmAPI:
                 ceph_hosts_xml=ceph_config.hosts_xml, mac=macip.mac, bridge=vlan.br)
 
             # 创建虚拟机元数据
-            vm = Vm(name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
+            vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
                     remarks=remarks, host=host, mac_ip=macip,xml=xml_desc, image=image)
-            vm.uuid = vm_uuid
             vm.save()
 
             # 创建虚拟机
@@ -655,6 +659,66 @@ class VmAPI:
                 vm.delete()
             raise VmError(msg=str(e))
 
+    def delete_vm(self, vm_uuid:str, user=None, force=False):
+        '''
+        删除一个虚拟机
 
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :param force:   是否强制删除
+        :return:
+            True
+            raise VmError
+
+        :raise VmError
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        host = vm.host
+        # 虚拟机的状态
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VmError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            if not force:
+                raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+            try:
+                self._vm_manager.poweroff(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+            except VmError as e:
+                raise VmError(msg='强制关闭虚拟机失败')
+
+        try:
+            # 释放mac ip
+            mac_ip = vm.mac_ip
+            if not mac_ip.set_free():
+                raise VmError(msg='释放mac ip资源失败')
+
+            # 释放disk
+            if not vm.rm_sys_disk():
+                raise VmError(msg='删除系统盘失败')
+
+            # 释放宿主机资源
+            if not host.free(vcpu=vm.vcpu, mem=vm.mem):
+                raise VmError(msg='释放宿主机资源失败')
+
+            # 删除虚拟机
+            if not self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid):
+                raise VmError(msg='删除虚拟机失败')
+
+        except VmError as e:
+            if not force:   # 非强制删除
+                raise e
+
+        try:
+            vm.delete()
+        except Exception as e:
+            raise  VmError(msg='删除虚拟机元数据失败')
+
+        return True
 
 

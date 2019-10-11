@@ -10,6 +10,7 @@ django = "==2.2.*"
 mysqlclient = "*"
 djangorestframework = "==3.10.3"
 django-rest-swagger = "==2.2.0"
+libvirt-python = "==5.7.0"
 
 [requires]
 python_version = "3.6"

@@ -136,7 +136,7 @@ class Group(models.Model):
     center = models.ForeignKey(Center, on_delete=models.CASCADE, verbose_name='组所属的分中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
-    users = models.ManyToManyField(to=User, blank=True)     # 有权访问此组的用户
+    users = models.ManyToManyField(to=User, blank=True, related_name='user_set')     # 有权访问此组的用户
 
     def __str__(self):
         return self.name
@@ -146,6 +146,23 @@ class Group(models.Model):
         verbose_name = '宿主机组'
         verbose_name_plural = '04_宿主机组'
         unique_together = ('center', 'name')
+
+    def user_has_perms(self, user:User):
+        '''
+        用户是否有访问此宿主机组的权限
+        :param user: 用户
+        :return:
+            True    # has
+            False   # no
+        '''
+        if user.is_superuser:   # 超级用户
+            return True
+
+        u = self.users.filter(id=user.id).first()
+        if u:
+            return True
+
+        return False
 
 
 class Vlan(models.Model):
@@ -253,6 +270,9 @@ class MacIP(models.Model):
             True    # 成功
             False   # 失败
         '''
+        if self.used == False:
+            return True
+
         self.used = False
         if not auto_commit:
             return True
@@ -407,6 +427,19 @@ class Host(models.Model):
 
         return True
 
+    def user_has_perms(self, user):
+        '''
+        用户是否有访问此宿主机的权限
+        :param user: 用户
+        :return:
+            True    # has
+            False   # no
+        '''
+        if self.group.user_has_perms(user=user):
+            return True
+
+        return False
+
 
 class VmXmlTemplate(models.Model):
     '''
@@ -545,3 +578,50 @@ class Vm(models.Model):
         if isinstance(self.uuid, str):
             return self.uuid
         return self.uuid.hex
+
+    def rm_sys_disk(self):
+        '''
+        删除系统盘
+        :return:
+            True    # success
+            False   # failed
+        '''
+        ceph_pool = self.image.ceph_pool
+        if not ceph_pool:
+            return False
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            return False
+
+        config_file = config.get_config_file()
+        keyring_file = config.get_keyring_file()
+
+        try:
+            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd.remove_image(image_name=self.disk)
+        except RadosError as e:
+            return False
+        except Exception as e:
+            return False
+
+        return True
+
+    def user_has_perms(self, user):
+        '''
+        用户是否有访问此宿主机的权限
+        :param user: 用户
+        :return:
+            True    # has
+            False   # no
+        '''
+        if not isinstance(user.id, int): # 未认证用户
+            return False
+
+        if user.is_superuser:
+            return True
+
+        if self.user == user:
+            return True
+
+        return False

@@ -7,7 +7,7 @@ from . import views
 app_name = "api"
 
 router = DefaultRouter()
-router.register(r'(?P<version>(v3|v4))/users', views.VmsViewSet, base_name='user')
+router.register(r'(?P<version>(v3|v4))/vms', views.VmsViewSet, base_name='vms')
 
 
 urlpatterns = [

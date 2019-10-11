@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "924d45b097a9e50a0631e55eddf043d959d63d0426bddd8e3ab6bec6629a7442"
+            "sha256": "9e866577c661d5c08ef7494d358ebf297603006892e3e25a817ad10fbf164e50"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -87,6 +87,13 @@
                 "sha256:9fe95f19286cfefaa917656583d020be14e7859c6b0252588391e47db34527de"
             ],
             "version": "==2.10.3"
+        },
+        "libvirt-python": {
+            "hashes": [
+                "sha256:7af4ff057f36e1c806caca2b30abc020cdccd08d89e8898b54b66c1779d509a4"
+            ],
+            "index": "pypi",
+            "version": "==5.7.0"
         },
         "markupsafe": {
             "hashes": [

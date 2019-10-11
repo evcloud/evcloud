@@ -122,9 +122,9 @@ class RbdManager:
             with cluster.open_ioctx(self.pool_name) as ioctx:
                 rbd.RBD().remove(ioctx=ioctx, name=image_name)
         except rbd.ImageNotFound as e:
-            raise RadosError('rename_image error: image not found')
+            return True
         except Exception as e:
-            raise RadosError(f'rename_image error:{str(e)}')
+            raise RadosError(f'remove_image error:{str(e)}')
 
         return True
 
