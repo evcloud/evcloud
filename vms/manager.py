@@ -10,12 +10,6 @@ from .models import (Center, Group, Host, Vm, Image, MacIP, Vlan, CephCluster)
 from . import errors
 from .errors import VmError
 
-class VirtualMachine(VirtAPI):
-    '''
-
-    '''
-    def __init__(self, vm:Vm):
-        pass
 
 class CenterManager:
     '''
@@ -367,22 +361,20 @@ class VmManager(VirtAPI):
     '''
     虚拟机元数据管理器
     '''
-
     def get_vm_by_uuid(self, uuid:str):
         '''
         通过uuid获取虚拟机元数据
 
         :param uuid: 虚拟机uuid hex字符串
         :return:
-            Vm() # success
-            None    #不存在或发生错误
+            Vm() or None     # success
+
+        :raise:  VmError
         '''
         try:
             return Vm.objects.filter(uuid=uuid).first()
         except Exception as e:
-            pass
-
-        return None
+            raise VmError(msg=str(e))
 
     def get_vms_queryset(self):
         '''
@@ -398,8 +390,6 @@ class VmManager(VirtAPI):
         :return: QuerySet()
         '''
         return Vm.objects.filter(user=user).all()
-
-
 
 
 class VmAPI:
@@ -721,4 +711,69 @@ class VmAPI:
 
         return True
 
+    def vm_operations(self, vm_uuid:str, op:str, user):
+        '''
+        操作虚拟机
+
+        :param vm_uuid: 虚拟机uuid
+        :param op: 操作，['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']
+        :param user: 用户
+        :return:
+            True    # success
+            False   # failed
+        :raise VmError
+        '''
+        # 删除操作
+        try:
+            if op == 'delete':
+                return self.delete_vm(vm_uuid=vm_uuid, user=user)
+            elif op == 'delete_force':
+                return self.delete_vm(vm_uuid=vm_uuid, force=True, user=user)
+        except VmError as e:
+            raise e
+
+        # 普通操作
+        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        host = vm.host
+        host_ip = host.ipv4
+
+        if op == 'start':
+            return self._vm_manager.start(host_ipv4=host_ip, vm_uuid=vm_uuid)
+        elif op == 'reboot':
+            return self._vm_manager.reboot(host_ipv4=host_ip, vm_uuid=vm_uuid)
+        elif op == 'shutdown':
+            return self._vm_manager.shutdown(host_ipv4=host_ip, vm_uuid=vm_uuid)
+        elif op == 'poweroff':
+            return self._vm_manager.poweroff(host_ipv4=host_ip, vm_uuid=vm_uuid)
+        else:
+            raise VmError(msg='无效的操作')
+
+    def get_vm_status(self, vm_uuid:str, user):
+        '''
+        获取虚拟机的运行状态
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :return:
+            (state_code:int, state_str:str)     # success
+
+        :raise VmError()
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        host = vm.host
+        host_ip = host.ipv4
+        try:
+            return self._vm_manager.domain_status(host_ipv4=host_ip, vm_uuid=vm_uuid)
+        except VmError as e:
+            raise VmError(msg='获取虚拟机状态失败')
 

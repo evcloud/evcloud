@@ -181,7 +181,7 @@ class VirtAPI(object):
             info = domain.info()
             return info[0]
         except libvirt.libvirtError as e:
-            raise errors.VmError(msg='获取虚拟机状态失败', err=e)
+            raise errors.VmError(err=e)
 
     def is_shutoff(self, host_ipv4:str, vm_uuid:str):
         '''

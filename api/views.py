@@ -6,6 +6,7 @@ from rest_framework.schemas import AutoSchema
 from rest_framework.compat import coreapi, coreschema
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.serializers import Serializer
+from rest_framework.decorators import action
 
 from vms.manager import VmManager, VmAPI
 from vms.errors import VmError
@@ -105,7 +106,7 @@ class VmsViewSet(viewsets.GenericViewSet):
     destroy:
         删除虚拟机
 
-        >>Http Code: 状态码204：删除成功，NO_CONTENT；
+        >> Http Code: 状态码204：删除成功，NO_CONTENT；
         >>Http Code: 状态码200：请求成功，未能成功删除虚拟机;
             {
                 'code': 200,
@@ -119,11 +120,65 @@ class VmsViewSet(viewsets.GenericViewSet):
         >>Http Code: 状态码404：找不到资源;
         >>Http Code: 状态码500：服务器内部错误;
 
+    retrieve:
+        获取虚拟机元数据信息
+
+        http code: 200, 请求成功：
+        {
+          "code": 200,
+          "code_text": "获取虚拟机信息成功",
+          "vm": {
+            "uuid": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
+            "name": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
+            "vcpu": 2,
+            "mem": 2048,
+            "disk": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
+            "host": "10.100.50.121",
+            "mac_ip": "10.107.50.253",
+            "user": {
+              "id": 1,
+              "username": "shun"
+            },
+            "create_time": "2019-10-12 08:09:27"
+          }
+        }
+        >>Http Code: 状态码400：请求失败;
+            {
+                'code': 400,
+                'code_text': 'xxx失败'
+            }
+
+    vm_operations:
+        操作虚拟机
+
+        >>Http Code: 状态码200：请求成功;
+            {
+                'code': 200,
+                'code_text': '操作虚拟机成功'
+            }
+        >>Http Code: 状态码400：请求失败;
+            {
+                'code': 400,
+                'code_text': '操作虚拟机失败'
+            }
+
+    vm_status:
+        获取虚拟机当前运行状态
+
+        >> http code 200, 成功：
+        {
+          "code": 200,
+          "code_text": "获取信息成功",
+          "status": {
+            "status_code": 5,
+            "status_text": "shut off"
+          }
+        }
     '''
     permission_classes = [IsAuthenticated,]
     pagination_class = LimitOffsetPagination
     lookup_field = 'uuid'
-    lookup_value_regex = '.+'
+    lookup_value_regex = '[0-9a-z-]+'
 
     # api docs
     schema = CustomAutoSchema(
@@ -135,6 +190,15 @@ class VmsViewSet(viewsets.GenericViewSet):
                     required=False,
                     schema=coreschema.Boolean(description='强制删除'),
                     description='true:强制删除'
+                ),
+            ],
+            'vm_operations': [
+                coreapi.Field(
+                    name='op',
+                    location='form',
+                    required=True,
+                    schema=coreschema.Enum(enum=['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force'], description='操作'),
+                    description="选项：['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']"
                 ),
             ]
         }
@@ -191,6 +255,24 @@ class VmsViewSet(viewsets.GenericViewSet):
             'vm': serializers.VmSerializer(vm).data
         }, status=status.HTTP_201_CREATED)
 
+    def retrieve(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        try:
+            vm = VmManager().get_vm_by_uuid(uuid=vm_uuid)
+        except VmError as e:
+            return  Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not vm:
+            return Response(data={'code': 404, 'code_text': '虚拟机不存在'}, status=status.HTTP_404_NOT_FOUND)
+        if not vm.user_has_perms(user=request.user):
+            return Response(data={'code': 404, 'code_text': '当前用户没有权限访问此虚拟机'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(data={
+            'code': 200,
+            'code_text': '获取虚拟机信息成功',
+            'vm': serializers.VmSerializer(vm).data
+        })
+
     def destroy(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         force = request.query_params.get('force', '').lower()
@@ -203,6 +285,41 @@ class VmsViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 200, 'code_text': f'删除失败，{str(e)}'}, status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # def partial_update(self, request, *args, **kwargs):
+    #     pass
+
+    @action(methods=['patch'], url_path='operations', detail=True, url_name='vm_operations')
+    def vm_operations(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        op = request.data.get('op', None)
+
+        ops = ['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']
+        if not op or op not in ops:
+            return Response(data={'code': 400, 'code_text': 'op参数无效'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmAPI()
+        try:
+            ok = api.vm_operations(user=request.user, vm_uuid=vm_uuid, op=op)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not ok:
+            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': f'{op}虚拟机成功'})
+
+    @action(methods=['get'], url_path='status', detail=True, url_name='vm_status')
+    def vm_status(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        api = VmAPI()
+        try:
+            code, msg = api.get_vm_status(user=request.user, vm_uuid=vm_uuid)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'获取虚拟机状态失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '获取信息成功',
+                              'status': {'status_code': code, 'status_text': msg}})
 
     def get_serializer_class(self):
         """
