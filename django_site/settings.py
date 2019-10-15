@@ -42,7 +42,14 @@ INSTALLED_APPS = [
 
     'vms',
     'users',
-    'api'
+    'api',
+    'compute.apps.ComputeConfig',
+    'ceph',
+    'device',
+    'image.apps.ImageConfig',
+    'network.apps.NetworkConfig',
+    'novnc',
+    'vdisk',
 ]
 
 MIDDLEWARE = [

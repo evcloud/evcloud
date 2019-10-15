@@ -174,6 +174,8 @@ class VmsViewSet(viewsets.GenericViewSet):
             "status_text": "shut off"
           }
         }
+
+
     '''
     permission_classes = [IsAuthenticated,]
     pagination_class = LimitOffsetPagination
