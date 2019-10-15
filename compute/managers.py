@@ -3,9 +3,33 @@ from django.db import transaction
 from compute.models import Center, Group, Host
 from network.models import Vlan
 
-from vms import errors
-from vms.errors import VmError
 
+class ComputeError(Exception):
+    '''
+    计算资源相关错误定义
+    '''
+    def __init__(self, code:int=0, msg:str='', err=None):
+        '''
+        :param code: 错误码
+        :param msg: 错误信息
+        :param err: 错误对象
+        '''
+        self.code = code
+        self.msg = msg
+        self.err = err
+
+    def __str__(self):
+        return self.detail()
+
+    def detail(self):
+        '''错误详情'''
+        if self.msg:
+            return self.msg
+
+        if self.err:
+            return str(self.err)
+
+        return '未知的错误'
 
 class CenterManager:
     '''
@@ -19,15 +43,15 @@ class CenterManager:
         :return:
             Image() # success
             None    #不存在
-        :raise VmError
+        :raise ComputeError
         '''
         if not isinstance(center_id, int) or center_id < 0:
-            raise VmError(code=errors.ERR_CENTER_ID, msg='分中心ID参数有误')
+            raise ComputeError(msg='分中心ID参数有误')
 
         try:
             return Center.objects.filter(id=center_id).first()
         except Exception as e:
-            raise VmError(msg=f'查询分中心时错误,{str(e)}')
+            raise ComputeError(msg=f'查询分中心时错误,{str(e)}')
 
 
 class GroupManager:
@@ -42,15 +66,15 @@ class GroupManager:
         :return:
             Group() # success
             None    #不存在
-        :raise VmError
+        :raise ComputeError
         '''
         if not isinstance(group_id, int) or group_id < 0:
-            raise VmError(code=errors.ERR_GROUP_ID, msg='宿主机组ID参数有误')
+            raise ComputeError(msg='宿主机组ID参数有误')
 
         try:
             return Group.objects.filter(id=group_id).first()
         except Exception as e:
-            raise VmError(msg=f'查询宿主机组时错误,{str(e)}')
+            raise ComputeError(msg=f'查询宿主机组时错误,{str(e)}')
 
 
 class HostManager:
@@ -65,15 +89,15 @@ class HostManager:
         :return:
             Host() # success
             None    #不存在
-        :raise VmError
+        :raise ComputeError
         '''
         if not isinstance(host_id, int) or host_id < 0:
-            raise VmError(code=errors.ERR_HOST_ID, msg='宿主机ID参数有误')
+            raise ComputeError(msg='宿主机ID参数有误')
 
         try:
             return Host.objects.filter(id=host_id).first()
         except Exception as e:
-            raise VmError(msg=f'查询宿主机时错误,{str(e)}')
+            raise ComputeError(msg=f'查询宿主机时错误,{str(e)}')
 
     def get_hosts_by_group_id(self, group_id:int):
         '''
@@ -82,17 +106,17 @@ class HostManager:
         :param group_id: 宿主机组id
         :return:
             [Host(),]    # success
-            raise VmError #发生错误
+            raise ComputeError #发生错误
 
-        :raise VmError
+        :raise ComputeError
         '''
         if not isinstance(group_id, int) or group_id < 0:
-            raise VmError(code=errors.ERR_GROUP_ID, msg='宿主机组ID参数有误')
+            raise ComputeError(msg='宿主机组ID参数有误')
         try:
             hosts_qs = Host.objects.filter(group=group_id).all()
             return list(hosts_qs)
         except Exception as e:
-            raise VmError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
+            raise ComputeError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
 
     def get_hosts_by_group_and_vlan(self, group_or_id, vlan:Vlan):
         '''
@@ -102,25 +126,25 @@ class HostManager:
         :param vlan: 子网对象
         :return:
             [Host(),]    # success
-            raise VmError #发生错误
+            raise ComputeError #发生错误
 
-        :raise VmError
+        :raise ComputeError
         '''
         if isinstance(group_or_id, Group):
             group = group_or_id
         elif isinstance(group_or_id, int) and group_or_id > 0:
             group = group_or_id
         else:
-            raise VmError(msg='请输入一个宿主机组对象或宿主机组ID')
+            raise ComputeError(msg='请输入一个宿主机组对象或宿主机组ID')
 
         if not isinstance(vlan, Vlan):
-            raise VmError(msg='请输入一个子网Vlan对象')
+            raise ComputeError(msg='请输入一个子网Vlan对象')
 
         try:
             hosts_qs = vlan.vlan_hosts.filter(group=group).all()
             return list(hosts_qs)
         except Exception as e:
-            raise VmError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
+            raise ComputeError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
 
 
     def claim_from_host(self, host_id:int, vcpu:int, mem:int):
@@ -133,7 +157,7 @@ class HostManager:
         :return:
             Host()  # success
             None    #宿主机不存在，或没有足够的资源
-        :raise VmError
+        :raise ComputeError
         '''
         with transaction.atomic():
             host = Host.objects.select_for_update().filter(id=host_id).first()
@@ -142,11 +166,11 @@ class HostManager:
 
             # 宿主机是否满足资源需求
             if not host.meet_needs(vcpu=vcpu, mem=mem):
-                raise VmError(msg='宿主机没有足够的资源')
+                raise ComputeError(msg='宿主机没有足够的资源')
 
             # 申请资源
             if not host.claim(vcpu=vcpu, mem=mem):
-                raise VmError(msg='向宿主机申请资源时失败')
+                raise ComputeError(msg='向宿主机申请资源时失败')
 
         return host
 
@@ -180,23 +204,23 @@ class HostManager:
             Host()  # success
             None    # 没有足够的资源的宿主机
 
-        :raise VmError
+        :raise ComputeError
         '''
         # 检查参数
         if not isinstance(hosts, list):
-            raise VmError(msg='参数有误，请输入宿主机列表')
+            raise ComputeError(msg='参数有误，请输入宿主机列表')
 
         if len(hosts) == 0: # 没有满足条件的宿主机
             return None
 
         if not isinstance(hosts[0], Host):
-            raise VmError(msg='参数有误，请输入宿主机列表')
+            raise ComputeError(msg='参数有误，请输入宿主机列表')
 
         if not isinstance(vcpu, int) or vcpu <= 0:
-            raise VmError(msg='参数有误，vcpu必须是一个正整数')
+            raise ComputeError(msg='参数有误，vcpu必须是一个正整数')
 
         if not isinstance(mem, int) or mem <= 0:
-            raise VmError(msg='参数有误，mem必须是一个正整数')
+            raise ComputeError(msg='参数有误，mem必须是一个正整数')
 
         for host in hosts:
             # 宿主机是否满足资源需求
@@ -206,11 +230,7 @@ class HostManager:
             if not claim: # 立即申请资源
                 continue
 
-            try:
-                host = self.claim_from_host(host_id=host.id, vcpu=vcpu, mem=mem)
-            except VmError as e:
-                raise e
-
+            host = self.claim_from_host(host_id=host.id, vcpu=vcpu, mem=mem)
             if host:
                 return host
 

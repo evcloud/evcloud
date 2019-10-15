@@ -2,21 +2,31 @@ from django.db import models
 
 # Create your models here.
 
+class NetworkType(models.Model):
+    '''
+    网络类型
+    '''
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(verbose_name='类型名称', max_length=100)
+    remarks = models.CharField(verbose_name='备注', max_length=255, default='', blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('id',)
+        verbose_name = '网络类型'
+        verbose_name_plural = '05_网络类型'
+
+
 class Vlan(models.Model):
     '''
     虚拟局域网子网模型
     '''
-    PRIVATE = 0
-    PUBLIC = 1
-    VLAN_TYPE_CHOICES = (
-        (PRIVATE, '私网'),
-        (PUBLIC, '公网')
-    )
-
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='VLAN名称', max_length=100)
     br = models.CharField(verbose_name='网桥', max_length=50)
-    type = models.SmallIntegerField(verbose_name='网络类型', choices=VLAN_TYPE_CHOICES, default=PRIVATE)
+    net_type = models.ForeignKey(to=NetworkType, verbose_name='网络类型',on_delete=models.CASCADE, related_name='vlan_set')
     subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')
     net_mask = models.GenericIPAddressField(verbose_name='子网掩码', null=True, blank=True)
     gateway = models.GenericIPAddressField(verbose_name='网关', null=True, blank=True)

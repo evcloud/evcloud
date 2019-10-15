@@ -2,7 +2,6 @@ import subprocess
 
 import libvirt
 
-from . import errors
 
 VIR_DOMAIN_NOSTATE = 0  # no state
 VIR_DOMAIN_RUNNING = 1  # the domain is running
@@ -29,6 +28,35 @@ VM_STATE = {
     VIR_DOMAIN_HOST_DOWN: 'host connect failed',
     VIR_DOMAIN_MISS: 'miss',
 }
+
+
+class VirtError(Exception):
+    '''
+    libvirt函数封装错误类型定义
+    '''
+    def __init__(self, code:int=0, msg:str='', err=None):
+        '''
+        :param code: 错误码
+        :param msg: 错误信息
+        :param err: 错误对象
+        '''
+        self.code = code
+        self.msg = msg
+        self.err = err
+
+    def __str__(self):
+        return self.detail()
+
+    def detail(self):
+        '''错误详情'''
+        if self.msg:
+            return self.msg
+
+        if self.err:
+            return str(self.err)
+
+        return '未知的错误'
+
 
 class VirtAPI(object):
     '''
@@ -57,13 +85,13 @@ class VirtAPI(object):
         :param host_ip: 宿主机IP
         :return:
             success: libvirt.virConnect
-            failed: raise VmError()
+            failed: raise VirtError()
 
-        :raise VmError()
+        :raise VirtError()
         '''
         if host_ip:
             if not self._host_alive(host_ip):
-                raise errors.VmError(code=errors.ERR_HOST_CONNECTION)
+                raise VirtError(msg='宿主机连接失败')
             name = f'qemu+ssh://{host_ip}/system'
         else:
             name = 'qemu:///system'
@@ -71,7 +99,7 @@ class VirtAPI(object):
         try:
             return libvirt.open(name=name)
         except libvirt.libvirtError as e:
-            raise errors.VmError(code=errors.ERR_HOST_CONNECTION, err=e)
+            raise VirtError(err=e)
 
     def define(self, host_ipv4:str, xml_desc:str):
         '''
@@ -81,16 +109,16 @@ class VirtAPI(object):
         :param xml_desc: 定义虚拟机的xml
         :return:
             success: libvirt.virDomain()
-            failed: raise VmError()
+            failed: raise VirtError()
 
-        :raise VmError()
+        :raise VirtError()
         '''
         conn = self._get_connection(host_ipv4)
         try:
             dom = conn.defineXML(xml_desc)
             return dom
         except libvirt.libvirtError as e:
-            raise errors.VmError(code=errors.ERR_VM_DEFINE, err=e)
+            raise VirtError(err=e)
 
     def get_domain(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -100,15 +128,15 @@ class VirtAPI(object):
         :param vm_uuid: 虚拟机uuid
         :return:
             success: libvirt.virDomain()
-            failed: raise VmError()
+            failed: raise VirtError()
 
-        :raise VmError()
+        :raise VirtError()
         '''
         conn = self._get_connection(host_ipv4)
         try:
             return conn.lookupByUUIDString(vm_uuid)
         except libvirt.libvirtError as e:
-            raise errors.VmError(code=errors.ERR_VM_MISSING, err=e)
+            raise VirtError(err=e)
 
     def domain_exists(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -120,7 +148,7 @@ class VirtAPI(object):
             True: 已存在
             False: 不存在
 
-        :raise VmError()
+        :raise VirtError()
         '''
         conn = self._get_connection(host_ipv4)
         try:
@@ -129,7 +157,7 @@ class VirtAPI(object):
                     return True
             return False
         except libvirt.libvirtError as e:
-            raise errors.VmError(err=e)
+            raise VirtError(err=e)
 
     def undefine(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -141,7 +169,7 @@ class VirtAPI(object):
             success: True
             failed: False
 
-        :raise VmError()
+        :raise VirtError()
         '''
         dom = self.get_domain(host_ipv4, vm_uuid)
         try:
@@ -149,7 +177,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise errors.VmError(msg='删除虚拟机失败', err=e)
+            raise VirtError(msg=f'删除虚拟机失败,{str(e)}', err=e)
 
     def domain_status(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -160,7 +188,7 @@ class VirtAPI(object):
         :return:
             success: (state_code:int, state_str:str)
 
-        :raise VmError()
+        :raise VirtError()
         '''
         domain = self.get_domain(host_ipv4, vm_uuid)
         code = self._status_code(domain)
@@ -175,13 +203,13 @@ class VirtAPI(object):
         :return:
             success: state_code:int
 
-        :raise VmError()
+        :raise VirtError()
         '''
         try:
             info = domain.info()
             return info[0]
         except libvirt.libvirtError as e:
-            raise errors.VmError(err=e)
+            raise VirtError(err=e)
 
     def is_shutoff(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -193,7 +221,7 @@ class VirtAPI(object):
             True: 关机
             False: 未关机
 
-        :raise VmError()
+        :raise VirtError()
         '''
         domain = self.get_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
         return self._domain_is_shutoff(domain)
@@ -207,7 +235,7 @@ class VirtAPI(object):
             True: 关机
             False: 未关机
 
-        :raise VmError()
+        :raise VirtError()
         '''
         code = self._status_code(domain)
         return code == VIR_DOMAIN_SHUTOFF
@@ -222,7 +250,7 @@ class VirtAPI(object):
             True: 开机
             False: 未开机
 
-        :raise VmError()
+        :raise VirtError()
         '''
         domain = self.get_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
         code = self._status_code(domain)
@@ -239,7 +267,7 @@ class VirtAPI(object):
             True: 开机
             False: 未开机
 
-        :raise VmError()
+        :raise VirtError()
         '''
         code = self._status_code(domain)
         if code in (VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED):
@@ -256,7 +284,7 @@ class VirtAPI(object):
             success: True
             failed: False
 
-        :raise VmError()
+        :raise VirtError()
         '''
         domain = self.get_domain(host_ipv4, vm_uuid)
         if self._domain_is_running(domain):
@@ -268,7 +296,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise errors.VmError(msg='启动虚拟机失败', err=e)
+            raise VirtError(msg='启动虚拟机失败', err=e)
 
     def reboot(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -280,7 +308,7 @@ class VirtAPI(object):
             success: True
             failed: False
 
-        :raise VmError()
+        :raise VirtError()
         '''
         domain = self.get_domain(host_ipv4, vm_uuid)
         if not self._domain_is_running(domain):
@@ -292,7 +320,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise errors.VmError(msg='重启虚拟机失败', err=e)
+            raise VirtError(msg='重启虚拟机失败', err=e)
 
     def shutdown(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -304,7 +332,7 @@ class VirtAPI(object):
             success: True
             failed: False
 
-        :raise VmError()
+        :raise VirtError()
         '''
         domain = self.get_domain(host_ipv4, vm_uuid)
         if not self._domain_is_running(domain):
@@ -316,7 +344,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise errors.VmError(msg='关闭虚拟机失败', err=e)
+            raise VirtError(msg='关闭虚拟机失败', err=e)
 
     def poweroff(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -328,7 +356,7 @@ class VirtAPI(object):
             success: True
             failed: False
 
-        :raise VmError()
+        :raise VirtError()
         '''
         domain = self.get_domain(host_ipv4, vm_uuid)
         if not self._domain_is_running(domain):
@@ -340,7 +368,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise errors.VmError(msg='关闭虚拟机电源失败', err=e)
+            raise VirtError(msg='关闭虚拟机电源失败', err=e)
 
 
     # def _xml_edit_vcpu(self, xml_desc, vcpu):

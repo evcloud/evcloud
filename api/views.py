@@ -8,8 +8,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.serializers import Serializer
 from rest_framework.decorators import action
 
-from vms.manager import VmManager, VmAPI
-from vms.errors import VmError
+from vms.manager import VmManager, VmAPI, VmError
 from . import serializers
 
 # Create your views here.

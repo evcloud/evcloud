@@ -3,14 +3,41 @@ import os
 
 from ceph.managers import RadosError, RbdManager
 from ceph.models import CephCluster
-from compute.managers import CenterManager, GroupManager, HostManager
-from image.managers import ImageManager
-from network.managers import VlanManager, MacIPManager
+from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
+from image.managers import ImageManager, ImageError
+from network.managers import VlanManager, MacIPManager, NetworkError
 from network.models import Vlan
-from .virt import VirtAPI
+from utils.ev_libvirt.virt import VirtAPI, VirtError
 from .models import Vm
-from . import errors
-from .errors import VmError
+
+
+
+class VmError(Exception):
+    '''
+    虚拟机相关错误定义
+    '''
+    def __init__(self, code:int=0, msg:str='', err=None):
+        '''
+        :param code: 错误码
+        :param msg: 错误信息
+        :param err: 错误对象
+        '''
+        self.code = code
+        self.msg = msg
+        self.err = err
+
+    def __str__(self):
+        return self.detail()
+
+    def detail(self):
+        '''错误详情'''
+        if self.msg:
+            return self.msg
+
+        if self.err:
+            return str(self.err)
+
+        return '未知的错误'
 
 
 class VmManager(VirtAPI):
@@ -106,12 +133,12 @@ class VmAPI:
         '''
         try:
             image = self._image_manager.get_image_by_id(image_id)
-        except VmError as e:
-            raise e
+        except ImageError as e:
+            raise VmError(err=e)
         if not image:
-            raise VmError(code=errors.ERR_IMAGE_ID, msg='镜像ID参数有误，未找到指定系统镜像')
+            raise VmError(msg='镜像ID参数有误，未找到指定系统镜像')
         if not image.enable:
-            raise VmError(code=errors.ERR_IMAGE_ID, msg='镜像ID参数有误，镜像未启用')
+            raise VmError(msg='镜像ID参数有误，镜像未启用')
 
         return image
 
@@ -127,11 +154,11 @@ class VmAPI:
            '''
         try:
             vlan = self._vlan_manager.get_vlan_by_id(vlan_id)
-        except VmError as e:
-            raise e
+        except NetworkError as e:
+            raise VmError(err=e)
 
         if not vlan:
-            raise VmError(code=errors.ERR_VLAN_ID, msg='子网ID有误，子网不存在')
+            raise VmError(msg='子网ID有误，子网不存在')
 
         return vlan
 
@@ -154,25 +181,32 @@ class VmAPI:
         if host_id:
             try:
                 h = self._host_manager.get_host_by_id(host_id)
-            except VmError as e:
-                raise e
+            except ComputeError as e:
+                raise VmError(msg=str(e))
+
             # 用户访问宿主机权限检查
             if not h.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
+
             # 宿主机存在, 并符合子网要求
             if h and h.contains_vlan(vlan):
                 host_list.append(h)
         elif group_id:
-            group = self._group_manager.get_group_by_id(group_id=group_id)
+            try:
+                group = self._group_manager.get_group_by_id(group_id=group_id)
+            except ComputeError as e:
+                raise VmError(msg=f'查询宿主机组，{str(e)}')
             if not group:
                 raise VmError(msg='指定宿主机组不存在')
+
             # 用户访问宿主机组权限检查
             if not group.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
+
             try:
                 host_list = self._host_manager.get_hosts_by_group_and_vlan(group_or_id=group_id, vlan=vlan)
-            except VmError as e:
-                raise e
+            except ComputeError as e:
+                raise VmError(msg=f'获取宿主机list错误，{str(e)}')
         if not host_list:
             raise VmError(msg='参数有误，未找到指定的可用宿主机')
 
@@ -215,8 +249,8 @@ class VmAPI:
         '''
         try:
             host = self._host_manager.filter_meet_requirements(hosts=hosts, vcpu=vcpu, mem=mem, claim=True)
-        except VmError as e:
-            raise VmError(code=e.code, msg='无法创建虚拟机,' + e.detail())
+        except ComputeError as e:
+            raise VmError(msg=f'无法创建虚拟机,{str(e)}')
 
         # 没有满足资源需求的宿主机
         if not host:
@@ -287,12 +321,11 @@ class VmAPI:
             # 创建虚拟机
             try:
                 self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
-            except VmError as e:
-                raise  e
+            except VirtError as e:
+                raise VmError(msg=str(e))
             host.vm_created += 1
             host.save()
             return vm
-
         except Exception as e:
             if macip:
                 self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
@@ -328,14 +361,14 @@ class VmAPI:
         # 虚拟机的状态
         try:
             run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-        except VmError as e:
+        except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
             if not force:
                 raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
             try:
                 self._vm_manager.poweroff(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-            except VmError as e:
+            except VirtError as e:
                 raise VmError(msg='强制关闭虚拟机失败')
 
         try:
@@ -353,7 +386,10 @@ class VmAPI:
                 raise VmError(msg='释放宿主机资源失败')
 
             # 删除虚拟机
-            if not self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid):
+            try:
+                if not self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid):
+                    raise VmError(msg='删除虚拟机失败')
+            except VirtError as e:
                 raise VmError(msg='删除虚拟机失败')
 
         except VmError as e:
@@ -398,16 +434,19 @@ class VmAPI:
         host = vm.host
         host_ip = host.ipv4
 
-        if op == 'start':
-            return self._vm_manager.start(host_ipv4=host_ip, vm_uuid=vm_uuid)
-        elif op == 'reboot':
-            return self._vm_manager.reboot(host_ipv4=host_ip, vm_uuid=vm_uuid)
-        elif op == 'shutdown':
-            return self._vm_manager.shutdown(host_ipv4=host_ip, vm_uuid=vm_uuid)
-        elif op == 'poweroff':
-            return self._vm_manager.poweroff(host_ipv4=host_ip, vm_uuid=vm_uuid)
-        else:
-            raise VmError(msg='无效的操作')
+        try:
+            if op == 'start':
+                return self._vm_manager.start(host_ipv4=host_ip, vm_uuid=vm_uuid)
+            elif op == 'reboot':
+                return self._vm_manager.reboot(host_ipv4=host_ip, vm_uuid=vm_uuid)
+            elif op == 'shutdown':
+                return self._vm_manager.shutdown(host_ipv4=host_ip, vm_uuid=vm_uuid)
+            elif op == 'poweroff':
+                return self._vm_manager.poweroff(host_ipv4=host_ip, vm_uuid=vm_uuid)
+            else:
+                raise VmError(msg='无效的操作')
+        except VirtError as e:
+            raise VmError(msg=str(e))
 
     def get_vm_status(self, vm_uuid:str, user):
         '''
@@ -430,6 +469,6 @@ class VmAPI:
         host_ip = host.ipv4
         try:
             return self._vm_manager.domain_status(host_ipv4=host_ip, vm_uuid=vm_uuid)
-        except VmError as e:
+        except VirtError as e:
             raise VmError(msg='获取虚拟机状态失败')
 
