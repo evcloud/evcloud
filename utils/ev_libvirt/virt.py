@@ -370,6 +370,25 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise VirtError(msg='关闭虚拟机电源失败', err=e)
 
+    def get_domain_xml_desc(self, host_ipv4:str, vm_uuid:str):
+        '''
+        动态从宿主机获取虚拟机的xml内容
+
+        :param host_ipv4: 虚拟机所在的宿主机ip
+        :param vm_uuid: 虚拟机uuid
+        :return:
+            xml: str    # success
+
+        :raise VirtError()
+        '''
+        try:
+            domain = self.get_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
+            return domain.XMLDesc()
+        except libvirt.libvirtError as e:
+            raise VirtError(msg=str(e))
+
+
+
 
     # def _xml_edit_vcpu(self, xml_desc, vcpu):
     #     xml = XMLEditor()

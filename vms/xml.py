@@ -26,8 +26,11 @@ class XMLEditor(object):
             success: minidom.Document()
             failed: None
         '''
-        if self._dom:
+        try:
             return self._dom
+        except:
+            pass
+
         return None
 
     def get_root(self):
@@ -39,16 +42,25 @@ class XMLEditor(object):
             return self._dom.documentElement
         return None
 
-    def get_node(self, path):
-        node = self._dom.documentElement
-        for tag in path:
-            find = False
-            for child_node in node.childNodes:
-                if child_node.nodeName == tag:
-                    find = True
-                    node = child_node
-                    break
-            if not find:
-                return None
-        return node
+    def get_node_list(self, tag_path:str):
+        '''
+        获取指定节点
 
+        :param tag_path:   格式如：tag_name/tag_name/tag_name
+        :return:
+            NodeList()  # success
+            None        # not found
+        '''
+        tag_path = tag_path.strip('/')
+        tag_names = tag_path.split('/')
+        if len(tag_names) <= 0:
+            return None
+
+        node_list = [self._dom,]
+        for tag in tag_names:
+            p_node = node_list[0]
+            node_list = p_node.getElementsByTagName(tag)
+            if len(node_list) <= 0: # 未找到节点
+                return None
+
+        return node_list

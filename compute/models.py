@@ -179,10 +179,15 @@ class Host(models.Model):
             False   # failed
         '''
         # 申请资源
-        self.vcpu_allocated = F('vcpu_allocated') + vcpu
-        self.mem_allocated = F('mem_allocated') + mem
+        if vcpu <= 0 and mem <= 0:
+            return True
+        if vcpu > 0:
+            self.vcpu_allocated = F('vcpu_allocated') + vcpu
+        if mem > 0:
+            self.mem_allocated = F('mem_allocated') + mem
         try:
             self.save()
+            self.refresh_from_db()
         except Exception as e:
             return False
 
@@ -199,10 +204,15 @@ class Host(models.Model):
             False   # failed
         '''
         # 释放资源
-        self.vcpu_allocated = F('vcpu_allocated') - vcpu
-        self.mem_allocated = F('mem_allocated') - mem
+        if vcpu <= 0 and mem <= 0:
+            return True
+        if vcpu > 0:
+            self.vcpu_allocated = F('vcpu_allocated') - vcpu
+        if mem > 0:
+            self.mem_allocated = F('mem_allocated') - mem
         try:
             self.save()
+            self.refresh_from_db()
         except Exception as e:
             return False
 
