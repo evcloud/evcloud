@@ -35,8 +35,8 @@ class NovncError(Exception):
         return '未知的错误'
 
 class NovncTokenManager(object):
-    def generate_token(self, vmid):
-        hostip, vncport = get_vm_vncinfo(vmid)
+    def generate_token(self, vmid, hostip):
+        vncport = get_vm_vncinfo(vmid, hostip)
         #删除该hostip和vncport的历史token记录
         Token.objects.filter(ip = hostip).filter(port = vncport).delete()
         #创建新的token记录
@@ -48,19 +48,11 @@ class NovncTokenManager(object):
         start_time = now - datetime.timedelta(days=365);   #print(start_time);
         end_time   = now - datetime.timedelta(days=3);     #print(end_time);
         Token.objects.filter(updatetime__range=(start_time, end_time)).delete();   #注意 __range表示范围
-        return novnc_token            }
+        return(f"/novnc/?vncid={novnc_token}")
     def del_token(self, vncid):
         Token.objects.filter(token = str(vncid)).delete()
-    def get_vm_vncinfo(self, vmid):
-        '''设置novnc token, 并返回vncid'''
-        obj = Vm.objects.filter(uuid = vmid)
-        if obj:
-            obj = obj[0]
-        else:
-            self.error = 'UUID error.'
-            return False
-        hostip = obj.host.ipv4
-        cmd = f'ssh {hostip} virsh vncdisplay {obj.uuid}'
+    def get_vm_vncinfo(self, vmid, hostip):
+        cmd = f'ssh {hostip} virsh vncdisplay {vmid}'
         (res, info) = subprocess.getstatusoutput(cmd)
         if res != 0:
             self.error = 'UUID error' 
@@ -75,5 +67,5 @@ class NovncTokenManager(object):
         if port == False:
             self.error = 'get vnc port error.'
             return False
-        return(hostip, vncport)    
+        return(vncport)    
 
