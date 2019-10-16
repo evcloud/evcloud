@@ -174,6 +174,8 @@ class VmsViewSet(viewsets.GenericViewSet):
           }
         }
 
+    partial_update:
+        修改虚拟机vcpu和内存大小
 
     '''
     permission_classes = [IsAuthenticated,]
@@ -220,7 +222,6 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data)
 
     def create(self, request, *args, **kwargs):
-        code_text = ''
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid(raise_exception=False):
             code_text = '参数验证有误'
@@ -287,8 +288,39 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # def partial_update(self, request, *args, **kwargs):
-    #     pass
+    def partial_update(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid(raise_exception=False):
+            code_text = '参数验证有误'
+            try:
+                for _, err_list in serializer.errors.items():
+                    code_text = err_list[0]
+            except:
+                pass
+
+            data = {
+                'code': 400,
+                'code_text': code_text,
+                'data': serializer.data,
+            }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+        vcpu = validated_data.get('vcpu', 0)
+        mem = validated_data.get('mem', 0)
+
+        api = VmAPI()
+        try:
+            ok = api.edit_vm_vcpu_mem(user=request.user, vm_uuid=vm_uuid, mem=mem, vcpu=vcpu)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not ok:
+            return Response(data={'code': 400, 'code_text': '修改虚拟机失败'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '修改虚拟机成功'})
 
     @action(methods=['patch'], url_path='operations', detail=True, url_name='vm_operations')
     def vm_operations(self, request, *args, **kwargs):
@@ -330,6 +362,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         """
         if self.action in ['list', 'retrieve']:
             return serializers.VmSerializer
-        elif self.action =='create':
+        elif self.action == 'create':
             return serializers.VmCreateSerializer
+        elif self.action == 'partial_update':
+            return serializers.VmPatchSerializer
         return Serializer
