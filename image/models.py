@@ -47,7 +47,7 @@ class Image(models.Model):
     version = models.CharField(verbose_name='系统版本信息', max_length=100)
     type = models.ForeignKey(to=ImageType, on_delete=models.CASCADE, verbose_name='类型')
     ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.CASCADE, verbose_name='CEPH存储后端')
-    base_image = models.CharField(verbose_name='基础镜像', max_length=200, default='', help_text='用于创建镜像快照')
+    base_image = models.CharField(verbose_name='父镜像', max_length=200, default='', help_text='用于创建镜像快照')
     enable = models.BooleanField(verbose_name='启用', default=True, help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
     create_newsnap = models.BooleanField('更新模板', default=False, help_text='''选中该选项，保存时会基于基础镜像"
            "创建新快照（以当前时间作为快照名称）,更新操作系统模板。新建snap时请确保基础镜像处于关机状态！''')  # 这个字段不需要持久化存储，用于获取用户页面选择

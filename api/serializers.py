@@ -58,6 +58,15 @@ class VmCreateSerializer(serializers.Serializer):
         return data
 
 
+class VmPatchSerializer(serializers.Serializer):
+    '''
+    创建虚拟机序列化器
+    '''
+    vcpu = serializers.IntegerField(label='cpu数', required=False, min_value=1, help_text='cpu数')
+    mem = serializers.IntegerField(label='内存大小', required=False, min_value=200)
+
+    def validate(self, data):
+        return data
 
 
 
