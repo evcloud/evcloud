@@ -28,9 +28,10 @@ class Vlan(models.Model):
     br = models.CharField(verbose_name='网桥', max_length=50)
     net_type = models.ForeignKey(to=NetworkType, verbose_name='网络类型',on_delete=models.CASCADE, related_name='vlan_set')
     subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')
-    net_mask = models.GenericIPAddressField(verbose_name='子网掩码', null=True, blank=True)
-    gateway = models.GenericIPAddressField(verbose_name='网关', null=True, blank=True)
-    dns_server = models.GenericIPAddressField(verbose_name='DNS服务IP', null=True, blank=True)
+    net_mask = models.GenericIPAddressField(verbose_name='子网掩码')
+    gateway = models.GenericIPAddressField(verbose_name='网关')
+    dns_server = models.GenericIPAddressField(verbose_name='DNS服务IP')
+    dhcp_config = models.TextField(verbose_name='DHCP部分配置信息')
     enable = models.BooleanField(verbose_name='状态', default=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
 
@@ -41,6 +42,20 @@ class Vlan(models.Model):
         ordering = ('id',)
         verbose_name = 'VLAN子网'
         verbose_name_plural = '05_VLAN子网'
+
+    def get_free_ip_number(self):
+        '''
+        获得该子网已经生成，但尚未使用的ip数量
+        :return: int
+        '''
+        return MacIP.objects.filter(id=self, used=False, enable=True).count()
+
+    def get_ip_number(self):
+        '''
+        获得该子网已经生成的所有ip数量
+        :return: int
+        '''
+        return MacIP.objects.filter(id=self, enable=True).count()
 
 
 class MacIP(models.Model):
