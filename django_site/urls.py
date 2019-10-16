@@ -22,5 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
     path('api/', include('api.urls')),
+    path('novnc/',include('novnc.urls')),
     path('apidocs/', get_swagger_view(title='EVCloud API'), name='apidocs'),
 ]

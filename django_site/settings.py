@@ -136,6 +136,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'collect_static')
+#静态文件查找路径
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 #session 有效期设置
 SESSION_SAVE_EVERY_REQUEST = True #
@@ -193,6 +197,9 @@ REST_FRAMEWORK = {
 
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
+
+# vnc
+VNCSERVER_BASE_PORT = 5900
 
 # 导入安全相关的settings
 from .security import *
