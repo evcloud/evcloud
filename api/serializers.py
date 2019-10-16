@@ -1,7 +1,9 @@
 from rest_framework import serializers
 
 from vms.models import Vm
-
+from compute.models import Center, Group, Host
+from network.models import Vlan
+from image.models import Image
 
 
 class VmSerializer(serializers.ModelSerializer):
@@ -69,4 +71,47 @@ class VmPatchSerializer(serializers.Serializer):
         return data
 
 
+class CenterSerializer(serializers.ModelSerializer):
+    '''
+    分中心序列化器
+    '''
+    class Meta:
+        model = Center
+        fields = ('id', 'name', 'location', 'desc')
 
+
+class GroupSerializer(serializers.ModelSerializer):
+    '''
+    宿主机组序列化器
+    '''
+    class Meta:
+        model = Group
+        fields = ('id', 'name', 'center', 'desc')
+
+
+class HostSerializer(serializers.ModelSerializer):
+    '''
+    宿主机序列化器
+    '''
+    class Meta:
+        model = Host
+        fields = ('id', 'ipv4', 'group', 'vlans', 'vcpu_total', 'vcpu_allocated', 'mem_total', 'mem_allocated',
+                  'mem_reserved', 'vm_limit', 'vm_created', 'enable', 'desc')
+
+
+class VlanSerializer(serializers.ModelSerializer):
+    '''
+    子网网段序列化器
+    '''
+    class Meta:
+        model = Vlan
+        fields = ('id', 'name', 'br', 'net_type', 'enable', 'subnet_ip', 'net_mask', 'gateway', 'dns_server', 'remarks')
+
+
+class ImageSerializer(serializers.ModelSerializer):
+    '''
+    子网网段序列化器
+    '''
+    class Meta:
+        model = Image
+        fields = ('id', 'name', 'version', 'type', 'enable', 'ceph_pool', 'base_image', 'snap', 'xml_tpl', 'create_time', 'desc')

@@ -19,7 +19,7 @@ def vnc_view(req):
         dic = {'vncid': vncid}
         http_host = req.META['HTTP_HOST']
         http_host = http_host.split(':')[0]
-        dic['url'] = f'http://{http_host}://novnc_nginx/vnc_auto.html?path=websockify/?token={vncid}'
+        dic['url'] = f'http://{http_host}/novnc_nginx/vnc_auto.html?path=websockify/?token={vncid}'
         
         #return render_to_response('novnc.html', dic, context_instance=RequestContext(req)) 
         return render(req, 'novnc.html', dic)
