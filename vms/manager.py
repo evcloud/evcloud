@@ -9,7 +9,7 @@ from network.managers import VlanManager, MacIPManager, NetworkError
 from network.models import Vlan
 from utils.ev_libvirt.virt import VirtAPI, VirtError
 from .models import Vm
-
+from .xml import XMLEditor
 
 
 class VmError(Exception):
@@ -73,6 +73,56 @@ class VmManager(VirtAPI):
         :return: QuerySet()
         '''
         return Vm.objects.filter(user=user).all()
+
+    def _xml_edit_vcpu(self, xml_desc:str, vcpu:int):
+        '''
+        修改 xml中vcpu节点内容
+
+        :param xml_desc: 定义虚拟机的xml内容
+        :param vcpu: 虚拟cpu数
+        :return:
+            xml: str    # success
+
+        :raise:  VmError
+        '''
+        xml = XMLEditor()
+        if not xml.set_xml(xml_desc):
+            raise VmError(msg='xml文本无效')
+
+        root = xml.get_root()
+        try:
+            root.getElementsByTagName('vcpu')[0].firstChild.data = vcpu
+        except Exception as e:
+            raise VmError(msg='修改xml文本vcpu节点错误')
+        return root.toxml()
+
+    def _xml_edit_mem(self, xml_desc:str, mem:int):
+        '''
+        修改xml中mem节点内容
+
+        :param xml_desc: 定义虚拟机的xml内容
+        :param mem: 修改内存大小
+        :return:
+            xml: str    # success
+
+        :raise:  VmError
+        '''
+        xml = XMLEditor()
+        if not xml.set_xml(xml_desc):
+            raise VmError(msg='xml文本无效')
+        try:
+            root = xml.get_root()
+            node = root.getElementsByTagName('memory')[0]
+            node.attributes['unit'].value = 'MiB'
+            node.firstChild.data = mem
+
+            node = root.getElementsByTagName('currentMemory')[0]
+            node.attributes['unit'].value = 'MiB'
+            node.firstChild.data = mem
+
+            return root.toxml()
+        except Exception as e:
+            raise VmError(msg='修改xml文本memory节点错误')
 
 
 class VmAPI:
@@ -400,6 +450,116 @@ class VmAPI:
             vm.delete()
         except Exception as e:
             raise  VmError(msg='删除虚拟机元数据失败')
+
+        return True
+
+    def edit_vm_vcpu_mem(self, vm_uuid:str, vcpu:int=0, mem:int=0, user=None, force=False):
+        '''
+        修改虚拟机vcpu和内存大小
+
+        :param vm_uuid: 虚拟机uuid
+        :param vcpu:要修改的vcpu数，默认0 不修改
+        :param mem: 要修改的内存大小，默认0 不修改
+        :param user: 用户
+        :param force:   是否强制修改
+        :return:
+            True
+            raise VmError
+
+        :raise VmError
+        '''
+        if vcpu < 0 or mem < 0:
+            raise VmError(msg='vcpu或mem不能小于0')
+
+        if vcpu == 0 and mem == 0:
+            return True
+
+        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 没有变化直接返回
+        if vm.vcpu == vcpu and vm.mem == mem:
+            return True
+
+        host = vm.host
+        # 虚拟机的状态
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            if not force:
+                raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+            try:
+                self._vm_manager.poweroff(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+            except VirtError as e:
+                raise VmError(msg='强制关闭虚拟机失败')
+
+        xml_desc = vm.xml
+        try:
+            # 修改vcpu
+            if vcpu > 0 and vcpu != vm.vcpu:
+                # vcpu增大
+                if vcpu > vm.vcpu:
+                    vcpu_need = vcpu - vm.vcpu
+                    # 宿主机是否满足资源需求
+                    if not host.meet_needs(vcpu=vcpu_need, mem=0):
+                        raise VmError(msg='宿主机已没有足够的vcpu资源')
+
+                    if not host.claim(vcpu=vcpu_need, mem=0):
+                        raise VmError(msg='向宿主机申请的vcpu资源失败')
+                else:
+                    vcpu_free = vm.vcpu - vcpu
+                    if not host.free(vcpu=vcpu_free, mem=0):
+                        raise VmError(msg='释放宿主机vcpu资源失败')
+
+                try:
+                    xml_desc = self._vm_manager._xml_edit_vcpu(xml_desc=xml_desc, vcpu=vcpu)
+                except VmError as e:
+                    raise e
+
+                vm.vcpu = vcpu
+
+            if mem > 0 and mem != vm.mem:
+                # vcpu增大
+                if mem > vm.mem:
+                    mem_need = mem - vm.mem
+                    # 宿主机是否满足资源需求
+                    if not host.meet_needs(vcpu=0, mem=mem_need):
+                        raise VmError(msg='宿主机已没有足够的内存资源')
+
+                    if not host.claim(vcpu=0, mem=mem_need):
+                        raise VmError(msg='向宿主机申请的内存资源失败')
+                else:
+                    mem_free = vm.mem - mem
+                    if not host.free(vcpu=0, mem=mem_free):
+                        raise VmError(msg='释放宿主机内存资源失败')
+
+                try:
+                    xml_desc = self._vm_manager._xml_edit_mem(xml_desc=xml_desc, mem=mem)
+                except VmError as e:
+                    raise e
+
+                vm.mem = mem
+
+            # 删除虚拟机
+            try:
+                if not self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc):
+                    raise VmError(msg='修改虚拟机失败')
+            except VirtError as e:
+                raise VmError(msg='修改虚拟机失败')
+
+            vm.xml = xml_desc
+        except VmError as e:
+                raise e
+
+        try:
+            vm.save()
+        except Exception as e:
+            raise  VmError(msg='修改虚拟机元数据失败')
 
         return True
 
