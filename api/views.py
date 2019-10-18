@@ -189,6 +189,36 @@ class VmsViewSet(viewsets.GenericViewSet):
     # api docs
     schema = CustomAutoSchema(
         manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='center_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='分中心id'),
+                    description='所属分中心'
+                ),
+                coreapi.Field(
+                    name='group_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='宿主机组id'),
+                    description='所属宿主机组'
+                ),
+                coreapi.Field(
+                    name='host_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='宿主机id'),
+                    description='所属宿主机'
+                ),
+                coreapi.Field(
+                    name='search',
+                    location='query',
+                    required=False,
+                    schema=coreschema.String(description='关键字'),
+                    description='关键字查询'
+                )
+            ],
             'destroy': [
                 coreapi.Field(
                     name='force',
@@ -211,8 +241,17 @@ class VmsViewSet(viewsets.GenericViewSet):
     )
 
     def list(self, request, *args, **kwargs):
+        center_id = int(request.query_params.get('center_id', 0))
+        group_id = int(request.query_params.get('group_id', 0))
+        host_id = int(request.query_params.get('host_id', 0))
+        search = request.query_params.get('search', '')
+
         manager = VmManager()
-        self.queryset = manager.get_user_vms_queryset(user=request.user)
+        try:
+            self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
+                                                    search=search, user_id=request.user.id)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': '查询虚拟机时错误'}, status=status.HTTP_400_BAD_REQUEST)
 
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)

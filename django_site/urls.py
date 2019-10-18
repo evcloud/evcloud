@@ -15,13 +15,22 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
 from rest_framework_swagger.views import get_swagger_view
 
+def home(request):
+    return redirect(to='vms:vms')
 
 urlpatterns = [
+    path('', home, name='home'),
     path('admin/', admin.site.urls),
-    path('users/', include('users.urls')),
-    path('api/', include('api.urls')),
-    path('novnc/',include('novnc.urls')),
+    path('users/', include('users.urls', namespace='users')),
+    path('api/', include('api.urls', namespace='api')),
+    path('vms/',include('vms.urls', namespace='vms')),
+    path('novnc/',include('novnc.urls', namespace='novnc')),
     path('apidocs/', get_swagger_view(title='EVCloud API'), name='apidocs'),
 ]
+
+
+
+
