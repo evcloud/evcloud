@@ -35,7 +35,7 @@ class Group(models.Model):
     组用于权限隔离，某一个用户创建的虚拟机只能创建在指定的组的宿主机上，无权使用其他组的宿主机
     '''
     id = models.AutoField(primary_key=True)
-    center = models.ForeignKey(Center, on_delete=models.CASCADE, verbose_name='组所属的分中心')
+    center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的分中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
     users = models.ManyToManyField(to=User, blank=True, related_name='user_set')     # 有权访问此组的用户
@@ -75,7 +75,7 @@ class Host(models.Model):
     一台宿主机可能连接多个vlan子网
     '''
     id = models.AutoField(primary_key=True)
-    group = models.ForeignKey(to=Group, on_delete=models.CASCADE, verbose_name='宿主机所属的组')
+    group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set', verbose_name='宿主机所属的组')
     vlans = models.ManyToManyField(to=Vlan, verbose_name='VLAN子网', related_name='vlan_hosts') # 局域子网
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
     vcpu_total = models.IntegerField(default=24, verbose_name='宿主机CPU总数')

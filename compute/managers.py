@@ -53,6 +53,27 @@ class CenterManager:
         except Exception as e:
             raise ComputeError(msg=f'查询分中心时错误,{str(e)}')
 
+    def get_group_ids_by_center(self, center_or_id):
+        '''
+        获取分中心下的宿主机组id list
+
+        :param center_or_id: 分中心对象或id
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        if isinstance(center_or_id, int):
+            if center_or_id <= 0:
+                raise ComputeError(msg='无效的center id')
+            center = self.get_center_by_id(center_id=center_or_id)
+        elif not isinstance(center_or_id, Center):
+            raise ComputeError(msg='无效的center or id')
+        else:
+            center = center_or_id
+
+        ids = list(center.group_set.values_list('id').all())
+        return ids
+
 
 class GroupManager:
     '''
@@ -75,6 +96,86 @@ class GroupManager:
             return Group.objects.filter(id=group_id).first()
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机组时错误,{str(e)}')
+
+    def get_host_queryset_by_group(self, group_or_id):
+        '''
+        通过宿主机组对象和id获取宿主机查询集
+
+        :param group_or_id: 宿主机组对象和id
+        :return:
+            QuerySet   # success
+        :raise ComputeError
+        '''
+        if isinstance(group_or_id, int):
+            if group_or_id <= 0:
+                raise ComputeError(msg='无效的group id')
+            group = self.get_group_by_id(group_or_id)
+        elif not isinstance(group_or_id, Group):
+            raise ComputeError(msg='无效的group or id')
+        else:
+            group = group_or_id
+
+        return group.hosts_set.all()
+
+    def get_host_ids_by_group(self,  group_or_id):
+        '''
+        通过宿主机组对象和id获取宿主机id list
+
+        :param group_or_id: 宿主机组对象和id
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        hosts = self.get_host_queryset_by_group(group_or_id)
+
+        try:
+            ids = list(hosts.values_list('id').all())
+        except Exception as e:
+            raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
+        return ids
+
+    def get_hsot_queryset_by_group_ids(self, ids:list):
+        '''
+        通过宿主机组id list获取宿主机查询集
+
+        :param ids: 宿主机组id list
+        :return:
+            QuerySet   # success
+        '''
+        return Host.objects.filter(group__in=ids).all()
+
+    def get_hsot_ids_by_group_ids(self, ids:list):
+        '''
+        通过宿主机组id list获取宿主机id list
+
+        :param ids: 宿主机组id list
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        hosts = self.get_hsot_queryset_by_group_ids(ids)
+        try:
+            ids = list(hosts.values_list('id').all())
+        except Exception as e:
+            raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
+        return ids
+
+    def get_hsot_ids_by_group_or_ids(self, group_or_ids):
+        '''
+        通过宿主机组对象或id,或id list获取宿主机id list
+
+        :param group_or_ids: 宿主机组对象，id,或id list
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        if isinstance(group_or_ids, list):
+            return self.get_hsot_ids_by_group_ids(group_or_ids)
+        elif isinstance(group_or_ids, int) or isinstance(group_or_ids, Group):
+            return self.get_host_ids_by_group(group_or_ids)
+
+        raise ComputeError(msg='无效的宿主机组参数')
+
 
 
 class HostManager:
@@ -234,4 +335,6 @@ class HostManager:
             if host:
                 return host
 
-        return None
+        return
+
+

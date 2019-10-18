@@ -1,6 +1,8 @@
 import uuid
 import os
 
+from django.db.models import Q
+
 from ceph.managers import RadosError, RbdManager
 from ceph.models import CephCluster
 from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
@@ -123,6 +125,91 @@ class VmManager(VirtAPI):
             return root.toxml()
         except Exception as e:
             raise VmError(msg='修改xml文本memory节点错误')
+
+    def get_vms_queryset_by_center(self, center_or_id):
+        '''
+        获取分中心下的虚拟机查询集
+
+        :param center_or_id: 分中心对象或id
+        :return:
+            vms: QuerySet   # success
+        :raise VmError
+        '''
+        try:
+            group_ids = CenterManager().get_group_ids_by_center(center_or_id)
+            host_ids = GroupManager().get_hsot_ids_by_group_ids(group_ids)
+        except ComputeError as e:
+            raise VmError(msg=str(e))
+
+        return Vm.objects.filter(host__in=host_ids).all()
+
+    def get_vms_queryset_by_group(self, group_or_id):
+        '''
+        获取宿主机组下的虚拟机查询集
+
+        :param group_or_id: 宿主机组对象或id
+        :return:
+            vms: QuerySet   # success
+        :raise VmError
+        '''
+        try:
+            host_ids = GroupManager().get_host_ids_by_group(group_or_id)
+        except ComputeError as e:
+            raise VmError(msg=str(e))
+
+        return Vm.objects.filter(host__in=host_ids).all()
+
+    def get_vms_queryset_by_host(self, host_or_id):
+        '''
+        获取宿主机下的虚拟机查询集
+
+        :param host_or_id: 宿主机对象或id
+        :return:
+            vms: QuerySet   # success
+        :raise VmError
+        '''
+        return Vm.objects.filter(host=host_or_id).all()
+
+    def filter_vms_queryset(self, center_id:int=0, group_id:int=0, host_id:int=0, user_id:int=0, search:str=''):
+        '''
+        通过条件筛选虚拟机查询集
+
+        :param center_id: 分中心id,大于0有效
+        :param group_id: 宿主机组id,大于0有效
+        :param host_id: 宿主机id,大于0有效
+        :param user_id: 用户id,大于0有效
+        :param search: 关键字筛选条件
+        :return:
+            QuerySet    # success
+
+        :raise: VmError
+        '''
+        if center_id <= 0 and group_id <= 0 and host_id <= 0 and user_id <= 0 and not search:
+            raise VmError(msg='查询虚拟机条件无效')
+
+        vm_queryset = None
+        if host_id > 0:
+            vm_queryset = self.get_vms_queryset_by_host(host_id)
+        elif group_id > 0:
+            vm_queryset = self.get_vms_queryset_by_group(group_id)
+        elif center_id > 0:
+            vm_queryset = self.get_vms_queryset_by_center(center_id)
+
+        if user_id > 0:
+            if vm_queryset:
+                vm_queryset = vm_queryset.filter(user=user_id).all()
+            else:
+                vm_queryset = self.get_user_vms_queryset(user_id)
+
+        if search:
+            if vm_queryset:
+                vm_queryset = vm_queryset.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
+                                                 Q(uuid__icontains=search)).all()
+            else:
+                vm_queryset = Vm.objects.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
+                                                 Q(uuid__icontains=search)).all()
+
+        return vm_queryset
 
 
 class VmAPI:
