@@ -170,7 +170,7 @@ class VmManager(VirtAPI):
         '''
         return Vm.objects.filter(host=host_or_id).all()
 
-    def filter_vms_queryset(self, center_id:int=0, group_id:int=0, host_id:int=0, user_id:int=0, search:str=''):
+    def filter_vms_queryset(self, center_id:int=0, group_id:int=0, host_id:int=0, user_id:int=0, search:str='', all_no_filters:bool=False):
         '''
         通过条件筛选虚拟机查询集
 
@@ -179,13 +179,16 @@ class VmManager(VirtAPI):
         :param host_id: 宿主机id,大于0有效
         :param user_id: 用户id,大于0有效
         :param search: 关键字筛选条件
+        :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
         :return:
             QuerySet    # success
 
         :raise: VmError
         '''
         if center_id <= 0 and group_id <= 0 and host_id <= 0 and user_id <= 0 and not search:
-            raise VmError(msg='查询虚拟机条件无效')
+            if not all_no_filters:
+                raise VmError(msg='查询虚拟机条件无效')
+            return self.get_vms_queryset()
 
         vm_queryset = None
         if host_id > 0:
@@ -196,7 +199,7 @@ class VmManager(VirtAPI):
             vm_queryset = self.get_vms_queryset_by_center(center_id)
 
         if user_id > 0:
-            if vm_queryset:
+            if vm_queryset is not None:
                 vm_queryset = vm_queryset.filter(user=user_id).all()
             else:
                 vm_queryset = self.get_user_vms_queryset(user_id)
@@ -719,3 +722,27 @@ class VmAPI:
         except VirtError as e:
             raise VmError(msg='获取虚拟机状态失败')
 
+    def modify_vm_remark(self, vm_uuid:str, remark:str, user):
+        '''
+        修改虚拟机备注信息
+
+        :param vm_uuid: 虚拟机uuid
+        :param remark: 新的备注信息
+        :param user: 用户
+        :return:
+            True       # success
+        :raise VmError()
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        vm.remarks = remark
+        try:
+            vm.save(update_fields=['remarks'])
+        except Exception as e:
+            raise VmError(msg='更新备注信息失败')
+
+        return True

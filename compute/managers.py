@@ -66,6 +66,8 @@ class CenterManager:
             if center_or_id <= 0:
                 raise ComputeError(msg='无效的center id')
             center = self.get_center_by_id(center_id=center_or_id)
+            if not center:
+                raise ComputeError(msg='指定的分中心不存在')
         elif not isinstance(center_or_id, Center):
             raise ComputeError(msg='无效的center or id')
         else:
@@ -73,6 +75,31 @@ class CenterManager:
 
         ids = list(center.group_set.values_list('id').all())
         return ids
+
+    def get_center_queryset(self):
+        return Center.objects.all()
+
+    def get_group_queryset_by_center(self, center_or_id):
+        '''
+        获取分中心下的宿主机组查询集
+
+        :param center_or_id: 分中心对象或id
+        :return:
+            groups: QuerySet   # success
+        :raise ComputeError
+        '''
+        if isinstance(center_or_id, int):
+            if center_or_id <= 0:
+                raise ComputeError(msg='无效的center id')
+            center = self.get_center_by_id(center_id=center_or_id)
+            if not center:
+                raise ComputeError(msg='指定的分中心不存在')
+        elif not isinstance(center_or_id, Center):
+            raise ComputeError(msg='无效的center or id')
+        else:
+            center = center_or_id
+
+        return center.group_set.all()
 
 
 class GroupManager:

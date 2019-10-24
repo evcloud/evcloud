@@ -31,6 +31,7 @@ class Vm(models.Model):
         return self.name
 
     class Meta:
+        ordering = ['-create_time']
         verbose_name = '虚拟机'
         verbose_name_plural = '虚拟机'
 

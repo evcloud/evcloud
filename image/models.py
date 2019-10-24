@@ -59,7 +59,7 @@ class Image(models.Model):
     desc = models.TextField(verbose_name='描述', default='', blank=True)
 
     def __str__(self):
-        return self.snap
+        return self.name
 
     class Meta:
         verbose_name = '操作系统镜像'
