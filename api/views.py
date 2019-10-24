@@ -236,6 +236,15 @@ class VmsViewSet(viewsets.GenericViewSet):
                     schema=coreschema.Enum(enum=['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force'], description='操作'),
                     description="选项：['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']"
                 ),
+            ],
+            'vm_remark': [
+                coreapi.Field(
+                    name='remark',
+                    location='query',
+                    required=True,
+                    schema=coreschema.String(description='备注信息'),
+                    description='新的备注信息'
+                ),
             ]
         }
     )
@@ -367,7 +376,10 @@ class VmsViewSet(viewsets.GenericViewSet):
     @action(methods=['patch'], url_path='operations', detail=True, url_name='vm_operations')
     def vm_operations(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
-        op = request.data.get('op', None)
+        try:
+            op = request.data.get('op', None)
+        except Exception as e:
+            return Response(data={'code': 400, 'code_text': f'参数有误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
         ops = ['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']
         if not op or op not in ops:
@@ -425,6 +437,24 @@ class VmsViewSet(viewsets.GenericViewSet):
         url = request.build_absolute_uri(url)
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
                               'vnc': {'id': vnc_id, 'url': url}})
+
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='vm_remark')
+    def vm_remark(self, request, *args, **kwargs):
+        '''
+        修改虚拟机备注信息
+        '''
+        remark = request.query_params.get('remark')
+        if not remark:
+            return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
+
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        api = VmAPI()
+        try:
+            api.modify_vm_remark(user=request.user, vm_uuid=vm_uuid, remark=remark)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'修改虚拟机备注信息失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
 
     def get_serializer_class(self):
         """

@@ -1,0 +1,63 @@
+<div class="btn-group">
+    <button type="button" class="btn btn-sm btn-success" onclick="window.open('/vmadmin/vm/vnc/?vmid={{ vm.uuid }}')">
+        <img src="/static/images/display.png"></button>
+    <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+            aria-expanded="false">
+        <span class="caret"></span>
+        <span class="sr-only">Toggle Dropdown</span>
+    </button>
+    <ul class="dropdown-menu">
+        <li>
+            <button class="btn btn-xs btn-primary btn-block btn-vm-start" data-vm-uuid="{{ vm.uuid }}">开机
+            </button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-warning btn-block btn_vm_shutdown" data-vm-uuid="{{ vm.uuid }}">
+                关机
+            </button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-warning btn-block btn-vm-reboot" data-vm-uuid="{{ vm.uuid }}">
+                软重启
+            </button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-warning btn-block btn_vm_poweroff" data-vm-uuid="{{ vm.uuid }}">
+                强制断电
+            </button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-danger btn-block btn_vm_delete" data-vm-uuid="{{ vm.uuid }}">删除</button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-danger btn-block btn_vm_delete_force" data-vm-uuid="{{ vm.uuid }}">强制删除</button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-info btn-block"
+                    onclick="alert('暂不支持此操作');">挂载磁盘
+            </button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-info btn-block"
+                    onclick="alert('暂不支持此操作');">修改配置
+            </button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-info btn-block"
+                    onclick="alert('暂不支持此操作');">重置镜像
+            </button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-info btn-block"
+                    onclick="alert('暂不支持此操作');">关机迁移
+            </button>
+        </li>
+        <li>
+            <button class="btn btn-xs btn-info btn-block"
+                    onclick="alert('暂不支持此操作');">创建快照
+            </button>
+        </li>
+    </ul>
+</div>
+
+
