@@ -1,6 +1,8 @@
 import uuid
 import os
 
+from django.db.models import Q
+
 from ceph.managers import RadosError, RbdManager
 from ceph.models import CephCluster
 from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
@@ -123,6 +125,94 @@ class VmManager(VirtAPI):
             return root.toxml()
         except Exception as e:
             raise VmError(msg='修改xml文本memory节点错误')
+
+    def get_vms_queryset_by_center(self, center_or_id):
+        '''
+        获取分中心下的虚拟机查询集
+
+        :param center_or_id: 分中心对象或id
+        :return:
+            vms: QuerySet   # success
+        :raise VmError
+        '''
+        try:
+            group_ids = CenterManager().get_group_ids_by_center(center_or_id)
+            host_ids = GroupManager().get_hsot_ids_by_group_ids(group_ids)
+        except ComputeError as e:
+            raise VmError(msg=str(e))
+
+        return Vm.objects.filter(host__in=host_ids).all()
+
+    def get_vms_queryset_by_group(self, group_or_id):
+        '''
+        获取宿主机组下的虚拟机查询集
+
+        :param group_or_id: 宿主机组对象或id
+        :return:
+            vms: QuerySet   # success
+        :raise VmError
+        '''
+        try:
+            host_ids = GroupManager().get_host_ids_by_group(group_or_id)
+        except ComputeError as e:
+            raise VmError(msg=str(e))
+
+        return Vm.objects.filter(host__in=host_ids).all()
+
+    def get_vms_queryset_by_host(self, host_or_id):
+        '''
+        获取宿主机下的虚拟机查询集
+
+        :param host_or_id: 宿主机对象或id
+        :return:
+            vms: QuerySet   # success
+        :raise VmError
+        '''
+        return Vm.objects.filter(host=host_or_id).all()
+
+    def filter_vms_queryset(self, center_id:int=0, group_id:int=0, host_id:int=0, user_id:int=0, search:str='', all_no_filters:bool=False):
+        '''
+        通过条件筛选虚拟机查询集
+
+        :param center_id: 分中心id,大于0有效
+        :param group_id: 宿主机组id,大于0有效
+        :param host_id: 宿主机id,大于0有效
+        :param user_id: 用户id,大于0有效
+        :param search: 关键字筛选条件
+        :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
+        :return:
+            QuerySet    # success
+
+        :raise: VmError
+        '''
+        if center_id <= 0 and group_id <= 0 and host_id <= 0 and user_id <= 0 and not search:
+            if not all_no_filters:
+                raise VmError(msg='查询虚拟机条件无效')
+            return self.get_vms_queryset()
+
+        vm_queryset = None
+        if host_id > 0:
+            vm_queryset = self.get_vms_queryset_by_host(host_id)
+        elif group_id > 0:
+            vm_queryset = self.get_vms_queryset_by_group(group_id)
+        elif center_id > 0:
+            vm_queryset = self.get_vms_queryset_by_center(center_id)
+
+        if user_id > 0:
+            if vm_queryset is not None:
+                vm_queryset = vm_queryset.filter(user=user_id).all()
+            else:
+                vm_queryset = self.get_user_vms_queryset(user_id)
+
+        if search:
+            if vm_queryset:
+                vm_queryset = vm_queryset.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
+                                                 Q(uuid__icontains=search)).all()
+            else:
+                vm_queryset = Vm.objects.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
+                                                 Q(uuid__icontains=search)).all()
+
+        return vm_queryset
 
 
 class VmAPI:
@@ -373,8 +463,7 @@ class VmAPI:
                 self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
             except VirtError as e:
                 raise VmError(msg=str(e))
-            host.vm_created += 1
-            host.save()
+            host.vm_created_num_add_1() # 宿主机已创建虚拟机数量+1
             return vm
         except Exception as e:
             if macip:
@@ -445,7 +534,7 @@ class VmAPI:
         except VmError as e:
             if not force:   # 非强制删除
                 raise e
-
+        host.vm_created_num_sub_1() # 宿主机已创建虚拟机数量+1
         try:
             vm.delete()
         except Exception as e:
@@ -632,3 +721,27 @@ class VmAPI:
         except VirtError as e:
             raise VmError(msg='获取虚拟机状态失败')
 
+    def modify_vm_remark(self, vm_uuid:str, remark:str, user):
+        '''
+        修改虚拟机备注信息
+
+        :param vm_uuid: 虚拟机uuid
+        :param remark: 新的备注信息
+        :param user: 用户
+        :return:
+            True       # success
+        :raise VmError()
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        vm.remarks = remark
+        try:
+            vm.save(update_fields=['remarks'])
+        except Exception as e:
+            raise VmError(msg='更新备注信息失败')
+
+        return True

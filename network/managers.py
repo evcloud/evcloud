@@ -56,6 +56,9 @@ class VlanManager:
         except Exception as e:
             raise NetworkError(msg=f'查询子网时错误,{str(e)}')
 
+    def get_vlan_queryset(self):
+        return Vlan.objects.filter(enable=True).all()
+
     def generate_subips(self, vlan_id, from_ip, to_ip, write_database=False):
         '''
         生成子网ip

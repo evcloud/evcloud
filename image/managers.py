@@ -49,3 +49,8 @@ class ImageManager:
             return Image.objects.filter(id=image_id).first()
         except Exception as e:
             raise ImageError(msg=f'查询镜像时错误,{str(e)}')
+
+
+
+
+

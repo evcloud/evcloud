@@ -2,7 +2,7 @@
 
 <html lang="zh-hans">
 <head>
-    <title>登录 | Django 站点管理员</title>
+    <title>登录 | 云主机平台</title>
     <link rel="stylesheet" type="text/css" href="/static/admin/css/base.css">
     <link rel="stylesheet" type="text/css" href="/static/admin/css/login.css">
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -28,7 +28,7 @@
             {% if form.errors %}
                 <div class="errornote">{{ form.non_field_errors }}</div>
             {% endif %}
-            <form method="post" action="{% url 'login' %}" id="login-form">
+            <form method="post" action="{% url 'users:login' %}" id="login-form">
                 {% csrf_token %}
                 <div class="form-row">
                     <label class="required" for="id_username">用户名:</label> <input type="text" name="username" autofocus

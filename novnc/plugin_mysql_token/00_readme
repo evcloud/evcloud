@@ -2,3 +2,4 @@ ln -s /home/uwsgi/evcloud/novnc/plugin_mysql_token/token_plugin_mysql.py /usr/lo
 #需要在token_plugin_mysql.py 设置数据库连接信息
 
 #ln -s /home/novnc/mysql_token/token_plugin_mysql.py /usr/local/lib/python3.6/site-packages/websockify/token_plugins.py
+#ln -s /home/uwsgi/evcloud_dev/novnc/plugin_mysql_token/token_plugin_mysql.py /root/.local/share/virtualenvs/evcloud_dev-vXR92v4t/lib/python3.6/site-packages/websockify/token_plugins.py

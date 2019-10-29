@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -9,6 +8,11 @@ from rest_framework.serializers import Serializer
 from rest_framework.decorators import action
 
 from vms.manager import VmManager, VmAPI, VmError
+from novnc.manager import NovncTokenManager, NovncError
+from compute.models import Center, Group, Host
+from compute.managers import CenterManager, HostManager, ComputeError
+from network.models import Vlan, MacIP
+from image.models import Image
 from . import serializers
 
 # Create your views here.
@@ -92,7 +96,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         }
         >> http code 200: 创建失败
         {
-          "code": 201,
+          "code": 200,
           "code_text": "创建失败",
           "data": { },              # 请求时提交的数据
         }
@@ -186,6 +190,36 @@ class VmsViewSet(viewsets.GenericViewSet):
     # api docs
     schema = CustomAutoSchema(
         manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='center_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='分中心id'),
+                    description='所属分中心'
+                ),
+                coreapi.Field(
+                    name='group_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='宿主机组id'),
+                    description='所属宿主机组'
+                ),
+                coreapi.Field(
+                    name='host_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='宿主机id'),
+                    description='所属宿主机'
+                ),
+                coreapi.Field(
+                    name='search',
+                    location='query',
+                    required=False,
+                    schema=coreschema.String(description='关键字'),
+                    description='关键字查询'
+                )
+            ],
             'destroy': [
                 coreapi.Field(
                     name='force',
@@ -203,13 +237,31 @@ class VmsViewSet(viewsets.GenericViewSet):
                     schema=coreschema.Enum(enum=['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force'], description='操作'),
                     description="选项：['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']"
                 ),
+            ],
+            'vm_remark': [
+                coreapi.Field(
+                    name='remark',
+                    location='query',
+                    required=True,
+                    schema=coreschema.String(description='备注信息'),
+                    description='新的备注信息'
+                ),
             ]
         }
     )
 
     def list(self, request, *args, **kwargs):
+        center_id = int(request.query_params.get('center_id', 0))
+        group_id = int(request.query_params.get('group_id', 0))
+        host_id = int(request.query_params.get('host_id', 0))
+        search = request.query_params.get('search', '')
+
         manager = VmManager()
-        self.queryset = manager.get_user_vms_queryset(user=request.user)
+        try:
+            self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
+                                                    search=search, user_id=request.user.id)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': '查询虚拟机时错误'}, status=status.HTTP_400_BAD_REQUEST)
 
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
@@ -226,8 +278,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         if not serializer.is_valid(raise_exception=False):
             code_text = '参数验证有误'
             try:
-                for _, err_list in serializer.errors.items():
-                    code_text = err_list[0]
+                for name, err_list in serializer.errors.items():
+                    code_text = f'"{name}" {err_list[0]}'
             except:
                 pass
 
@@ -325,7 +377,10 @@ class VmsViewSet(viewsets.GenericViewSet):
     @action(methods=['patch'], url_path='operations', detail=True, url_name='vm_operations')
     def vm_operations(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
-        op = request.data.get('op', None)
+        try:
+            op = request.data.get('op', None)
+        except Exception as e:
+            return Response(data={'code': 400, 'code_text': f'参数有误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
         ops = ['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']
         if not op or op not in ops:
@@ -354,6 +409,63 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 200, 'code_text': '获取信息成功',
                               'status': {'status_code': code, 'status_text': msg}})
 
+    @action(methods=['post'], url_path='vnc', detail=True, url_name='vm_vnc')
+    def vm_vnc(self, request, *args, **kwargs):
+        '''
+        创建虚拟机vnc
+
+            >> http code 200:
+            {
+              "code": 200,
+              "code_text": "创建虚拟机vnc成功",
+              "vnc": {
+                "id": "42bfe71e-6419-474a-bc99-9e519637797d",
+                "url": "http://159.226.91.140:8000/novnc/?vncid=42bfe71e-6419-474a-bc99-9e519637797d"
+              }
+            }
+        '''
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        try:
+            vm = VmManager().get_vm_by_uuid(uuid=vm_uuid)
+        except VmError as e:
+            return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not vm:
+            return Response(data={'code': 404, 'code_text': '虚拟机不存在'}, status=status.HTTP_404_NOT_FOUND)
+        if not vm.user_has_perms(user=request.user):
+            return Response(data={'code': 404, 'code_text': '当前用户没有权限访问此虚拟机'}, status=status.HTTP_404_NOT_FOUND)
+
+        vm_uuid = vm.get_uuid()
+        host_ipv4 = vm.host.ipv4
+
+        vnc_manager = NovncTokenManager()
+        try:
+            vnc_id, url = vnc_manager.generate_token(vmid=vm_uuid, hostip=host_ipv4)
+        except NovncError as e:
+            return Response(data={'code': 400, 'code_text': f'创建虚拟机vnc失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        url = request.build_absolute_uri(url)
+        return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
+                              'vnc': {'id': vnc_id, 'url': url}})
+
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='vm_remark')
+    def vm_remark(self, request, *args, **kwargs):
+        '''
+        修改虚拟机备注信息
+        '''
+        remark = request.query_params.get('remark')
+        if not remark:
+            return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
+
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        api = VmAPI()
+        try:
+            api.modify_vm_remark(user=request.user, vm_uuid=vm_uuid, remark=remark)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'修改虚拟机备注信息失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -366,4 +478,271 @@ class VmsViewSet(viewsets.GenericViewSet):
             return serializers.VmCreateSerializer
         elif self.action == 'partial_update':
             return serializers.VmPatchSerializer
+        return Serializer
+
+
+class CenterViewSet(viewsets.GenericViewSet):
+    '''
+    分中心类视图
+    '''
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+    queryset = Center.objects.all()
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+        }
+    )
+    def list(self, request, *args, **kwargs):
+        '''
+        获取分中心列表
+        '''
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        if self.action in ['list', 'retrieve']:
+            return serializers.CenterSerializer
+        return Serializer
+
+
+class GroupViewSet(viewsets.GenericViewSet):
+    '''
+    宿主机组类视图
+    '''
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+    queryset = Group.objects.all()
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取宿主机组列表
+        '''
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        if self.action in ['list', 'retrieve']:
+            return serializers.GroupSerializer
+        return Serializer
+
+
+class HostViewSet(viewsets.GenericViewSet):
+    '''
+    宿主机类视图
+    '''
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+    queryset = Host.objects.all()
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='group_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='宿主机组id'),
+                    description='所属宿主机组'
+                ),
+                coreapi.Field(
+                    name='vlan_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='子网网段id'),
+                    description='所属子网网段'
+                )
+            ]
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取宿主机列表
+
+            http code 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "ipv4": "10.100.50.121",
+                  "group": 1,
+                  "vlans": [
+                    1
+                  ],
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 14,
+                  "mem_total": 132768,
+                  "mem_allocated": 9216,
+                  "mem_reserved": 12038,
+                  "vm_limit": 10,
+                  "vm_created": 8,
+                  "enable": true,
+                  "desc": ""
+                }
+              ]
+            }
+        '''
+        group_id = int(request.query_params.get('group_id', 0))
+        vlan_id = int(request.query_params.get('vlan_id', 0))
+
+        try:
+            queryset = HostManager().filter_hosts_queryset(group_id=group_id, vlan_id=vlan_id)
+        except ComputeError as e:
+            return  Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        if self.action in ['list', 'retrieve']:
+            return serializers.HostSerializer
+        return Serializer
+
+
+class VlanViewSet(viewsets.GenericViewSet):
+    '''
+    vlan类视图
+    '''
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+    queryset = Vlan.objects.all()
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取网段列表
+        '''
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        if self.action in ['list', 'retrieve']:
+            return serializers.VlanSerializer
+        return Serializer
+
+
+class ImageViewSet(viewsets.GenericViewSet):
+    '''
+    镜像类视图
+    '''
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+    queryset = Image.objects.all()
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='center_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='分中心id'),
+                    description='所属分中心'
+                )
+            ]
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取系统镜像列表
+        '''
+        center_id = int(request.query_params.get('center_id', 0))
+        if center_id > 0:
+            try:
+                queryset = CenterManager().get_image_queryset_by_center(center_id)
+            except Exception as e:
+                return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            queryset = self.get_queryset()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    # def create(self, request, *args, **kwargs):
+    #     pass
+    #
+    # def retrieve(self, request, *args, **kwargs):
+    #     pass
+    #
+    # def destroy(self, request, *args, **kwargs):
+    #     pass
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        if self.action in ['list', 'retrieve']:
+            return serializers.ImageSerializer
         return Serializer

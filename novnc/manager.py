@@ -3,6 +3,7 @@
 #@desc:    novnc token管理模块。完成读写novnc的token配置文件到数据库			
 
 import os, uuid
+import subprocess
 import datetime
 from django.conf import settings
 from .models import Token
@@ -35,28 +36,49 @@ class NovncError(Exception):
         return '未知的错误'
 
 class NovncTokenManager(object):
-    def generate_token(self, vmid, hostip):
-        vncport = get_vm_vncinfo(vmid, hostip)
+    def generate_token(self, vmid:str, hostip:str):
+        '''
+        创建虚拟机vnc url
+
+        :param vmid:
+        :param hostip:
+        :return:
+            (vnc_id:str, vnc_url:str)   # success
+
+        :raise: NovncError
+        '''
+        vncport = self.get_vm_vncinfo(vmid, hostip)
         #删除该hostip和vncport的历史token记录
         Token.objects.filter(ip = hostip).filter(port = vncport).delete()
         #创建新的token记录
         novnc_token = str(uuid.uuid4())
         new_token = Token.objects.create(token = novnc_token, ip = hostip, port = vncport)
-        new_token.save();
+        new_token.save()
         #删除 一年前 到 3天前 之间的token记录
         now = datetime.datetime.now()
-        start_time = now - datetime.timedelta(days=365);   #print(start_time);
-        end_time   = now - datetime.timedelta(days=3);     #print(end_time);
-        Token.objects.filter(updatetime__range=(start_time, end_time)).delete();   #注意 __range表示范围
-        return(f"/novnc/?vncid={novnc_token}")
+        start_time = now - datetime.timedelta(days=365)   #print(start_time);
+        end_time   = now - datetime.timedelta(days=3)     #print(end_time);
+        Token.objects.filter(updatetime__range=(start_time, end_time)).delete()   #注意 __range表示范围
+        return(novnc_token, f"/novnc/?vncid={novnc_token}")
+
     def del_token(self, vncid):
         Token.objects.filter(token = str(vncid)).delete()
+
     def get_vm_vncinfo(self, vmid, hostip):
+        '''
+        获取虚拟机的vnc端口
+
+        :param vmid:
+        :param hostip:
+        :return:
+            port: str   # success
+        :raise: NovncError
+        '''
         cmd = f'ssh {hostip} virsh vncdisplay {vmid}'
         (res, info) = subprocess.getstatusoutput(cmd)
         if res != 0:
-            self.error = 'UUID error' 
-            retrun False 
+            raise NovncError(msg=info)
+
         port = False
         for line in info.split('\n'):
             line = line.strip()
@@ -65,7 +87,7 @@ class NovncTokenManager(object):
                     port = settings.VNCSERVER_BASE_PORT + int(line[1:])
                     break
         if port == False:
-            self.error = 'get vnc port error.'
-            return False
-        return(vncport)    
+            raise NovncError(msg='get vnc port error')
+
+        return str(port)
 
