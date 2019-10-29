@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load  sizeformat %}
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
+{% endblock %}
+{% block title %}云主机列表{% endblock %}
+
+{% block boby %}
+    <div class="col-md-offset-1 col-md-10 col-lg-10">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title"><strong>云主机列表 ({{ count }})</strong></span>
+                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vms:vm-create' %}">
+                    创建云主机<span class="glyphicon glyphicon-plus"></span>
+                </a></span>
+            </div>
+            <div class="panel-body" style="min-height: 400px;">
+                <form role="form" class="form-horizontal" method="get" action="">
+                    <div class="input-group" style="">
+                        <label class="input-group-addon" for="id-center">分中心</label>
+                        <select name="center" class="form-control" id="id-center">
+                            <option value="">--</option>
+                            {% for c in centers %}
+                                <option value="{{ c.id }}" {% if c.id == center_id %}selected{% endif %}>
+                                    {{ c.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <label class="input-group-addon" for="id-group">主机组</label>
+                        <select name="group" class="form-control" id="id-group">
+                            <option value="">--</option>
+                            {% for g in groups %}
+                                <option value="{{ g.id }}" {% if g.id == group_id|add:0 %}
+                                        selected {% endif %}>{{ g.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <label class="input-group-addon" for="id-host">宿主机</label>
+                        <select name="host" class="form-control" id="id-host">
+                            <option value="">--</option>
+                            {% for h in hosts %}
+                                <option value="{{ h.id }}" {% if h.id == host_id|add:0 %}
+                                        selected {% endif %}>{{ h.ipv4 }}</option>
+                            {% endfor %}
+                        </select>
+                        <label class="input-group-addon" for="id-user">创建者</label>
+                        <select name="user" class="form-control" id="id-user">
+                            <option value="">--</option>
+                            {% for u in users %}
+                                <option value="{{ u.id }}" {% if u.id == user_id %}selected {% endif %}>{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                        <label class="input-group-addon">关键字</label>
+                        <input type="text" class="form-control" name="search" value="{{ search }}"
+                               placeholder="搜 UUID、IP、备注"/>
+                        <span class="input-group-addon"></span>
+                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                    </div>
+                </form>
+                <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                    <tr>
+                        <th></th>
+                        <th width="120px">IP地址</th>
+                        <th>创建者</th>
+                        <th>镜像</th>
+                        <th>宿主机</th>
+                        <th>CPU/MEM</th>
+                        <th>云硬盘</th>
+                        <th width="180px">备注</th>
+                        <th>状态<button class="btn btn-sm btn-update-vm-status"><span class="glyphicon glyphicon-refresh"></span></button></th>
+                        <th>任务</th>
+                        <th>操作</th>
+                    </tr>
+                    {% for vm in vms %}
+                        <tr id="tr_{{ vm.uuid }}">
+                            <td><input type="checkbox" class="item-checkbox" value="{{ vm.uuid }}" name="select_vm"></td>
+                            <td title="{{ vm.uuid }}"><b>{{ vm.mac_ip.ipv4 }}</b></td>
+                            <td>{{ vm.user }}</td>
+                            <td>{{ vm.image }}</td>
+                            <td>{{ vm.host }}</td>
+                            <td>
+                                {{ vm.vcpu }} / {{ vm.mem|sizeformat:'MB' }}
+                            </td>
+                            <td>无
+    {#                            {% for v in vm.volumes %}#}
+    {#                                {{ v.dev }} {{ v.size|sizeformat:'MB' }} <br>#}
+    {#                            {% endfor %}#}
+                            </td>
+                            <td>
+                                <div class="mouse-hover">
+                                    <span>{{ vm.remarks|default_if_none:'' }}</span>
+                                    <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.uuid }}" title="修改备注">
+                                        <span class="glyphicon glyphicon-pencil"></span>
+                                    </span>
+                                </div>
+                                <div id="remarks_edit" style="display:none">
+                                    <textarea id="remarks">{{ vm.remarks|default_if_none:'' }}</textarea>
+                                    <span class="save_vm_remark" title="保存备注" vm_uuid="{{ vm.uuid }}">
+                                        <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+                                    </span>
+                                </div>
+                            </td>
+                            <td><span id="vm_status_{{ vm.uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span></td>
+                            <td><span id="vm_task_{{ vm.uuid }}"></span></td>
+
+                            <td>
+                                {% with need_refresh='false' %}
+                                    {% include 'vm_operations.html' %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    {% if vms %}
+                        <tr title="批量操作">
+                            <td><input type="checkbox" data-check-target=".item-checkbox" /></td>
+                            <td colspan="10">
+                                <button class="btn btn-xs btn-primary" id="id-btn-batch-vm-start">开机</button>
+                                <button class="btn btn-xs btn-warning" id="id-btn-batch-vm-shutdown">正常关机</button>
+                                <button class="btn btn-xs btn-warning" id="id-btn-batch-vm-poweroff">强制断电</button>
+                                <button class="btn btn-xs btn-danger" id="id-btn-batch-vm-delete">删除</button>
+                                <button class="btn btn-xs btn-danger" id="id-btn-batch-vm-delete_force">强制删除
+                                </button>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+            </div>
+            <div class="panel-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
+                            {% if page_list %}
+                                {% if previous %}
+                                    <li><a href="?{{ previous }}" aria-label="Previous"><span
+                                            aria-hidden="true">&laquo;</span></a></li>
+                                {% else %}
+                                    <li class="disable"><span aria-hidden="true">&laquo;</span></li>
+                                {% endif %}
+                            {% endif %}
+                            {% for disp, query, active in page_list %}
+                                {% if active %}
+                                    <li class="active"><a href="?{{ query }}">{{ disp }}</a></li>
+                                {% else %}
+                                    <li><a href="?{{ query }}">{{ disp }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_list %}
+                                {% if next %}
+                                    <li><a href="?{{ next }}" aria-label="Next"><span
+                                            aria-hidden="true">&raquo;</span></a></li>
+                                {% else %}
+                                    <li class="disable"><span aria-hidden="true">&raquo;</span></li>
+                                {% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'vms/vms_common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_list.js' %}"></script>
+{% endblock %}
+
