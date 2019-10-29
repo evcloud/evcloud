@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 
 from .manager import VmManager, VmError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
+from network.managers import VlanManager
 
 # Create your views here.
 User = get_user_model()
@@ -174,5 +175,27 @@ class VmsView(View):
         querys.setlist('page', [page_num])
         return querys.urlencode()
 
+class VmCreateView(View):
+    '''创建虚拟机类视图'''
+    def get(self, request, *args, **kwargs):
+        center_id = str_to_int_or_default(request.GET.get('center_id', 0), 0)
 
+        try:
+            c_manager = CenterManager()
+            centers = c_manager.get_center_queryset()
+            groups = None
+            images = None
+            if center_id > 0:
+                images = c_manager.get_image_queryset_by_center(center_id)
+                groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
+        except ComputeError as e:
+            return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
+
+        context = {}
+        context['center_id'] = center_id if center_id > 0 else None
+        context['centers'] = centers
+        context['groups'] = groups
+        context['images'] = images
+        context['vlans'] = VlanManager().get_vlan_queryset()
+        return render(request, 'vms_create.html', context=context)
 

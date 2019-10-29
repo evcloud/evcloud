@@ -38,7 +38,7 @@ class Group(models.Model):
     center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的分中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
-    users = models.ManyToManyField(to=User, blank=True, related_name='user_set')     # 有权访问此组的用户
+    users = models.ManyToManyField(to=User, blank=True, related_name='group_set')     # 有权访问此组的用户
 
     def __str__(self):
         return self.name
@@ -230,3 +230,45 @@ class Host(models.Model):
             return True
 
         return False
+
+    def vm_created_num_add_1(self, commit=True):
+        '''
+        已创建虚拟机数量+1
+        :param commit: True,立即提交更新到数据库；False,不提交
+        :return:
+            True
+            False
+        '''
+        self.vm_created = F('vm_created') + 1
+        if not commit:
+            return True
+
+        try:
+            self.save(update_fields=['vm_created'])
+            self.refresh_from_db()
+        except Exception as e:
+            return False
+
+        return True
+
+    def vm_created_num_sub_1(self, commit=True):
+        '''
+        已创建虚拟机数量-1
+        :param commit: True,立即提交更新到数据库；False,不提交
+        :return:
+            True
+            False
+        '''
+        self.vm_created = F('vm_created') - 1
+        if not commit:
+            return True
+
+        try:
+            self.save(update_fields=['vm_created'])
+            self.refresh_from_db()
+        except Exception as e:
+            return False
+
+        return True
+
+

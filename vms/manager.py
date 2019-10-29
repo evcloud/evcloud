@@ -463,8 +463,7 @@ class VmAPI:
                 self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
             except VirtError as e:
                 raise VmError(msg=str(e))
-            host.vm_created += 1
-            host.save()
+            host.vm_created_num_add_1() # 宿主机已创建虚拟机数量+1
             return vm
         except Exception as e:
             if macip:
@@ -535,7 +534,7 @@ class VmAPI:
         except VmError as e:
             if not force:   # 非强制删除
                 raise e
-
+        host.vm_created_num_sub_1() # 宿主机已创建虚拟机数量+1
         try:
             vm.delete()
         except Exception as e:

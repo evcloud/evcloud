@@ -38,43 +38,6 @@
             10: 'default'
     };
 
-    /**
-     * 去除字符串前后给定字符，不改变原字符串
-     * @param char
-     * @returns { String }
-     */
-    String.prototype.strip = function (char) {
-      if (char){
-        return this.replace(new RegExp('^\\'+char+'+|\\'+char+'+$', 'g'), '');
-      }
-      return this.replace(/^\s+|\s+$/g, '');
-    };
-
-    //返回一个去除右边的给定字符的字符串，不改变原字符串
-    String.prototype.rightStrip = function(searchValue){
-        if(this.endsWith(searchValue)){
-            return this.substring(0, this.lastIndexOf(searchValue));
-        }
-        return this;
-    };
-
-    //返回一个去除左边的给定字符的字符串，不改变原字符串
-    String.prototype.leftStrip = function(searchValue){
-        if(this.startsWith(searchValue)){
-            return this.replace(searchValue);
-        }
-        return this;
-    };
-
-    //
-    // 从当前url中获取域名
-    // 如http://abc.com/
-    function get_domain_url() {
-        let origin = window.location.origin;
-        origin = origin.rightStrip('/');
-        return origin + '/';
-    }
-
     //API域名
     let DOMAIN_NAME = get_domain_url(); //'http://10.0.86.213:8000/';
 
@@ -91,36 +54,6 @@
             url = '/' + url;
         return domain + url;
     }
-
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    function csrfSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
-
-    //
-    //所有ajax的请求的全局设置
-    //
-    $.ajaxSettings.beforeSend = function(xhr, settings){
-        var csrftoken = getCookie('csrftoken');
-        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-            xhr.setRequestHeader("X-CSRFToken", csrftoken);
-        }
-    };
 
     $('.edit_vm_remark').click(function (e) {
         e.preventDefault();
@@ -258,6 +191,12 @@
     // 虚拟机运行状态api构建
     function build_vm_status_api(vm_uuid){
         let url = 'api/v3/vms/' + vm_uuid + '/status/';
+        return build_absolute_url(url);
+    }
+
+    // 虚拟机vnc api构建
+    function build_vm_vnc_api(vm_uuid){
+        let url = 'api/v3/vms/' + vm_uuid + '/vnc/';
         return build_absolute_url(url);
     }
 
@@ -557,6 +496,34 @@
         for (let i in vm_uuids){
             delete_vm(vm_uuids[i], 'delete_force');
         }
+    });
+
+    // 获取虚拟机vnc url
+    function get_vm_vnc_url(vm_uuid){
+        let api = build_vm_vnc_api(vm_uuid);
+        $.ajax({
+            url: api,
+            type: 'post',
+            success: function (data, status_text) {
+                let vnc = data.vnc.url;
+                window.open(vnc, '_blank');
+            },
+            error: function (xhr, msg, err) {
+                data = xhr.responseJSON;
+                msg = '打开vnc失败';
+                if (data.hasOwnProperty('code_text')){
+                    msg = '打开vnc失败,' + data.code_text;
+                }
+                alert(msg);
+            }
+        });
+    }
+
+    // 打开vnc点击事件
+    $(".btn-vnc-open").click(function (e) {
+        e.preventDefault();
+        let vm_uuid = $(this).attr('data-vm-uuid');
+        get_vm_vnc_url(vm_uuid);
     });
 
 })();
