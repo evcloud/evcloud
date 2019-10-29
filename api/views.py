@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from vms.manager import VmManager, VmAPI, VmError
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
+from compute.managers import CenterManager, HostManager, ComputeError
 from network.models import Vlan, MacIP
 from image.models import Image
 from . import serializers
@@ -95,7 +96,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         }
         >> http code 200: 创建失败
         {
-          "code": 201,
+          "code": 200,
           "code_text": "创建失败",
           "data": { },              # 请求时提交的数据
         }
@@ -277,8 +278,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         if not serializer.is_valid(raise_exception=False):
             code_text = '参数验证有误'
             try:
-                for _, err_list in serializer.errors.items():
-                    code_text = err_list[0]
+                for name, err_list in serializer.errors.items():
+                    code_text = f'"{name}" {err_list[0]}'
             except:
                 pass
 
@@ -413,6 +414,15 @@ class VmsViewSet(viewsets.GenericViewSet):
         '''
         创建虚拟机vnc
 
+            >> http code 200:
+            {
+              "code": 200,
+              "code_text": "创建虚拟机vnc成功",
+              "vnc": {
+                "id": "42bfe71e-6419-474a-bc99-9e519637797d",
+                "url": "http://159.226.91.140:8000/novnc/?vncid=42bfe71e-6419-474a-bc99-9e519637797d"
+              }
+            }
         '''
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
@@ -559,14 +569,62 @@ class HostViewSet(viewsets.GenericViewSet):
     # api docs
     schema = CustomAutoSchema(
         manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='group_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='宿主机组id'),
+                    description='所属宿主机组'
+                ),
+                coreapi.Field(
+                    name='vlan_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='子网网段id'),
+                    description='所属子网网段'
+                )
+            ]
         }
     )
 
     def list(self, request, *args, **kwargs):
         '''
         获取宿主机列表
+
+            http code 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "ipv4": "10.100.50.121",
+                  "group": 1,
+                  "vlans": [
+                    1
+                  ],
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 14,
+                  "mem_total": 132768,
+                  "mem_allocated": 9216,
+                  "mem_reserved": 12038,
+                  "vm_limit": 10,
+                  "vm_created": 8,
+                  "enable": true,
+                  "desc": ""
+                }
+              ]
+            }
         '''
-        queryset = self.filter_queryset(self.get_queryset())
+        group_id = int(request.query_params.get('group_id', 0))
+        vlan_id = int(request.query_params.get('vlan_id', 0))
+
+        try:
+            queryset = HostManager().filter_hosts_queryset(group_id=group_id, vlan_id=vlan_id)
+        except ComputeError as e:
+            return  Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -637,6 +695,15 @@ class ImageViewSet(viewsets.GenericViewSet):
     # api docs
     schema = CustomAutoSchema(
         manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='center_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='分中心id'),
+                    description='所属分中心'
+                )
+            ]
         }
     )
 
@@ -644,7 +711,14 @@ class ImageViewSet(viewsets.GenericViewSet):
         '''
         获取系统镜像列表
         '''
-        queryset = self.filter_queryset(self.get_queryset())
+        center_id = int(request.query_params.get('center_id', 0))
+        if center_id > 0:
+            try:
+                queryset = CenterManager().get_image_queryset_by_center(center_id)
+            except Exception as e:
+                return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            queryset = self.get_queryset()
 
         page = self.paginate_queryset(queryset)
         if page is not None:

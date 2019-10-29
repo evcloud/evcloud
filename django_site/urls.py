@@ -18,8 +18,11 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from rest_framework_swagger.views import get_swagger_view
 
+admin.AdminSite.site_header = 'EVCloud后台管理（管理员登录）'
+admin.AdminSite.site_title = '管理员登录'
+
 def home(request):
-    return redirect(to='vms:vms')
+    return redirect(to='vms:vms-list')
 
 urlpatterns = [
     path('', home, name='home'),

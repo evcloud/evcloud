@@ -11,10 +11,13 @@
     <div class="col-md-offset-1 col-md-10 col-lg-10">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h2 class="panel-title"><strong>云主机列表 ({{ count }})</strong></h2>
+                <span class="panel-title"><strong>云主机列表 ({{ count }})</strong></span>
+                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vms:vm-create' %}">
+                    创建云主机<span class="glyphicon glyphicon-plus"></span>
+                </a></span>
             </div>
             <div class="panel-body" style="min-height: 400px;">
-                <form role="form" class="form-horizontal" method="get" action="" style="padding-bottom:10px">
+                <form role="form" class="form-horizontal" method="get" action="">
                     <div class="input-group" style="">
                         <label class="input-group-addon" for="id-center">分中心</label>
                         <select name="center" class="form-control" id="id-center">
@@ -159,6 +162,7 @@
 {% endblock %}
 
 {% block script %}
+    <script type="text/javascript" src="{% static 'vms/vms_common.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_list.js' %}"></script>
 {% endblock %}
 

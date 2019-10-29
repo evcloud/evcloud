@@ -27,6 +27,7 @@ class Vlan(models.Model):
     name = models.CharField(verbose_name='VLAN名称', max_length=100)
     br = models.CharField(verbose_name='网桥', max_length=50)
     net_type = models.ForeignKey(to=NetworkType, verbose_name='网络类型',on_delete=models.CASCADE, related_name='vlan_set')
+    # center = models.ForeignKey(to=Center, verbose_name='所属分中心', on_delete=models.CASCADE, related_name='vlan_set')
     subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')
     net_mask = models.GenericIPAddressField(verbose_name='子网掩码')
     gateway = models.GenericIPAddressField(verbose_name='网关')
