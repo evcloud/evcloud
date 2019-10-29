@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}创建云主机{% endblock %}
+
+{% block head %}{% endblock %}
+
+{% block boby %}
+    <div class="col-md-offset-3 col-md-6 col-lg-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title">创建云主机</span>
+                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vms:vms-list' %}">
+                    云主机列表
+                </a></span>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal" >
+                    <div class="form-group">
+                        <label for="id-center" class="col-sm-offset-1 col-sm-2 control-label">分中心</label>
+                        <div class="col-sm-7">
+                            <select name="center_id" class="form-control" id="id-center">
+                                <option value="">--</option>
+                                {% for c in centers %}
+                                    <option value="{{ c.id }}" {% if c.id == center_id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                <form class="form-horizontal" id="id-form-vm-create">
+                    <div class="form-group">
+                        <label for="id-group" class="col-sm-offset-1 col-sm-2 control-label">机组</label>
+                        <div class="col-sm-7">
+                            <select name="group_id" class="form-control" id="id-group">
+                                <option value="">--</option>
+                                {% for g in groups %}
+                                    <option value="{{ g.id }}" {% if g.id == group_id %}selected{% endif %}>{{ g.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-vlan" class="col-sm-offset-1 col-sm-2 control-label">网段</label>
+                        <div class="col-sm-7">
+                            <select name="vlan_id" class="form-control" id="id-vlan">
+                                <option value="">--</option>
+                                {% for v in vlans %}
+                                    <option value="{{ v.id }}" {% if v.id == vlan_id %}selected{% endif %}>{{ v.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-host" class="col-sm-offset-1 col-sm-2 control-label">宿主机</label>
+                        <div class="col-sm-7">
+                            <select name="host_id" class="form-control" id="id-host">
+                                <option value="">自动选择</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-image" class="col-sm-offset-1 col-sm-2 control-label">系统镜像</label>
+                        <div class="col-sm-7">
+                            <select name="image_id" class="form-control" id="id-image" required>
+                                {% for i in images %}
+                                    <option value="{{ i.id }}">{{ i.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-vcpu" class="col-sm-offset-1 col-sm-2 control-label">CPU数</label>
+                        <div class="col-sm-7 form-inline">
+                            {% if user.is_superuser %}
+                                <input name="vcpu" type="text" class="form-control" id="id-vcpu" value="2" required>
+                            {% else %}
+                                <select name="vcpu" class="form-control" id="id-vcpu" required>
+                                    <option value="2">2</option>
+                                    <option value="4">4</option>
+                                    <option value="8">8</option>
+                                </select>
+                            {% endif %}
+                            <span>个</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-mem" class="col-sm-offset-1 col-sm-2 control-label">内存大小</label>
+                        <div class="col-sm-7 form-inline">
+                            {% if user.is_superuser %}
+                                <input name="mem" type="text" class="form-control" id="id-mem" value="2048">
+                            {% else %}
+                                <select name="mem" class="form-control" id="id-mem">
+                                    <option value="1024">1024</option>
+                                    <option value="2048">2048</option>
+                                    <option value="4096">4096</option>
+                                    <option value="8192">8192</option>
+                                    <option value="16384">16384</option>
+                                </select>
+                            {% endif %}
+                            <span>MB</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-remarks" class="col-sm-offset-1 col-sm-2 control-label">备注</label>
+                        <div class="col-sm-7">
+                            <input name="remarks" type="text" class="form-control" id="id-remarks">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <button type="submit" class="btn btn-primary">创建</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="panel-footer">
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'vms/vms_common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_create.js' %}"></script>
+{% endblock %}
+
+
+
+

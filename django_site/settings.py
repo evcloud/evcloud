@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECRET_KEY = 'w8d+&&ximtq8==j$@h(e6ow896454254#4i!&(vhbbw$s'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -38,8 +38,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework_swagger',
+
     'vms',
     'users',
+    'api',
+    'ceph',
+    'compute.apps.ComputeConfig',
+    'device',
+    'image.apps.ImageConfig',
+    'network.apps.NetworkConfig',
+    'novnc',
+    'vdisk',
 ]
 
 MIDDLEWARE = [
@@ -57,7 +67,7 @@ ROOT_URLCONF = 'django_site.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, '/templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'), ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -126,6 +136,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'collect_static')
+#静态文件查找路径
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 #session 有效期设置
 SESSION_SAVE_EVERY_REQUEST = True #
@@ -139,9 +153,53 @@ AUTH_USER_MODEL = 'users.UserProfile'
 # APPEND_SLASH=False
 
 #登陆url
-LOGIN_URL = '/accounts/login/'
-LOGOUT_URL = '/accounts/logout/'
+LOGIN_URL = '/users/login/'
+LOGOUT_URL = '/users/logout/'
 LOGIN_REDIRECT_URL = '/'    # 默认重定向url
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+        'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # 'users.auth.authentication.AuthKeyAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'rest_framework.parsers.JSONParser', # 支持解析application/json方式的json数据
+        'rest_framework.parsers.FormParser', # 支持解析application/x-www-form-urlencoded方式的form表单数据，request.data将填充一个QueryDict
+        'rest_framework.parsers.MultiPartParser' # 支持解析multipart/form-data方式多部分HTML表单内容，支持文件上载，request.data将填充一个QueryDict
+    ),
+    # 'DEFAULT_THROTTLE_CLASSES': (
+    #     'rest_framework.throttling.AnonRateThrottle',  # 未登陆认证的用户默认访问限制
+    #     'rest_framework.throttling.UserRateThrottle'  # 登陆认证的用户默认访问限制
+    # ),
+    # 'DEFAULT_THROTTLE_RATES': {
+    #     'anon': '5/minute',  # 未登陆认证的用户默认请求访问限制每分钟次数
+    #     'user': '20/minute'  # 登陆认证的用户默认请求访问限制每分钟次数
+    # },
+    # api version settings
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    'DEFAULT_VERSION': 'v3',
+    'ALLOWED_VERSIONS': ('v3', ),
+    'VERSION_PARAM': 'version',
+
+    # 分页
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100,
+
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+}
+
+# vnc
+VNCSERVER_BASE_PORT = 5900
 
 # 导入安全相关的settings
 from .security import *
