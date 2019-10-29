@@ -2,6 +2,8 @@ from django.db import transaction
 
 from compute.models import Center, Group, Host
 from network.models import Vlan
+from image.models import Image
+from ceph.models import CephPool
 
 
 class ComputeError(Exception):
@@ -53,6 +55,154 @@ class CenterManager:
         except Exception as e:
             raise ComputeError(msg=f'查询分中心时错误,{str(e)}')
 
+    def get_group_ids_by_center(self, center_or_id):
+        '''
+        获取分中心下的宿主机组id list
+
+        :param center_or_id: 分中心对象或id
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        if isinstance(center_or_id, int):
+            if center_or_id <= 0:
+                raise ComputeError(msg='无效的center id')
+            center = self.get_center_by_id(center_id=center_or_id)
+            if not center:
+                raise ComputeError(msg='指定的分中心不存在')
+        elif not isinstance(center_or_id, Center):
+            raise ComputeError(msg='无效的center or id')
+        else:
+            center = center_or_id
+
+        ids = list(center.group_set.values_list('id').all())
+        return ids
+
+    def get_center_queryset(self):
+        return Center.objects.all()
+
+    def get_group_queryset_by_center(self, center_or_id):
+        '''
+        获取分中心下的宿主机组查询集
+
+        :param center_or_id: 分中心对象或id
+        :return:
+            groups: QuerySet   # success
+        :raise ComputeError
+        '''
+        if isinstance(center_or_id, int):
+            if center_or_id <= 0:
+                raise ComputeError(msg='无效的center id')
+            center = self.get_center_by_id(center_id=center_or_id)
+            if not center:
+                raise ComputeError(msg='指定的分中心不存在')
+        elif not isinstance(center_or_id, Center):
+            raise ComputeError(msg='无效的center or id')
+        else:
+            center = center_or_id
+
+        return center.group_set.all()
+
+    def get_user_group_queryset(self, user):
+        '''
+        获取用户有权限的宿主机组查询集
+
+        :param user: 用户对象
+        :return:
+            groups: QuerySet   # success
+        '''
+        if user.is_superuser:
+            return Group.objects.all()
+
+        return user.group_set.all()
+
+    def get_user_group_queryset_by_center(self, center_or_id, user):
+        '''
+        获取分中心下的宿主机组查询集
+
+        :param center_or_id: 分中心对象或id
+        :param user: 用户对象
+        :return:
+            groups: QuerySet   # success
+        :raise ComputeError
+        '''
+        if isinstance(center_or_id, Center) or isinstance(center_or_id, int):
+            qs = self.get_user_group_queryset(user)
+            return qs.filter(center=center_or_id)
+
+        raise ComputeError(msg='无效的center id')
+
+    def get_ceph_queryset_by_center(self, center_or_id):
+        '''
+        获取一个分中心下的所有ceph集群查询集
+
+        :param center_or_id: 分中心对象或id
+        :return:
+             QuerySet   # success
+        :raise ComputeError
+        '''
+        if isinstance(center_or_id, int):
+            if center_or_id <= 0:
+                raise ComputeError(msg='无效的center id')
+            center = self.get_center_by_id(center_id=center_or_id)
+            if not center:
+                raise ComputeError(msg='指定的分中心不存在')
+        elif not isinstance(center_or_id, Center):
+            raise ComputeError(msg='无效的center or id')
+        else:
+            center = center_or_id
+
+        return center.ceph_clusters.all()
+
+    def get_ceph_ids_by_center(self, center_or_id):
+        '''
+        获取一个分中心下的所有ceph集群id list
+
+        :param center_or_id: 分中心对象或id
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        cephs = self.get_ceph_queryset_by_center(center_or_id)
+        ids = list(cephs.values_list('id').all())
+        return ids
+
+    def get_pool_queryset_by_center(self, center_or_id):
+        '''
+        获取一个分中心下的所有ceph pool查询集
+
+        :param center_or_id: 分中心对象或id
+        :return:
+             QuerySet   # success
+        :raise ComputeError
+        '''
+        ceph_ids = self.get_ceph_ids_by_center(center_or_id)
+        return CephPool.objects.filter(ceph__in=ceph_ids).all()
+
+    def get_pool_ids_by_center(self, center_or_id):
+        '''
+        获取一个分中心下的所有ceph pool id
+
+        :param center_or_id: 分中心对象或id
+        :return:
+             QuerySet   # success
+        :raise ComputeError
+        '''
+        pools = self.get_pool_queryset_by_center(center_or_id)
+        return list(pools.values_list('id').all())
+
+    def get_image_queryset_by_center(self, center_or_id):
+        '''
+        获取一个分中心下的所有镜像查询集
+
+        :param center_or_id: 分中心对象或id
+        :return:
+             images: QuerySet   # success
+        :raise ComputeError
+        '''
+        pool_ids = self.get_pool_ids_by_center(center_or_id)
+        return Image.objects.filter(ceph_pool__in=pool_ids).all()
+
 
 class GroupManager:
     '''
@@ -75,6 +225,106 @@ class GroupManager:
             return Group.objects.filter(id=group_id).first()
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机组时错误,{str(e)}')
+
+    def get_host_queryset_by_group(self, group_or_id):
+        '''
+        通过宿主机组对象和id获取宿主机查询集
+
+        :param group_or_id: 宿主机组对象和id
+        :return:
+            QuerySet   # success
+        :raise ComputeError
+        '''
+        if isinstance(group_or_id, int):
+            if group_or_id <= 0:
+                raise ComputeError(msg='无效的group id')
+            group = self.get_group_by_id(group_or_id)
+        elif not isinstance(group_or_id, Group):
+            raise ComputeError(msg='无效的group or id')
+        else:
+            group = group_or_id
+
+        return group.hosts_set.all()
+
+    def get_host_ids_by_group(self,  group_or_id):
+        '''
+        通过宿主机组对象和id获取宿主机id list
+
+        :param group_or_id: 宿主机组对象和id
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        hosts = self.get_host_queryset_by_group(group_or_id)
+
+        try:
+            ids = list(hosts.values_list('id').all())
+        except Exception as e:
+            raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
+        return ids
+
+    def get_host_queryset_by_group_vlan(self, group_or_id, vlan_id:int):
+        '''
+        通过宿主机组对象和id获取宿主机查询集
+
+        :param group_or_id: 宿主机组对象和id
+        :return:
+            QuerySet   # success
+        :raise ComputeError
+        '''
+        if isinstance(group_or_id, int):
+            if group_or_id <= 0:
+                raise ComputeError(msg='无效的group id')
+            group = self.get_group_by_id(group_or_id)
+        elif not isinstance(group_or_id, Group):
+            raise ComputeError(msg='无效的group or id')
+        else:
+            group = group_or_id
+
+        return group.hosts_set.all()
+
+    def get_hsot_queryset_by_group_ids(self, ids:list):
+        '''
+        通过宿主机组id list获取宿主机查询集
+
+        :param ids: 宿主机组id list
+        :return:
+            QuerySet   # success
+        '''
+        return Host.objects.filter(group__in=ids).all()
+
+    def get_hsot_ids_by_group_ids(self, ids:list):
+        '''
+        通过宿主机组id list获取宿主机id list
+
+        :param ids: 宿主机组id list
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        hosts = self.get_hsot_queryset_by_group_ids(ids)
+        try:
+            ids = list(hosts.values_list('id').all())
+        except Exception as e:
+            raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
+        return ids
+
+    def get_hsot_ids_by_group_or_ids(self, group_or_ids):
+        '''
+        通过宿主机组对象或id,或id list获取宿主机id list
+
+        :param group_or_ids: 宿主机组对象，id,或id list
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        '''
+        if isinstance(group_or_ids, list):
+            return self.get_hsot_ids_by_group_ids(group_or_ids)
+        elif isinstance(group_or_ids, int) or isinstance(group_or_ids, Group):
+            return self.get_host_ids_by_group(group_or_ids)
+
+        raise ComputeError(msg='无效的宿主机组参数')
+
 
 
 class HostManager:
@@ -118,14 +368,49 @@ class HostManager:
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
 
-    def get_hosts_by_group_and_vlan(self, group_or_id, vlan:Vlan):
+    def filter_hosts_queryset(self, group_id:int=0, vlan_id:int=0, enable:bool=True):
         '''
-        获取宿指定主机组，并且包含指定vlan的所有宿主机元数据模型对象
+        过滤宿主机查询集
+
+        :param group_id: 宿主机组id，默认为0，忽略此参数
+        :param vlan_id: 子网网段id，默认为0，忽略此参数
+        :param enable: True,过滤有效的宿主机；False，不过滤
+        :return:
+            QuerySet    # success
+
+        :raises: ComputeError
+        '''
+        if group_id < 0 or vlan_id < 0:
+            raise ComputeError(msg='group_id或vlan_id无效')
+
+        qs = None
+        if vlan_id > 0:
+            vlan = Vlan.objects.filter(id=vlan_id).first()
+            qs = vlan.vlan_hosts.all()
+
+        if group_id > 0:
+            if qs is not None:
+                qs = qs.filter(group=group_id).all()
+            else:
+                qs = Host.objects.filter(group=group_id).all()
+
+        if qs is None:
+            qs = Host.objects.all()
+
+        if enable == True:
+            qs = qs.filter(enable=True).all()
+
+        return qs
+
+
+    def get_hosts_queryset_by_group_vlan(self, group_or_id, vlan:Vlan):
+        '''
+        获取宿指定主机组，并且包含指定vlan的所有宿主机元数据模型对象查询集
 
         :param group_or_id: 宿主机组对象Group()或id
         :param vlan: 子网对象
         :return:
-            [Host(),]    # success
+            QuerySet    # success
             raise ComputeError #发生错误
 
         :raise ComputeError
@@ -140,8 +425,22 @@ class HostManager:
         if not isinstance(vlan, Vlan):
             raise ComputeError(msg='请输入一个子网Vlan对象')
 
+        return  vlan.vlan_hosts.filter(group=group).all()
+
+    def get_hosts_by_group_and_vlan(self, group_or_id, vlan:Vlan):
+        '''
+        获取宿指定主机组，并且包含指定vlan的所有宿主机元数据模型对象
+
+        :param group_or_id: 宿主机组对象Group()或id
+        :param vlan: 子网对象
+        :return:
+            [Host(),]    # success
+            raise ComputeError #发生错误
+
+        :raise ComputeError
+        '''
+        hosts_qs = self.get_hosts_queryset_by_group_vlan(group_or_id=group_or_id, vlan=vlan)
         try:
-            hosts_qs = vlan.vlan_hosts.filter(group=group).all()
             return list(hosts_qs)
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
@@ -234,4 +533,6 @@ class HostManager:
             if host:
                 return host
 
-        return None
+        return
+
+

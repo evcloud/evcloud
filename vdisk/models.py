@@ -1,12 +1,15 @@
 #coding=utf-8
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from ceph.models import CephPool
 from compute.models import Group
 
+
+User = get_user_model()
+
 class Vdisk(models.Model):
     '''附加磁盘类'''
-    uuid = models.CharField(max_length=200, primary_key=True)
+    uuid = models.CharField(max_length=64, primary_key=True)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, null=True, blank=True, on_delete=models.CASCADE)
     creator = models.CharField(max_length=200, null=True, blank=True)

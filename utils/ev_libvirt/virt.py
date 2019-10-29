@@ -390,31 +390,4 @@ class VirtAPI(object):
 
 
 
-    # def _xml_edit_vcpu(self, xml_desc, vcpu):
-    #     xml = XMLEditor()
-    #     xml.set_xml(xml_desc)
-    #     root = xml.get_root()
-    #     try:
-    #         root.getElementsByTagName('vcpu')[0].firstChild.data = vcpu
-    #     except:
-    #         return False
-    #     return root.toxml()
-    #
-    # def _xml_edit_mem(self, xml_desc, mem):
-    #     xml = XMLEditor()
-    #     xml.set_xml(xml_desc)
-    #     try:
-    #         node = xml.get_node(['memory'])
-    #         if node:
-    #             node.attributes['unit'].value = 'MiB'
-    #             node.firstChild.data = mem
-    #         node1 = xml.get_node(['currentMemory'])
-    #         if node1:
-    #             node1.attributes['unit'].value = 'MiB'
-    #             node1.firstChild.data = mem
-    #         return xml.get_root().toxml()
-    #     except:
-    #         return False
-
-
 

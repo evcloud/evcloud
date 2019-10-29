@@ -15,12 +15,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
 from rest_framework_swagger.views import get_swagger_view
 
+admin.AdminSite.site_header = 'EVCloud后台管理（管理员登录）'
+admin.AdminSite.site_title = '管理员登录'
+
+def home(request):
+    return redirect(to='vms:vms-list')
 
 urlpatterns = [
+    path('', home, name='home'),
     path('admin/', admin.site.urls),
-    path('users/', include('users.urls')),
-    path('api/', include('api.urls')),
+    path('users/', include('users.urls', namespace='users')),
+    path('api/', include('api.urls', namespace='api')),
+    path('vms/',include('vms.urls', namespace='vms')),
+    path('novnc/',include('novnc.urls', namespace='novnc')),
     path('apidocs/', get_swagger_view(title='EVCloud API'), name='apidocs'),
 ]
+
+
+
+

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block boby %}
+    <div class="col-md-offset-2 col-md-8 col-lg-8">
+        {% if msg %}
+            <span class="text-warning">{{ msg }}</span>
+        {% else %}
+            <span class="text-warning">很抱歉，感觉自己好像出了点问题</span>
+        {% endif %}
+        {% if errors %}
+            <ul class="list-group">
+            {% for err in errors %}
+                <li class="list-group-item list-group-item-warning">{{ err }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endblock %}
