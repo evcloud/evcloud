@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework',
+    'rest_framework.authtoken',
     'rest_framework_swagger',
 
     'vms',
@@ -167,7 +169,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'users.auth.authentication.AuthKeyAuthentication',
-        # 'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
         # 'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
@@ -200,6 +202,7 @@ REST_FRAMEWORK = {
 
 # vnc
 VNCSERVER_BASE_PORT = 5900
+
 
 # 导入安全相关的settings
 from .security import *

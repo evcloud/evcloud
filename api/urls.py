@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
 from . import views
@@ -15,4 +15,5 @@ router.register(r'(?P<version>(v3|v4))/vlan', views.VlanViewSet, base_name='vlan
 
 urlpatterns = [
     path(r'', include(router.urls)),
+    re_path(r'(?P<version>(v3|v4))/token', views.AuthTokenViewSet.as_view(), name='token'),
 ]
