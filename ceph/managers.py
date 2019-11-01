@@ -2,6 +2,9 @@ import os
 
 import rados, rbd  #yum install python36-rbd.x86_64 python-rados.x86_64
 
+from .models import CephCluster
+
+
 class RadosError(rados.Error):
     '''def __init__(self, message, errno=None)'''
     pass
@@ -170,7 +173,28 @@ class RbdManager:
             raise RadosError(f'rename_image error:{str(e)}')
 
 
+class CephClusterManager:
+    '''
+    CEPH集群管理器
+    '''
 
+    def get_ceph_by_id(self, ceph_id: int):
+        '''
+        通过id获取ceph集群配置对象
+
+        :param ceph_id: ceph集群id
+        :return:
+            Host() # success
+            None    #不存在
+        :raise RadosError
+        '''
+        if not isinstance(ceph_id, int) or ceph_id <= 0:
+            raise RadosError('CEPH集群ID参数有误')
+
+        try:
+            return CephCluster.objects.filter(id=ceph_id).first()
+        except Exception as e:
+            raise RadosError(f'查询CEPH集群时错误,{str(e)}')
 
 
 

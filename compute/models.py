@@ -92,12 +92,12 @@ class Host(models.Model):
     ipmi_user = models.CharField(max_length=100, default='', blank=True)
     ipmi_password = models.CharField(max_length=100, default='', blank=True)
 
-    def __str__(self):
-        return self.ipv4
-
     class Meta:
         verbose_name = '宿主机'
         verbose_name_plural = '06_宿主机'
+
+    def __str__(self):
+        return self.ipv4
 
     def exceed_vm_limit(self):
         '''
