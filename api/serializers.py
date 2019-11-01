@@ -115,3 +115,16 @@ class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
         fields = ('id', 'name', 'version', 'type', 'enable', 'ceph_pool', 'base_image', 'snap', 'xml_tpl', 'create_time', 'desc')
+
+
+class AuthTokenDumpSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    user = serializers.SerializerMethodField()
+    created = serializers.SerializerMethodField()
+
+    def get_user(self, obj):
+        return obj.user.username
+
+    def get_created(self, obj):
+        return obj.created.strftime('%Y-%m-%d %H:%M:%S')
+
