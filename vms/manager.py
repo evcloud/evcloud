@@ -10,7 +10,7 @@ from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from network.models import Vlan
 from utils.ev_libvirt.virt import VirtAPI, VirtError
-from .models import Vm
+from .models import Vm, VmArchive, VmLog
 from .xml import XMLEditor
 
 
@@ -213,6 +213,71 @@ class VmManager(VirtAPI):
                                                  Q(uuid__icontains=search)).all()
 
         return vm_queryset
+
+
+class VmArchiveManager:
+    '''
+    虚拟机归档管理类
+    '''
+    def add_vm_archive(self, vm:Vm):
+        '''
+        添加一个虚拟机的归档记录
+
+        :param vm: 虚拟机元数据对象
+        :return:
+            VmArchive() # success
+
+        :raises:  VmError
+        '''
+        try:
+            host = vm.host
+            group = host.group
+            center = group.center
+            mac_ip = vm.mac_ip
+            vlan = mac_ip.vlan
+            image = vm.image
+            ceph_pool = image.ceph_pool
+
+            va = VmArchive(uuid=vm.get_uuid(), name=vm.name, vcpu=vm.vcpu, mem=vm.mem, disk=vm.disk, xml=vm.xml,
+                           mac=mac_ip.mac, ipv4=mac_ip.ipv4, vlan_id=vlan.id, br=vlan.br,
+                           image_id=image.id, image_parent=image.base_image, ceph_id=ceph_pool.ceph.id, ceph_pool=ceph_pool.pool_name,
+                           center_id=center.id, center_name=center.name, group_id=group.id, group_name=group.name,
+                           host_id=host.id, host_ipv4=host.ipv4, user=vm.user, create_time=vm.create_time, remarks=vm.remarks)
+            va.save()
+        except Exception as e:
+            raise VmError(msg=str(e))
+        return va
+
+class VmLogManager():
+    '''
+    虚拟机错误日志记录管理
+    '''
+    def __init__(self):
+        self.vm_log = VmLog()
+
+    @property
+    def about(self):
+        return self.vm_log
+
+    def add_log(self, title:str, about:int, text:str):
+        '''
+        添加记录
+
+        :param title: 记录标题
+        :param about: 记录相关内容
+        :param text: 记录内容
+        :return:
+            VmLog()     # success
+            None        # failed
+        '''
+        about = VmLog.to_valid_about_value(about)
+        try:
+            log = VmLog(title=title, about=about, content=text)
+            log.save()
+        except Exception as e:
+            return None
+
+        return log
 
 
 class VmAPI:
@@ -483,7 +548,7 @@ class VmAPI:
 
         :param vm_uuid: 虚拟机uuid
         :param user: 用户
-        :param force:   是否强制删除
+        :param force:   是否强制删除， 会强制关闭正在运行的虚拟机
         :return:
             True
             raise VmError
@@ -510,35 +575,47 @@ class VmAPI:
             except VirtError as e:
                 raise VmError(msg='强制关闭虚拟机失败')
 
+        # 归档虚拟机
         try:
-            # 释放mac ip
-            mac_ip = vm.mac_ip
-            if not mac_ip.set_free():
-                raise VmError(msg='释放mac ip资源失败')
-
-            # 释放disk
-            if not vm.rm_sys_disk():
-                raise VmError(msg='删除系统盘失败')
-
-            # 释放宿主机资源
-            if not host.free(vcpu=vm.vcpu, mem=vm.mem):
-                raise VmError(msg='释放宿主机资源失败')
-
-            # 删除虚拟机
-            try:
-                if not self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid):
-                    raise VmError(msg='删除虚拟机失败')
-            except VirtError as e:
-                raise VmError(msg='删除虚拟机失败')
-
+            vm_ahv = VmArchiveManager().add_vm_archive(vm)
         except VmError as e:
-            if not force:   # 非强制删除
-                raise e
-        host.vm_created_num_sub_1() # 宿主机已创建虚拟机数量+1
+            raise VmError(msg=f'归档虚拟机失败，{str(e)}')
+
+        log_manager = VmLogManager()
+
+        # 删除虚拟机
+        try:
+            if not self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid):
+                raise VmError(msg='删除虚拟机失败')
+        except (VirtError, VmError):
+            vm_ahv.delete()  # 删除归档记录
+            raise VmError(msg='删除虚拟机失败')
+
+        # 删除虚拟机元数据
         try:
             vm.delete()
         except Exception as e:
-            raise  VmError(msg='删除虚拟机元数据失败')
+            msg = f'虚拟机（uuid={vm.get_uuid()}）已删除，并归档，但是虚拟机元数据删除失败;请手动删除虚拟机元数据。'
+            log_manager.add_log(title='删除虚拟机元数据失败', about=log_manager.about.ABOUT_VM_METADATA, text=msg)
+            raise VmError(msg='删除虚拟机元数据失败')
+
+        # 宿主机已创建虚拟机数量-1
+        if not host.vm_created_num_sub_1():
+            msg = f'虚拟机（uuid={vm.get_uuid()}）已删除，并归档，宿主机（id={host.id}; ipv4={host.ipv4}）已创建虚拟机数量-1失败, 请手动-1。'
+            log_manager.add_log(title='宿主机已创建虚拟机数量-1失败', about=log_manager.about.ABOUT_HOST_VM_CREATED, text=msg)
+
+        # 释放mac ip
+        mac_ip = vm.mac_ip
+        if not mac_ip.set_free():
+            msg = f'释放mac ip资源失败, 虚拟机uuid={vm.get_uuid()};\n mac_ip信息：{mac_ip.get_detail_str()};\n ' \
+                  f'请查看核对虚拟机是否已成功删除并归档，如果已删除请手动释放此mac_ip资源'
+            log_manager.add_log(title='释放mac ip资源失败', about=log_manager.about.ABOUT_MAC_IP, text=msg)
+
+        # 释放宿主机资源
+        if not host.free(vcpu=vm.vcpu, mem=vm.mem):
+            msg = f'释放宿主机资源失败, 虚拟机uuid={vm.get_uuid()};\n 宿主机信息：id={host.id}; ipv4={host.ipv4};\n' \
+                  f'未释放资源：mem={vm.mem}MB;vcpu={vm.vcpu}；\n请查看核对虚拟机是否已成功删除并归档，如果已删除请手动释放此宿主机资源'
+            log_manager.add_log(title='释放宿主机men, cpu资源失败', about=log_manager.about.ABOUT_MEM_CPU, text=msg)
 
         return True
 
@@ -550,7 +627,7 @@ class VmAPI:
         :param vcpu:要修改的vcpu数，默认0 不修改
         :param mem: 要修改的内存大小，默认0 不修改
         :param user: 用户
-        :param force:   是否强制修改
+        :param force:   是否强制修改, 会强制关闭正在运行的虚拟机
         :return:
             True
             raise VmError

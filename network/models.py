@@ -73,12 +73,15 @@ class MacIP(models.Model):
     enable = models.BooleanField(verbose_name='开启使用', default=True, help_text='是否可以被分配使用')
     desc = models.TextField(verbose_name='备注说明', default='', blank=True)
 
-    def __str__(self):
-        return self.ipv4
-
     class Meta:
         verbose_name = 'MAC IP地址'
         verbose_name_plural = '07_MAC IP地址'
+
+    def __str__(self):
+        return self.ipv4
+
+    def get_detail_str(self):
+        return f'id={self.id};mac={self.mac};ipv4={self.ipv4};'
 
     def can_used(self):
         '''

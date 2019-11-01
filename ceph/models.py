@@ -59,10 +59,8 @@ class CephCluster(models.Model):
             False   # failed
         '''
         path = os.path.join(settings.BASE_DIR, 'data/ceph/conf/')
-        if not self.config_file:
-            self.config_file = os.path.join(path, f'{self.name}.conf')
-        if not self.keyring_file:
-            self.keyring_file = os.path.join(path, f'{self.name}.keyring')
+        self.config_file = os.path.join(path, f'{self.id}.conf')
+        self.keyring_file = os.path.join(path, f'{self.id}.keyring')
 
         try:
             # 目录路径不存在存在则创建
@@ -79,8 +77,8 @@ class CephCluster(models.Model):
         return True
 
     def save(self, *args, **kwargs):
-        self._save_config_to_file()
         super().save(*args, **kwargs)
+        self._save_config_to_file()
 
 
 class CephPool(models.Model):
