@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 
+from utils.jwt import JWTokenTool
 
 #获取用户模型
 User = get_user_model()
@@ -198,51 +199,48 @@ class ForgetPasswordForm(forms.Form):
         return self.cleaned_data
 
 
-# class PasswordResetForm(forms.Form):
-#     '''
-#     密码用户名表单
-#     '''
-#     jwt = forms.CharField( label=None, max_length=1000,
-#                            widget=forms.HiddenInput(attrs={
-#                                'class': 'form-control',
-#                                'placeholder': 'jwt-value',}))
-#
-#     new_password = forms.CharField( label='新密码',
-#                                 min_length=8,
-#                                 max_length=20,
-#                                 widget=forms.PasswordInput(attrs={
-#                                                 'class': 'form-control',
-#                                                 'placeholder': '请输入一个8-20位的新密码'
-#                                 }))
-#     confirm_new_password = forms.CharField( label='确认新密码',
-#                                 min_length=8,
-#                                 max_length=20,
-#                                 widget=forms.PasswordInput(attrs={
-#                                                 'class': 'form-control',
-#                                                 'placeholder': '请再次输入新密码'
-#                                 }))
-#
-#     def clean(self):
-#         '''
-#         在调用is_valid()后会被调用
-#         '''
-#         jwt = self.cleaned_data.get('jwt', '')
-#         new_password = self.cleaned_data.get('new_password')
-#         confirm_new_password = self.cleaned_data.get('confirm_new_password')
-#
-#         if new_password != confirm_new_password or not new_password:
-#             raise forms.ValidationError('新密码输入不一致，请重新输入')
-#
-#         jwtt = JWTokenTool()
-#         try:
-#             ret = jwtt.authenticate_jwt(jwt)
-#         except:
-#             ret = None
-#
-#         if not ret:
-#             raise forms.ValidationError('重置密码失败，jwt无效或已过期，请重新找回密码获取新的链接')
-#
-#         user = ret[0]
-#         self.cleaned_data['user'] = user
-#
-#         return self.cleaned_data
+class PasswordResetForm(forms.Form):
+    '''
+    密码用户名表单
+    '''
+    jwt = forms.CharField( label=None, max_length=1000,
+                           widget=forms.HiddenInput(attrs={
+                               'class': 'form-control',
+                               'placeholder': 'jwt-value',}))
+
+    new_password = forms.CharField( label='新密码',
+                                min_length=8,
+                                max_length=20,
+                                widget=forms.PasswordInput(attrs={
+                                                'class': 'form-control',
+                                                'placeholder': '请输入一个8-20位的新密码'
+                                }))
+    confirm_new_password = forms.CharField( label='确认新密码',
+                                min_length=8,
+                                max_length=20,
+                                widget=forms.PasswordInput(attrs={
+                                                'class': 'form-control',
+                                                'placeholder': '请再次输入新密码'
+                                }))
+
+    def clean(self):
+        '''
+        在调用is_valid()后会被调用
+        '''
+        jwt = self.cleaned_data.get('jwt', '')
+        new_password = self.cleaned_data.get('new_password')
+        confirm_new_password = self.cleaned_data.get('confirm_new_password')
+
+        if new_password != confirm_new_password or not new_password:
+            raise forms.ValidationError('新密码输入不一致，请重新输入')
+
+        try:
+            user = JWTokenTool().verify_jwt_return_user(jwt=jwt)
+        except:
+            user = None
+
+        if not user:
+            raise forms.ValidationError('重置密码失败，jwt无效或已过期，请重新找回密码获取新的链接')
+
+        self.cleaned_data['user'] = user
+        return self.cleaned_data

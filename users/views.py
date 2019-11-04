@@ -4,8 +4,9 @@ from django.contrib.auth.decorators import login_required
 
 from rest_framework.authtoken.models import Token
 
-from .forms import UserRegisterForm, PasswordChangeForm, ForgetPasswordForm
+from .forms import UserRegisterForm, PasswordChangeForm, ForgetPasswordForm, PasswordResetForm
 from .models import Email
+from utils.jwt import JWTokenTool
 
 #获取用户模型
 User = get_user_model()
@@ -182,11 +183,120 @@ def change_password(request):
     return render(request, 'form.html', content)
 
 
-# @login_required
-# def security(request, *args, **kwargs):
-#     '''
-#      安全凭证函数视图
-#     '''
-#     user = request.user
-#     token = get_or_create_token(user=user)
-#     return render(request, 'security.html', context={'token': token})
+def forget_password(request):
+    '''
+    忘记密码视图
+    '''
+    if request.method == 'POST':
+        form = ForgetPasswordForm(request.POST)
+        if form.is_valid():
+            urls = []
+            try:
+                urls.append({'url': reverse('users:login'), 'name': '登录'})
+            except:
+                pass
+
+            user = form.cleaned_data['user']
+            email = form.cleaned_data['username']
+            # new_password = form.cleaned_data.get('new_password')
+            # user.email = new_password # 用于email字段暂存要重置的密码
+            # 是否是未激活的用户
+            if not user.is_active:
+                if send_active_url_email(request, email, user):
+                    return render(request, 'message.html', context={'message': '用户未激活，请先登录邮箱访问收到的链接以激活用户', 'urls': urls})
+                form.add_error(None, '邮件发送失败，请检查用户名输入是否有误，稍后重试')
+            else:
+                if send_forget_password_email(request, email, user):
+                    return render(request, 'message.html', context={'message': '重置密码确认邮件已发送，请尽快登录邮箱访问收到的链接以完成密码重置，以防链接过期无效'})
+                form.add_error(None, '邮件发送失败，请检查用户名输入是否有误，稍后重试')
+
+    else:
+        form = ForgetPasswordForm()
+
+    content = {}
+    content['form_title'] = '找回密码'
+    content['submit_text'] = '提交'
+    content['form'] = form
+    return render(request, 'form.html', content)
+
+
+def forget_password_confirm(request):
+    '''
+    忘记密码链接确认，完成密码修改
+    :param request:
+    :return:
+    '''
+    urls = []
+    try:
+        urls.append({'url': reverse('users:login'), 'name': '登录'})
+        urls.append({'url': reverse('users:register'), 'name': '注册'})
+    except:
+        pass
+
+    if request.method == 'POST':
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            password = form.cleaned_data.get('new_password')
+            user = form.cleaned_data.get('user')
+            user.set_password(password)
+            user.save()
+            return render(request, 'message.html', context={'message': '用户重置密码成功，请尝试登录', 'urls': urls})
+    else:
+        jwtt = JWTokenTool()
+        try:
+            ret = jwtt.authenticate_query(request)
+        except:
+            ret = None
+        if not ret:
+            return render(request, 'message.html', context={'message': '链接无效或已过期，请重新找回密码获取新的链接', 'urls': urls})
+
+        jwt_value = ret[-1]
+        form = PasswordResetForm(initial={'jwt': jwt_value})
+
+    content = {}
+    content['form_title'] = '重置密码'
+    content['submit_text'] = '确定'
+    content['form'] = form
+    return render(request, 'form.html', context=content)
+
+
+def send_forget_password_email(request, to_email, user):
+    '''
+    发送忘记密码连接邮件
+
+    :param email: 邮箱
+    :param user: 用户对象
+    :return: True(发送成功)，False(发送失败)
+    '''
+    link = get_find_password_link(request, user)
+    if not link:
+        return False
+
+    message = f'''
+        亲爱的用户：
+            欢迎使用EVCloud,您正在为以本邮箱注册的账号找回密码，请访问下面连接以完成账户密码修改,如非本人操作请忽略此邮件。
+            连接：{link}
+        '''
+    return send_one_email(subject='EVCloud账户找回密码', receiver=to_email, message=message, log_message=link)
+
+
+def get_find_password_link(request, user):
+    '''
+    获取找回密码连接
+    :param request:
+    :param user:
+    :return: 正常：url; 错误：None
+    '''
+    jwt = JWTokenTool()
+    token = jwt.obtain_one_jwt(user=user)
+    if not token:
+        return None
+
+    try:
+        url = reverse('users:forget_confirm')
+    except:
+        return None
+
+    url = request.build_absolute_uri(url)
+    return url + '?jwt=' + token
+

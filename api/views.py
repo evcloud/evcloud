@@ -8,6 +8,7 @@ from rest_framework.serializers import Serializer
 from rest_framework.decorators import action
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 from vms.manager import VmManager, VmAPI, VmError
 from novnc.manager import NovncTokenManager, NovncError
@@ -859,7 +860,6 @@ class AuthTokenViewSet(ObtainAuthToken):
         return [IsAuthenticated()]
 
 
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 class JWTObtainPairView(TokenObtainPairView):
     '''
     JWT登录认证视图
