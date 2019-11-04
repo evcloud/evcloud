@@ -12,6 +12,7 @@ djangorestframework = "==3.10.3"
 django-rest-swagger = "==2.2.0"
 libvirt-python = "==5.7.0"
 websockify = "==0.9.*"
+djangorestframework-simplejwt = "==4.3.*"
 
 [requires]
 python_version = "3.6"

@@ -25,3 +25,6 @@ EMAIL_USE_TLS = True    #是否使用TLS安全传输协议
 EMAIL_HOST = 'xxx'
 EMAIL_HOST_USER = 'xxx'
 EMAIL_HOST_PASSWORD = 'xxx'
+
+# from .settings import SIMPLE_JWT
+# SIMPLE_JWT['SIGNING_KEY'] = SECRET_KEY # 默认SECRET_KEY, 建议设置其他值

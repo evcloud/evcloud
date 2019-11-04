@@ -858,3 +858,67 @@ class AuthTokenViewSet(ObtainAuthToken):
             return []
         return [IsAuthenticated()]
 
+
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+class JWTObtainPairView(TokenObtainPairView):
+    '''
+    JWT登录认证视图
+    '''
+    def post(self, request, *args, **kwargs):
+        '''
+        登录认证，获取JWT
+
+            http 200:
+            {
+              "refresh": "xxx",     # refresh JWT, 此JWT通过刷新API可以获取新的access JWT
+              "access": "xxx"       # access JWT, 用于身份认证，如 'Authorization Bearer accessJWT'
+            }
+            http 401:
+            {
+              "detail": "No active account found with the given credentials"
+            }
+        '''
+        return super().post(request, args, kwargs)
+
+
+class JWTRefreshView(TokenRefreshView):
+    '''
+    Refresh JWT视图
+    '''
+    def post(self, request, *args, **kwargs):
+        '''
+        通过refresh JWT获取新的access JWT
+
+            http 200:
+            {
+              "access": "xxx"
+            }
+            http 401:
+            {
+              "detail": "Token is invalid or expired",
+              "code": "token_not_valid"
+            }
+        '''
+        return super().post(request, args, kwargs)
+
+
+class JWTVerifyView(TokenVerifyView):
+    '''
+    校验access JWT视图
+    '''
+    def post(self, request, *args, **kwargs):
+        '''
+        校验access JWT是否有效
+
+            http 200:
+            {
+            }
+            http 401:
+            {
+              "detail": "Token is invalid or expired",
+              "code": "token_not_valid"
+            }
+        '''
+        return super().post(request, args, kwargs)
+
+
