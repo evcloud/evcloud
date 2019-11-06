@@ -172,6 +172,29 @@ class RbdManager:
         except Exception as e:
             raise RadosError(f'rename_image error:{str(e)}')
 
+    def create_image(self, name:str, size:int):
+        '''
+        Create an rbd image.
+
+        :param name: what the image is called
+        :param size: how big the image is in bytes
+        :return:
+            True    # success
+            None    # image already exists
+
+        :raises: FunctionNotSupported, RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            with cluster.open_ioctx(self.pool_name) as ioctx:
+                rbd.RBD().create(ioctx=ioctx, name=name, size=size)
+        except rbd.ImageExists as e:
+            return None
+        except (TypeError, rbd.InvalidArgument, Exception) as e:
+            raise RadosError(f'create_image error:{str(e)}')
+
+        return True
+
 
 class CephClusterManager:
     '''

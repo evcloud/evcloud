@@ -5,8 +5,8 @@ from .models import Vm, VmArchive, VmLog
 
 @admin.register(Vm)
 class VmAdmin(admin.ModelAdmin):
-    list_display_links = ('uuid', 'name',)
-    list_display = ( 'uuid', 'name', 'mac_ip', 'vcpu', 'mem', 'host', 'user', 'create_time', 'remarks')
+    list_display_links = ('uuid',)
+    list_display = ( 'uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'user', 'create_time', 'remarks')
     search_fields = ['name','mac_ip__name']
     list_filter = ['host', 'user']
 

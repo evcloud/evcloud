@@ -62,6 +62,9 @@ class VirtAPI(object):
     '''
     libvirt api包装
     '''
+    def __init__(self):
+        self.VirtError = VirtError
+
     def _host_alive(self, host_ipv4:str, times=3):
         '''
         检测宿主机是否可访问
@@ -387,7 +390,52 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise VirtError(msg=str(e))
 
+    def attach_device(self, host_ipv4:str, vm_uuid:str, xml:str):
+        '''
+        附加设备到虚拟机
 
+        :param host_ipv4: 宿主机ip
+        :param vm_uuid: 虚拟机uuid
+        :param xml: 设备xml
+        :return:
+            True    # success
+            False   # failed
+
+        :raises: VirtError
+        '''
+        domain = self.get_domain(host_ipv4, vm_uuid)
+        try:
+            ret = domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG) # 指定将设备分配给持久化域
+        except libvirt.libvirtError as e:
+            msg = str(e)
+            if 'already in the domain configuration' in msg:
+                return True
+            raise VirtError(msg=msg)
+        if ret == 0:
+            return True
+        return False
+
+    def detach_device(self, host_ipv4:str, vm_uuid:str, xml:str):
+        '''
+        从虚拟机拆卸设备
+
+        :param host_ipv4: 宿主机ip
+        :param vm_uuid: 虚拟机uuid
+        :param xml: 设备xml
+        :return:
+            True    # success
+            False   # failed
+
+        :raises: VirtError
+        '''
+        domain = self.get_domain(host_ipv4, vm_uuid)
+        try:
+            ret = domain.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+        except libvirt.libvirtError as e:
+            raise VirtError(msg=str(e))
+        if ret == 0:
+            return True
+        return False
 
 
 

@@ -1,5 +1,5 @@
 #coding=utf-8
-from .manager import VdiskError, Manager as VdiskManager
+from .manager import VdiskError, VdiskManager
 from .quota import Quota
 from datetime import datetime
 from ceph.api import CephAPI

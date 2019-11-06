@@ -77,8 +77,11 @@ class CephCluster(models.Model):
         return True
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+        if not self.id:
+            super().save(*args, **kwargs)
+
         self._save_config_to_file()
+        super().save(*args, **kwargs)
 
 
 class CephPool(models.Model):
