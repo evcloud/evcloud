@@ -55,6 +55,15 @@
         return domain + url;
     }
 
+    //
+    // 页面刷新时执行
+    window.onload = function() {
+        nav_active_display();
+        // 虚拟机列表运行状态查询更新
+        update_vms_status(get_vm_list_uuid_array());
+    };
+
+
     $('.edit_vm_remark').click(function (e) {
         e.preventDefault();
 
@@ -172,9 +181,6 @@
             get_vm_status(api, vmids[i]);
         }
     }
-
-    // 虚拟机列表运行状态查询更新
-    update_vms_status(get_vm_list_uuid_array());
 
     // 刷新虚拟机状态点击事件
     $(".btn-update-vm-status").click(function (e) {
@@ -525,5 +531,10 @@
         let vm_uuid = $(this).attr('data-vm-uuid');
         get_vm_vnc_url(vm_uuid);
     });
+
+    // 激活虚拟机列表导航栏
+    function nav_active_display() {
+        $("#nav_vm_list").addClass("active");
+    }
 
 })();

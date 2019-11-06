@@ -9,6 +9,7 @@ from compute.managers import CenterManager, GroupManager, HostManager, ComputeEr
 from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from network.models import Vlan
+from vdisk.manager import VdiskManager, VdiskError
 from utils.ev_libvirt.virt import VirtAPI, VirtError
 from .models import Vm, VmArchive, VmLog
 from .xml import XMLEditor
@@ -214,6 +215,92 @@ class VmManager(VirtAPI):
 
         return vm_queryset
 
+    def get_vm_vdisk_dev_list(self, vm:Vm):
+        '''
+        获取虚拟机所有硬盘的dev
+
+        :param vm: 虚拟机对象
+        :return:
+            (disk:list, dev:list)    # disk = [disk_uuid, disk_uuid, ]; dev = ['vda', 'vdb', ]
+        '''
+        try:
+            xml_desc = self.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+        except self.VirtError as e:
+            raise VmError(msg=str(e))
+
+        dev_list = []
+        disk_list = []
+        xml = XMLEditor()
+        if not xml.set_xml(xml_desc):
+            raise VmError(msg='虚拟机xml文本无效')
+
+        root = xml.get_root()
+        devices = root.getElementsByTagName('devices')[0].childNodes
+        for d in devices:
+            if d.nodeName == 'disk':
+                for disk_child in d.childNodes:
+                    if disk_child.nodeName == 'source':
+                        pool_disk = disk_child.getAttribute('name')
+                        disk = pool_disk.split('/')[-1]
+                        disk_list.append(disk)
+                    if disk_child.nodeName == 'target':
+                        dev_list.append(disk_child.getAttribute('dev'))
+        return (disk_list, dev_list)
+
+    def new_vdisk_dev(self, dev_list:list):
+        '''
+        顺序从vda - vdz中获取下一个不包含在dev_list中的的dev字符串
+
+        :param dev_list: 已使用的dev的list
+        :return:
+            str     # success
+            None    # 没有可用的dev了
+        '''
+        for i in range(0, 26):
+            dev = 'vd' + chr(ord('a') + i % 26)
+            if dev not in dev_list:
+                return dev
+
+        return None
+
+    def mount_disk(self, vm:Vm, disk_xml:str):
+        '''
+        向虚拟机挂载虚拟硬盘
+
+        :param vm: 虚拟机对象
+        :param disk_xml: 硬盘xml
+        :return:
+            True    # success
+            False   # failed
+        :raises: VmError
+        '''
+        host = vm.host
+        try:
+            if self.attach_device(host_ipv4=host.ipv4, vm_uuid=vm.get_uuid(), xml=disk_xml):
+                return True
+            return False
+        except self.VirtError as e:
+            raise VmError(msg=f'挂载硬盘错误，{str(e)}')
+
+    def umount_disk(self, vm:Vm, disk_xml:str):
+        '''
+        从虚拟机卸载虚拟硬盘
+
+        :param vm: 虚拟机对象
+        :param disk_xml: 硬盘xml
+        :return:
+            True    # success
+            False   # failed
+        :raises: VmError
+        '''
+        host = vm.host
+        try:
+            if self.detach_device(host_ipv4=host.ipv4, vm_uuid=vm.get_uuid(), xml=disk_xml):
+                return True
+            return False
+        except self.VirtError as e:
+            raise VmError(msg=f'卸载硬盘错误，{str(e)}')
+
 
 class VmArchiveManager:
     '''
@@ -292,6 +379,7 @@ class VmAPI:
         self._image_manager = ImageManager()
         self._vlan_manager = VlanManager()
         self._macip_manager = MacIPManager()
+        self._vdisk_manager = VdiskManager()
 
     def new_uuid_str(self):
         '''
@@ -822,3 +910,141 @@ class VmAPI:
             raise VmError(msg='更新备注信息失败')
 
         return True
+
+    def mount_disk(self, vm_uuid:str, vdisk_uuid:str, user):
+        '''
+        向虚拟机挂载硬盘
+
+        :param vm_uuid: 虚拟机uuid
+        :param vdisk_uuid: 虚拟硬盘uuid
+        :param user: 用户
+        :return:
+            True    # success
+
+        :raises: VmError
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        try:
+            vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid)
+        except VdiskError as e:
+            raise VmError(msg='查询硬盘时错误')
+
+        if vdisk is None:
+            raise VmError(msg='硬盘不存在')
+        if not vdisk.enable:
+            raise VmError(msg='硬盘暂不可使用')
+        if not vdisk.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此硬盘')
+
+        disk_list, dev_list = self._vm_manager.get_vm_vdisk_dev_list(vm=vm)
+        dev = self._vm_manager.new_vdisk_dev(dev_list)
+        if not dev:
+            raise VmError(msg='不能挂载更多的硬盘了')
+
+        # 硬盘元数据和虚拟机建立挂载关系
+        try:
+            self._vdisk_manager.mount_to_vm(vdisk_uuid=vdisk_uuid, vm_uuid=vm_uuid, dev=dev)
+        except VdiskError as e:
+            raise VmError(msg=str(e))
+
+        # 向虚拟机挂载硬盘
+        xml = vdisk.xml_desc(dev=dev)
+        try:
+            self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
+        except VmError as e:
+            try:
+                self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk_uuid)
+            except VdiskError:
+                msg = f'硬盘与虚拟机解除挂载关系失败, 虚拟机uuid={vm.get_uuid()};\n' \
+                      f'硬盘uuid={vdisk.uuid};\n 请查看核对此硬盘是否被挂载到此虚拟机，如果已挂载到此虚拟机，' \
+                      f'请忽略此记录，如果未挂载，请手动解除与虚拟机挂载关系'
+                log_manager = VmLogManager()
+                log_manager.add_log(title='释放宿主机men, cpu资源失败', about=log_manager.about.ABOUT_VM_DISK, text=msg)
+            raise e
+
+        # 更新vm元数据中的xml
+        try:
+            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            vm.xml = xml_desc
+            vm.save(update_fields=['xml'])
+        except Exception:
+            pass
+
+        return True
+
+    def umount_disk(self, vm_uuid:str, vdisk_uuid:str, user):
+        '''
+        从虚拟机卸载硬盘
+
+        :param vm_uuid: 虚拟机uuid
+        :param vdisk_uuid: 虚拟硬盘uuid
+        :param user: 用户
+        :return:
+            True    # success
+
+        :raises: VmError
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        try:
+            vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid)
+        except VdiskError as e:
+            raise VmError(msg='查询硬盘时错误')
+
+        if vdisk is None:
+            raise VmError(msg='硬盘不存在')
+
+        # 向虚拟机挂载硬盘
+        xml = vdisk.xml_desc()
+        try:
+            self._vm_manager.umount_disk(vm=vm, disk_xml=xml)
+        except VmError as e:
+            raise e
+
+        # 硬盘元数据和虚拟机解除挂载关系
+        try:
+            self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk_uuid)
+        except VdiskError as e:
+            try:
+                self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
+            except VmError:
+                pass
+            raise VmError(msg=str(e))
+
+        # 更新vm元数据中的xml
+        try:
+            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            vm.xml = xml_desc
+            vm.save(update_fields=['xml'])
+        except Exception:
+            pass
+
+        return True
+
