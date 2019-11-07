@@ -4,6 +4,7 @@ from vms.models import Vm
 from compute.models import Center, Group, Host
 from network.models import Vlan
 from image.models import Image
+from vdisk.models import Vdisk
 
 
 class VmSerializer(serializers.ModelSerializer):
@@ -127,4 +128,40 @@ class AuthTokenDumpSerializer(serializers.Serializer):
 
     def get_created(self, obj):
         return obj.created.strftime('%Y-%m-%d %H:%M:%S')
+
+
+class VdiskSerializer(serializers.ModelSerializer):
+    '''
+    虚拟硬盘序列化器
+    '''
+    group = serializers.SerializerMethodField()
+    quota = serializers.SerializerMethodField()
+    class Meta:
+        model = Vdisk
+        fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks', 'group')
+        depth = 0
+
+    def get_group(self, obj):
+        return obj.quota.group.name
+
+    def get_quota(self, obj):
+        return obj.quota.name
+
+
+class VdiskCreateSerializer(serializers.Serializer):
+    '''
+    虚拟硬盘创建序列化器
+    '''
+    size = serializers.IntegerField(label='容量大小（GB）', required=True, min_value=1, help_text='容量大小,单位GB')
+    quota_id = serializers.IntegerField(label='硬盘存储池id', required=False, allow_null=True, min_value=1, help_text='宿主机组id', default=None)
+    group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True, min_value=1, help_text='宿主机组id', default=None)
+    remarks = serializers.CharField(label='备注', required=False, default='')
+
+    def validate(self, data):
+        group_id = data.get('group_id')
+        quota_id = data.get('quota_id')
+
+        if not group_id and not quota_id:
+            raise serializers.ValidationError(detail={'code_text': 'group_id和quota_id参数必须提交其中一个'})
+        return data
 

@@ -215,6 +215,23 @@ class VmManager(VirtAPI):
 
         return vm_queryset
 
+    def get_vm_xml_desc(self, host_ipv4:str, vm_uuid:str):
+        '''
+        动态从宿主机获取虚拟机的xml内容
+
+        :param host_ipv4: 虚拟机所在的宿主机ip
+        :param vm_uuid: 虚拟机uuid
+        :return:
+            xml: str    # success
+
+        :raise VmError()
+        '''
+        try:
+            xml_desc = self.get_domain_xml_desc(vm_uuid=host_ipv4, host_ipv4=vm_uuid)
+            return  xml_desc
+        except self.VirtError as e:
+            raise VmError(msg=str(e))
+
     def get_vm_vdisk_dev_list(self, vm:Vm):
         '''
         获取虚拟机所有硬盘的dev
@@ -222,11 +239,10 @@ class VmManager(VirtAPI):
         :param vm: 虚拟机对象
         :return:
             (disk:list, dev:list)    # disk = [disk_uuid, disk_uuid, ]; dev = ['vda', 'vdb', ]
+
+        :raises: VmError
         '''
-        try:
-            xml_desc = self.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
-        except self.VirtError as e:
-            raise VmError(msg=str(e))
+        xml_desc = self.get_vm_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
 
         dev_list = []
         disk_list = []
@@ -334,6 +350,7 @@ class VmArchiveManager:
         except Exception as e:
             raise VmError(msg=str(e))
         return va
+
 
 class VmLogManager():
     '''
@@ -699,6 +716,14 @@ class VmAPI:
                   f'请查看核对虚拟机是否已成功删除并归档，如果已删除请手动释放此mac_ip资源'
             log_manager.add_log(title='释放mac ip资源失败', about=log_manager.about.ABOUT_MAC_IP, text=msg)
 
+        # 卸载所有挂载的虚拟硬盘
+        try:
+            self._vdisk_manager.umount_all_from_vm(vm_uuid=vm_uuid)
+        except VdiskError as e:
+            msg = f'删除虚拟机时，卸载所有虚拟硬盘失败, 虚拟机uuid={vm.get_uuid()};\n' \
+                  f'请查看核对虚拟机是否已删除归档，请手动解除所有虚拟硬盘与虚拟机挂载关系'
+            log_manager.add_log(title='删除虚拟机时，卸载所有虚拟硬盘失败', about=log_manager.about.ABOUT_VM_DISK, text=msg)
+
         # 释放宿主机资源
         if not host.free(vcpu=vm.vcpu, mem=vm.mem):
             msg = f'释放宿主机资源失败, 虚拟机uuid={vm.get_uuid()};\n 宿主机信息：id={host.id}; ipv4={host.ipv4};\n' \
@@ -752,7 +777,7 @@ class VmAPI:
             except VirtError as e:
                 raise VmError(msg='强制关闭虚拟机失败')
 
-        xml_desc = vm.xml
+        xml_desc = self._vm_manager.get_vm_xml_desc(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
         try:
             # 修改vcpu
             if vcpu > 0 and vcpu != vm.vcpu:
@@ -799,7 +824,7 @@ class VmAPI:
 
                 vm.mem = mem
 
-            # 删除虚拟机
+            # 创建虚拟机
             try:
                 if not self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc):
                     raise VmError(msg='修改虚拟机失败')
@@ -973,7 +998,7 @@ class VmAPI:
                       f'硬盘uuid={vdisk.uuid};\n 请查看核对此硬盘是否被挂载到此虚拟机，如果已挂载到此虚拟机，' \
                       f'请忽略此记录，如果未挂载，请手动解除与虚拟机挂载关系'
                 log_manager = VmLogManager()
-                log_manager.add_log(title='释放宿主机men, cpu资源失败', about=log_manager.about.ABOUT_VM_DISK, text=msg)
+                log_manager.add_log(title='硬盘与虚拟机解除挂载关系失败', about=log_manager.about.ABOUT_VM_DISK, text=msg)
             raise e
 
         # 更新vm元数据中的xml

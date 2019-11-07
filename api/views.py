@@ -16,6 +16,8 @@ from compute.models import Center, Group, Host
 from compute.managers import CenterManager, HostManager, ComputeError
 from network.models import Vlan, MacIP
 from image.models import Image
+from vdisk.models import Vdisk
+from vdisk.manager import VdiskManager,VdiskError
 from . import serializers
 
 # Create your views here.
@@ -216,6 +218,13 @@ class VmsViewSet(viewsets.GenericViewSet):
                     description='所属宿主机'
                 ),
                 coreapi.Field(
+                    name='user_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='用户id'),
+                    description='所属用户，当前为超级用户时此参数有效'
+                ),
+                coreapi.Field(
                     name='search',
                     location='query',
                     required=False,
@@ -257,12 +266,17 @@ class VmsViewSet(viewsets.GenericViewSet):
         center_id = int(request.query_params.get('center_id', 0))
         group_id = int(request.query_params.get('group_id', 0))
         host_id = int(request.query_params.get('host_id', 0))
+        user_id = int(request.query_params.get('user_id', 0))
         search = request.query_params.get('search', '')
+
+        user = request.user
+        if not user.is_superuser: # 当前是普通用户，只查当前用户的；当前是超级用户，user_id查询参数有效
+            user_id = user.id
 
         manager = VmManager()
         try:
             self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
-                                                    search=search, user_id=request.user.id)
+                                                    search=search, user_id=user_id)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': '查询虚拟机时错误'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -921,4 +935,177 @@ class JWTVerifyView(TokenVerifyView):
         '''
         return super().post(request, args, kwargs)
 
+
+class VDiskViewSet(viewsets.GenericViewSet):
+    '''
+    虚拟硬盘类视图
+    '''
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+    queryset = Vdisk.objects.all()
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='center_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='分中心id'),
+                    description='所属分中心',
+                    type='int'
+                ),
+                coreapi.Field(
+                    name='group_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='机组id'),
+                    description='所属机组'
+                ),
+                coreapi.Field(
+                    name='quota_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='硬盘存储池id'),
+                    description='所属硬盘存储池'
+                ),
+                coreapi.Field(
+                    name='user_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='用户id'),
+                    description='所属用户，当前为超级用户时此参数有效'
+                ),
+                coreapi.Field(
+                    name='search',
+                    location='query',
+                    required=False,
+                    schema=coreschema.String(description='查询关键字'),
+                    description='查询关键字'
+                ),
+            ]
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取云硬盘列表
+        '''
+        center_id = int(request.query_params.get('center_id', 0))
+        group_id = int(request.query_params.get('group_id', 0))
+        quota_id = int(request.query_params.get('quota_id', 0))
+        user_id = int(request.query_params.get('user_id', 0))
+        search = request.query_params.get('search', '')
+
+        user = request.user
+        if not user.is_superuser:  # 当前是普通用户，只查当前用户的；当前是超级用户，user_id查询参数有效
+            user_id = user.id
+
+        manager = VdiskManager()
+        try:
+            self.queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
+                                                        search=search, user_id=user_id)
+        except VdiskError as e:
+            return Response(data={'code': 400, 'code_text': f'查询云硬盘时错误, {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+            data = {'code': 200, 'disks': serializer.data, }
+        return Response(data)
+
+    def create(self, request, *args, **kwargs):
+        '''
+        创建云硬盘
+
+            http code 201 创建成功:
+            {
+              "code": 201,
+              "code_text": "创建成功",
+              "disk": {
+                "uuid": "972e015b3b4c491ca36b414dd517fdf0",
+                "size": 2,
+                "vm": null,
+                "user": 1,
+                "quota": 1,
+                "create_time": "2019-11-07T11:21:44.116941+08:00",
+                "attach_time": null,
+                "enable": true,
+                "remarks": "test2"
+              }
+            http code 200 失败：
+            {
+              "code": 200,
+              "code_text": "创建失败，xxx",
+            }
+
+            http code 400 请求无效：
+            {
+              "code": 400,
+              "code_text": "xxx",
+              "data":{ }            # 请求时提交的数据
+            }
+        '''
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid(raise_exception=False):
+            code_text = '参数验证有误'
+            try:
+                for name, err_list in serializer.errors.items():
+                    if name == 'code_text':
+                        code_text = err_list[0]
+                    else:
+                        code_text = f'"{name}" {err_list[0]}'
+                    break
+            except:
+                pass
+
+            data = {
+                'code': 400,
+                'code_text': code_text,
+                'data': serializer.data,
+            }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        size = data.get('size')
+        group_id = data.get('group_id', None)
+        quota_id = data.get('quota_id', None)
+        remarks = data.get('remarks', '')
+
+        manager = VdiskManager()
+        try:
+            disk = manager.create_vdisk(size=size, user=request.user, group=group_id, quota=quota_id, remarks=remarks)
+        except VdiskError as e:
+            return Response(data={'code': 200, 'code_text': str(e)}, status=status.HTTP_200_OK)
+
+        data = {
+            'code': 201,
+            'code_text': '创建成功',
+            'disk': serializers.VdiskSerializer(instance=disk).data,
+        }
+        return Response(data=data, status=status.HTTP_201_CREATED)
+
+
+    # def retrieve(self, request, *args, **kwargs):
+    #     pass
+    #
+    # def destroy(self, request, *args, **kwargs):
+    #     pass
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        if self.action in ['list', 'retrieve']:
+            return serializers.VdiskSerializer
+        elif self.action == 'create':
+            return serializers.VdiskCreateSerializer
+        return Serializer
 

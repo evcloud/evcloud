@@ -75,7 +75,7 @@ class CenterManager:
         else:
             center = center_or_id
 
-        ids = list(center.group_set.values_list('id').all())
+        ids = list(center.group_set.values_list('id', flat=True).all())
         return ids
 
     def get_center_queryset(self):
@@ -164,7 +164,7 @@ class CenterManager:
         :raise ComputeError
         '''
         cephs = self.get_ceph_queryset_by_center(center_or_id)
-        ids = list(cephs.values_list('id').all())
+        ids = list(cephs.values_list('id', flat=True).all())
         return ids
 
     def get_pool_queryset_by_center(self, center_or_id):
@@ -189,7 +189,7 @@ class CenterManager:
         :raise ComputeError
         '''
         pools = self.get_pool_queryset_by_center(center_or_id)
-        return list(pools.values_list('id').all())
+        return list(pools.values_list('id', flat=True).all())
 
     def get_image_queryset_by_center(self, center_or_id):
         '''
@@ -258,7 +258,7 @@ class GroupManager:
         hosts = self.get_host_queryset_by_group(group_or_id)
 
         try:
-            ids = list(hosts.values_list('id').all())
+            ids = list(hosts.values_list('id', flat=True).all())
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
         return ids
@@ -284,7 +284,7 @@ class GroupManager:
         '''
         hosts = self.get_hsot_queryset_by_group_ids(ids)
         try:
-            ids = list(hosts.values_list('id').all())
+            ids = list(hosts.values_list('id', flat=True).all())
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
         return ids
