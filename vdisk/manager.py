@@ -2,9 +2,10 @@
 import uuid
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
-from vms.models import Vm
+from compute.managers import CenterManager, ComputeError
 from .models import Vdisk
 from .models import Quota
 
@@ -39,6 +40,118 @@ class VdiskManager:
     '''
     虚拟硬盘管理器
     '''
+    def get_vdisk_queryset(self):
+        '''
+        虚拟硬盘查询集
+        :return:
+            QuerySet()
+        '''
+        return Vdisk.objects.all()
+
+    def get_enable_vdisk_queryset(self):
+        '''
+        所有有效的虚拟硬盘查询集
+        :return:
+            QuerySet()
+        '''
+        return Vdisk.objects.filter(enable=True).all()
+
+    def get_user_vdisk_queryset(self, user):
+        '''
+        获取用户的硬盘查询集
+
+        :param user: 用户对象或id
+        :return:
+            QuerySet()
+        '''
+        qs = self.get_vdisk_queryset()
+        return qs.filter(user=user).all()
+
+    def get_vdisk_queryset_by_quota(self, quota):
+        '''
+        获取硬盘存储池下的硬盘查询集
+
+        :param quota: 硬盘存储池配额对象或id
+        :return:
+            QuerySet()
+        '''
+        qs = self.get_vdisk_queryset()
+        return qs.filter(quota=quota).all()
+
+    def get_vdisk_queryset_by_quota_ids(self, quota_ids:list):
+        '''
+        获取硬盘存储池下的硬盘查询集
+
+        :param quota_ids: 硬盘存储池配额id list
+        :return:
+            QuerySet()
+        '''
+        qs = self.get_vdisk_queryset()
+        return qs.filter(quota__in=quota_ids).all()
+
+    def get_quota_queryset_by_group(self, group):
+        '''
+        获取宿主机组下的硬盘存储池配额查询集
+
+        :param group: 宿主机组对象或id
+        :return:
+            QuerySet()
+        '''
+        return Quota.objects.filter(group=group).all()
+
+    def get_quota_queryset_by_group_ids(self, group_ids:list):
+        '''
+        获取宿主机组下的硬盘存储池配额查询集
+
+        :param group_ids: 宿主机组id list
+        :return:
+            QuerySet()
+        '''
+        return Quota.objects.filter(group__in=group_ids).all()
+
+    def get_quota_ids_by_group_ids(self, group_ids:list):
+        '''
+        获取宿主机组下的硬盘存储池配额查询集
+
+        :param group_ids: 宿主机组id list
+        :return:
+            ids: list
+        '''
+        qs = self.get_quota_queryset_by_group_ids(group_ids)
+        return list(qs.values_list('id', flat=True).all())
+
+    def get_vdisk_queryset_by_group(self,group):
+        '''
+        宿主机组下的硬盘查询集
+
+        :param group: 宿主机组对象或id
+        :return:
+            QuerySet()
+        '''
+        quota_ids = self.get_quota_queryset_by_group(group=group).values_list('id', flat=True).all()
+        qs = self.get_vdisk_queryset()
+        if len(quota_ids) == 1:
+            return qs.filter(quota=quota_ids[0]).all()
+        return qs.filter(quota__in=quota_ids).all()
+
+    def get_vdisk_queryset_by_center(self, center):
+        '''
+        分中心下的硬盘查询集
+
+        :param center: 分中心对象或id
+        :return:
+            QuerySet()
+
+        :raises: VdiskError
+        '''
+        try:
+            group_ids = CenterManager().get_group_ids_by_center(center)
+        except ComputeError as e:
+            raise VdiskError(msg=str(e))
+        quota_ids = self.get_quota_ids_by_group_ids(group_ids)
+        qs = self.get_vdisk_queryset_by_quota_ids(quota_ids)
+        return qs
+
     def get_vdisk_by_uuid(self, uuid:str):
         '''
         通过uuid获取虚拟机元数据
@@ -54,13 +167,18 @@ class VdiskManager:
         except Exception as e:
             raise VdiskError(msg=str(e))
 
-    def create_vdisk(self, quota, size:int, user):
+    def create_vdisk(self, size:int, user, group=None, quota=None, remarks=''):
         '''
         创建一个虚拟云硬盘
 
+        备注：group和quota参数至少需要一个，优先使用quota参数；
+                当只有group参数时，通过group获取quota
+
+        :param group: 宿主机组对象或id
         :param quota: 硬盘所属的云硬盘CEPH存储池对象或id
         :param size: 硬盘的容量大小
         :param user: 创建硬盘的用户
+        :param remarks: 备注信息
         :return:
             Vdisk()     # success
 
@@ -69,11 +187,18 @@ class VdiskManager:
         if size <= 0:
             raise VdiskError(msg='创建的硬盘大小必须大于0')
 
-        if isinstance(quota, int):
-            quota = Quota.objects.filter(id=quota).first()
-
-        if not isinstance(quota, Quota):
-            raise VdiskError(msg='无效的quota或quota id')
+        if quota:
+            if isinstance(quota, int):
+                quota = Quota.objects.filter(id=quota).first()
+            if not isinstance(quota, Quota):
+                raise VdiskError(msg='无效的quota或quota id')
+        elif group:
+            qs = self.get_quota_queryset_by_group(group=group)
+            quota = qs.first()
+            if not isinstance(quota, Quota):
+                raise VdiskError(msg='无效的group或group id')
+        else:
+            raise VdiskError(msg='至少需要一个有效的group或quota参数')
 
         if not quota.check_disk_size_limit(size=size):
             raise VdiskError(msg='超出了可创建硬盘最大容量')
@@ -85,7 +210,7 @@ class VdiskManager:
         if not quota.claim(size=size):
             raise VdiskError(msg='申请硬盘存储容量失败')
 
-        vd = Vdisk(size=size, quota=quota, user=user)
+        vd = Vdisk(size=size, quota=quota, user=user, remarks=remarks)
         try:
             vd.save() # save内会创建元数据和ceph rbd image
         except Exception as e:
@@ -114,9 +239,7 @@ class VdiskManager:
                     if disk.vm == vdisk_uuid:
                         return True
 
-                    # 检查硬盘挂载的虚拟机是否存在
-                    if Vm.objects.filter(pk=disk.vm).exists():
-                        raise VdiskError(msg='硬盘已被挂载到其他虚拟机')
+                    raise VdiskError(msg='硬盘已被挂载到其他虚拟机')
                 # 挂载
                 if disk.enable == True:
                     disk.vm = vm_uuid
@@ -160,9 +283,27 @@ class VdiskManager:
             raise VdiskError(msg='硬盘不存在')
         return True
 
+    def umount_all_from_vm(self, vm_uuid:str):
+        '''
+        从虚拟机卸载所有虚拟硬盘,只是在硬盘元数据层面和虚拟机解除挂载关系
+
+        :param vm_uuid: 虚拟机uuid
+        :return:
+            rows: int   # 卸载数量
+
+        :raises: VdiskError
+        '''
+        with transaction.atomic():
+            try:
+                rows = Vdisk.objects.select_for_update().filter(vm=vm_uuid).update(vm='', dev='')
+            except Exception:
+                raise VdiskError(msg='更新元数据失败')
+
+        return rows
+
     def get_vm_vdisk_queryset(self, vm_uuid:str):
         '''
-        获取挂载到制定虚拟机下的所有虚拟硬盘查询集
+        获取挂载到指定虚拟机下的所有虚拟硬盘查询集
 
         :param vm_uuid: 虚拟机uuid
         :return:
@@ -170,7 +311,7 @@ class VdiskManager:
         '''
         return Vdisk.objects.filter(vm=vm_uuid).all()
 
-    def get_mounted_vdisk_count(self, vm_uuid:str):
+    def get_vm_mounted_vdisk_count(self, vm_uuid:str):
         '''
         获取虚拟机下已挂载虚拟硬盘的数量
 
@@ -180,6 +321,49 @@ class VdiskManager:
         '''
         qs = self.get_vm_vdisk_queryset(vm_uuid=vm_uuid)
         return qs.count()
+
+    def filter_vdisk_queryset(self, center_id: int = 0, group_id: int = 0, quota_id: int = 0, user_id: int = 0,
+                                search: str = '', all_no_filters: bool = False):
+        '''
+        通过条件筛选虚拟机查询集
+
+        :param center_id: 分中心id,大于0有效
+        :param group_id: 宿主机组id,大于0有效
+        :param quota_id: 硬盘存储池配额id,大于0有效
+        :param user_id: 用户id,大于0有效
+        :param search: 关键字筛选条件
+        :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
+        :return:
+            QuerySet    # success
+
+        :raise: VdiskError
+        '''
+        if center_id <= 0 and group_id <= 0 and quota_id <= 0 and user_id <= 0 and not search:
+            if not all_no_filters:
+                raise VdiskError(msg='查询条件无效')
+            return self.get_vdisk_queryset()
+
+        queryset = None
+        if quota_id > 0:
+            queryset = self.get_vdisk_queryset_by_quota(quota=quota_id)
+        elif group_id > 0:
+            queryset = self.get_vdisk_queryset_by_group(group_id)
+        elif center_id > 0:
+            queryset = self.get_vdisk_queryset_by_center(center_id)
+
+        if user_id > 0:
+            if queryset is not None:
+                queryset = queryset.filter(user=user_id).all()
+            else:
+                queryset = self.get_user_vdisk_queryset(user_id)
+
+        if search:
+            if queryset:
+                queryset = queryset.filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()
+            else:
+                queryset = self.get_vdisk_queryset().filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()
+
+        return queryset
 
     def get_vdisk_list(self, user_id=None, creator=None, cephpool_id=None, group_id=None, vm_uuid=None):
         vdisk_list = Vdisk.objects.all().order_by('-create_time')

@@ -5,6 +5,7 @@ from image.models import Image
 from compute.models import Host
 from network.models import MacIP
 from ceph.managers import RbdManager, CephClusterManager, RadosError
+from vdisk.manager import VdiskManager
 
 #获取用户模型
 User = get_user_model()
@@ -98,6 +99,26 @@ class Vm(models.Model):
             return True
 
         return False
+
+    def get_mounted_vdisk_queryset(self):
+        '''
+        获取挂载到虚拟机下的所有虚拟硬盘查询集
+
+        :return:
+            QuerySet()
+        '''
+        vm_uuid = self.get_uuid()
+        return VdiskManager().get_vm_vdisk_queryset(vm_uuid=vm_uuid)
+
+    def get_vm_mounted_vdisk_count(self):
+        '''
+        获取虚拟机下已挂载虚拟硬盘的数量
+
+        :return:
+            int
+        '''
+        qs = self.get_mounted_vdisk_queryset()
+        return qs.count()
 
 
 class VmArchive(models.Model):
