@@ -155,6 +155,13 @@ class Vdisk(models.Model):
         '''
         return uuid4().hex
 
+    def get_bytes_size(self):
+        '''GB to Bytes size'''
+        return self.size * 1024**3
+
+    def get_GB_size(self):
+        return self.size
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         # uuid有效认为已存在，只是更新信息
         if self.uuid:
@@ -190,9 +197,45 @@ class Vdisk(models.Model):
         config_file = config.get_config_file()
         keyring_file = config.get_keyring_file()
 
+        size = self.get_bytes_size()
         try:
             rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
-            rbd.create_image(name=self.uuid, size=self.size)
+            rbd.create_image(name=self.uuid, size=size)
+        except (RadosError, Exception) as e:
+            return False
+
+        return True
+
+    def delete(self, using=None, keep_parents=False):
+        if not self._remove_ceph_disk():
+            raise Exception('remove ceph rbd image failed')
+        super().delete(using=using, keep_parents=keep_parents)
+
+    def _remove_ceph_disk(self):
+        '''
+        删除硬盘对应的ceph rbd image
+
+        :return:
+            True    # success
+            False   # failed
+        '''
+        try:
+            ceph_pool = self.quota.cephpool
+            if not ceph_pool:
+                return False
+            pool_name = ceph_pool.pool_name
+            config = ceph_pool.ceph
+            if not config:
+                return False
+        except Exception:
+            return False
+
+        config_file = config.get_config_file()
+        keyring_file = config.get_keyring_file()
+
+        try:
+            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd.remove_image(image_name=self.uuid)
         except (RadosError, Exception) as e:
             return False
 
@@ -223,10 +266,10 @@ class Vdisk(models.Model):
                   <auth username='{auth_user}'>
                     <secret type='ceph' uuid='{auth_uuid}'/>
                   </auth>
-                  <source protocol='rbd' name='%(pool)s/%(name)s'>
-                    %(hosts_xml)s
+                  <source protocol='rbd' name='{pool}/{name}'>
+                    {hosts_xml}
                   </source>
-                    <target dev='%(dev)s' bus='virtio'/>   
+                    <target dev='{dev}' bus='virtio'/>   
             </disk>
             '''
 
@@ -241,8 +284,20 @@ class Vdisk(models.Model):
 
         cephpool = self.quota.cephpool
         ceph = cephpool.ceph
-        xml = self.xml_tpl.format(auth_use=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
+        xml = self.xml_tpl.format(auth_user=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
                                   name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev)
         return xml
+
+    def is_mounted(self):
+        '''
+        是否已被挂载
+        :return:
+            True    # 已挂载
+            False   # 未挂载
+        '''
+        if self.vm:
+            return True
+
+        return False
 
 

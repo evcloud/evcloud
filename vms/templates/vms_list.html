@@ -73,9 +73,9 @@
                         <th>操作</th>
                     </tr>
                     {% for vm in vms %}
-                        <tr id="tr_{{ vm.uuid }}">
-                            <td><input type="checkbox" class="item-checkbox" value="{{ vm.uuid }}" name="select_vm"></td>
-                            <td title="{{ vm.uuid }}"><b>{{ vm.mac_ip.ipv4 }}</b></td>
+                        <tr id="tr_{{ vm.hex_uuid }}">
+                            <td><input type="checkbox" class="item-checkbox" value="{{ vm.hex_uuid }}" name="select_vm"></td>
+                            <td title="{{ vm.hex_uuid }}"><b>{{ vm.mac_ip.ipv4 }}</b></td>
                             <td>{{ vm.user }}</td>
                             <td>{{ vm.image }}</td>
                             <td>{{ vm.host }}</td>
@@ -90,19 +90,19 @@
                             <td>
                                 <div class="mouse-hover">
                                     <span>{{ vm.remarks|default_if_none:'' }}</span>
-                                    <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.uuid }}" title="修改备注">
+                                    <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.hex_uuid }}" title="修改备注">
                                         <span class="glyphicon glyphicon-pencil"></span>
                                     </span>
                                 </div>
                                 <div id="remarks_edit" style="display:none">
                                     <textarea id="remarks">{{ vm.remarks|default_if_none:'' }}</textarea>
-                                    <span class="save_vm_remark" title="保存备注" vm_uuid="{{ vm.uuid }}">
+                                    <span class="save_vm_remark" title="保存备注" vm_uuid="{{ vm.hex_uuid }}">
                                         <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
                                     </span>
                                 </div>
                             </td>
-                            <td><span id="vm_status_{{ vm.uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span></td>
-                            <td><span id="vm_task_{{ vm.uuid }}"></span></td>
+                            <td><span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span></td>
+                            <td><span id="vm_task_{{ vm.hex_uuid }}"></span></td>
 
                             <td>
                                 {% with need_refresh='false' %}

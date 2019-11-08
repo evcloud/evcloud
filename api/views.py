@@ -270,13 +270,14 @@ class VmsViewSet(viewsets.GenericViewSet):
         search = request.query_params.get('search', '')
 
         user = request.user
-        if not user.is_superuser: # 当前是普通用户，只查当前用户的；当前是超级用户，user_id查询参数有效
-            user_id = user.id
-
         manager = VmManager()
         try:
-            self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
-                                                    search=search, user_id=user_id)
+            if user.is_superuser: # 当前是超级用户，user_id查询参数有效
+                self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
+                                                            search=search, user_id=user_id, all_no_filters=True)
+            else:
+                self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
+                                                    search=search, user_id=user.id)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': '查询虚拟机时错误'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -423,7 +424,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'获取虚拟机状态失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(data={'code': 200, 'code_text': '获取信息成功',
+        return Response(data={'code': 200, 'code_text': '获取虚拟机状态成功',
                               'status': {'status_code': code, 'status_text': msg}})
 
     @action(methods=['post'], url_path='vnc', detail=True, url_name='vm_vnc')
@@ -942,6 +943,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
     '''
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
+    lookup_field = 'uuid'
+    lookup_value_regex = '[0-9a-z-]+'
     queryset = Vdisk.objects.all()
 
     # api docs
@@ -984,13 +987,43 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     schema=coreschema.String(description='查询关键字'),
                     description='查询关键字'
                 ),
-            ]
+            ],
+            'disk_mount': [
+                coreapi.Field(
+                    name='vm_uuid',
+                    location='query',
+                    required=True,
+                    schema=coreschema.String(description='虚拟机uuid'),
+                    description='要挂载的虚拟机uuid'
+                )
+            ],
         }
     )
 
     def list(self, request, *args, **kwargs):
         '''
         获取云硬盘列表
+
+            http code 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "uuid": "d38c784f14ee4d73a0e1143b8498efa4",
+                  "size": 20,
+                  "vm": "c58125f6916b4028864b46c7c0b02d99",
+                  "user": 1,
+                  "quota": "group1云硬盘存储池",
+                  "create_time": "2019-11-08T14:29:07.027888+08:00",
+                  "attach_time": "2019-11-08T14:32:22.311323+08:00",
+                  "enable": true,
+                  "remarks": "string",
+                  "group": "宿主机组1"
+                }
+              ]
+            }
         '''
         center_id = int(request.query_params.get('center_id', 0))
         group_id = int(request.query_params.get('group_id', 0))
@@ -999,13 +1032,14 @@ class VDiskViewSet(viewsets.GenericViewSet):
         search = request.query_params.get('search', '')
 
         user = request.user
-        if not user.is_superuser:  # 当前是普通用户，只查当前用户的；当前是超级用户，user_id查询参数有效
-            user_id = user.id
-
         manager = VdiskManager()
         try:
-            self.queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
-                                                        search=search, user_id=user_id)
+            if user.is_superuser: # 当前是超级用户，user_id查询参数有效
+                self.queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
+                                                              search=search, user_id=user_id, all_no_filters=True)
+            else:
+                self.queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
+                                                              search=search, user_id=user.id)
         except VdiskError as e:
             return Response(data={'code': 400, 'code_text': f'查询云硬盘时错误, {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1090,12 +1124,146 @@ class VDiskViewSet(viewsets.GenericViewSet):
         }
         return Response(data=data, status=status.HTTP_201_CREATED)
 
+    def retrieve(self, request, *args, **kwargs):
+        '''
+        获取硬盘详细数据
 
-    # def retrieve(self, request, *args, **kwargs):
-    #     pass
-    #
-    # def destroy(self, request, *args, **kwargs):
-    #     pass
+            http code 200:
+            {
+              "code": 200,
+              "code_text": "获取云硬盘信息成功",
+              "vm": {
+                "uuid": "296beb3413724456911077321a4247f9",
+                "size": 1,
+                "vm": null,
+                "user": {
+                  "id": 1,
+                  "username": "shun"
+                },
+                "quota": {
+                  "id": 1,
+                  "name": "group1云硬盘存储池",
+                  "pool": {
+                    "id": 1,
+                    "name": "vm1"
+                  },
+                  "ceph": {
+                    "id": 1,
+                    "name": "对象存储集群"
+                  },
+                  "group": {
+                    "id": 1,
+                    "name": "宿主机组1"
+                  }
+                },
+                "create_time": "2019-11-07T11:19:55.496380+08:00",
+                "attach_time": null,
+                "enable": true,
+                "remarks": "test"
+              }
+            }
+        '''
+        disk_uuid = kwargs.get(self.lookup_field, '')
+        try:
+            disk = VdiskManager().get_vdisk_by_uuid(uuid=disk_uuid)
+        except VdiskError as e:
+            return  Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not disk:
+            return Response(data={'code': 404, 'code_text': '云硬盘不存在'}, status=status.HTTP_404_NOT_FOUND)
+        if not disk.user_has_perms(user=request.user):
+            return Response(data={'code': 404, 'code_text': '当前用户没有权限访问此云硬盘'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(data={
+            'code': 200,
+            'code_text': '获取云硬盘信息成功',
+            'vm': serializers.VdiskDetailSerializer(disk).data
+        })
+
+    def destroy(self, request, *args, **kwargs):
+        '''
+        销毁硬盘
+
+            http code 204: 销毁成功
+            http code 400,403, 404: 销毁失败
+            {
+                "code": 4xx,
+                "code_text": "xxx"
+            }
+        '''
+        disk_uuid = kwargs.get(self.lookup_field, '')
+        api = VdiskManager()
+        try:
+            vdisk = api.get_vdisk_by_uuid(uuid=disk_uuid)
+        except VdiskError as e:
+            return Response(data={'code': 400, 'code_text': f'查询硬盘时错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if vdisk is None:
+            return Response(data={'code': 404, 'code_text': '硬盘不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not vdisk.user_has_perms(user=request.user):
+            return Response(data={'code': 403, 'code_text': '当前用户没有权限访问此硬盘'}, status=status.HTTP_403_FORBIDDEN)
+
+        if vdisk.is_mounted():
+            return Response(data={'code': 400, 'code_text': '硬盘已被挂载使用，请先卸载后再销毁'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            vdisk.delete()
+        except Exception as e:
+            return Response(data={'code': 400, 'code_text': f'销毁硬盘失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['patch'], url_path='mount', detail=True, url_name='disk_mount')
+    def disk_mount(self, request, *args, **kwargs):
+        '''
+        挂载硬盘
+
+            http code 200:
+            {
+                "code": 200,
+                "code_text": "挂载硬盘成功"
+            }
+            http code 400:
+            {
+                "code": 400,
+                "code_text": "挂载硬盘失败，xxx"
+            }
+        '''
+        disk_uuid = kwargs.get(self.lookup_field, '')
+        vm_uuid = request.query_params.get('vm_uuid', '')
+        api = VmAPI()
+        try:
+            disk = api.mount_disk(user=request.user, vm_uuid=vm_uuid, vdisk_uuid=disk_uuid)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'挂载硬盘失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '挂载硬盘成功'})
+
+    @action(methods=['patch'], url_path='umount', detail=True, url_name='disk_umount')
+    def disk_umount(self, request, *args, **kwargs):
+        '''
+        卸载硬盘
+
+            http code 200:
+            {
+                "code": 200,
+                "code_text": "卸载硬盘成功"
+            }
+            http code 400:
+            {
+                "code": 400,
+                "code_text": "卸载硬盘失败，xxx"
+            }
+        '''
+        disk_uuid = kwargs.get(self.lookup_field, '')
+        api = VmAPI()
+        try:
+            disk = api.umount_disk(user=request.user, vdisk_uuid=disk_uuid)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'卸载硬盘失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '卸载硬盘成功'})
 
     def get_serializer_class(self):
         """

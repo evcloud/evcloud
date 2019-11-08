@@ -20,6 +20,7 @@ class UserProfileAdmin(UserAdmin):
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         (_('Important dates'), {'fields': ('date_joined',)}),
     )
+    ordering = None
 
     def fullname(self, obj):
         return obj.get_full_name()

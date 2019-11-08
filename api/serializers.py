@@ -148,6 +148,56 @@ class VdiskSerializer(serializers.ModelSerializer):
         return obj.quota.name
 
 
+class UserSimpleSerializer(serializers.Serializer):
+    '''用户极简序列化器'''
+    id = serializers.IntegerField()
+    username = serializers.CharField()
+
+
+class QuotaSimpleSerializer(serializers.Serializer):
+    '''硬盘存储池配额极简序列化器'''
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    pool = serializers.SerializerMethodField(method_name='get_pool')
+    ceph = serializers.SerializerMethodField(method_name='get_ceph')
+    group = serializers.SerializerMethodField(method_name='get_group')
+
+    def get_pool(self, obj):
+        pool = obj.cephpool
+        if not pool:
+            return {}
+
+        return {'id':pool.id, 'name': pool.pool_name}
+
+    def get_ceph(self, obj):
+        pool = obj.cephpool
+        if not pool:
+            return {}
+
+        ceph = pool.ceph
+        if not ceph:
+            return {}
+        return {'id':ceph.id, 'name': ceph.name}
+
+    def get_group(self, obj):
+        group = obj.group
+        if not group:
+            return {}
+        return {'id': group.id, 'name': group.name}
+
+
+class VdiskDetailSerializer(serializers.ModelSerializer):
+    '''
+    虚拟硬盘详细信息序列化器
+    '''
+    user = UserSimpleSerializer(required=False) # May be an anonymous user
+    quota = QuotaSimpleSerializer(required=False)
+    class Meta:
+        model = Vdisk
+        fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks')
+        depth = 1
+
+
 class VdiskCreateSerializer(serializers.Serializer):
     '''
     虚拟硬盘创建序列化器

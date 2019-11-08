@@ -236,7 +236,7 @@ class VdiskManager:
                 # 硬盘已被挂载
                 if disk.vm:
                     # 已挂载到此虚拟机
-                    if disk.vm == vdisk_uuid:
+                    if disk.vm == vm_uuid:
                         return True
 
                     raise VdiskError(msg='硬盘已被挂载到其他虚拟机')
@@ -365,19 +365,4 @@ class VdiskManager:
 
         return queryset
 
-    def get_vdisk_list(self, user_id=None, creator=None, cephpool_id=None, group_id=None, vm_uuid=None):
-        vdisk_list = Vdisk.objects.all().order_by('-create_time')
-        if user_id:
-            vdisk_list = vdisk_list.filter(user_id=user_id)
-        if creator:
-            vdisk_list = vdisk_list.filter(creator=creator)
-        if cephpool_id:
-            vdisk_list = vdisk_list.filter(cephpool_id=cephpool_id)
-        if group_id:
-            vdisk_list = vdisk_list.filter(group_id=group_id)
-        if vm_uuid:
-            vdisk_list = vdisk_list.filter(vm=vm_uuid)
-        ret_list = []
-        for vdisk in vdisk_list:
-            ret_list.append(vdisk)
-        return ret_list
+
