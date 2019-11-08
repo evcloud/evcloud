@@ -61,6 +61,14 @@ class Vm(models.Model):
             return self.uuid
         return self.uuid.hex
 
+    @property
+    def hex_uuid(self):
+        return self.get_uuid()
+
+    @hex_uuid.setter
+    def hex_uuid(self, uuid):
+        self.uuid = uuid
+
     def rm_sys_disk(self):
         '''
         删除系统盘

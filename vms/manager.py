@@ -227,7 +227,7 @@ class VmManager(VirtAPI):
         :raise VmError()
         '''
         try:
-            xml_desc = self.get_domain_xml_desc(vm_uuid=host_ipv4, host_ipv4=vm_uuid)
+            xml_desc = self.get_domain_xml_desc(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
             return  xml_desc
         except self.VirtError as e:
             raise VmError(msg=str(e))
@@ -398,12 +398,12 @@ class VmAPI:
         self._macip_manager = MacIPManager()
         self._vdisk_manager = VdiskManager()
 
-    def new_uuid_str(self):
+    def new_uuid_obj(self):
         '''
         生成一个新的uuid字符串
         :return: uuid:str
         '''
-        return uuid.uuid4().hex
+        return uuid.uuid4()
 
     def get_rbd_manager(self, ceph:CephCluster, pool_name:str):
         '''
@@ -573,6 +573,7 @@ class VmAPI:
         创建一个虚拟机
 
         说明：group_id和host_id参数必须给定一个；host_id有效时，使用host_id；host_id无效时，使用group_id；
+        备注：虚拟机的名称和系统盘名称同虚拟机的uuid
 
         :param image_id: 镜像id
         :param vcpu: cpu数
@@ -600,7 +601,9 @@ class VmAPI:
         vlan = self._get_vlan(vlan_id)      # 局域子网
         host_list = self._get_host_list(vlan=vlan, host_id=host_id, group_id=group_id, user=user) # 宿主机
 
-        vm_uuid = self.new_uuid_str()
+        vm_uuid_obj = self.new_uuid_obj()
+        vm_uuid = vm_uuid_obj.hex
+
         ceph_pool = image.ceph_pool
         pool_name = ceph_pool.pool_name
         ceph_config = ceph_pool.ceph
@@ -624,7 +627,7 @@ class VmAPI:
                 ceph_hosts_xml=ceph_config.hosts_xml, mac=macip.mac, bridge=vlan.br)
 
             # 创建虚拟机元数据
-            vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
+            vm = Vm(uuid=vm_uuid_obj, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
                     remarks=remarks, host=host, mac_ip=macip,xml=xml_desc, image=image)
             vm.save()
 
@@ -944,7 +947,7 @@ class VmAPI:
         :param vdisk_uuid: 虚拟硬盘uuid
         :param user: 用户
         :return:
-            True    # success
+            Vdisk()    # success
 
         :raises: VmError
         '''
@@ -976,6 +979,9 @@ class VmAPI:
             raise VmError(msg='当前用户没有权限访问此硬盘')
 
         disk_list, dev_list = self._vm_manager.get_vm_vdisk_dev_list(vm=vm)
+        if vdisk_uuid in disk_list:
+            return vdisk
+
         dev = self._vm_manager.new_vdisk_dev(dev_list)
         if not dev:
             raise VmError(msg='不能挂载更多的硬盘了')
@@ -987,10 +993,10 @@ class VmAPI:
             raise VmError(msg=str(e))
 
         # 向虚拟机挂载硬盘
-        xml = vdisk.xml_desc(dev=dev)
         try:
+            xml = vdisk.xml_desc(dev=dev)
             self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
-        except VmError as e:
+        except (VmError, Exception) as e:
             try:
                 self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk_uuid)
             except VdiskError:
@@ -999,7 +1005,7 @@ class VmAPI:
                       f'请忽略此记录，如果未挂载，请手动解除与虚拟机挂载关系'
                 log_manager = VmLogManager()
                 log_manager.add_log(title='硬盘与虚拟机解除挂载关系失败', about=log_manager.about.ABOUT_VM_DISK, text=msg)
-            raise e
+            raise VmError(msg=str(e))
 
         # 更新vm元数据中的xml
         try:
@@ -1009,20 +1015,34 @@ class VmAPI:
         except Exception:
             pass
 
-        return True
+        return vdisk
 
-    def umount_disk(self, vm_uuid:str, vdisk_uuid:str, user):
+    def umount_disk(self, vdisk_uuid:str, user):
         '''
         从虚拟机卸载硬盘
 
-        :param vm_uuid: 虚拟机uuid
         :param vdisk_uuid: 虚拟硬盘uuid
         :param user: 用户
         :return:
-            True    # success
+            Vdisk()    # success
 
         :raises: VmError
         '''
+        try:
+            vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid)
+        except VdiskError as e:
+            raise VmError(msg='查询硬盘时错误')
+
+        if vdisk is None:
+            raise VmError(msg='硬盘不存在')
+
+        if not vdisk.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此硬盘')
+
+        vm_uuid = vdisk.vm
+        if not vm_uuid:
+            return vdisk
+
         vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
         if vm is None:
             raise VmError(msg='虚拟机不存在')
@@ -1037,14 +1057,6 @@ class VmAPI:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
             raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
-
-        try:
-            vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid)
-        except VdiskError as e:
-            raise VmError(msg='查询硬盘时错误')
-
-        if vdisk is None:
-            raise VmError(msg='硬盘不存在')
 
         # 向虚拟机挂载硬盘
         xml = vdisk.xml_desc()
@@ -1071,5 +1083,5 @@ class VmAPI:
         except Exception:
             pass
 
-        return True
+        return vdisk
 

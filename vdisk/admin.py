@@ -19,5 +19,13 @@ class VdiskAdmin(admin.ModelAdmin):
     search_fields = ['uuid', 'vm','remarks']
     list_filter = ['quota', 'user']
 
+    def delete_queryset(self, request, queryset):
+        '''
+        后台管理批量删除重写， 通过每个对象的delete()方法删除，同时会删除ceph rbd image
+        '''
+        for obj in queryset:
+            if not obj.is_mounted():    # 硬盘已挂载，不删除
+                obj.delete()
+
 
 
