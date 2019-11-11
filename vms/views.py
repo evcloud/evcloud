@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from .manager import VmManager, VmError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from network.managers import VlanManager
+from vdisk.manager import VdiskManager, VdiskError
 
 # Create your views here.
 User = get_user_model()
@@ -86,9 +87,19 @@ class VmsView(View):
         page_nav = self.get_page_nav(request, vms_page, paginator)
 
         context['page_nav'] = page_nav
-        context['vms'] = vms_page
+        context['vms'] = self.vm_list_with_vdisk(vms_page)
         context['count'] = paginator.count
         return context
+
+    def vm_list_with_vdisk(self, vms):
+        vms_list = []
+        manager = VdiskManager()
+        for vm in vms:
+            vdisk = manager.get_vm_vdisk_queryset(vm.hex_uuid)
+            vm.vdisks = vdisk
+            vms_list.append(vm)
+
+        return vms_list
 
     def get_page_nav(self, request, vms_page, paginator):
         '''
@@ -174,6 +185,7 @@ class VmsView(View):
         querys = request.GET.copy()
         querys.setlist('page', [page_num])
         return querys.urlencode()
+
 
 class VmCreateView(View):
     '''创建虚拟机类视图'''

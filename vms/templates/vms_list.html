@@ -82,10 +82,14 @@
                             <td>
                                 {{ vm.vcpu }} / {{ vm.mem|sizeformat:'MB' }}
                             </td>
-                            <td>无
-    {#                            {% for v in vm.volumes %}#}
-    {#                                {{ v.dev }} {{ v.size|sizeformat:'MB' }} <br>#}
-    {#                            {% endfor %}#}
+                            <td>
+                                {% if vm.vdisks %}
+                                    {% for v in vm.vdisks %}
+                                        {{ v.dev }} {{ v.size }}GB <br>
+                                    {% endfor %}
+                                {% else %}
+                                        无
+                                {% endif %}
                             </td>
                             <td>
                                 <div class="mouse-hover">
