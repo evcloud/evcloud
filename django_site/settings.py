@@ -27,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
+INTERNAL_IPS = []
 
 # Application definition
 
@@ -223,3 +223,12 @@ VNCSERVER_BASE_PORT = 5900
 
 # 导入安全相关的settings
 from .security import *
+
+if DEBUG:
+    # django debug toolbar
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+    DEBUG_TOOLBAR_CONFIG = {
+        # 'SHOW_COLLAPSED': True,
+    }
+    INTERNAL_IPS += ['159.226.91.152', '127.0.0.1'] # 通过这些IP地址访问时，页面才会出现django debug toolbar面板

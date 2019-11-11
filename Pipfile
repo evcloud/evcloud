@@ -13,6 +13,7 @@ django-rest-swagger = "==2.2.0"
 libvirt-python = "==5.7.0"
 websockify = "==0.9.*"
 djangorestframework-simplejwt = "==4.3.*"
+django-debug-toolbar = "==2.*"
 
 [requires]
 python_version = "3.6"
