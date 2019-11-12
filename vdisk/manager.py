@@ -40,13 +40,15 @@ class VdiskManager:
     '''
     虚拟硬盘管理器
     '''
+    VdiskError = VdiskError
+
     def get_vdisk_queryset(self):
         '''
         虚拟硬盘查询集
         :return:
             QuerySet()
         '''
-        return Vdisk.objects.all()
+        return Vdisk.objects.filter(deleted=False).all()
 
     def get_enable_vdisk_queryset(self):
         '''
@@ -54,7 +56,7 @@ class VdiskManager:
         :return:
             QuerySet()
         '''
-        return Vdisk.objects.filter(enable=True).all()
+        return self.get_vdisk_queryset().filter(enable=True).all()
 
     def get_user_vdisk_queryset(self, user):
         '''
@@ -152,18 +154,22 @@ class VdiskManager:
         qs = self.get_vdisk_queryset_by_quota_ids(quota_ids)
         return qs
 
-    def get_vdisk_by_uuid(self, uuid:str):
+    def get_vdisk_by_uuid(self, uuid:str, related_fields:tuple=()):
         '''
         通过uuid获取虚拟机元数据
 
         :param uuid: 虚拟机uuid hex字符串
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
         :return:
             Vdisk() or None     # success
 
         :raise:  VdiskError
         '''
+        qs = self.get_vdisk_queryset()
         try:
-            return Vdisk.objects.filter(uuid=uuid).first()
+            if related_fields:
+                qs.select_related(*related_fields)
+            return qs.filter(uuid=uuid).first()
         except Exception as e:
             raise VdiskError(msg=str(e))
 
@@ -218,12 +224,12 @@ class VdiskManager:
 
         return vd
 
-    def mount_to_vm(self, vdisk_uuid:str, vm_uuid:str, dev):
+    def mount_to_vm(self, vdisk_uuid:str, vm, dev):
         '''
         标记虚拟硬盘挂载到虚拟机,只是在硬盘元数据层面和虚拟机建立挂载关系
 
         :param vdisk_uuid: 虚拟硬盘uuid
-        :param vm_uuid: 虚拟机uuid
+        :param vm: 虚拟机对象
         :param dev:
         :return:
             True
@@ -236,13 +242,13 @@ class VdiskManager:
                 # 硬盘已被挂载
                 if disk.vm:
                     # 已挂载到此虚拟机
-                    if disk.vm == vm_uuid:
+                    if disk.vm == vm:
                         return True
 
                     raise VdiskError(msg='硬盘已被挂载到其他虚拟机')
                 # 挂载
                 if disk.enable == True:
-                    disk.vm = vm_uuid
+                    disk.vm = vm
                     disk.attach_time = timezone.now()
                     disk.dev = dev
                     try:
@@ -273,7 +279,7 @@ class VdiskManager:
                     return True
 
                 # 卸载
-                disk.vm = ''
+                disk.vm = None
                 disk.dev = ''
                 try:
                     disk.save(update_fields=['vm', 'dev'])
@@ -295,7 +301,7 @@ class VdiskManager:
         '''
         with transaction.atomic():
             try:
-                rows = Vdisk.objects.select_for_update().filter(vm=vm_uuid).update(vm='', dev='')
+                rows = Vdisk.objects.select_for_update().filter(vm=vm_uuid).update(vm='', dev=None)
             except Exception:
                 raise VdiskError(msg='更新元数据失败')
 
@@ -309,7 +315,7 @@ class VdiskManager:
         :return:
             QuerySet()
         '''
-        return Vdisk.objects.filter(vm=vm_uuid).all()
+        return self.get_vdisk_queryset().filter(vm=vm_uuid).all()
 
     def get_vm_mounted_vdisk_count(self, vm_uuid:str):
         '''
@@ -341,7 +347,7 @@ class VdiskManager:
         if center_id <= 0 and group_id <= 0 and quota_id <= 0 and user_id <= 0 and not search:
             if not all_no_filters:
                 raise VdiskError(msg='查询条件无效')
-            return self.get_vdisk_queryset()
+            return self.get_vdisk_queryset().select_related('user', 'quota', 'quota__group', 'vm', 'vm__mac_ip').all()
 
         queryset = None
         if quota_id > 0:
@@ -363,6 +369,30 @@ class VdiskManager:
             else:
                 queryset = self.get_vdisk_queryset().filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()
 
-        return queryset
+        return queryset.select_related('user', 'quota', 'quota__group', 'vm', 'vm__mac_ip').all()
 
+    def modify_vdisk_remarks(self, uuid:str, remarks:str, user):
+        '''
+        修改硬盘的备注信息
 
+        :param uuid: 硬盘uuid
+        :param remarks: 新的备注信息
+        :param user: 用户
+        :return:
+            Vdisk() # success
+        :raise:  VdiskError
+        '''
+        disk = self.get_vdisk_by_uuid(uuid=uuid)
+        if not disk:
+            raise VdiskError(msg='硬盘不存在')
+
+        if not disk.user_has_perms(user):
+            raise VdiskError(msg='没有权限访问此硬盘')
+
+        disk.remarks = remarks
+        try:
+            disk.save()
+        except Exception as e:
+            raise VdiskError(msg=str(e))
+
+        return disk

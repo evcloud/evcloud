@@ -330,7 +330,7 @@ class VmsViewSet(viewsets.GenericViewSet):
     def retrieve(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
-            vm = VmManager().get_vm_by_uuid(uuid=vm_uuid)
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid)
         except VmError as e:
             return  Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -444,7 +444,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         '''
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
-            vm = VmManager().get_vm_by_uuid(uuid=vm_uuid)
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid)
         except VmError as e:
             return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -997,6 +997,15 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     description='要挂载的虚拟机uuid'
                 )
             ],
+            'disk_remark': [
+                coreapi.Field(
+                    name='remark',
+                    location='query',
+                    required=True,
+                    schema=coreschema.String(description='备注信息'),
+                    description='新的备注信息'
+                ),
+            ]
         }
     )
 
@@ -1204,11 +1213,12 @@ class VDiskViewSet(viewsets.GenericViewSet):
         if not vdisk.user_has_perms(user=request.user):
             return Response(data={'code': 403, 'code_text': '当前用户没有权限访问此硬盘'}, status=status.HTTP_403_FORBIDDEN)
 
-        if vdisk.is_mounted():
+        if vdisk.is_mounted:
             return Response(data={'code': 400, 'code_text': '硬盘已被挂载使用，请先卸载后再销毁'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            vdisk.delete()
+            vdisk.deleted = True
+            vdisk.save(update_fields=['deleted'])
         except Exception as e:
             return Response(data={'code': 400, 'code_text': f'销毁硬盘失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1264,6 +1274,25 @@ class VDiskViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 400, 'code_text': f'卸载硬盘失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 200, 'code_text': '卸载硬盘成功'})
+
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='disk_remark')
+    def disk_remark(self, request, *args, **kwargs):
+        '''
+        修改云硬盘备注信息
+        '''
+        remark = request.query_params.get('remark')
+        if not remark:
+            return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
+
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        api = VdiskManager()
+        try:
+            disk = api.modify_vdisk_remarks(user=request.user, uuid=vm_uuid, remarks=remark)
+        except api.VdiskError as e:
+            return Response(data={'code': 400, 'code_text': f'修改硬盘备注信息失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '修改硬盘备注信息成功'})
 
     def get_serializer_class(self):
         """

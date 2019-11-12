@@ -9,6 +9,7 @@ from django.utils import timezone
 from ceph.models import CephPool
 from ceph.managers import RbdManager, RadosError
 from compute.models import Group
+from vms.models import Vm
 
 
 User = get_user_model()
@@ -129,7 +130,7 @@ class Vdisk(models.Model):
     '''附加磁盘类'''
     uuid = models.CharField(max_length=64, primary_key=True, editable=False, blank=True, verbose_name='云硬盘UUID')
     size = models.IntegerField(verbose_name='容量大小GB', help_text='单位GB')
-    vm = models.CharField(max_length=200, null=True, blank=True, verbose_name='挂载于虚拟机')
+    vm = models.ForeignKey(to=Vm, related_name='vdisk_set', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='挂载于虚拟机')
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE, related_name='vdisk_set', verbose_name='创建者')
     quota = models.ForeignKey(to=Quota, on_delete=models.CASCADE, null=True, related_name='vdisk_set', verbose_name='云硬盘CEPH存储池')
     create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
@@ -137,9 +138,11 @@ class Vdisk(models.Model):
     dev = models.CharField(max_length=100, blank=True, editable=False, default='', verbose_name='虚拟机中disk的设备名称',
                            help_text="对应系统中硬盘挂载逻辑设备名称（vda-vdz）")
     enable = models.BooleanField(default=True, verbose_name='是否可用')
+    deleted = models.BooleanField(default=False, verbose_name='已删除')
     remarks = models.TextField(blank=True, default='', verbose_name='备注')
     
     class Meta:
+        ordering = ['-create_time']
         verbose_name = 'CEPH云硬盘'
         verbose_name_plural = 'CEPH云硬盘'
         unique_together = ['uuid', 'quota']
@@ -288,6 +291,7 @@ class Vdisk(models.Model):
                                   name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev)
         return xml
 
+    @property
     def is_mounted(self):
         '''
         是否已被挂载
@@ -299,5 +303,4 @@ class Vdisk(models.Model):
             return True
 
         return False
-
 
