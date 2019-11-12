@@ -3,17 +3,17 @@
 {% load  sizeformat %}
 
 {% block head %}
-    <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'vdisk/vdisk.css' %}">
 {% endblock %}
-{% block title %}云主机列表{% endblock %}
+{% block title %}云硬盘列表{% endblock %}
 
 {% block boby %}
     <div class="col-md-offset-1 col-md-10 col-lg-10">
         <div class="panel panel-default">
             <div class="panel-heading">
-                <span class="panel-title"><strong>云主机列表 ({{ count }})</strong></span>
-                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vms:vm-create' %}">
-                    创建云主机<span class="glyphicon glyphicon-plus"></span>
+                <span class="panel-title"><strong>云硬盘列表 ({{ count }})</strong></span>
+                <span><a class="btn btn-xs btn-primary pull-right" href="">
+                    创建云硬盘<span class="glyphicon glyphicon-plus"></span>
                 </a></span>
             </div>
             <div class="panel-body" style="min-height: 400px;">
@@ -36,12 +36,12 @@
                                         selected {% endif %}>{{ g.name }}</option>
                             {% endfor %}
                         </select>
-                        <label class="input-group-addon" for="id-host">宿主机</label>
-                        <select name="host" class="form-control" id="id-host">
+                        <label class="input-group-addon" for="id-quota">存储池</label>
+                        <select name="quota" class="form-control" id="id-quota">
                             <option value="">--</option>
-                            {% for h in hosts %}
-                                <option value="{{ h.id }}" {% if h.id == host_id|add:0 %}
-                                        selected {% endif %}>{{ h.ipv4 }}</option>
+                            {% for q in quotas %}
+                                <option value="{{ q.id }}" {% if q.id == quota_id|add:0 %}
+                                        selected {% endif %}>{{ q.name }}</option>
                             {% endfor %}
                         </select>
                         <label class="input-group-addon" for="id-user">创建者</label>
@@ -61,73 +61,65 @@
                 <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                     <tr>
                         <th></th>
-                        <th width="120px">IP地址</th>
-                        <th>创建者</th>
-                        <th>镜像</th>
-                        <th>宿主机</th>
-                        <th>CPU/MEM</th>
-                        <th>云硬盘</th>
-                        <th width="180px">备注</th>
-                        <th>状态<button class="btn btn-sm btn-update-vm-status"><span class="glyphicon glyphicon-refresh"></span></button></th>
-                        <th>任务</th>
+                        <th width="120px">UUID</th>
+                        <th>机组</th>
+                        <th>存储池</th>
+                        <th>容量</th>
+                        <th>用户</th>
+                        <th>创建时间</th>
+                        <th>挂载云主机</th>
+                        <th>挂载时间</th>
+                        <th>状态</th>
+                        <th>备注</th>
                         <th>操作</th>
                     </tr>
-                    {% for vm in vms %}
-                        <tr id="tr_{{ vm.hex_uuid }}">
-                            <td><input type="checkbox" class="item-checkbox" value="{{ vm.hex_uuid }}" name="select_vm"></td>
-                            <td title="{{ vm.hex_uuid }}"><b>{{ vm.mac_ip.ipv4 }}</b></td>
-                            <td>{{ vm.user }}</td>
-                            <td>{{ vm.image }}</td>
-                            <td>{{ vm.host }}</td>
-                            <td>
-                                {{ vm.vcpu }} / {{ vm.mem|sizeformat:'MB' }}
+                    {% for disk in vdisks %}
+                        <tr id="tr_{{ disk.uuid }}">
+                            <td><input type="checkbox" class="item-checkbox" value="{{ disk.uuid }}" name="select_vm"></td>
+                            <td><b>{{ disk.uuid }}</b></td>
+                            <td>{{ disk.quota.group }}</td>
+                            <td>{{ disk.quota }}</td>
+                            <td>{{ disk.size|sizeformat:'GB' }}</td>
+                            <td>{{ disk.user }}</td>
+                            <td>{{ disk.create_time }}</td>
+                            {% if disk.vm %}
+                                <td>{{ disk.vm.ipv4 }}</td>
+                                <td>{{ disk.attach_time }}</td>
+                            {% else %}
+                                <td>未挂载</td>
+                                <td>无</td>
+                            {% endif %}
+                             <td>
+                                {%if disk.enable%}
+                                    <span class="glyphicon glyphicon-ok"></span>
+                                {%else%}
+                                    <span class="glyphicon glyphicon-ok"></span>
+                                {%endif%}
                             </td>
                             <td>
-                                {% if vm.vdisks %}
-                                    {% for v in vm.vdisks %}
-                                        {{ v.dev }} {{ v.size }}GB <br>
-                                    {% endfor %}
-                                {% else %}
-                                        无
-                                {% endif %}
-                            </td>
-                            <td class="mouse-hover">
-                                <div>
-                                    <span>{{ vm.remarks|default_if_none:'' }}</span>
-                                    <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.hex_uuid }}" title="修改备注">
+                                <div class="mouse-hover">
+                                    <span>{{ disk.remarks|default_if_none:'' }}</span>
+                                    <span class="mouse-hover-show edit_disk_remark" data-disk_uuid="{{ disk.uuid }}" title="修改备注">
                                         <span class="glyphicon glyphicon-pencil"></span>
                                     </span>
                                 </div>
                                 <div id="remarks_edit" style="display:none">
-                                    <textarea id="remarks">{{ vm.remarks|default_if_none:'' }}</textarea>
-                                    <span class="save_vm_remark" title="保存备注" vm_uuid="{{ vm.hex_uuid }}">
+                                    <textarea id="remarks">{{ disk.remarks|default_if_none:'' }}</textarea>
+                                    <span class="save_disk_remark" title="保存备注" data-disk_uuid="{{ disk.uuid }}">
                                         <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
                                     </span>
                                 </div>
                             </td>
-                            <td><span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span></td>
-                            <td><span id="vm_task_{{ vm.hex_uuid }}"></span></td>
-
                             <td>
-                                {% with need_refresh='false' %}
-                                    {% include 'vm_operations.html' %}
-                                {% endwith %}
+                                {% if disk.is_mounted %}
+                                    <button type="button" class="btn btn-xs btn-warning btn-disk-umount" data-disk_uuid="{{ disk.uuid }}">卸载</button>
+                                {% else %}
+                                    <button type="button" class="btn btn-xs btn-success btn-disk-mount" data-disk_uuid="{{ disk.uuid }}">挂载</button>
+                                {% endif %}
+                                <button type="button" class="btn btn-xs btn-danger btn-disk-delete" data-disk_uuid="{{ disk.uuid }}">销毁</button>
                             </td>
                         </tr>
                     {% endfor %}
-                    {% if vms %}
-                        <tr title="批量操作">
-                            <td><input type="checkbox" data-check-target=".item-checkbox" /></td>
-                            <td colspan="10">
-                                <button class="btn btn-xs btn-primary" id="id-btn-batch-vm-start">开机</button>
-                                <button class="btn btn-xs btn-warning" id="id-btn-batch-vm-shutdown">正常关机</button>
-                                <button class="btn btn-xs btn-warning" id="id-btn-batch-vm-poweroff">强制断电</button>
-                                <button class="btn btn-xs btn-danger" id="id-btn-batch-vm-delete">删除</button>
-                                <button class="btn btn-xs btn-danger" id="id-btn-batch-vm-delete_force">强制删除
-                                </button>
-                            </td>
-                        </tr>
-                    {% endif %}
                 </table>
             </div>
             <div class="panel-footer">
@@ -167,6 +159,6 @@
 
 {% block script %}
     <script type="text/javascript" src="{% static 'vms/vms_common.js' %}"></script>
-    <script type="text/javascript" src="{% static 'vms/vms_list.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vdisk/vdisk_list.js' %}"></script>
 {% endblock %}
 

@@ -47,18 +47,24 @@ class VmManager(VirtAPI):
     '''
     虚拟机元数据管理器
     '''
-    def get_vm_by_uuid(self, uuid:str):
+    VmError = VmError
+
+    def get_vm_by_uuid(self, vm_uuid:str, related_fields:tuple=('mac_ip', 'host')):
         '''
         通过uuid获取虚拟机元数据
 
-        :param uuid: 虚拟机uuid hex字符串
+        :param vm_uuid: 虚拟机uuid hex字符串
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
         :return:
             Vm() or None     # success
 
         :raise:  VmError
         '''
+        qs = self.get_vms_queryset()
         try:
-            return Vm.objects.filter(uuid=uuid).first()
+            if related_fields:
+                qs.select_related(*related_fields)
+            return qs.filter(uuid=vm_uuid).first()
         except Exception as e:
             raise VmError(msg=str(e))
 
@@ -75,7 +81,7 @@ class VmManager(VirtAPI):
         :param user: 用户
         :return: QuerySet()
         '''
-        return Vm.objects.filter(user=user).all()
+        return self.get_vms_queryset().filter(user=user).all()
 
     def _xml_edit_vcpu(self, xml_desc:str, vcpu:int):
         '''
@@ -189,7 +195,7 @@ class VmManager(VirtAPI):
         if center_id <= 0 and group_id <= 0 and host_id <= 0 and user_id <= 0 and not search:
             if not all_no_filters:
                 raise VmError(msg='查询虚拟机条件无效')
-            return self.get_vms_queryset()
+            return self.get_vms_queryset().select_related('user', 'image', 'mac_ip', 'host').all()
 
         vm_queryset = None
         if host_id > 0:
@@ -213,7 +219,7 @@ class VmManager(VirtAPI):
                 vm_queryset = Vm.objects.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
                                                  Q(uuid__icontains=search)).all()
 
-        return vm_queryset
+        return vm_queryset.select_related('user', 'image', 'mac_ip', 'host').all()
 
     def get_vm_xml_desc(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -322,6 +328,8 @@ class VmArchiveManager:
     '''
     虚拟机归档管理类
     '''
+    VmError = VmError
+
     def add_vm_archive(self, vm:Vm):
         '''
         添加一个虚拟机的归档记录
@@ -388,6 +396,8 @@ class VmAPI:
     '''
     虚拟机API
     '''
+    VmError = VmError
+
     def __init__(self):
         self._center_manager = CenterManager()
         self._group_manager = GroupManager()
@@ -663,7 +673,7 @@ class VmAPI:
 
         :raise VmError
         '''
-        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
         if vm is None:
             raise VmError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
@@ -756,7 +766,7 @@ class VmAPI:
         if vcpu == 0 and mem == 0:
             return True
 
-        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
         if vm is None:
             raise VmError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
@@ -867,7 +877,7 @@ class VmAPI:
             raise e
 
         # 普通操作
-        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
         if vm is None:
             raise VmError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
@@ -901,7 +911,7 @@ class VmAPI:
 
         :raise VmError()
         '''
-        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
         if vm is None:
             raise VmError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
@@ -925,7 +935,7 @@ class VmAPI:
             True       # success
         :raise VmError()
         '''
-        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
         if vm is None:
             raise VmError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
@@ -951,23 +961,8 @@ class VmAPI:
 
         :raises: VmError
         '''
-        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        # 虚拟机的状态
-        host = vm.host
         try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
-
-        try:
-            vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid)
+            vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid, related_fields=('quota', 'quota__group'))
         except VdiskError as e:
             raise VmError(msg='查询硬盘时错误')
 
@@ -977,6 +972,24 @@ class VmAPI:
             raise VmError(msg='硬盘暂不可使用')
         if not vdisk.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此硬盘')
+
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        if host.group != vdisk.quota.group:
+            raise VmError(msg='虚拟机和硬盘不再同一个机组')
+
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         disk_list, dev_list = self._vm_manager.get_vm_vdisk_dev_list(vm=vm)
         if vdisk_uuid in disk_list:
@@ -988,7 +1001,7 @@ class VmAPI:
 
         # 硬盘元数据和虚拟机建立挂载关系
         try:
-            self._vdisk_manager.mount_to_vm(vdisk_uuid=vdisk_uuid, vm_uuid=vm_uuid, dev=dev)
+            self._vdisk_manager.mount_to_vm(vdisk_uuid=vdisk_uuid, vm=vm, dev=dev)
         except VdiskError as e:
             raise VmError(msg=str(e))
 
@@ -1029,7 +1042,7 @@ class VmAPI:
         :raises: VmError
         '''
         try:
-            vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid)
+            vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid, related_fields=('vm', 'vm__host'))
         except VdiskError as e:
             raise VmError(msg='查询硬盘时错误')
 
@@ -1039,20 +1052,17 @@ class VmAPI:
         if not vdisk.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此硬盘')
 
-        vm_uuid = vdisk.vm
-        if not vm_uuid:
+        vm = vdisk.vm
+        if not vm:
             return vdisk
 
-        vm = self._vm_manager.get_vm_by_uuid(uuid=vm_uuid)
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此虚拟机')
 
         # 虚拟机的状态
         host = vm.host
         try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
         except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:

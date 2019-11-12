@@ -5,7 +5,7 @@ from image.models import Image
 from compute.models import Host
 from network.models import MacIP
 from ceph.managers import RbdManager, CephClusterManager, RadosError
-from vdisk.manager import VdiskManager
+
 
 #获取用户模型
 User = get_user_model()
@@ -69,6 +69,10 @@ class Vm(models.Model):
     def hex_uuid(self, uuid):
         self.uuid = uuid
 
+    @property
+    def ipv4(self):
+        return self.mac_ip.ipv4
+
     def rm_sys_disk(self):
         '''
         删除系统盘
@@ -115,8 +119,7 @@ class Vm(models.Model):
         :return:
             QuerySet()
         '''
-        vm_uuid = self.get_uuid()
-        return VdiskManager().get_vm_vdisk_queryset(vm_uuid=vm_uuid)
+        self.vdisk_set.all()
 
     def get_vm_mounted_vdisk_count(self):
         '''
