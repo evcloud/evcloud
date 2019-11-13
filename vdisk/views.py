@@ -94,5 +94,23 @@ class VdiskView(View):
         return context
 
 
+class VdiskCreateView(View):
+    '''创建硬盘类视图'''
+    def get(self, request, *args, **kwargs):
+        center_id = str_to_int_or_default(request.GET.get('center_id', 0), 0)
 
+        try:
+            c_manager = CenterManager()
+            centers = c_manager.get_center_queryset()
+            groups = None
+            if center_id > 0:
+                groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
+        except ComputeError as e:
+            return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
+
+        context = {}
+        context['center_id'] = center_id if center_id > 0 else None
+        context['centers'] = centers
+        context['groups'] = groups
+        return render(request, 'vdisk_create.html', context=context)
 

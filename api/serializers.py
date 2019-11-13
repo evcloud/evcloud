@@ -186,6 +186,13 @@ class QuotaSimpleSerializer(serializers.Serializer):
         return {'id': group.id, 'name': group.name}
 
 
+class QuotaListSerializer(QuotaSimpleSerializer):
+    '''硬盘存储池配额列表序列化器'''
+    total = serializers.IntegerField()
+    size_used = serializers.IntegerField()
+    max_vdisk = serializers.IntegerField()
+
+
 class VdiskDetailSerializer(serializers.ModelSerializer):
     '''
     虚拟硬盘详细信息序列化器
