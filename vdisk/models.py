@@ -49,7 +49,8 @@ class Quota(models.Model):
             a = Vdisk.objects.filter(quota=self.id).aggregate(total=Sum('size'))
         except Exception as e:
             return -1
-        return a.get('total', -1)
+        size = a.get('total', -1)
+        return size  if isinstance(size, int) else 0
 
     def meet_needs(self,size:int):
         '''

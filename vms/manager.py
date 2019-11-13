@@ -528,7 +528,7 @@ class VmAPI:
             except ComputeError as e:
                 raise VmError(msg=f'获取宿主机list错误，{str(e)}')
         if not host_list:
-            raise VmError(msg='参数有误，未找到指定的可用宿主机')
+            raise VmError(msg='未找到指定的可用宿主机')
 
         return host_list
 
@@ -1068,7 +1068,7 @@ class VmAPI:
         if run:
             raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
 
-        # 向虚拟机挂载硬盘
+        # 从虚拟机卸载硬盘
         xml = vdisk.xml_desc()
         try:
             self._vm_manager.umount_disk(vm=vm, disk_xml=xml)

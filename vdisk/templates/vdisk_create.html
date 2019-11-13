@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}创建云硬盘{% endblock %}
+
+{% block head %}{% endblock %}
+
+{% block boby %}
+    <div class="col-md-offset-3 col-md-6 col-lg-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title">创建云硬盘</span>
+                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vdisk:vdisk-list' %}">
+                    云硬盘列表
+                </a></span>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal" >
+                    <div class="form-group">
+                        <label for="id-center" class="col-sm-offset-1 col-sm-2 control-label">分中心</label>
+                        <div class="col-sm-7">
+                            <select name="center_id" class="form-control" id="id-center">
+                                <option value="">--</option>
+                                {% for c in centers %}
+                                    <option value="{{ c.id }}" {% if c.id == center_id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                <form class="form-horizontal" id="id-form-create">
+                    <div class="form-group">
+                        <label for="id-group" class="col-sm-offset-1 col-sm-2 control-label">机组</label>
+                        <div class="col-sm-7">
+                            <select name="group_id" class="form-control" id="id-group">
+                                <option value="">--</option>
+                                {% for g in groups %}
+                                    <option value="{{ g.id }}" {% if g.id == group_id %}selected{% endif %}>{{ g.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-quota" class="col-sm-offset-1 col-sm-2 control-label">存储池</label>
+                        <div class="col-sm-7">
+                            <select name="quota_id" class="form-control" id="id-quota">
+                                <option value="">--</option>
+                                {% for v in vlans %}
+                                    <option value="{{ v.id }}" {% if v.id == vlan_id %}selected{% endif %}>{{ v.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-size" class="col-sm-offset-1 col-sm-2 control-label">容量大小</label>
+                        <div class="col-sm-7 form-inline">
+                            {% if user.is_superuser %}
+                                <input name="size" type="text" class="form-control" id="id-size" value="100">
+                            {% else %}
+                                <select name="size" class="form-control" id="id-size">
+                                    <option value="10">10</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="500">500</option>
+                                    <option value="1000">1000</option>
+                                    <option value="2000">2000</option>
+                                </select>
+                            {% endif %}
+                            <span>GB</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-remarks" class="col-sm-offset-1 col-sm-2 control-label">备注</label>
+                        <div class="col-sm-7">
+                            <input name="remarks" type="text" class="form-control" id="id-remarks">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <button type="submit" class="btn btn-primary">创建</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="panel-footer">
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'vms/vms_common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vdisk/vdisk_create.js' %}"></script>
+{% endblock %}

@@ -3,7 +3,15 @@
 {% load  sizeformat %}
 
 {% block head %}
-    <link rel="stylesheet" type="text/css" href="{% static 'vdisk/vdisk.css' %}">
+{#    <link rel="stylesheet" type="text/css" href="{% static 'vdisk/vdisk.css' %}">#}
+    <style>
+    .mouse-hover:hover .mouse-hover-show {
+        display: inline-block;
+    }
+    .mouse-hover-show {
+        display: none;
+    }
+    </style>
 {% endblock %}
 {% block title %}云硬盘列表{% endblock %}
 
@@ -12,7 +20,7 @@
         <div class="panel panel-default">
             <div class="panel-heading">
                 <span class="panel-title"><strong>云硬盘列表 ({{ count }})</strong></span>
-                <span><a class="btn btn-xs btn-primary pull-right" href="">
+                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vdisk:vdisk-create' %}">
                     创建云硬盘<span class="glyphicon glyphicon-plus"></span>
                 </a></span>
             </div>

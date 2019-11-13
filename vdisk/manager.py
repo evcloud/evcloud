@@ -91,6 +91,14 @@ class VdiskManager:
         qs = self.get_vdisk_queryset()
         return qs.filter(quota__in=quota_ids).all()
 
+    def get_quota_queryset(self):
+        '''
+        获取硬盘存储池配额查询集
+        :return:
+            QuerySet()
+        '''
+        return Quota.objects.all()
+
     def get_quota_queryset_by_group(self, group):
         '''
         获取宿主机组下的硬盘存储池配额查询集
@@ -99,7 +107,7 @@ class VdiskManager:
         :return:
             QuerySet()
         '''
-        return Quota.objects.filter(group=group).all()
+        return self.get_quota_queryset().filter(group=group).all()
 
     def get_quota_queryset_by_group_ids(self, group_ids:list):
         '''
@@ -109,7 +117,7 @@ class VdiskManager:
         :return:
             QuerySet()
         '''
-        return Quota.objects.filter(group__in=group_ids).all()
+        return self.get_quota_queryset().filter(group__in=group_ids).all()
 
     def get_quota_ids_by_group_ids(self, group_ids:list):
         '''
