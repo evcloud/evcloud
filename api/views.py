@@ -1398,7 +1398,7 @@ class QuotaViewSet(viewsets.GenericViewSet):
             queryset = manager.get_quota_queryset_by_group(group=group_id)
         else:
             queryset = manager.get_quota_queryset()
-        queryset.select_related('cephpool', 'cephpool__ceph', 'group')
+            queryset = queryset.select_related('cephpool', 'cephpool__ceph', 'group').all()
         try:
             page = self.paginate_queryset(queryset)
         except Exception as e:

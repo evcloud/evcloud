@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from vdisk.manager import VdiskManager, VdiskError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from utils.paginators import NumsPaginator
+from vms.manager import VmManager
 
 # Create your views here.
 User = get_user_model()
@@ -114,3 +115,51 @@ class VdiskCreateView(View):
         context['groups'] = groups
         return render(request, 'vdisk_create.html', context=context)
 
+
+class DiskMountToVmView(View):
+    '''硬盘挂载到虚拟机类视图'''
+    NUM_PER_PAGE = 20
+
+    def get(self, request, *args, **kwargs):
+        disk_uuid = kwargs.get('disk_uuid', '')
+        search = request.GET.get('search', '')
+
+        disk_manager = VdiskManager()
+        disk = disk_manager.get_vdisk_by_uuid(uuid=disk_uuid, related_fields=('quota', 'quota__group', 'vm'))
+        if not disk:
+            return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云硬盘不存在']})
+
+        context = {}
+        context['disk'] = disk
+        context['search'] = search
+        # 如果硬盘已被挂载
+        if disk.vm:
+            return render(request, 'vdisk_mount_to_vm.html', context=context)
+
+        group = disk.quota.group
+        user = request.user
+
+        vm_manager = VmManager()
+        related_fields = ('user', 'image', 'mac_ip')
+        try:
+            if user.is_superuser:
+                queryset = vm_manager.filter_vms_queryset(group_id=group.id, search=search, related_fields=related_fields)
+            else:
+                queryset = vm_manager.filter_vms_queryset(group_id=group.id, search=search, user_id=user.id, related_fields=related_fields)
+        except vm_manager.VmError as e:
+            return render(request, 'error.html', {'errors': ['查询挂载云主机列表时错误', str(e)]})
+
+        context = self.get_vms_list_context(request=request, queryset=queryset, context=context)
+        return render(request, 'vdisk_mount_to_vm.html', context=context)
+
+    def get_vms_list_context(self, request, queryset, context:dict):
+        # 分页显示
+        paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
+        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        vms_page = paginator.get_page(page_num)
+        page_nav = paginator.get_page_nav(vms_page)
+
+        context['page_nav'] = page_nav
+        context['vms'] = vms_page
+        context['count'] = paginator.count
+        return context
