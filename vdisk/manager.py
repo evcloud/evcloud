@@ -176,7 +176,7 @@ class VdiskManager:
         qs = self.get_vdisk_queryset()
         try:
             if related_fields:
-                qs.select_related(*related_fields)
+                qs = qs.select_related(*related_fields).all()
             return qs.filter(uuid=uuid).first()
         except Exception as e:
             raise VdiskError(msg=str(e))

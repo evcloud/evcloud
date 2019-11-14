@@ -63,7 +63,7 @@ class VmManager(VirtAPI):
         qs = self.get_vms_queryset()
         try:
             if related_fields:
-                qs.select_related(*related_fields)
+                qs = qs.select_related(*related_fields).all()
             return qs.filter(uuid=vm_uuid).first()
         except Exception as e:
             raise VmError(msg=str(e))
@@ -177,7 +177,8 @@ class VmManager(VirtAPI):
         '''
         return Vm.objects.filter(host=host_or_id).all()
 
-    def filter_vms_queryset(self, center_id:int=0, group_id:int=0, host_id:int=0, user_id:int=0, search:str='', all_no_filters:bool=False):
+    def filter_vms_queryset(self, center_id:int=0, group_id:int=0, host_id:int=0, user_id:int=0, search:str='',
+                            all_no_filters:bool=False, related_fields:tuple=()):
         '''
         通过条件筛选虚拟机查询集
 
@@ -187,15 +188,19 @@ class VmManager(VirtAPI):
         :param user_id: 用户id,大于0有效
         :param search: 关键字筛选条件
         :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
         :return:
             QuerySet    # success
 
         :raise: VmError
         '''
+        if not related_fields:
+            related_fields = ('user', 'image', 'mac_ip', 'host')
+
         if center_id <= 0 and group_id <= 0 and host_id <= 0 and user_id <= 0 and not search:
             if not all_no_filters:
                 raise VmError(msg='查询虚拟机条件无效')
-            return self.get_vms_queryset().select_related('user', 'image', 'mac_ip', 'host').all()
+            return self.get_vms_queryset().select_related(*related_fields).all()
 
         vm_queryset = None
         if host_id > 0:
@@ -219,7 +224,7 @@ class VmManager(VirtAPI):
                 vm_queryset = Vm.objects.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
                                                  Q(uuid__icontains=search)).all()
 
-        return vm_queryset.select_related('user', 'image', 'mac_ip', 'host').all()
+        return vm_queryset.select_related(*related_fields).all()
 
     def get_vm_xml_desc(self, host_ipv4:str, vm_uuid:str):
         '''

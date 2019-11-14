@@ -122,7 +122,7 @@
                                 {% if disk.is_mounted %}
                                     <button type="button" class="btn btn-xs btn-warning btn-disk-umount" data-disk_uuid="{{ disk.uuid }}">卸载</button>
                                 {% else %}
-                                    <button type="button" class="btn btn-xs btn-success btn-disk-mount" data-disk_uuid="{{ disk.uuid }}">挂载</button>
+                                    <a class="btn btn-xs btn-success" href="{% url 'vdisk:vdisk-mount-to-vm' disk_uuid=disk.uuid %}">挂载</a>
                                 {% endif %}
                                 <button type="button" class="btn btn-xs btn-danger btn-disk-delete" data-disk_uuid="{{ disk.uuid }}">销毁</button>
                             </td>
