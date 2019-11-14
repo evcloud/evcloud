@@ -112,6 +112,16 @@ class Vm(models.Model):
 
         return False
 
+    @property
+    def vdisks(self):
+        '''
+        获取挂载到虚拟机下的所有虚拟硬盘查询集
+
+        :return:
+            QuerySet()
+        '''
+        return self.vdisk_set.all()
+
     def get_mounted_vdisk_queryset(self):
         '''
         获取挂载到虚拟机下的所有虚拟硬盘查询集
@@ -119,7 +129,7 @@ class Vm(models.Model):
         :return:
             QuerySet()
         '''
-        self.vdisk_set.all()
+        return self.vdisks
 
     def get_vm_mounted_vdisk_count(self):
         '''

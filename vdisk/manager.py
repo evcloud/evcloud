@@ -337,7 +337,7 @@ class VdiskManager:
         return qs.count()
 
     def filter_vdisk_queryset(self, center_id: int = 0, group_id: int = 0, quota_id: int = 0, user_id: int = 0,
-                                search: str = '', all_no_filters: bool = False):
+                                search: str = '', all_no_filters: bool = False, related_fields:tuple=()):
         '''
         通过条件筛选虚拟机查询集
 
@@ -347,15 +347,20 @@ class VdiskManager:
         :param user_id: 用户id,大于0有效
         :param search: 关键字筛选条件
         :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
         :return:
             QuerySet    # success
 
         :raise: VdiskError
         '''
+        if not related_fields:
+            related_fields = ('user', 'quota', 'quota__group', 'vm', 'vm__mac_ip')
+
         if center_id <= 0 and group_id <= 0 and quota_id <= 0 and user_id <= 0 and not search:
             if not all_no_filters:
                 raise VdiskError(msg='查询条件无效')
-            return self.get_vdisk_queryset().select_related('user', 'quota', 'quota__group', 'vm', 'vm__mac_ip').all()
+
+            return self.get_vdisk_queryset().select_related(*related_fields).all()
 
         queryset = None
         if quota_id > 0:
@@ -377,7 +382,7 @@ class VdiskManager:
             else:
                 queryset = self.get_vdisk_queryset().filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()
 
-        return queryset.select_related('user', 'quota', 'quota__group', 'vm', 'vm__mac_ip').all()
+        return queryset.select_related(*related_fields).all()
 
     def modify_vdisk_remarks(self, uuid:str, remarks:str, user):
         '''

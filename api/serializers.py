@@ -130,24 +130,6 @@ class AuthTokenDumpSerializer(serializers.Serializer):
         return obj.created.strftime('%Y-%m-%d %H:%M:%S')
 
 
-class VdiskSerializer(serializers.ModelSerializer):
-    '''
-    虚拟硬盘序列化器
-    '''
-    group = serializers.SerializerMethodField()
-    quota = serializers.SerializerMethodField()
-    class Meta:
-        model = Vdisk
-        fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks', 'group')
-        depth = 0
-
-    def get_group(self, obj):
-        return obj.quota.group.name
-
-    def get_quota(self, obj):
-        return obj.quota.name
-
-
 class UserSimpleSerializer(serializers.Serializer):
     '''用户极简序列化器'''
     id = serializers.IntegerField()
@@ -193,16 +175,55 @@ class QuotaListSerializer(QuotaSimpleSerializer):
     max_vdisk = serializers.IntegerField()
 
 
+class VdiskSerializer(serializers.ModelSerializer):
+    '''
+    虚拟硬盘序列化器
+    '''
+    group = serializers.SerializerMethodField()
+    quota = serializers.SerializerMethodField()
+    vm = serializers.SerializerMethodField()
+    user = UserSimpleSerializer(required=False)  # May be an anonymous user
+    class Meta:
+        model = Vdisk
+        fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks', 'group')
+        depth = 0
+
+    def get_group(self, obj):
+        group = obj.quota.group
+        if not group:
+            return group
+        return {'id': group.id, 'name': group.name}
+
+    def get_quota(self, obj):
+        quota = obj.quota
+        if not quota:
+            return quota
+        return {'id': quota.id, 'name': quota.name}
+
+    def get_vm(self, obj):
+        vm = obj.vm
+        if vm:
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+        return vm
+
+
 class VdiskDetailSerializer(serializers.ModelSerializer):
     '''
     虚拟硬盘详细信息序列化器
     '''
     user = UserSimpleSerializer(required=False) # May be an anonymous user
     quota = QuotaSimpleSerializer(required=False)
+    vm = serializers.SerializerMethodField()
     class Meta:
         model = Vdisk
         fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks')
         depth = 1
+
+    def get_vm(self, obj):
+        vm = obj.vm
+        if vm:
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+        return vm
 
 
 class VdiskCreateSerializer(serializers.Serializer):
