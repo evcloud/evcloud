@@ -987,6 +987,13 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     schema=coreschema.String(description='查询关键字'),
                     description='查询关键字'
                 ),
+                coreapi.Field(
+                    name='mounted',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Boolean(description='true=已挂载；false=未挂载'),
+                    description='是否挂载查询条件'
+                ),
             ],
             'disk_mount': [
                 coreapi.Field(
@@ -1020,16 +1027,28 @@ class VDiskViewSet(viewsets.GenericViewSet):
               "previous": null,
               "results": [
                 {
-                  "uuid": "d38c784f14ee4d73a0e1143b8498efa4",
-                  "size": 20,
-                  "vm": "c58125f6916b4028864b46c7c0b02d99",
-                  "user": 1,
-                  "quota": "group1云硬盘存储池",
-                  "create_time": "2019-11-08T14:29:07.027888+08:00",
-                  "attach_time": "2019-11-08T14:32:22.311323+08:00",
+                  "uuid": "77a076b56220448f84700df51405e7df",
+                  "size": 11,
+                  "vm": {
+                    "uuid": "c58125f6916b4028864b46c7c0b02d99",
+                    "ipv4": "10.107.50.252"
+                  },
+                  "user": {
+                    "id": 1,
+                    "username": "shun"
+                  },
+                  "quota": {
+                    "id": 1,
+                    "name": "group1云硬盘存储池"
+                  },
+                  "create_time": "2019-11-13T16:56:20.278780+08:00",
+                  "attach_time": "2019-11-14T09:11:44.291782+08:00",
                   "enable": true,
-                  "remarks": "string",
-                  "group": "宿主机组1"
+                  "remarks": "test3",
+                  "group": {
+                    "id": 1,
+                    "name": "宿主机组1"
+                  }
                 }
               ]
             }
@@ -1039,21 +1058,30 @@ class VDiskViewSet(viewsets.GenericViewSet):
         quota_id = int(request.query_params.get('quota_id', 0))
         user_id = int(request.query_params.get('user_id', 0))
         search = request.query_params.get('search', '')
+        mounted = request.query_params.get('mounted', '')
 
         user = request.user
         manager = VdiskManager()
         try:
             if user.is_superuser: # 当前是超级用户，user_id查询参数有效
-                self.queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
+                queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
                                                               search=search, user_id=user_id, all_no_filters=True)
             else:
-                self.queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
+                queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
                                                               search=search, user_id=user.id)
         except VdiskError as e:
             return Response(data={'code': 400, 'code_text': f'查询云硬盘时错误, {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
+        if mounted == 'true':
+            queryset = queryset.filter(vm__isnull=False).all()
+        elif mounted == 'false':
+            queryset = queryset.filter(vm__isnull=True).all()
+
+        try:
+            page = self.paginate_queryset(queryset)
+        except Exception as e:
+            return Response(data={'code': 400, 'code_text': f'查询云硬盘时错误, {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
@@ -1186,7 +1214,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         return Response(data={
             'code': 200,
             'code_text': '获取云硬盘信息成功',
-            'vm': serializers.VdiskDetailSerializer(disk).data
+            'vm': self.get_serializer(disk).data
         })
 
     def destroy(self, request, *args, **kwargs):
@@ -1300,8 +1328,10 @@ class VDiskViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action in ['list', 'retrieve']:
+        if self.action == 'list':
             return serializers.VdiskSerializer
+        elif self.action == 'retrieve':
+            return serializers.VdiskDetailSerializer
         elif self.action == 'create':
             return serializers.VdiskCreateSerializer
         return Serializer

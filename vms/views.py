@@ -89,19 +89,9 @@ class VmsView(View):
         page_nav = paginator.get_page_nav(vms_page)
 
         context['page_nav'] = page_nav
-        context['vms'] = self.vm_list_with_vdisk(vms_page)
+        context['vms'] = vms_page
         context['count'] = paginator.count
         return context
-
-    def vm_list_with_vdisk(self, vms):
-        vms_list = []
-        manager = VdiskManager()
-        for vm in vms:
-            vdisk = manager.get_vm_vdisk_queryset(vm.hex_uuid)
-            vm.vdisks = vdisk
-            vms_list.append(vm)
-
-        return vms_list
 
 
 class VmCreateView(View):
@@ -128,3 +118,47 @@ class VmCreateView(View):
         context['vlans'] = VlanManager().get_vlan_queryset()
         return render(request, 'vms_create.html', context=context)
 
+
+class VmMountDiskView(View):
+    '''虚拟机挂载硬盘类视图'''
+    NUM_PER_PAGE = 20
+
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+        search = request.GET.get('search', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云主机不存在']})
+
+        group = vm.host.group
+        user = request.user
+
+        disk_manager = VdiskManager()
+        related_fields = ('user', 'quota', 'quota__group')
+        try:
+            if user.is_superuser:
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search, related_fields=related_fields)
+            else:
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search, user_id=user.id, related_fields=related_fields)
+        except VdiskError as e:
+            return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
+        queryset = queryset.filter(vm=None).all()
+        context = {}
+        context['vm'] = vm
+        context['search'] =search
+        context = self.get_vdisks_list_context(request=request, queryset=queryset, context=context)
+        return render(request, 'vm_mount_disk.html', context=context)
+
+    def get_vdisks_list_context(self, request, queryset, context:dict):
+        # 分页显示
+        paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
+        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        vms_page = paginator.get_page(page_num)
+        page_nav = paginator.get_page_nav(vms_page)
+
+        context['page_nav'] = page_nav
+        context['vdisks'] = vms_page
+        context['count'] = paginator.count
+        return context

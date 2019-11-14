@@ -68,7 +68,7 @@ class Image(models.Model):
 
     @property
     def fullname(self):
-        return self.name + ' ' + self.version
+        return f'{self.name} {self.version}'
 
     def save(self, *args, **kwargs):
         # super().save(*args, **kwargs)

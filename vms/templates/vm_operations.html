@@ -33,9 +33,7 @@
             <button class="btn btn-xs btn-danger btn-block btn_vm_delete_force" data-vm-uuid="{{ vm.hex_uuid }}">强制删除</button>
         </li>
         <li>
-            <button class="btn btn-xs btn-info btn-block"
-                    onclick="alert('暂不支持此操作');">挂载磁盘
-            </button>
+            <a class="btn btn-xs btn-info btn-block" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载磁盘</a>
         </li>
         <li>
             <button class="btn btn-xs btn-info btn-block"
