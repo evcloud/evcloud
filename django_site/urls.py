@@ -33,6 +33,7 @@ urlpatterns = [
     path('vms/',include('vms.urls', namespace='vms')),
     path('vdisk/',include('vdisk.urls', namespace='vdisk')),
     path('novnc/',include('novnc.urls', namespace='novnc')),
+    path('network/',include('network.urls', namespace='network')),
     path('apidocs/', get_swagger_view(title='EVCloud API'), name='apidocs'),
 ]
 

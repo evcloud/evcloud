@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load  sizeformat %}
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'network/vlan_list.css' %}">
+{% endblock %}
+{% block title %}IP列表{% endblock %}
+
+{% block boby %}
+    <div class="col-md-offset-1 col-md-10 col-lg-10">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title"><strong>IP列表</strong></span>
+                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'network:vlan_add' %}">
+                    <span class="glyphicon glyphicon-download-alt"></span> 导出配置文件
+                </a></span>
+            </div>
+            <div class="panel-body" style="min-height: 400px;">
+                <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                    <tr>
+                        <th>编号</th>
+                        <th>IP</th>
+                        <th>MAC</th>
+                        <th>主机编号</th>
+                        <th>状态</th>
+                    </tr>
+                    {% for macip in macips %}
+                    <tr>
+                        <th>{{ macip.id }}</th>
+                        <th>{{ macip.ipv4 }}</th>
+                        <th>{{ macip.mac }}</th>
+                        <th>{{ macip.host_uuid }}</th>
+                        <th>{{ macip.enable }}</th>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'network/vms_list.js' %}"></script>
+{% endblock %}
+
