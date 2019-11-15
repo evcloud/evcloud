@@ -12,7 +12,7 @@
         <div class="panel panel-default">
             <div class="panel-heading">
                 <span class="panel-title"><strong>IP列表</strong></span>
-                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'network:vlan_add' %}">
+                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'network:vlan_show' %}?vlan_id={{ vlan_id }}">
                     <span class="glyphicon glyphicon-download-alt"></span> 导出配置文件
                 </a></span>
             </div>
@@ -31,7 +31,12 @@
                         <th>{{ macip.ipv4 }}</th>
                         <th>{{ macip.mac }}</th>
                         <th>{{ macip.host_uuid }}</th>
-                        <th>{{ macip.enable }}</th>
+                        {% if macip.enable %}
+                        <th><span class="glyphicon glyphicon-ok"></span></th>
+                        {% endif %}
+                        {% if not macip.enable %}
+                        <th><span class="glyphicon glyphicon-remove"></span></th>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </table>
