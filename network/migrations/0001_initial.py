@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ('used', models.BooleanField(default=False, help_text='是否已分配给虚拟机使用', verbose_name='被使用')),
                 ('enable', models.BooleanField(default=True, help_text='是否可以被分配使用', verbose_name='开启使用')),
                 ('desc', models.TextField(blank=True, default='', verbose_name='备注说明')),
-                ('vlan', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='network.Vlan', verbose_name='VLAN子网')),
+                ('vlan', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='macips', to='network.Vlan', verbose_name='VLAN子网')),
             ],
             options={
                 'verbose_name': 'MAC IP地址',
