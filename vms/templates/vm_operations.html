@@ -12,7 +12,7 @@
             </button>
         </li>
         <li>
-            <button class="btn btn-xs btn-warning btn-block btn_vm_shutdown" data-vm-uuid="{{ vm.hex_uuid }}">
+            <button class="btn btn-xs btn-warning btn-block btn-vm-shutdown" data-vm-uuid="{{ vm.hex_uuid }}">
                 关机
             </button>
         </li>
@@ -22,15 +22,15 @@
             </button>
         </li>
         <li>
-            <button class="btn btn-xs btn-warning btn-block btn_vm_poweroff" data-vm-uuid="{{ vm.hex_uuid }}">
+            <button class="btn btn-xs btn-warning btn-block btn-vm-poweroff" data-vm-uuid="{{ vm.hex_uuid }}">
                 强制断电
             </button>
         </li>
         <li>
-            <button class="btn btn-xs btn-danger btn-block btn_vm_delete" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
+            <button class="btn btn-xs btn-danger btn-block btn-vm-delete" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
         </li>
         <li>
-            <button class="btn btn-xs btn-danger btn-block btn_vm_delete_force" data-vm-uuid="{{ vm.hex_uuid }}">强制删除</button>
+            <button class="btn btn-xs btn-danger btn-block btn-vm-delete-force" data-vm-uuid="{{ vm.hex_uuid }}">强制删除</button>
         </li>
         <li>
             <a class="btn btn-xs btn-info btn-block" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载磁盘</a>

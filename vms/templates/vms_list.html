@@ -75,7 +75,7 @@
                     {% for vm in vms %}
                         <tr id="tr_{{ vm.hex_uuid }}">
                             <td><input type="checkbox" class="item-checkbox" value="{{ vm.hex_uuid }}" name="select_vm"></td>
-                            <td title="{{ vm.hex_uuid }}"><b>{{ vm.mac_ip.ipv4 }}</b></td>
+                            <td title="{{ vm.hex_uuid }}"><a href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.mac_ip.ipv4 }}</b></a></td>
                             <td>{{ vm.user }}</td>
                             <td>{{ vm.image }}</td>
                             <td>{{ vm.host }}</td>
@@ -109,9 +109,7 @@
                             <td><span id="vm_task_{{ vm.hex_uuid }}"></span></td>
 
                             <td>
-                                {% with need_refresh='false' %}
-                                    {% include 'vm_operations.html' %}
-                                {% endwith %}
+                                {% include 'vm_operations.html' %}
                             </td>
                         </tr>
                     {% endfor %}
@@ -167,6 +165,7 @@
 
 {% block script %}
     <script type="text/javascript" src="{% static 'vms/vms_common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_list.js' %}"></script>
 {% endblock %}
 
