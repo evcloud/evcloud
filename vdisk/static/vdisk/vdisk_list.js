@@ -28,7 +28,7 @@
     $('.edit_disk_remark').click(function (e) {
         e.preventDefault();
 
-        vm_uuid = $(this).attr('data-disk_uuid');
+        vm_uuid = $(this).attr('data-disk-uuid');
         let div_show = $(this).parent();
         div_show.hide();
 		div_show.next().show();
@@ -36,14 +36,14 @@
 
     $('.save_disk_remark').click(function (e) {
         e.preventDefault();
-        let disk_uuid = $(this).attr('data-disk_uuid');
+        let disk_uuid = $(this).attr('data-disk-uuid');
         let dom_remark = $(this).prev();
         let remark = dom_remark.val();
         let div_edit = dom_remark.parent();
         let div_show = div_edit.prev();
 
         $.ajax({
-			url: '/api/v3/vdisk/' + disk_uuid + '/remark/?remark='+ remark,
+			url: build_absolute_url('/api/v3/vdisk/' + disk_uuid + '/remark/?remark='+ remark),
 			type: 'patch',
 			success:function(data){
 			    div_show.children("span:first").text(remark);
@@ -64,9 +64,9 @@
         if(!confirm("确定要卸载此硬盘吗？")){
             return
         }
-        let disk_uuid = $(this).attr('data-disk_uuid');
+        let disk_uuid = $(this).attr('data-disk-uuid');
         $.ajax({
-			url: '/api/v3/vdisk/' + disk_uuid + '/umount/',
+			url: build_absolute_url('/api/v3/vdisk/' + disk_uuid + '/umount/'),
 			type: 'patch',
             success: function (data, status_text) {
                 alert('已成功卸载硬盘');
@@ -88,11 +88,12 @@
         if(!confirm("确定要销毁此硬盘吗？")){
             return
         }
-        let disk_uuid = $(this).attr('data-disk_uuid');
+        let disk_uuid = $(this).attr('data-disk-uuid');
         $.ajax({
-			url: '/api/v3/vdisk/' + disk_uuid + '/',
+			url: build_absolute_url('/api/v3/vdisk/' + disk_uuid + '/'),
 			type: 'delete',
             success: function (data, status_text) {
+			    $("#tr_" + disk_uuid).remove();
                 alert('已成功销毁硬盘');
             },
             error: function (xhr, msg, err) {

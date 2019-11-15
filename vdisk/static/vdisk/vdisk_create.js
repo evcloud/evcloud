@@ -1,22 +1,5 @@
 ;(function f() {
 
-    //API域名
-    let DOMAIN_NAME = get_domain_url(); //'http://10.0.86.213:8000/';
-
-    // 获取API域名
-    function get_api_domain_name(){
-        return DOMAIN_NAME;
-    }
-
-    // 构建带域名url
-    function build_absolute_url(url){
-        let domain = get_api_domain_name();
-        domain = domain.rightStrip('/');
-        if(!url.startsWith('/'))
-            url = '/' + url;
-        return domain + url;
-    }
-
     //
     // 页面刷新时执行
     window.onload = function() {

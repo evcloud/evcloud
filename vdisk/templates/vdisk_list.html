@@ -107,24 +107,24 @@
                             <td>
                                 <div class="mouse-hover">
                                     <span>{{ disk.remarks|default_if_none:'' }}</span>
-                                    <span class="mouse-hover-show edit_disk_remark" data-disk_uuid="{{ disk.uuid }}" title="修改备注">
+                                    <span class="mouse-hover-show edit_disk_remark" data-disk-uuid="{{ disk.uuid }}" title="修改备注">
                                         <span class="glyphicon glyphicon-pencil"></span>
                                     </span>
                                 </div>
                                 <div id="remarks_edit" style="display:none">
                                     <textarea id="remarks">{{ disk.remarks|default_if_none:'' }}</textarea>
-                                    <span class="save_disk_remark" title="保存备注" data-disk_uuid="{{ disk.uuid }}">
+                                    <span class="save_disk_remark" title="保存备注" data-disk-uuid="{{ disk.uuid }}">
                                         <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
                                     </span>
                                 </div>
                             </td>
                             <td>
                                 {% if disk.is_mounted %}
-                                    <button type="button" class="btn btn-xs btn-warning btn-disk-umount" data-disk_uuid="{{ disk.uuid }}">卸载</button>
+                                    <button type="button" class="btn btn-xs btn-warning btn-disk-umount" data-disk-uuid="{{ disk.uuid }}">卸载</button>
                                 {% else %}
                                     <a class="btn btn-xs btn-success" href="{% url 'vdisk:vdisk-mount-to-vm' disk_uuid=disk.uuid %}">挂载</a>
                                 {% endif %}
-                                <button type="button" class="btn btn-xs btn-danger btn-disk-delete" data-disk_uuid="{{ disk.uuid }}">销毁</button>
+                                <button type="button" class="btn btn-xs btn-danger btn-disk-delete" data-disk-uuid="{{ disk.uuid }}">销毁</button>
                             </td>
                         </tr>
                     {% endfor %}
