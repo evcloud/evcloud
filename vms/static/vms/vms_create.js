@@ -17,6 +17,17 @@
         return domain + url;
     }
 
+    //
+    // 页面刷新时执行
+    window.onload = function() {
+        nav_active_display();
+    };
+
+    // 激活虚拟机列表导航栏
+    function nav_active_display() {
+        $("#nav_vm_list").addClass("active");
+    }
+
     /**
      * 拼接params对象为url参数字符串
      * @param {Object} obj - 待拼接的对象

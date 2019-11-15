@@ -1,4 +1,5 @@
 import re
+from io import StringIO
 
 from django.db import transaction
 
@@ -90,6 +91,11 @@ class VlanManager:
         return [*zip(subips, submacs)]
 
     def get_macips_by_vlan(self, vlan):
+        '''
+        获得vlan对应的所有macip记录
+        :param vlan:
+        :return: 直接返回查询结果
+        '''
         try:
             macips = MacIP.objects.filter(vlan=vlan)
         except Exception as error:
@@ -118,7 +124,7 @@ class VlanManager:
 
         for mac, ip in macips:
             lines += '\t' + 'host %s{hardware ethernet %s;fixed-address %s;}\n' % ('v_' + ip.replace('.', '_'), mac, ip)
-        return lines
+        return StringIO(lines)
 
 
 class MacIPManager:

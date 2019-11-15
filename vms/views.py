@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.views.generic.base import View
-from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
 
 from .manager import VmManager, VmError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from network.managers import VlanManager
+from vdisk.manager import VdiskManager, VdiskError
+from utils.paginators import NumsPaginator
 
 # Create your views here.
 User = get_user_model()
@@ -29,6 +30,8 @@ class VmsView(View):
     '''
     虚拟机类视图
     '''
+    NUM_PER_PAGE = 20   # Show num per page
+
     def get(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.GET.get('center', 0), 0)
         group_id = str_to_int_or_default(request.GET.get('group', 0), 0)
@@ -80,100 +83,16 @@ class VmsView(View):
 
     def get_vms_list_context(self, request, vms_queryset, context:dict):
         # 分页显示
-        paginator = Paginator(vms_queryset, 20)  # Show num vm per page
+        paginator = NumsPaginator(request, vms_queryset, self.NUM_PER_PAGE)
         page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
         vms_page = paginator.get_page(page_num)
-        page_nav = self.get_page_nav(request, vms_page, paginator)
+        page_nav = paginator.get_page_nav(vms_page)
 
         context['page_nav'] = page_nav
         context['vms'] = vms_page
         context['count'] = paginator.count
         return context
 
-    def get_page_nav(self, request, vms_page, paginator):
-        '''
-        页码导航栏相关信息
-
-        :return: dict
-            {
-                'previous': query_str, # str or None
-                'next': query_str,     # str or None
-                'page_list': [
-                    [page_num:int or str, query_str:str, active:bool],
-                ]
-            }
-        '''
-        page_list = []
-        current_page = vms_page.number
-        if paginator.num_pages >= 2:
-            page_list = list(range(max(current_page - 2, 1), min(current_page + 2, paginator.num_pages) + 1))
-            # 是否添加'...'
-            if (page_list[0] - 1) >= 2:  # '...'在左边
-                num = (current_page + 1) // 2
-                page_list.insert(0, ('...', num))
-            if (paginator.num_pages - page_list[-1]) >= 2:
-                num = (current_page + paginator.num_pages) // 2
-                page_list.append(('...', num))  # '...'在左边
-            # 是否添加第1页
-            if page_list[0] != 1:
-                page_list.insert(0, 1)
-            # 是否添加第最后一页
-            if page_list[-1] != paginator.num_pages:
-                page_list.append(paginator.num_pages)
-
-        page_nav = {}
-        page_nav['page_list'] = self.get_page_list(request, page_list, current_page)
-
-        # 上一页
-        if vms_page.has_previous():
-            page_nav['previous'] = self.build_page_url_query_str(request, vms_page.previous_page_number())
-        else:
-            page_nav['previous'] = None
-            # 下一页
-        if vms_page.has_next():
-            page_nav['next'] = self.build_page_url_query_str(request, vms_page.next_page_number())
-        else:
-            page_nav['next'] = None
-
-        return page_nav
-
-    def get_page_list(self, request, page_nums:list, current_page:int):
-        '''
-        构建页码导航栏 页码信息
-
-        :param page_nums:
-        :param current_page:
-        :return:
-            [[page_num:int, query_str:str, active:bool], ]
-        '''
-        page_list = []
-        for p in page_nums:
-            disp = p    # 页码显示内容
-            num = p     # 页码
-            if isinstance(p, tuple):
-                disp, num = p
-
-            active = False
-            query_str = self.build_page_url_query_str(request=request, page_num=num)
-            if num == current_page:
-                active = True
-
-            page_list.append([disp, query_str, active])
-
-        return page_list
-
-    def build_page_url_query_str(self, request, page_num:int):
-        '''
-        构建页码对应的url query参数字符串
-
-        :param request:
-        :param page_num: 页码
-        :return:
-            str
-        '''
-        querys = request.GET.copy()
-        querys.setlist('page', [page_num])
-        return querys.urlencode()
 
 class VmCreateView(View):
     '''创建虚拟机类视图'''
@@ -199,3 +118,60 @@ class VmCreateView(View):
         context['vlans'] = VlanManager().get_vlan_queryset()
         return render(request, 'vms_create.html', context=context)
 
+
+class VmMountDiskView(View):
+    '''虚拟机挂载硬盘类视图'''
+    NUM_PER_PAGE = 20
+
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+        search = request.GET.get('search', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云主机不存在']})
+
+        group = vm.host.group
+        user = request.user
+
+        disk_manager = VdiskManager()
+        related_fields = ('user', 'quota', 'quota__group')
+        try:
+            if user.is_superuser:
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search, related_fields=related_fields)
+            else:
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search, user_id=user.id, related_fields=related_fields)
+        except VdiskError as e:
+            return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
+        queryset = queryset.filter(vm=None).all()
+        context = {}
+        context['vm'] = vm
+        context['search'] =search
+        context = self.get_vdisks_list_context(request=request, queryset=queryset, context=context)
+        return render(request, 'vm_mount_disk.html', context=context)
+
+    def get_vdisks_list_context(self, request, queryset, context:dict):
+        # 分页显示
+        paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
+        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        vms_page = paginator.get_page(page_num)
+        page_nav = paginator.get_page_nav(vms_page)
+
+        context['page_nav'] = page_nav
+        context['vdisks'] = vms_page
+        context['count'] = paginator.count
+        return context
+
+
+class VmDetailView(View):
+    '''虚拟机详情类视图'''
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云主机不存在']})
+
+        return render(request, 'vm_detail.html', context={'vm': vm})

@@ -1,7 +1,13 @@
 #coding=utf-8
 import uuid
-from .models import Vdisk as DBVdisk
-from .vdisk import Vdisk
+
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
+
+from compute.managers import CenterManager, ComputeError
+from .models import Vdisk
+from .models import Quota
 
 class VdiskError(Exception):
     '''
@@ -30,72 +36,376 @@ class VdiskError(Exception):
 
         return '未知的错误'
 
-class Manager(object):
-    def create_vdisk(self, cephpool, size, group_id=None, vdisk_id=None):
-        if not vdisk_id:
-            vdisk_id = str(uuid.uuid4())
-        print(cephpool, vdisk_id, size)
-        create_success = cephpool.create(vdisk_id, size)
-        if create_success:
-            try:
-                db = DBVdisk()
-                db.uuid = vdisk_id
-                db.size = size
-                db.cephpool_id = cephpool.id
-                db.group_id = group_id
-                db.save()        
-            except Exception as e:
-                cephpool.rm(vdisk_id)
-                raise VdiskError(msg=f'云硬盘创建失败，写入数据库失败,{str(e)}')
-            else:
-                return vdisk_id
-        else:
-            raise VdiskError(msg='ceph create操作失败')
+class VdiskManager:
+    '''
+    虚拟硬盘管理器
+    '''
+    VdiskError = VdiskError
 
-    def get_vdisk_list(self, user_id=None, creator=None, cephpool_id=None, group_id=None, vm_uuid=None):
-        vdisk_list = DBVdisk.objects.all().order_by('-create_time')
-        if user_id:
-            vdisk_list = vdisk_list.filter(user_id=user_id)
-        if creator:
-            vdisk_list = vdisk_list.filter(creator=creator)
-        if cephpool_id:
-            vdisk_list = vdisk_list.filter(cephpool_id=cephpool_id)
-        if group_id:
-            vdisk_list = vdisk_list.filter(group_id=group_id)
-        if vm_uuid:
-            vdisk_list = vdisk_list.filter(vm=vm_uuid)
-        ret_list = []
-        for vdisk in vdisk_list:
-            ret_list.append(Vdisk(db=vdisk))
-        return ret_list
+    def get_vdisk_queryset(self):
+        '''
+        虚拟硬盘查询集
+        :return:
+            QuerySet()
+        '''
+        return Vdisk.objects.filter(deleted=False).all()
 
-    def get_vdisk_quota_by_group_id(self, group_id):
-        return 0
+    def get_enable_vdisk_queryset(self):
+        '''
+        所有有效的虚拟硬盘查询集
+        :return:
+            QuerySet()
+        '''
+        return self.get_vdisk_queryset().filter(enable=True).all()
 
-    def get_group_quota_by_group_id(self, group_id):
-        return 0
+    def get_user_vdisk_queryset(self, user):
+        '''
+        获取用户的硬盘查询集
 
-    def set_vdisk_quota(self, size):
-        '''目前使用Django admin模块维护数据，暂不使用此函数'''
-        return False
+        :param user: 用户对象或id
+        :return:
+            QuerySet()
+        '''
+        qs = self.get_vdisk_queryset()
+        return qs.filter(user=user).all()
 
-    def set_group_quota(self, size):
-        '''目前使用Django admin模块维护数据，暂不使用此函数'''
-        return False
+    def get_vdisk_queryset_by_quota(self, quota):
+        '''
+        获取硬盘存储池下的硬盘查询集
 
-    def get_vdisk_by_id(self, vdisk_id):
+        :param quota: 硬盘存储池配额对象或id
+        :return:
+            QuerySet()
+        '''
+        qs = self.get_vdisk_queryset()
+        return qs.filter(quota=quota).all()
+
+    def get_vdisk_queryset_by_quota_ids(self, quota_ids:list):
+        '''
+        获取硬盘存储池下的硬盘查询集
+
+        :param quota_ids: 硬盘存储池配额id list
+        :return:
+            QuerySet()
+        '''
+        qs = self.get_vdisk_queryset()
+        return qs.filter(quota__in=quota_ids).all()
+
+    def get_quota_queryset(self):
+        '''
+        获取硬盘存储池配额查询集
+        :return:
+            QuerySet()
+        '''
+        return Quota.objects.all()
+
+    def get_quota_queryset_by_group(self, group):
+        '''
+        获取宿主机组下的硬盘存储池配额查询集
+
+        :param group: 宿主机组对象或id
+        :return:
+            QuerySet()
+        '''
+        return self.get_quota_queryset().filter(group=group).all()
+
+    def get_quota_queryset_by_group_ids(self, group_ids:list):
+        '''
+        获取宿主机组下的硬盘存储池配额查询集
+
+        :param group_ids: 宿主机组id list
+        :return:
+            QuerySet()
+        '''
+        return self.get_quota_queryset().filter(group__in=group_ids).all()
+
+    def get_quota_ids_by_group_ids(self, group_ids:list):
+        '''
+        获取宿主机组下的硬盘存储池配额查询集
+
+        :param group_ids: 宿主机组id list
+        :return:
+            ids: list
+        '''
+        qs = self.get_quota_queryset_by_group_ids(group_ids)
+        return list(qs.values_list('id', flat=True).all())
+
+    def get_vdisk_queryset_by_group(self,group):
+        '''
+        宿主机组下的硬盘查询集
+
+        :param group: 宿主机组对象或id
+        :return:
+            QuerySet()
+        '''
+        quota_ids = self.get_quota_queryset_by_group(group=group).values_list('id', flat=True).all()
+        qs = self.get_vdisk_queryset()
+        if len(quota_ids) == 1:
+            return qs.filter(quota=quota_ids[0]).all()
+        return qs.filter(quota__in=quota_ids).all()
+
+    def get_vdisk_queryset_by_center(self, center):
+        '''
+        分中心下的硬盘查询集
+
+        :param center: 分中心对象或id
+        :return:
+            QuerySet()
+
+        :raises: VdiskError
+        '''
         try:
-            vdisk = DBVdisk.objects.get(uuid = vdisk_id)
-        except:
-            raise VdiskError(msg='云硬盘ID有误')
-        return Vdisk(db=vdisk)
+            group_ids = CenterManager().get_group_ids_by_center(center)
+        except ComputeError as e:
+            raise VdiskError(msg=str(e))
+        quota_ids = self.get_quota_ids_by_group_ids(group_ids)
+        qs = self.get_vdisk_queryset_by_quota_ids(quota_ids)
+        return qs
 
-    def get_mounted_vdisk_list(self, vmid):
-        vdisk_list = DBVdisk.objects.filter(vm = vmid)
-        ret_list = []
-        for vdisk in vdisk_list:
-            ret_list.append(Vdisk(db=vdisk))
-        return ret_list
+    def get_vdisk_by_uuid(self, uuid:str, related_fields:tuple=()):
+        '''
+        通过uuid获取虚拟机元数据
 
-    def get_mounted_vdisk_count(self, vmid):
-        return DBVdisk.objects.filter(vm = vmid).count()
+        :param uuid: 虚拟机uuid hex字符串
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
+        :return:
+            Vdisk() or None     # success
+
+        :raise:  VdiskError
+        '''
+        qs = self.get_vdisk_queryset()
+        try:
+            if related_fields:
+                qs = qs.select_related(*related_fields).all()
+            return qs.filter(uuid=uuid).first()
+        except Exception as e:
+            raise VdiskError(msg=str(e))
+
+    def create_vdisk(self, size:int, user, group=None, quota=None, remarks=''):
+        '''
+        创建一个虚拟云硬盘
+
+        备注：group和quota参数至少需要一个，优先使用quota参数；
+                当只有group参数时，通过group获取quota
+
+        :param group: 宿主机组对象或id
+        :param quota: 硬盘所属的云硬盘CEPH存储池对象或id
+        :param size: 硬盘的容量大小
+        :param user: 创建硬盘的用户
+        :param remarks: 备注信息
+        :return:
+            Vdisk()     # success
+
+        :raises: VdiskError
+        '''
+        if size <= 0:
+            raise VdiskError(msg='创建的硬盘大小必须大于0')
+
+        if quota:
+            if isinstance(quota, int):
+                quota = Quota.objects.filter(id=quota).first()
+            if not isinstance(quota, Quota):
+                raise VdiskError(msg='无效的quota或quota id')
+        elif group:
+            qs = self.get_quota_queryset_by_group(group=group)
+            quota = qs.first()
+            if not isinstance(quota, Quota):
+                raise VdiskError(msg='无效的group或group id')
+        else:
+            raise VdiskError(msg='至少需要一个有效的group或quota参数')
+
+        if not quota.check_disk_size_limit(size=size):
+            raise VdiskError(msg='超出了可创建硬盘最大容量')
+
+        if not quota.meet_needs(size=size):
+            raise VdiskError(msg='没有足够的存储容量创建硬盘')
+
+        # 向硬盘CEPH存储池申请容量
+        if not quota.claim(size=size):
+            raise VdiskError(msg='申请硬盘存储容量失败')
+
+        vd = Vdisk(size=size, quota=quota, user=user, remarks=remarks)
+        try:
+            vd.save() # save内会创建元数据和ceph rbd image
+        except Exception as e:
+            raise VdiskError(msg=str(e))
+
+        return vd
+
+    def mount_to_vm(self, vdisk_uuid:str, vm, dev):
+        '''
+        标记虚拟硬盘挂载到虚拟机,只是在硬盘元数据层面和虚拟机建立挂载关系
+
+        :param vdisk_uuid: 虚拟硬盘uuid
+        :param vm: 虚拟机对象
+        :param dev:
+        :return:
+            True
+
+        :raises: VdiskError
+        '''
+        try:
+            with transaction.atomic():
+                disk = Vdisk.objects.select_for_update().get(pk=vdisk_uuid)
+                # 硬盘已被挂载
+                if disk.vm:
+                    # 已挂载到此虚拟机
+                    if disk.vm == vm:
+                        return True
+
+                    raise VdiskError(msg='硬盘已被挂载到其他虚拟机')
+                # 挂载
+                if disk.enable == True:
+                    disk.vm = vm
+                    disk.attach_time = timezone.now()
+                    disk.dev = dev
+                    try:
+                        disk.save(update_fields=['vm', 'dev', 'attach_time'])
+                    except Exception:
+                        raise VdiskError(msg='更新元数据失败')
+                else:
+                    raise VdiskError(msg='硬盘已暂停使用')
+        except Vdisk.DoesNotExist as e:
+            raise VdiskError(msg='硬盘不存在')
+        return True
+
+    def umount_from_vm(self, vdisk_uuid:str):
+        '''
+        从虚拟机卸载虚拟硬盘,只是在硬盘元数据层面和虚拟机解除挂载关系
+
+        :param vdisk_uuid: 虚拟硬盘uuid
+        :return:
+            True
+
+        :raises: VdiskError
+        '''
+        try:
+            with transaction.atomic():
+                disk = Vdisk.objects.select_for_update().get(pk=vdisk_uuid)
+                # 硬盘未挂载
+                if not disk.vm:
+                    return True
+
+                # 卸载
+                disk.vm = None
+                disk.dev = ''
+                try:
+                    disk.save(update_fields=['vm', 'dev'])
+                except Exception:
+                    raise VdiskError(msg='更新元数据失败')
+        except Vdisk.DoesNotExist as e:
+            raise VdiskError(msg='硬盘不存在')
+        return True
+
+    def umount_all_from_vm(self, vm_uuid:str):
+        '''
+        从虚拟机卸载所有虚拟硬盘,只是在硬盘元数据层面和虚拟机解除挂载关系
+
+        :param vm_uuid: 虚拟机uuid
+        :return:
+            rows: int   # 卸载数量
+
+        :raises: VdiskError
+        '''
+        with transaction.atomic():
+            try:
+                rows = Vdisk.objects.select_for_update().filter(vm=vm_uuid).update(vm='', dev=None)
+            except Exception:
+                raise VdiskError(msg='更新元数据失败')
+
+        return rows
+
+    def get_vm_vdisk_queryset(self, vm_uuid:str):
+        '''
+        获取挂载到指定虚拟机下的所有虚拟硬盘查询集
+
+        :param vm_uuid: 虚拟机uuid
+        :return:
+            QuerySet()
+        '''
+        return self.get_vdisk_queryset().filter(vm=vm_uuid).all()
+
+    def get_vm_mounted_vdisk_count(self, vm_uuid:str):
+        '''
+        获取虚拟机下已挂载虚拟硬盘的数量
+
+        :param vm_uuid: 虚拟机uuid
+        :return:
+            int
+        '''
+        qs = self.get_vm_vdisk_queryset(vm_uuid=vm_uuid)
+        return qs.count()
+
+    def filter_vdisk_queryset(self, center_id: int = 0, group_id: int = 0, quota_id: int = 0, user_id: int = 0,
+                                search: str = '', all_no_filters: bool = False, related_fields:tuple=()):
+        '''
+        通过条件筛选虚拟机查询集
+
+        :param center_id: 分中心id,大于0有效
+        :param group_id: 宿主机组id,大于0有效
+        :param quota_id: 硬盘存储池配额id,大于0有效
+        :param user_id: 用户id,大于0有效
+        :param search: 关键字筛选条件
+        :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
+        :return:
+            QuerySet    # success
+
+        :raise: VdiskError
+        '''
+        if not related_fields:
+            related_fields = ('user', 'quota', 'quota__group', 'vm', 'vm__mac_ip')
+
+        if center_id <= 0 and group_id <= 0 and quota_id <= 0 and user_id <= 0 and not search:
+            if not all_no_filters:
+                raise VdiskError(msg='查询条件无效')
+
+            return self.get_vdisk_queryset().select_related(*related_fields).all()
+
+        queryset = None
+        if quota_id > 0:
+            queryset = self.get_vdisk_queryset_by_quota(quota=quota_id)
+        elif group_id > 0:
+            queryset = self.get_vdisk_queryset_by_group(group_id)
+        elif center_id > 0:
+            queryset = self.get_vdisk_queryset_by_center(center_id)
+
+        if user_id > 0:
+            if queryset is not None:
+                queryset = queryset.filter(user=user_id).all()
+            else:
+                queryset = self.get_user_vdisk_queryset(user_id)
+
+        if search:
+            if queryset:
+                queryset = queryset.filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()
+            else:
+                queryset = self.get_vdisk_queryset().filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()
+
+        return queryset.select_related(*related_fields).all()
+
+    def modify_vdisk_remarks(self, uuid:str, remarks:str, user):
+        '''
+        修改硬盘的备注信息
+
+        :param uuid: 硬盘uuid
+        :param remarks: 新的备注信息
+        :param user: 用户
+        :return:
+            Vdisk() # success
+        :raise:  VdiskError
+        '''
+        disk = self.get_vdisk_by_uuid(uuid=uuid)
+        if not disk:
+            raise VdiskError(msg='硬盘不存在')
+
+        if not disk.user_has_perms(user):
+            raise VdiskError(msg='没有权限访问此硬盘')
+
+        disk.remarks = remarks
+        try:
+            disk.save()
+        except Exception as e:
+            raise VdiskError(msg=str(e))
+
+        return disk

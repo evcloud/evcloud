@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 
 <html lang="zh-hans">
 <head>
@@ -7,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="/static/admin/css/login.css">
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" type="text/css" href="/static/admin/css/responsive.css">
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-3.3.7/css/bootstrap.min.css' %}">
     <meta name="robots" content="NONE,NOARCHIVE">
 </head>
 <body class=" login"
@@ -40,8 +42,10 @@
                     <input type="hidden" name="next" value="{{request.GET.next}}">
                     <input type="hidden" name="this_is_the_login_form" value="1" />
                 </div>
-                <div class="submit-row">
-                    <label>&nbsp;</label><input type="submit" value="登录">
+                <div class="form-row">
+                    <input type="submit" value="登录">
+                    <a class="btn text-warning" href="{% url 'users:forget' %}">忘记密码</a>
+                    <a class="btn btn-info pull-right" href="{% url 'users:register' %}">注册</a>
                 </div>
             </form>
         </div>

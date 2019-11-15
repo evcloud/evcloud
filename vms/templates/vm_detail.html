@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load  sizeformat %}
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
+{% endblock %}
+{% block title %}云主机详情{% endblock %}
+
+{% block boby %}
+    <div class="col-md-offset-1 col-md-10 col-lg-10">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title"><strong>云主机详情</strong></span>
+                <div class="pull-right">
+                    <a class="btn btn-xs btn-success" href="{% url 'vms:vm-create' %}">创建云主机</a>
+                    <a class="btn btn-xs btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">云主机列表</a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="text-center h3">
+                    <span id="id-vm-uuid">{{ vm.hex_uuid }}</span>
+                    {% include 'vm_operations.html' %}
+                    <span class="h5" id="vm_task_{{ vm.hex_uuid }}"></span>
+                </div>
+                <div>
+                    <ul class="list-group">
+                        <li class="list-group-item list-group-item-info">
+                            <div class="row">
+                                <div class="col-md-2">
+{#                                    <span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span>#}
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="col-md-4">
+                                        <strong>运行状态：</strong><span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span>
+                                        <span class="btn btn-sm btn-update-vm-status"><span class="glyphicon glyphicon-refresh"></span></span>
+                                    </div>
+                                    <div class="col-md-4"><strong>创建者：</strong>{{vm.user}}</div>
+                                    <div class="col-md-4"><strong>创建时间：</strong>{{vm.create_time}}</div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item list-group-item-success">
+                            <div class="row">
+                                <div class="col-md-2"><strong>位置信息</strong></div>
+                                <div class="col-md-10">
+                                    <div class="col-md-4"><strong>所属分中心：</strong>{{ vm.host.group.center.name }}</div>
+                                    <div class="col-md-4"><strong>所属集群：</strong>{{ vm.host.group.name }}</div>
+                                    <div class="col-md-4"><strong>宿主机IP：</strong>{{ vm.host.ipv4 }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item list-group-item-warning">
+                            <div class="row row_style">
+                                <div class="col-md-2"><strong>配置信息</strong></div>
+                                <div class="col-md-10">
+                                    <div class="col-md-4"><strong>CPU：</strong>{{ vm.vcpu }}</div>
+                                    <div class="col-md-4"><strong>MEMORY：</strong>{{ vm.mem|sizeformat:'MB' }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item list-group-item-danger">
+                            <div class="row">
+                                <div class="col-md-2"><strong>镜像信息</strong></div>
+                                <div class="col-md-10">
+                                    <div class="col-md-4"><strong>系统镜像</strong>：{{ vm.image }}</div>
+                                    <div class="col-md-4"><strong>CEPH集群</strong>：{{ vm.image.ceph_pool.ceph.name }}</div>
+                                    <div class="col-md-4"><strong>Pool Name</strong>：{{ vm.image.ceph_pool.pool_name }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item list-group-item-info">
+                            <div class="row">
+                                <div class="col-md-2"><strong>网络信息</strong></div>
+                                <div class="col-md-10">
+                                    <div class="col-md-4"><strong>IP：</strong>{{vm.ipv4}}</div>
+                                    <div class="col-md-4"><strong>MAC：</strong>{{ vm.mac_ip.mac }}</div>
+                                    <div class="col-md-4"><strong>子网：</strong>{{ vm.mac_ip.vlan }}</div>
+                                    <div class="col-md-4"><strong>网桥br：</strong>{{ vm.mac_ip.vlan.br }}</div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item list-group-item-success">
+                            <div class="row">
+                                <div class="col-md-2"><strong>备注信息</strong></div>
+                                <div class="col-md-10">
+                                    <p>{{ vm.remarks|default:'无' }}</p>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <p><strong>云硬盘</strong></p>
+                            {% if vm.vdisks %}
+                                <table class="table table-default table-disk-list"
+                                       style="word-wrap:break-word;word-break:break-all;">
+                                    <tr>
+                                        <th>设备</th>
+                                        <th>UUID</th>
+                                        <th>机组</th>
+                                        <th>存储池</th>
+                                        <th>容量</th>
+                                        <th>用户</th>
+                                        <th>创建时间</th>
+                                        <th>状态</th>
+                                        <th>备注</th>
+                                        <th>操作</th>
+                                    </tr>
+                                    {% for disk in vm.vdisks %}
+                                        <tr id="tr_{{ disk.uuid }}">
+                                            <td>{{ disk.dev }}</td>
+                                            <td><b>{{ disk.uuid }}</b></td>
+                                            <td>{{ disk.quota.group }}</td>
+                                            <td>{{ disk.quota }}</td>
+                                            <td>{{ disk.size|sizeformat:'GB' }}</td>
+                                            <td>{{ disk.user }}</td>
+                                            <td>{{ disk.create_time }}</td>
+                                            <td>
+                                                {% if disk.enable %}
+                                                    <span class="glyphicon glyphicon-ok"></span>
+                                                {% else %}
+                                                    <span class="glyphicon glyphicon-ok"></span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span>{{ disk.remarks|default_if_none:'' }}</span>
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-xs btn-success btn-disk-umount"
+                                                        data-disk-uuid="{{ disk.uuid }}">卸载
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
+                            {% else %}
+                                未挂载云硬盘
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'vms/vms_common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_detail.js' %}"></script>
+{% endblock %}
+
