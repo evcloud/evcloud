@@ -2,6 +2,9 @@ import os
 
 import rados, rbd  #yum install python36-rbd.x86_64 python-rados.x86_64
 
+from .models import CephCluster
+
+
 class RadosError(rados.Error):
     '''def __init__(self, message, errno=None)'''
     pass
@@ -169,8 +172,52 @@ class RbdManager:
         except Exception as e:
             raise RadosError(f'rename_image error:{str(e)}')
 
+    def create_image(self, name:str, size:int):
+        '''
+        Create an rbd image.
+
+        :param name: what the image is called
+        :param size: how big the image is in bytes
+        :return:
+            True    # success
+            None    # image already exists
+
+        :raises: FunctionNotSupported, RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            with cluster.open_ioctx(self.pool_name) as ioctx:
+                rbd.RBD().create(ioctx=ioctx, name=name, size=size)
+        except rbd.ImageExists as e:
+            return None
+        except (TypeError, rbd.InvalidArgument, Exception) as e:
+            raise RadosError(f'create_image error:{str(e)}')
+
+        return True
 
 
+class CephClusterManager:
+    '''
+    CEPH集群管理器
+    '''
+
+    def get_ceph_by_id(self, ceph_id: int):
+        '''
+        通过id获取ceph集群配置对象
+
+        :param ceph_id: ceph集群id
+        :return:
+            Host() # success
+            None    #不存在
+        :raise RadosError
+        '''
+        if not isinstance(ceph_id, int) or ceph_id <= 0:
+            raise RadosError('CEPH集群ID参数有误')
+
+        try:
+            return CephCluster.objects.filter(id=ceph_id).first()
+        except Exception as e:
+            raise RadosError(f'查询CEPH集群时错误,{str(e)}')
 
 
 

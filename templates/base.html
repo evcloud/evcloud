@@ -20,12 +20,17 @@
                     <span class="icon-bar"></span>
                 </button>
                 <a class="navbar-brand" href="#">
-                    EVCloud
+                    EVCloud云主机
                 </a>
             </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse navbar-right" id="bs-example-navbar-collapse-1">
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
+                    <li id="nav_vm_list"><a href="{% url "vms:vms-list" %}">云主机</a></li>
+                    <li id="nav_vdisk_list"><a href="{% url "vdisk:vdisk-list" %}">云硬盘</a></li>
+                    <li id="nav_vlan_list"><a href="{% url "network:vlan_list" %}">网络</a></li>
+                </ul>
+                <ul class="nav navbar-nav  navbar-right">
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                            aria-expanded="false">帮助&文档<span class="caret"></span></a>
@@ -42,7 +47,7 @@
                                        aria-expanded="false"><span class="glyphicon glyphicon-user" aria-hidden="true"></span>{{ user.username }} <span class="caret"></span></a>
                                     <ul class="dropdown-menu">
                                         <li><a href="{% url 'users:logout' %}?next=/">登出</a></li>
-{#                                        <li><a href="{% url 'users:change_password' %}">修改密码</a></li>#}
+                                        <li><a href="{% url 'users:change_password' %}">修改密码</a></li>
                                         <li role="separator" class="divider"></li>
                                         {% if user.is_superuser %}
                                             <li><a href="{% url 'admin:index' %}">后台管理</a></li>
@@ -51,7 +56,7 @@
                                 </li>
                             {% else %}
                                 <li><a href="{% url 'users:login' %}">登录</a></li>
-{#                                <li><a href="{% url 'users:register' %}">注册</a></li>#}
+                                <li><a href="{% url 'users:register' %}">注册</a></li>
                             {% endif %}
                         </ul>
                     </li>

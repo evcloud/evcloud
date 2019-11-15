@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block boby %}
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-offset-4 col-sm-4">
+                {% if tips_msg %}
+                    <div>
+                        <div class="alert alert-warning alert-dismissible" role="alert">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                                    aria-hidden="true">&times;</span></button>
+                            {{ tips_msg }}
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="panel panel-default panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">{{ form_title }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form method="POST" action="{{ action_url }}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                {% if field.is_hidden %}
+                                    {{ field }}
+                                {% else %}
+                                    {{ field.label_tag }}{{ field }}
+                                    <p class="text-danger">{{ field.errors.as_text }}</p>
+                                {% endif %}
+                            {% endfor %}
+                            <p id="tip_text" class="text-danger pull-left">{{ form.non_field_errors.as_text }}</p>
+                            <div class="clearfix"></div>
+                            <button type="submit" class="btn btn-primary pull-left">{{ submit_text }}</button>
+                        </form>
+                        {% block form_extend %}{% endblock %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

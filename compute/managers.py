@@ -75,7 +75,7 @@ class CenterManager:
         else:
             center = center_or_id
 
-        ids = list(center.group_set.values_list('id').all())
+        ids = list(center.group_set.values_list('id', flat=True).all())
         return ids
 
     def get_center_queryset(self):
@@ -164,7 +164,7 @@ class CenterManager:
         :raise ComputeError
         '''
         cephs = self.get_ceph_queryset_by_center(center_or_id)
-        ids = list(cephs.values_list('id').all())
+        ids = list(cephs.values_list('id', flat=True).all())
         return ids
 
     def get_pool_queryset_by_center(self, center_or_id):
@@ -177,7 +177,7 @@ class CenterManager:
         :raise ComputeError
         '''
         ceph_ids = self.get_ceph_ids_by_center(center_or_id)
-        return CephPool.objects.filter(ceph__in=ceph_ids).all()
+        return CephPool.objects.filter(ceph__in=ceph_ids, enable=True).all()
 
     def get_pool_ids_by_center(self, center_or_id):
         '''
@@ -189,7 +189,7 @@ class CenterManager:
         :raise ComputeError
         '''
         pools = self.get_pool_queryset_by_center(center_or_id)
-        return list(pools.values_list('id').all())
+        return list(pools.values_list('id', flat=True).all())
 
     def get_image_queryset_by_center(self, center_or_id):
         '''
@@ -201,7 +201,7 @@ class CenterManager:
         :raise ComputeError
         '''
         pool_ids = self.get_pool_ids_by_center(center_or_id)
-        return Image.objects.filter(ceph_pool__in=pool_ids).all()
+        return Image.objects.filter(ceph_pool__in=pool_ids, enable=True).all()
 
 
 class GroupManager:
@@ -244,7 +244,7 @@ class GroupManager:
         else:
             group = group_or_id
 
-        return group.hosts_set.all()
+        return group.hosts_set.filter(enable=True).all()
 
     def get_host_ids_by_group(self,  group_or_id):
         '''
@@ -258,30 +258,10 @@ class GroupManager:
         hosts = self.get_host_queryset_by_group(group_or_id)
 
         try:
-            ids = list(hosts.values_list('id').all())
+            ids = list(hosts.values_list('id', flat=True).all())
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
         return ids
-
-    def get_host_queryset_by_group_vlan(self, group_or_id, vlan_id:int):
-        '''
-        通过宿主机组对象和id获取宿主机查询集
-
-        :param group_or_id: 宿主机组对象和id
-        :return:
-            QuerySet   # success
-        :raise ComputeError
-        '''
-        if isinstance(group_or_id, int):
-            if group_or_id <= 0:
-                raise ComputeError(msg='无效的group id')
-            group = self.get_group_by_id(group_or_id)
-        elif not isinstance(group_or_id, Group):
-            raise ComputeError(msg='无效的group or id')
-        else:
-            group = group_or_id
-
-        return group.hosts_set.all()
 
     def get_hsot_queryset_by_group_ids(self, ids:list):
         '''
@@ -304,7 +284,7 @@ class GroupManager:
         '''
         hosts = self.get_hsot_queryset_by_group_ids(ids)
         try:
-            ids = list(hosts.values_list('id').all())
+            ids = list(hosts.values_list('id', flat=True).all())
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
         return ids
@@ -402,7 +382,6 @@ class HostManager:
 
         return qs
 
-
     def get_hosts_queryset_by_group_vlan(self, group_or_id, vlan:Vlan):
         '''
         获取宿指定主机组，并且包含指定vlan的所有宿主机元数据模型对象查询集
@@ -425,7 +404,7 @@ class HostManager:
         if not isinstance(vlan, Vlan):
             raise ComputeError(msg='请输入一个子网Vlan对象')
 
-        return  vlan.vlan_hosts.filter(group=group).all()
+        return  vlan.vlan_hosts.filter(group=group, enable=True).all()
 
     def get_hosts_by_group_and_vlan(self, group_or_id, vlan:Vlan):
         '''
@@ -444,7 +423,6 @@ class HostManager:
             return list(hosts_qs)
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
-
 
     def claim_from_host(self, host_id:int, vcpu:int, mem:int):
         '''
@@ -533,6 +511,6 @@ class HostManager:
             if host:
                 return host
 
-        return
+        return None
 
 

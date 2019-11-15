@@ -15,7 +15,7 @@ class CephClusterAdmin(admin.ModelAdmin):
 @admin.register(CephPool)
 class CephPoolAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'pool_name')
-    list_display = ( 'id', 'pool_name', 'ceph')
+    list_display = ( 'id', 'pool_name', 'ceph', 'remarks')
     # list_filter = ['ceph']
     # search_fields = ['pool_name']
 

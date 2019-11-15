@@ -36,6 +36,23 @@ function get_domain_url() {
     return origin + '/';
 }
 
+//API域名
+let DOMAIN_NAME = get_domain_url();
+
+// 获取API域名
+function get_api_domain_name(){
+    return DOMAIN_NAME;
+}
+
+// 构建带域名url
+function build_absolute_url(url){
+    let domain = get_api_domain_name();
+    domain = domain.rightStrip('/');
+    if(!url.startsWith('/'))
+        url = '/' + url;
+    return domain + url;
+}
+
 function getCookie(name) {
     var cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -85,3 +102,6 @@ function getForm2Obj(form_node) {
 
     return o;
 }
+
+
+

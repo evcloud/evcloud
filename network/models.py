@@ -49,14 +49,20 @@ class Vlan(models.Model):
         获得该子网已经生成，但尚未使用的ip数量
         :return: int
         '''
-        return MacIP.objects.filter(id=self, used=False, enable=True).count()
+        return self.macips.filter(used=False, enable=True).count()
 
     def get_ip_number(self):
         '''
         获得该子网已经生成的所有ip数量
         :return: int
         '''
-        return MacIP.objects.filter(id=self, enable=True).count()
+        return self.macips.filter(enable=True).count()
+
+    @property
+    def free_ip(self):
+        free_ip_number = self.get_free_ip_number()
+        ip_number = self.get_ip_number()
+        return f'{free_ip_number}/{ip_number}'
 
 
 class MacIP(models.Model):
@@ -66,19 +72,26 @@ class MacIP(models.Model):
     分配给虚拟机的IP地址
     '''
     id = models.AutoField(primary_key=True)
-    vlan = models.ForeignKey(to=Vlan, on_delete=models.SET_NULL, null=True, verbose_name='VLAN子网') # IP所属的vlan局域子网
+    vlan = models.ForeignKey(to=Vlan, on_delete=models.SET_NULL, related_name='macips', null=True, verbose_name='VLAN子网') # IP所属的vlan局域子网
     mac = models.CharField(verbose_name='MAC地址', max_length=17, unique=True)
     ipv4 = models.GenericIPAddressField(verbose_name='IP地址', unique=True)
     used = models.BooleanField(verbose_name='被使用', default=False, help_text='是否已分配给虚拟机使用')
     enable = models.BooleanField(verbose_name='开启使用', default=True, help_text='是否可以被分配使用')
     desc = models.TextField(verbose_name='备注说明', default='', blank=True)
 
-    def __str__(self):
-        return self.ipv4
-
     class Meta:
         verbose_name = 'MAC IP地址'
         verbose_name_plural = '07_MAC IP地址'
+
+    def __str__(self):
+        return self.ipv4
+
+    def get_detail_str(self):
+        return f'id={self.id};mac={self.mac};ipv4={self.ipv4};'
+
+    @property
+    def host_uuid(self):
+        return self.ip_vm.uuid
 
     def can_used(self):
         '''
