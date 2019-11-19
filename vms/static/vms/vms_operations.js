@@ -43,6 +43,12 @@ function build_vm_operations_api(vm_uuid){
     return build_absolute_url(url);
 }
 
+// 虚拟机系统快照创建api构建
+function build_vm_snap_create_api(vm_uuid, remarks){
+    let url = 'api/v3/vms/' + vm_uuid + '/snap/' + '?remark=' + remarks;
+    return build_absolute_url(url);
+}
+
 // 启动虚拟机
 function start_vm_ajax(vm_uuid, before_func, complate_func){
     let api = build_vm_operations_api(vm_uuid);
@@ -187,6 +193,37 @@ function delete_vm_ajax(vm_uuid, op='delete', before_func, success_func, complat
                 msg = '删除虚拟机失败,' + data.code_text;
             }
             alert(msg);
+            if(typeof(complate_func) === "function"){
+                complate_func();
+            }
+        }
+    });
+}
+
+
+// 创建虚拟机系统快照
+function create_snap_vm_ajax(vm_uuid, remarks, before_func, success_func, complate_func){
+    let api = build_vm_snap_create_api(vm_uuid, remarks);
+    if(typeof(before_func) === "function"){
+        before_func();
+    }
+    $.ajax({
+        url: api,
+        type: 'post',
+        success: function (data, status_text) {
+            if(typeof(success_func) === "function"){
+                success_func(data);
+            }
+        },
+        error: function (xhr, msg, err) {
+            data = xhr.responseJSON;
+            msg = '创建主机快照失败';
+            if (data.hasOwnProperty('code_text')){
+                msg = '创建主机快照失败,' + data.code_text;
+            }
+            alert(msg);
+        },
+        complete:function (xhr, ts) {
             if(typeof(complate_func) === "function"){
                 complate_func();
             }

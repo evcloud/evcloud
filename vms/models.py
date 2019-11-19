@@ -1,10 +1,12 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 
 from image.models import Image
 from compute.models import Host
 from network.models import MacIP
 from ceph.managers import RbdManager, CephClusterManager, RadosError
+from ceph.models import CephPool
 
 
 #获取用户模型
@@ -122,6 +124,10 @@ class Vm(models.Model):
         '''
         return self.vdisk_set.all()
 
+    @property
+    def sys_snaps(self):
+        return self.sys_disk_snaps.all()
+
     def get_mounted_vdisk_queryset(self):
         '''
         获取挂载到虚拟机下的所有虚拟硬盘查询集
@@ -182,7 +188,9 @@ class VmArchive(models.Model):
         verbose_name_plural = '虚拟机归档表'
 
     def delete(self, using=None, keep_parents=False):
-        self.rm_sys_disk()
+        self.rm_sys_disk_snap()
+        if not self.rm_sys_disk():
+            raise Exception('remove rbd image of disk error')
         super().delete(using=using, keep_parents=keep_parents)
 
     def get_ceph_cluster(self):
@@ -203,9 +211,20 @@ class VmArchive(models.Model):
 
         return ceph
 
+    def rm_sys_disk_snap(self):
+        '''
+        删除系统盘快照
+
+        :return:None
+        :raises: Exception
+        '''
+        snaps = VmDiskSnap.objects.select_related('ceph_pool', 'ceph_pool__ceph').filter(disk=self.disk).all()
+        for snap in snaps:
+            snap.delete()
+
     def rm_sys_disk(self):
         '''
-        删除系统盘
+        删除系统盘，需要先删除所有系统盘快照
         :return:
             True    # success
             False   # failed
@@ -279,3 +298,114 @@ class VmLog(models.Model):
 
         return self.ABOUT_NORMAL
 
+
+class VmDiskSnap(models.Model):
+    '''
+    虚拟机系统盘快照
+    '''
+    id = models.AutoField(verbose_name='ID', primary_key=True)
+    vm = models.ForeignKey(to=Vm, on_delete=models.SET_NULL, related_name='sys_disk_snaps', null=True, verbose_name='虚拟机')
+    ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.SET_NULL, null=True, verbose_name='CEPH POOL')
+    disk = models.CharField(max_length=100, verbose_name='虚拟机系统盘')  # 同虚拟机uuid
+    snap = models.CharField(max_length=100, verbose_name='系统盘CEPH快照') # 默认名称为 disk@snap创建日期
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
+    remarks = models.TextField(default='', null=True, blank=True, verbose_name='备注')
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = '虚拟机系统盘快照'
+        verbose_name_plural = '虚拟机系统盘快照'
+
+    def __str__(self):
+        return self.snap
+
+    @property
+    def sys_disk(self):
+        if self.disk:
+            return self.disk
+
+        if self.vm:
+            return self.vm.disk
+
+        raise Exception('can not get vm disk')
+
+    def get_ceph_pool(self):
+        '''
+        获取系统盘所在的ceph pool对象
+        :return:
+            CephPool()  # success
+            None        # failed
+        '''
+        if self.ceph_pool:
+            return self.ceph_pool
+        if self.vm and self.vm.image:
+            self.ceph_pool = self.vm.image.ceph_pool
+        return self.ceph_pool
+
+    def _create_sys_snap(self):
+        '''
+        创建系统盘快照
+        :return:
+            True    # success
+
+        :raises: Exception
+        '''
+        ceph_pool = self.get_ceph_pool()
+        if not ceph_pool:
+            raise Exception('can not get ceph pool')
+
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            raise Exception('can not get ceph')
+
+        config_file = config.get_config_file()
+        keyring_file = config.get_keyring_file()
+        now_timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        try:
+            disk = self.sys_disk
+            snap_name = f'{disk}@{now_timestamp}'
+            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd.create_snap(image_name=disk, snap_name=snap_name)
+        except (RadosError, Exception) as e:
+            raise Exception(str(e))
+
+        self.snap = snap_name
+        return True
+
+    def _remove_sys_snap(self):
+        '''
+        删除系统盘快照
+        :return:
+            True    # success
+
+        :raises: Exception
+        '''
+        ceph_pool = self.get_ceph_pool()
+        if not ceph_pool:
+            raise Exception('can not get ceph pool')
+
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            raise Exception('can not get ceph')
+
+        config_file = config.get_config_file()
+        keyring_file = config.get_keyring_file()
+        try:
+            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd.remove_snap(image_name=self.sys_disk, snap=self.snap)
+        except (RadosError, Exception) as e:
+            raise Exception(str(e))
+
+        return True
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if not self.snap:
+            self._create_sys_snap()
+        super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+
+    def delete(self, using=None, keep_parents=False):
+        if self.snap:
+            self._remove_sys_snap()
+        super().delete(using=using, keep_parents=keep_parents)

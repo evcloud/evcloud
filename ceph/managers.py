@@ -111,7 +111,7 @@ class RbdManager:
 
     def remove_image(self, image_name:str):
         '''
-        删除一个rbd image
+        删除一个rbd image，删除前需要删除所有的快照
 
         :param image_name: image name
         :return:
@@ -194,6 +194,85 @@ class RbdManager:
             raise RadosError(f'create_image error:{str(e)}')
 
         return True
+
+    def list_image_snaps(self, name:str):
+        '''
+        获取rbd image的所有快照
+        :param name: rbd image
+        :return:
+            list    # success
+        :raises: RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            with cluster.open_ioctx(self.pool_name) as ioctx:
+                with rbd.Image(ioctx=ioctx, name=name) as image:
+                    return list(image.list_snaps())
+        except Exception as e:
+            raise RadosError(f'list_image_snaps error:{str(e)}')
+
+    def remove_snap(self, image_name:str, snap:str):
+        '''
+        删除一个rbd image快照
+        :param snap: 快照名称
+        :param image_name: rbd image名称
+        :return:
+            True    # success
+        :raises: RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            with cluster.open_ioctx(self.pool_name) as ioctx:
+                with rbd.Image(ioctx=ioctx, name=image_name) as image:
+                    image.remove_snap(snap)
+        except rbd.ObjectNotFound as e:
+            return True
+        except Exception as e:
+            raise RadosError(f'remove_snap error:{str(e)}')
+        return True
+
+    def image_rollback_to_snap(self, image_name:str, snap:str):
+        '''
+        rbd image回滚到历史快照
+
+        :param snap: 快照名称
+        :param image_name: rbd image名称
+        :return:
+            True    # success
+        :raises: RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            with cluster.open_ioctx(self.pool_name) as ioctx:
+                with rbd.Image(ioctx=ioctx, name=image_name) as image:
+                    image.rollback_to_snap(name=snap)
+        except Exception as e:
+            raise RadosError(f'rollback_to_snap error:{str(e)}')
+        return True
+
+    def get_rbd_image(self, image_name:str):
+        '''
+        获取rbd image对象, 使用close_rbd_image()关闭
+
+        :param image_name: rbd image名称
+        :return:
+            rbd.Image()
+        :raises: RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            ioctx = cluster.open_ioctx(self.pool_name)
+            image = rbd.Image(ioctx=ioctx, name=image_name)
+            return image
+        except Exception as e:
+            raise RadosError(f'rollback_to_snap error:{str(e)}')
+
+    def close_rbd_image(self, image):
+        try:
+            image.close()
+            image.ioctx.close()
+        except Exception:
+            pass
 
 
 class CephClusterManager:
