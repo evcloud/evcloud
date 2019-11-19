@@ -21,6 +21,23 @@ from vdisk.manager import VdiskManager,VdiskError
 from . import serializers
 
 # Create your views here.
+
+def str_to_int_or_default(val, default):
+    '''
+    字符串转int，转换失败返回设置的默认值
+
+    :param val: 待转化的字符串
+    :param default: 转换失败返回的值
+    :return:
+        int     # success
+        default # failed
+    '''
+    try:
+        return int(val)
+    except Exception:
+        return default
+
+
 class CustomAutoSchema(AutoSchema):
     '''
     自定义Schema
@@ -258,15 +275,42 @@ class VmsViewSet(viewsets.GenericViewSet):
                     schema=coreschema.String(description='备注信息'),
                     description='新的备注信息'
                 ),
+            ],
+            'vm_sys_snap': [
+                coreapi.Field(
+                    name='remark',
+                    location='query',
+                    required=False,
+                    schema=coreschema.String(description='备注信息'),
+                    description='快照备注信息'
+                ),
+            ],
+            'delete_vm_snap': [
+                coreapi.Field(
+                    name='id',
+                    location='path',
+                    required=True,
+                    schema=coreschema.String(description='snap id'),
+                    description='快照id'
+                ),
+            ],
+            'vm_snap_remark': [
+                coreapi.Field(
+                    name='remark',
+                    location='query',
+                    required=True,
+                    schema=coreschema.String(description='新的备注信息'),
+                    description='快照备注信息'
+                ),
             ]
         }
     )
 
     def list(self, request, *args, **kwargs):
-        center_id = int(request.query_params.get('center_id', 0))
-        group_id = int(request.query_params.get('group_id', 0))
-        host_id = int(request.query_params.get('host_id', 0))
-        user_id = int(request.query_params.get('user_id', 0))
+        center_id = str_to_int_or_default(request.query_params.get('center_id', 0), default=0)
+        group_id = str_to_int_or_default(request.query_params.get('group_id', 0), default=0)
+        host_id = str_to_int_or_default(request.query_params.get('host_id', 0), default=0)
+        user_id = str_to_int_or_default(request.query_params.get('user_id', 0), default=0)
         search = request.query_params.get('search', '')
 
         user = request.user
@@ -483,6 +527,62 @@ class VmsViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 400, 'code_text': f'修改虚拟机备注信息失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
+
+    @action(methods=['post'], url_path='snap', detail=True, url_name='vm_sys_snap')
+    def vm_sys_snap(self, request, *args, **kwargs):
+        '''
+        创建虚拟机系统盘快照
+        '''
+        remark = request.query_params.get('remark', '')
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        api = VmAPI()
+        try:
+            snap = api.create_vm_sys_snap(vm_uuid=vm_uuid, remarks=remark, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'创建虚拟机系统快照失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '创建虚拟机系统快照成功',
+                              'snap': serializers.VmDiskSnapSerializer(snap).data}, status=status.HTTP_201_CREATED)
+
+    @action(methods=['delete'], url_path=r'snap/(?P<id>[0-9]+)', detail=False, url_name='delete_vm_snap')
+    def delete_vm_snap(self, request, *args, **kwargs):
+        '''
+        删除一个虚拟机系统快照
+        '''
+        snap_id = str_to_int_or_default(kwargs.get('id', '0'), default=0)
+        if snap_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmManager()
+        try:
+            ok = api.delete_sys_disk_snap(snap_id=snap_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'删除虚拟机系统快照失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['patch'], url_path=r'snap/(?P<id>[0-9]+)/remark', detail=False, url_name='vm_snap_remark')
+    def vm_snap_remark(self, request, *args, **kwargs):
+        '''
+        修改虚拟机快照备注信息
+        '''
+        remark = request.query_params.get('remark')
+        if not remark:
+            return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
+
+        snap_id = str_to_int_or_default(kwargs.get('id', '0'), default=0)
+        if snap_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmManager()
+        try:
+            snap = api.modify_sys_snap_remarks(snap_id=snap_id, remarks=remark, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'修改快照备注信息失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '修改快照备注信息成功'})
 
     def get_serializer_class(self):
         """
@@ -1420,4 +1520,89 @@ class QuotaViewSet(viewsets.GenericViewSet):
         if self.action in ['list', 'retrieve']:
             return serializers.QuotaListSerializer
         return Serializer
+
+
+# class VmSysSnapViewSet(viewsets.GenericViewSet):
+#     '''
+#     虚拟机系统盘快照类视图
+#     '''
+#     permission_classes = [IsAuthenticated, ]
+#     pagination_class = LimitOffsetPagination
+#
+#     # api docs
+#     schema = CustomAutoSchema(
+#         manual_fields={
+#             'list': [
+#                 coreapi.Field(
+#                     name='vm',
+#                     location='query',
+#                     required=False,
+#                     schema=coreschema.Integer(description='虚拟机id'),
+#                     description='所属虚拟机'
+#                 ),
+#             ]
+#         }
+#     )
+#
+#     def list(self, request, *args, **kwargs):
+#         '''
+#         获取虚拟机列表
+#
+#             http code 200:
+#             {
+#               "count": 1,
+#               "next": null,
+#               "previous": null,
+#               "results": [
+#                 {
+#                   "id": 1,
+#                   "name": "group1云硬盘存储池",
+#                   "pool": {
+#                     "id": 1,
+#                     "name": "vm1"
+#                   },
+#                   "ceph": {
+#                     "id": 1,
+#                     "name": "对象存储集群"
+#                   },
+#                   "group": {
+#                     "id": 1,
+#                     "name": "宿主机组1"
+#                   }
+#                 },
+#                 "total": 100000,    # 总容量
+#                 "size_used": 30,    # 已用容量
+#                 "max_vdisk": 200    # 硬盘最大容量上限
+#               ]
+#             }
+#         '''
+#         group_id = int(request.query_params.get('group_id', 0))
+#         manager = VdiskManager()
+#
+#         if group_id > 0:
+#             queryset = manager.get_quota_queryset_by_group(group=group_id)
+#         else:
+#             queryset = manager.get_quota_queryset()
+#             queryset = queryset.select_related('cephpool', 'cephpool__ceph', 'group').all()
+#         try:
+#             page = self.paginate_queryset(queryset)
+#         except Exception as e:
+#             return  Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+#
+#         if page is not None:
+#             serializer = self.get_serializer(page, many=True)
+#             return self.get_paginated_response(serializer.data)
+#
+#         serializer = self.get_serializer(queryset, many=True)
+#         return Response(serializer.data)
+#
+#     def get_serializer_class(self):
+#         """
+#         Return the class to use for the serializer.
+#         Defaults to using `self.serializer_class`.
+#         Custom serializer_class
+#         """
+#         if self.action in ['list', 'retrieve']:
+#             return serializers.QuotaListSerializer
+#         return Serializer
 

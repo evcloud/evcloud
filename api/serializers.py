@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from vms.models import Vm
+from vms.models import Vm, VmDiskSnap
 from compute.models import Center, Group, Host
 from network.models import Vlan
 from image.models import Image
@@ -243,3 +243,19 @@ class VdiskCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(detail={'code_text': 'group_id和quota_id参数必须提交其中一个'})
         return data
 
+
+class VmDiskSnapSerializer(serializers.Serializer):
+    '''
+    虚拟机系统盘快照序列化器
+    '''
+    id = serializers.IntegerField()
+    vm = serializers.SerializerMethodField()
+    snap = serializers.CharField()
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    remarks = serializers.CharField()
+
+    def get_vm(self, obj):
+        vm = obj.vm
+        if vm:
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+        return vm

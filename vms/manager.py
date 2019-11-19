@@ -11,7 +11,7 @@ from network.managers import VlanManager, MacIPManager, NetworkError
 from network.models import Vlan
 from vdisk.manager import VdiskManager, VdiskError
 from utils.ev_libvirt.virt import VirtAPI, VirtError
-from .models import Vm, VmArchive, VmLog
+from .models import Vm, VmArchive, VmLog, VmDiskSnap
 from .xml import XMLEditor
 
 
@@ -327,6 +327,79 @@ class VmManager(VirtAPI):
             return False
         except self.VirtError as e:
             raise VmError(msg=f'卸载硬盘错误，{str(e)}')
+
+    def create_sys_disk_snap(self, vm:Vm, remarks:str):
+        '''
+        创建虚拟机系统盘快照
+        :param vm: 虚拟机对象
+        :param remarks: 备注信息
+        :return:
+            VmDiskSnap()    # success
+
+        ::raises: VmError
+        '''
+        image = vm.image
+        ceph_pool = image.ceph_pool
+        disk_snap = VmDiskSnap(disk=vm.disk, vm=vm, ceph_pool=ceph_pool, remarks=remarks)
+        try:
+            disk_snap.save()
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+        return disk_snap
+
+    def delete_sys_disk_snap(self, snap_id:int, user):
+        '''
+        删除虚拟机系统盘快照
+
+        :param snap_id: 快照id
+        :param user: 用户
+        :return:
+            True    # success
+
+        :raises: VmError
+        '''
+        snap = VmDiskSnap.objects.select_related('vm', 'vm__user').filter(pk=snap_id).first()
+        if not snap:
+            raise VmError(msg='快照不存在')
+
+        if not user.is_superuser:
+            if snap.vm and not snap.vm.user_has_perms(user):
+                raise VmError(msg='没有此快照的访问权限')
+
+        try:
+            snap.delete()
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+        return True
+
+    def modify_sys_snap_remarks(self, snap_id:int, remarks:str, user):
+        '''
+        修改虚拟机系统盘快照备注信息
+
+        :param snap_id: 快照id
+        :param remarks: 备注信息
+        :param user: 用户
+        :return:
+            VmDiskSnap()    # success
+        :raises: VmError
+        '''
+        snap = VmDiskSnap.objects.select_related('vm', 'vm__user').filter(pk=snap_id).first()
+        if not snap:
+            raise VmError(msg='快照不存在')
+
+        if not user.is_superuser:
+            if snap.vm and not snap.vm.user_has_perms(user):
+                raise VmError(msg='没有此快照的访问权限')
+
+        try:
+            snap.remarks = remarks
+            snap.save(update_fields=['remarks'])
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+        return snap
 
 
 class VmArchiveManager:
@@ -1100,3 +1173,30 @@ class VmAPI:
 
         return vdisk
 
+    def create_vm_sys_snap(self, vm_uuid:str, remarks:str, user):
+        '''
+        创建虚拟机系统盘快照
+        :param vm_uuid: 虚拟机id
+        :param remarks: 快照备注信息
+        :param user: 用户
+        :return:
+            VmDiskSnap()    # success
+        :raises: VmError
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        # host = vm.host
+        # try:
+        #     run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+        # except VirtError as e:
+        #     raise VmError(msg='获取虚拟机运行状态失败')
+        # if run:
+        #     raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        snap = self._vm_manager.create_sys_disk_snap(vm=vm, remarks=remarks)
+        return snap
