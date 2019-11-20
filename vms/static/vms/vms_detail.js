@@ -42,9 +42,19 @@
         return build_absolute_url(url);
     }
 
+     // 虚拟机回滚到snap api构建
+    function build_vm_rollback_snap_api(vm_uuid, snap_id){
+        let url = 'api/v3/vms/' + vm_uuid + '/rollback/' + snap_id + '/';
+        return build_absolute_url(url);
+    }
+
+    function get_vm_uuid() {
+        return $("#id-vm-uuid").text();
+    }
+
     // 获取并设置虚拟机的运行状态
     function get_vm_status() {
-        let vmid = $("#id-vm-uuid").text();
+        let vmid = get_vm_uuid();
         let api = build_vm_status_api(vmid);
         let node_status = $("#vm_status_" + vmid);
         node_status.html(`<img src="/static/images/loading34.gif" width="43px"/>`);
@@ -384,16 +394,46 @@
         $.ajax({
 			url: api,
 			type: 'patch',
-			success:function(data){
+			success:function(){
 			    div_show.children("span:first").text(remark);
 			},
-            error: function(e){
+            error: function(){
 			    alert('修改失败');
             },
 			complete:function() {
 				div_show.show();
 				div_edit.hide();
 			}
+		});
+    });
+
+    // 回滚虚拟机到指定快照
+    $("#id-vm-snap-content").on('click', '.btn-vm-snap-rollback', function (e) {
+        e.preventDefault();
+        if(!confirm('确定回滚云主机到此快照吗？请谨慎操作。'))
+		    return;
+
+        let snap_id = $(this).attr('data-snap-id');
+        let vm_uuid = get_vm_uuid();
+        let api = build_vm_rollback_snap_api(vm_uuid, snap_id);
+        $.ajax({
+			url: api,
+			type: 'post',
+			success: function (data, status_text, xhr) {
+                if (xhr.status === 201){
+                    alert('回滚主机成功');
+                }else{
+                    alert('回滚主机失败');
+                }
+            },
+            error: function(xhr, msg, err){
+			    data = xhr.responseJSON;
+                msg = '回滚主机失败';
+                if (data.hasOwnProperty('code_text')){
+                    msg = '回滚主机失败,' + data.code_text;
+                }
+                alert(msg);
+            }
 		});
     });
 })();

@@ -9,6 +9,29 @@ class RadosError(rados.Error):
     '''def __init__(self, message, errno=None)'''
     pass
 
+def get_rbd_manager(ceph:CephCluster, pool_name:str):
+    '''
+    获取一个rbd管理接口对象
+
+    :param ceph: ceph配置模型对象CephCluster()
+    :param pool_name: pool名称
+    :return:
+        RbdManager()    # success
+        raise RadosError   # failed
+
+    :raise RadosError
+    '''
+    conf_file = ceph.config_file
+    keyring_file = ceph.keyring_file
+    # 当水平部署多个服务时，在后台添加ceph配置时，只有其中一个服务保存了配置文件，要检查当前服务是否保存到配置文件了
+    if not os.path.exists(conf_file) or not os.path.exists(keyring_file):
+        ceph.save()
+        conf_file = ceph.config_file
+        keyring_file = ceph.keyring_file
+
+    return RbdManager(conf_file=conf_file, keyring_file=keyring_file, pool_name=pool_name)
+
+
 class RbdManager:
     '''
     ceph rbd 操作管理接口
@@ -245,7 +268,7 @@ class RbdManager:
         try:
             with cluster.open_ioctx(self.pool_name) as ioctx:
                 with rbd.Image(ioctx=ioctx, name=image_name) as image:
-                    image.rollback_to_snap(name=snap)
+                    image.rollback_to_snap(snap)
         except Exception as e:
             raise RadosError(f'rollback_to_snap error:{str(e)}')
         return True

@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from image.models import Image
 from compute.models import Host
 from network.models import MacIP
-from ceph.managers import RbdManager, CephClusterManager, RadosError
+from ceph.managers import get_rbd_manager, CephClusterManager, RadosError
 from ceph.models import CephPool
 
 
@@ -13,7 +13,7 @@ from ceph.models import CephPool
 User = get_user_model()
 
 
-def remove_image(conf_file: str, keyring_file: str, pool_name: str, image_name: str):
+def remove_image(ceph, pool_name: str, image_name: str):
     '''
     删除一个镜像
 
@@ -22,7 +22,7 @@ def remove_image(conf_file: str, keyring_file: str, pool_name: str, image_name: 
         False   # failed
     '''
     try:
-        rbd = RbdManager(conf_file=conf_file, keyring_file=keyring_file, pool_name=pool_name)
+        rbd = get_rbd_manager(ceph=ceph, pool_name=pool_name)
         rbd.remove_image(image_name=image_name)
     except RadosError as e:
         return False
@@ -90,10 +90,7 @@ class Vm(models.Model):
         if not config:
             return False
 
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
-
-        return remove_image(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name, image_name=self.disk)
+        return remove_image(ceph=config, pool_name=pool_name, image_name=self.disk)
 
     def user_has_perms(self, user):
         '''
@@ -233,11 +230,7 @@ class VmArchive(models.Model):
         if not config:
             return False
 
-        pool_name = self.ceph_pool
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
-
-        return remove_image(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name, image_name=self.disk)
+        return remove_image(ceph=config, pool_name=self.ceph_pool, image_name=self.disk)
 
 
 class VmLog(models.Model):
@@ -359,13 +352,11 @@ class VmDiskSnap(models.Model):
         if not config:
             raise Exception('can not get ceph')
 
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
         now_timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
         try:
             disk = self.sys_disk
             snap_name = f'{disk}@{now_timestamp}'
-            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.create_snap(image_name=disk, snap_name=snap_name)
         except (RadosError, Exception) as e:
             raise Exception(str(e))
@@ -390,10 +381,8 @@ class VmDiskSnap(models.Model):
         if not config:
             raise Exception('can not get ceph')
 
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
         try:
-            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.remove_snap(image_name=self.sys_disk, snap=self.snap)
         except (RadosError, Exception) as e:
             raise Exception(str(e))
