@@ -584,6 +584,25 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改快照备注信息成功'})
 
+    @action(methods=['post'], url_path=r'rollback/(?P<snap_id>[0-9]+)', detail=True, url_name='vm_rollback_snap')
+    def vm_rollback_snap(self, request, *args, **kwargs):
+        '''
+        虚拟机系统盘回滚到指定快照
+        '''
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        snap_id = str_to_int_or_default(kwargs.get('snap_id', '0'), default=0)
+        if snap_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmAPI()
+        try:
+            ok = api.vm_rollback_to_snap(vm_uuid=vm_uuid, snap_id=snap_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'回滚虚拟机失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '回滚虚拟机成功'}, status=status.HTTP_201_CREATED)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.

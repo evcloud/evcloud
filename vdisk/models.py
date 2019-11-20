@@ -1,13 +1,12 @@
 #coding=utf-8
 from uuid import uuid4
 
-from django.db import models, transaction
+from django.db import models
 from django.db.models import F, Sum
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 from ceph.models import CephPool
-from ceph.managers import RbdManager, RadosError
+from ceph.managers import get_rbd_manager, RadosError
 from compute.models import Group
 from vms.models import Vm
 
@@ -198,12 +197,9 @@ class Vdisk(models.Model):
         except Exception:
             return False
 
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
-
         size = self.get_bytes_size()
         try:
-            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.create_image(name=self.uuid, size=size)
         except (RadosError, Exception) as e:
             return False
@@ -234,11 +230,8 @@ class Vdisk(models.Model):
         except Exception:
             return False
 
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
-
         try:
-            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.remove_image(image_name=self.uuid)
         except (RadosError, Exception) as e:
             return False

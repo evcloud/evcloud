@@ -2,7 +2,7 @@ from django.db import models
 from django.utils import timezone
 
 from ceph.models import CephPool
-from ceph.managers import RbdManager, RadosError
+from ceph.managers import get_rbd_manager, RadosError
 
 # Create your models here.
 
@@ -92,19 +92,13 @@ class Image(models.Model):
         if not config:
             return False
 
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
-
         now_timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
         snap_name = f'{self.base_image}@{now_timestamp}'
         self.create_newsnap = False
         try:
-            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.create_snap(image_name=self.base_image, snap_name=snap_name)
-        except RadosError as e:
-            self.enable = False
-            self.desc = f'创建快照{snap_name}失败：{str(e)}' + self.desc
-        except Exception as e:
+        except (RadosError, Exception) as e:
             self.enable = False
             self.desc = f'创建快照{snap_name}失败：{str(e)}' + self.desc
         else:

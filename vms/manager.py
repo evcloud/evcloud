@@ -3,7 +3,7 @@ import os
 
 from django.db.models import Q
 
-from ceph.managers import RadosError, RbdManager
+from ceph.managers import RadosError, get_rbd_manager
 from ceph.models import CephCluster
 from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
 from image.managers import ImageManager, ImageError
@@ -401,6 +401,42 @@ class VmManager(VirtAPI):
 
         return snap
 
+    def disk_rollback_to_snap(self, vm:Vm, snap_id:int):
+        '''
+        回滚虚拟机系统盘到指定快照
+
+        :param vm: 虚拟机对象
+        :param snap_id: 快照id
+        :param user: 用户
+        :return:
+            True    # success
+
+        :raises: VmError
+        '''
+        snap = VmDiskSnap.objects.select_related('ceph_pool', 'ceph_pool__ceph').filter(pk=snap_id).first()
+        if not snap:
+            raise VmError(msg='快照不存在')
+
+        if snap.disk != vm.disk:
+            raise VmError(msg='快照不属于此主机')
+
+        ceph_pool = snap.ceph_pool
+        if not ceph_pool:
+            raise VmError(msg='can not get ceph pool')
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            raise VmError(msg='can not get ceph')
+
+        try:
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
+            rbd.image_rollback_to_snap(image_name=vm.disk, snap=snap.snap)
+        except (RadosError, Exception) as e:
+            raise VmError(msg=str(e))
+
+        return True
+
+
 
 class VmArchiveManager:
     '''
@@ -505,17 +541,8 @@ class VmAPI:
 
         :raise VmError
         '''
-        conf_file = ceph.config_file
-        keyring_file = ceph.keyring_file
-        # 当水平部署多个服务时，在后台添加ceph配置时，只有其中一个服务保存了配置文件，要检查当前服务是否保存到配置文件了
-        if not os.path.exists(conf_file) or not os.path.exists(keyring_file):
-            ceph.save()
-            conf_file = ceph.config_file
-            keyring_file = ceph.keyring_file
-
         try:
-            rbd_manager = RbdManager(conf_file=conf_file, keyring_file=keyring_file, pool_name=pool_name)
-            return rbd_manager
+            return get_rbd_manager(ceph=ceph, pool_name=pool_name)
         except RadosError as e:
             raise VmError(msg=str(e))
 
@@ -1200,3 +1227,32 @@ class VmAPI:
 
         snap = self._vm_manager.create_sys_disk_snap(vm=vm, remarks=remarks)
         return snap
+
+    def vm_rollback_to_snap(self, vm_uuid:str, snap_id:int, user):
+        '''
+        回滚虚拟机系统盘到指定快照
+
+        :param vm_uuid: 虚拟机id
+        :param snap_id: 快照id
+        :param user: 用户
+        :return:
+           True    # success
+
+        :raises: VmError
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        return self._vm_manager.disk_rollback_to_snap(vm=vm, snap_id=snap_id)
