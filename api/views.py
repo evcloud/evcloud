@@ -199,10 +199,6 @@ class VmsViewSet(viewsets.GenericViewSet):
             "status_text": "shut off"
           }
         }
-
-    partial_update:
-        修改虚拟机vcpu和内存大小
-
     '''
     permission_classes = [IsAuthenticated,]
     pagination_class = LimitOffsetPagination
@@ -403,6 +399,20 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def partial_update(self, request, *args, **kwargs):
+        '''
+        修改虚拟机vcpu和内存大小
+
+            http code 200 修改成功：
+            {
+                "code": 200,
+                "code_text": "修改虚拟机成功"
+            }
+            http code 400 修改失败：
+            {
+                "code": 400,
+                "code_text": "xxx"
+            }
+        '''
         vm_uuid = kwargs.get(self.lookup_field, '')
 
         serializer = self.get_serializer(data=request.data)

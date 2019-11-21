@@ -39,7 +39,7 @@ class Vm(models.Model):
     uuid = models.UUIDField(verbose_name='虚拟机UUID', primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=200)
     vcpu = models.IntegerField(verbose_name='CPU数')
-    mem = models.IntegerField(verbose_name='内存大小')
+    mem = models.IntegerField(verbose_name='内存大小', help_text='单位MB')
     disk = models.CharField(verbose_name='系统盘名称', max_length=100, unique=True, help_text='vm自己的系统盘，保存于ceph中的rdb文件名称')
     image = models.ForeignKey(to=Image, on_delete=models.CASCADE, verbose_name='源镜像', help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
     user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL, related_name='user_vms',  null=True)
