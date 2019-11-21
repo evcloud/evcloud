@@ -266,14 +266,15 @@ class Vdisk(models.Model):
                   <source protocol='rbd' name='{pool}/{name}'>
                     {hosts_xml}
                   </source>
-                    <target dev='{dev}' bus='virtio'/>   
+                    <target dev='{dev}' bus='{bus}'/>   
             </disk>
             '''
 
-    def xml_desc(self, dev:str=''):
+    def xml_desc(self, dev:str='', bus='virtio'):
         '''
         disk xml
         :param dev: 硬盘未挂载时，需要传入此参数；硬盘挂载后，self.dev会记录挂载后的硬盘逻辑名称
+        :param bus: 指定硬盘的总线驱动，默认 'virtio'
         :return: str
         '''
         if not dev:
@@ -282,7 +283,7 @@ class Vdisk(models.Model):
         cephpool = self.quota.cephpool
         ceph = cephpool.ceph
         xml = self.xml_tpl.format(auth_user=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
-                                  name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev)
+                                  name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
         return xml
 
     @property

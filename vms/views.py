@@ -175,3 +175,16 @@ class VmDetailView(View):
             return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云主机不存在']})
 
         return render(request, 'vm_detail.html', context={'vm': vm})
+
+
+class VmEditView(View):
+    '''虚拟机修改类视图'''
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['云主机不存在']})
+
+        return render(request, 'vm_edit.html', context={'vm': vm})
