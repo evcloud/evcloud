@@ -183,7 +183,7 @@ class VmEditView(View):
         vm_uuid = kwargs.get('vm_uuid', '')
 
         vm_manager = VmManager()
-        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image'))
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
