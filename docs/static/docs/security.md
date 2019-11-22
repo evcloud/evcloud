@@ -2,8 +2,9 @@
 安全凭证是用于用户身份认证的凭证，iHarbor云对象存储服务提供了多种安全认证方式，如Session,Token,JWT。
 
 ## Auth Token认证 
-Token密钥认证方式，使用简单，安全性相对较低，推荐内网使用，token的获取可以通过开放的API获取,或者去iHarbor站点通过浏览器端网页获取。
-每个用户同一时刻只有一个有效的token，token永久有效，没有有效期，刷新创建新token，旧token会失效，如果token泄露，请及时创建新的token，以防数据泄露丢失。    
+Token密钥认证方式，使用简单，安全性相对较低，请及时定期刷新token。token的获取可以通过开放的API登录认证获取。每个用户同
+一时刻只有一个有效的token，token永久有效，没有有效期，刷新创建新token，旧token会失效，如果token泄露，请及时创建新的
+token，以防数据泄露丢失。    
 
 Token应包含在Authorization HTTP标头中，密钥应以字符串文字“Token”为前缀，空格分隔两个字符串。
 例如：   
