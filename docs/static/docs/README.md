@@ -4,11 +4,11 @@
 主要技术栈：CEPH、MySQl、Django、libvirt。
 
 ### 展示
-![image](https://github.com/evcloud/evcloud_dev/tree/develop/docs/static/docs/images/vm-list.jpg "Vm List")
+![image](images/vm-list.jpg "Vm List")
 
-![image](https://github.com/evcloud/evcloud_dev/tree/develop/docs/static/docs/images/vm-create.png "Vm Create")
+![image](images/vm-create.png "Vm Create")
 
-![image](https://github.com/evcloud/evcloud_dev/tree/develop/docs/static/docs/images/vm-vnc.png "Vm VNC")
+![image](images/vm-vnc.png "Vm VNC")
 
 ## 环境搭建(CentOS7)
 ### 1 安装python和Git
@@ -60,7 +60,7 @@ yum install -y http://download.ceph.com/rpm-nautilus/el7/x86_64/python36-rados-1
 yum install -y http://download.ceph.com/rpm-nautilus/el7/x86_64/python-rbd-14.2.4-0.el7.x86_64.rpm
 ```
 
-## 6 运行服务
+### 6 运行服务
 如果使用python虚拟还击，先激活python虚拟环境  
 ```
 pipenv shell
@@ -75,7 +75,7 @@ python manage.py runserver 0:80
 ```   
 如果一切正常，打开浏览器输入url(主机IP, 如：127.0.0.1)即可查看站点;
 
-## 7 NoVNC服务
+### 7 NoVNC服务
 安装websockify
 ```
 pip3 install websockify
@@ -91,3 +91,5 @@ websockify 0.0.0.0:84 --daemon --web=/usr/share/novnc --token-plugin=TokenMysql 
 请对应设置项目配置文件settings.py中参数NOVNC_SERVER_PORT的值。
 
 
+## 关于我们
+中国科学院计算机网络信息中心，科技云部。

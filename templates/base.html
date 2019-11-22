@@ -8,8 +8,8 @@
 	<title>{% block title %}{% endblock %}</title>
 </head>
 <body>
-    <nav class="navbar navbar-default navbar-fixed-top">
-        <div class="container-fluid">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid col-xs-offset-1 col-xs-10">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
@@ -36,7 +36,7 @@
                            aria-expanded="false">帮助&文档<span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             <li><a href="{% url 'apidocs' %}" target="view_window" >API文档</a></li>
-{#                            <li><a href="{% url 'docs:docs' %}">文档</a></li>#}
+                            <li><a href="{% url 'docs:docs' %}">文档</a></li>
                         </ul>
                     </li>
                     <li>
