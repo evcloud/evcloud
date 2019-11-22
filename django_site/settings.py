@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'network.apps.NetworkConfig',
     'novnc',
     'vdisk',
+    'docs',
 ]
 
 MIDDLEWARE = [
@@ -219,6 +220,7 @@ SIMPLE_JWT = {
 
 # vnc
 VNCSERVER_BASE_PORT = 5900
+# NOVNC_SERVER_PORT = 84  # novnc代理服务websockify的端口； 默认为80（需要通过nginx代理）
 
 
 # 导入安全相关的settings
