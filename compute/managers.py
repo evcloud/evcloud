@@ -191,18 +191,6 @@ class CenterManager:
         pools = self.get_pool_queryset_by_center(center_or_id)
         return list(pools.values_list('id', flat=True).all())
 
-    def get_image_queryset_by_center(self, center_or_id):
-        '''
-        获取一个分中心下的所有镜像查询集
-
-        :param center_or_id: 分中心对象或id
-        :return:
-             images: QuerySet   # success
-        :raise ComputeError
-        '''
-        pool_ids = self.get_pool_ids_by_center(center_or_id)
-        return Image.objects.filter(ceph_pool__in=pool_ids, enable=True).all()
-
 
 class GroupManager:
     '''

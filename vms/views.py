@@ -6,6 +6,7 @@ from .manager import VmManager, VmError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from network.managers import VlanManager
 from vdisk.manager import VdiskManager, VdiskError
+from image.managers import ImageManager, ImageError
 from utils.paginators import NumsPaginator
 
 # Create your views here.
@@ -99,15 +100,15 @@ class VmCreateView(View):
     def get(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.GET.get('center_id', 0), 0)
 
+        groups = None
+        images = None
         try:
             c_manager = CenterManager()
             centers = c_manager.get_center_queryset()
-            groups = None
-            images = None
             if center_id > 0:
-                images = c_manager.get_image_queryset_by_center(center_id)
+                images = ImageManager().get_image_queryset_by_center(center_id)
                 groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
-        except ComputeError as e:
+        except (ComputeError, ImageError) as e:
             return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
 
         context = {}

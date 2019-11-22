@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='image',
             name='base_image',
-            field=models.CharField(default='', help_text='用于创建镜像快照', max_length=200, verbose_name='父镜像'),
+            field=models.CharField(default='', help_text='用于创建镜像快照', max_length=200, verbose_name='镜像'),
         ),
     ]
