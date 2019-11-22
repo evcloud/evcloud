@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load  sizeformat %}
+
+{% block head %}
+
+{% endblock %}
+{% block title %}镜像列表{% endblock %}
+
+{% block boby %}
+    <div class="col-md-offset-1 col-md-10 col-lg-10">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title"><strong>镜像列表 ({{ count }})</strong></span>
+            </div>
+            <div class="panel-body">
+                <form role="form" class="form-horizontal" method="get" action="">
+                    <div class="input-group" style="">
+                        <label class="input-group-addon" for="id-center">分中心</label>
+                        <select name="center" class="form-control" id="id-center">
+                            <option value="">--</option>
+                            {% for c in centers %}
+                                <option value="{{ c.id }}" {% if c.id == center_id %}selected{% endif %}>
+                                    {{ c.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <label class="input-group-addon" for="id-user">类型</label>
+                        <select name="type" class="form-control" id="id-user">
+                            <option value="">--</option>
+                            {% for u in types %}
+                                <option value="{{ u.id }}" {% if u.id == type_id %}selected {% endif %}>{{ u.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <label class="input-group-addon">关键字</label>
+                        <input type="text" class="form-control" name="search" value="{{ search }}"
+                               placeholder="搜 名称、备注"/>
+                        <span class="input-group-addon"></span>
+                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                    </div>
+                </form>
+            </div>
+            <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                <tr class="bg-info">
+                    <th>名称</th>
+                    <th>版本信息</th>
+                    <th>系统类型</th>
+                    <th>镜像标签</th>
+                    <th>创建时间</th>
+                    <th>备注</th>
+                </tr>
+                {% for image in images %}
+                    <tr id="tr_{{ image.id }}">
+                        <td title="{{ image.id }}"><a href="#"><b>{{ image.name }}</b></a></td>
+                        <td>{{ image.version }}</td>
+                        <td>{{ image.sys_type_display }}</td>
+                        <td>{{ image.tag_display }}</td>
+                        <td>{{ image.create_time }}</td>
+                        <td class="mouse-hover">
+                            <div>
+                                <span>{{ image.desc|default_if_none:'' }}</span>
+                                <span class="mouse-hover-show edit_vm_remark" data-image-id="{{ image.id }}" style="display:none;" title="修改备注">
+                                    <span class="glyphicon glyphicon-pencil"></span>
+                                </span>
+                            </div>
+                            <div id="remarks_edit" style="display:none;">
+                                <textarea id="remarks">{{ image.desc|default_if_none:'' }}</textarea>
+                                <span class="save_vm_remark" title="保存备注" data-image-id="{{ image.id }}">
+                                    <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <div class="panel-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination"  style="margin:0;">
+                        {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
+                            {% if page_list %}
+                                {% if previous %}
+                                    <li><a href="?{{ previous }}" aria-label="Previous"><span
+                                            aria-hidden="true">&laquo;</span></a></li>
+                                {% else %}
+                                    <li class="disable"><span aria-hidden="true">&laquo;</span></li>
+                                {% endif %}
+                            {% endif %}
+                            {% for disp, query, active in page_list %}
+                                {% if active %}
+                                    <li class="active"><a href="?{{ query }}">{{ disp }}</a></li>
+                                {% else %}
+                                    <li><a href="?{{ query }}">{{ disp }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_list %}
+                                {% if next %}
+                                    <li><a href="?{{ next }}" aria-label="Next"><span
+                                            aria-hidden="true">&raquo;</span></a></li>
+                                {% else %}
+                                    <li class="disable"><span aria-hidden="true">&raquo;</span></li>
+                                {% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}

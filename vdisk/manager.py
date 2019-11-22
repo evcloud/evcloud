@@ -377,7 +377,7 @@ class VdiskManager:
                 queryset = self.get_user_vdisk_queryset(user_id)
 
         if search:
-            if queryset:
+            if queryset is not None:
                 queryset = queryset.filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()
             else:
                 queryset = self.get_vdisk_queryset().filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()

@@ -217,7 +217,7 @@ class VmManager(VirtAPI):
                 vm_queryset = self.get_user_vms_queryset(user_id)
 
         if search:
-            if vm_queryset:
+            if vm_queryset is not None:
                 vm_queryset = vm_queryset.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
                                                  Q(uuid__icontains=search)).all()
             else:

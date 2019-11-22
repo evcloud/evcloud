@@ -13,9 +13,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from vms.manager import VmManager, VmAPI, VmError
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
-from compute.managers import CenterManager, HostManager, ComputeError
-from network.models import Vlan, MacIP
+from compute.managers import HostManager, ComputeError
+from network.models import Vlan
 from image.models import Image
+from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
 from . import serializers
@@ -861,7 +862,7 @@ class ImageViewSet(viewsets.GenericViewSet):
         center_id = int(request.query_params.get('center_id', 0))
         if center_id > 0:
             try:
-                queryset = CenterManager().get_image_queryset_by_center(center_id)
+                queryset = ImageManager().get_image_queryset_by_center(center_id)
             except Exception as e:
                 return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
