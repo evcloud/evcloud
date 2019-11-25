@@ -838,7 +838,6 @@ class ImageViewSet(viewsets.GenericViewSet):
     '''
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
-    queryset = Image.objects.all()
 
     # api docs
     schema = CustomAutoSchema(
@@ -850,7 +849,28 @@ class ImageViewSet(viewsets.GenericViewSet):
                     required=False,
                     schema=coreschema.Integer(description='分中心id'),
                     description='所属分中心'
-                )
+                ),
+                coreapi.Field(
+                    name='tag',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='标签'),
+                    description='镜像标签'
+                ),
+                coreapi.Field(
+                    name='sys_type',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='系统类型'),
+                    description='系统类型'
+                ),
+                coreapi.Field(
+                    name='search',
+                    location='query',
+                    required=False,
+                    schema=coreschema.String(description='关键字查询'),
+                    description='关键字查询'
+                ),
             ]
         }
     )
@@ -858,15 +878,55 @@ class ImageViewSet(viewsets.GenericViewSet):
     def list(self, request, *args, **kwargs):
         '''
         获取系统镜像列表
+
+            镜像标签: [
+                [1, "基础镜像" ],
+                [2, "用户镜像"]
+            ]
+            系统类型: [
+                [1,"Windows"],
+                [2,"Linux"],
+                [3,"Unix"],
+                [4,"MacOS"],
+                [5,"Android"],
+                [6,"其他"]
+            ]
+
+            http code 200:
+            {
+              "count": 2,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "name": "centos8",
+                  "version": "64bit",
+                  "sys_type": {
+                    "id": 2,
+                    "name": "Linux"
+                  },
+                  "tag": {
+                    "id": 0,
+                    "name": "基础镜像"
+                  },
+                  "enable": true,
+                  "create_time": "2019-10-15T16:24:27.982294+08:00",
+                  "desc": "centos8"
+                }
+              ]
+            }
         '''
-        center_id = int(request.query_params.get('center_id', 0))
-        if center_id > 0:
-            try:
-                queryset = ImageManager().get_image_queryset_by_center(center_id)
-            except Exception as e:
-                return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            queryset = self.get_queryset()
+        center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
+        tag = str_to_int_or_default(request.query_params.get('tag', 0), 0)
+        sys_type = str_to_int_or_default(request.query_params.get('sys_type', 0), 0)
+        search = request.query_params.get('sys_type', '')
+
+        try:
+            queryset = ImageManager().filter_image_queryset(center_id=center_id, sys_type=sys_type, tag=tag,
+                                                            search=search, all_no_filters=request.user.is_superuser)
+        except Exception as e:
+            return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -874,7 +934,7 @@ class ImageViewSet(viewsets.GenericViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({'results': serializer.data})
 
     # def create(self, request, *args, **kwargs):
     #     pass

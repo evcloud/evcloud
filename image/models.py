@@ -44,26 +44,26 @@ class Image(models.Model):
     '''
     操作系统镜像
     '''
-    TAG_BASE = 0
-    TAG_USER = 1
+    TAG_BASE = 1
+    TAG_USER = 2
     CHOICES_TAG = (
         (TAG_BASE, '基础镜像'),
         (TAG_USER, '用户镜像')
     )
 
-    SYS_TYPE_OTHER = 0    # 其他
     SYS_TYPE_WINDOWS = 1
     SYS_TYPE_LINUX = 2
     SYS_TYPE_UNIX = 3
     SYS_TYPE_MACOS = 4
     SYS_TYPE_ANDROID = 5
+    SYS_TYPE_OTHER = 6  # 其他
     CHOICES_SYS_TYPE = (
-        (SYS_TYPE_OTHER, '其他'),
         (SYS_TYPE_WINDOWS, 'Windows'),
         (SYS_TYPE_LINUX, 'Linux'),
         (SYS_TYPE_UNIX, 'Unix'),
         (SYS_TYPE_MACOS, 'MacOS'),
         (SYS_TYPE_ANDROID, 'Android'),
+        (SYS_TYPE_OTHER, '其他'),
     )
 
     id = models.AutoField(primary_key=True)
