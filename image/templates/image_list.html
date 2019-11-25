@@ -62,7 +62,7 @@
                         <td>{{ image.version }}</td>
                         <td>{{ image.sys_type_display }}</td>
                         <td>{{ image.tag_display }}</td>
-                        <td>{{ image.create_time }}</td>
+                        <td>{{ image.create_time|date:'Y-m-d H:i:s' }}</td>
                         <td class="mouse-hover">
                             <div>
                                 <span>{{ image.desc|default_if_none:'' }}</span>
