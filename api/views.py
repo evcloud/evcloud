@@ -645,6 +645,21 @@ class CenterViewSet(viewsets.GenericViewSet):
     def list(self, request, *args, **kwargs):
         '''
         获取分中心列表
+
+            http code 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "name": "怀柔分中心",
+                  "location": "怀柔",
+                  "desc": "xxx"
+                }
+              ]
+            }
         '''
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -911,7 +926,7 @@ class ImageViewSet(viewsets.GenericViewSet):
                     "name": "基础镜像"
                   },
                   "enable": true,
-                  "create_time": "2019-10-15T16:24:27.982294+08:00",
+                  "create_time": "2019-10-15 16:25:26",
                   "desc": "centos8"
                 }
               ]
@@ -1231,8 +1246,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     "id": 1,
                     "name": "group1云硬盘存储池"
                   },
-                  "create_time": "2019-11-13T16:56:20.278780+08:00",
-                  "attach_time": "2019-11-14T09:11:44.291782+08:00",
+                  "create_time": "2019-11-13 16:56:20",
+                  "attach_time": "2019-11-14 09:11:44",
                   "enable": true,
                   "remarks": "test3",
                   "group": {
@@ -1294,7 +1309,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "vm": null,
                 "user": 1,
                 "quota": 1,
-                "create_time": "2019-11-07T11:21:44.116941+08:00",
+                "create_time": "2019-11-07 11:21:44",
                 "attach_time": null,
                 "enable": true,
                 "remarks": "test2"
@@ -1383,7 +1398,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     "name": "宿主机组1"
                   }
                 },
-                "create_time": "2019-11-07T11:19:55.496380+08:00",
+                "create_time": "2019-11-07 11:19:55",
                 "attach_time": null,
                 "enable": true,
                 "remarks": "test"
@@ -1611,88 +1626,4 @@ class QuotaViewSet(viewsets.GenericViewSet):
             return serializers.QuotaListSerializer
         return Serializer
 
-
-# class VmSysSnapViewSet(viewsets.GenericViewSet):
-#     '''
-#     虚拟机系统盘快照类视图
-#     '''
-#     permission_classes = [IsAuthenticated, ]
-#     pagination_class = LimitOffsetPagination
-#
-#     # api docs
-#     schema = CustomAutoSchema(
-#         manual_fields={
-#             'list': [
-#                 coreapi.Field(
-#                     name='vm',
-#                     location='query',
-#                     required=False,
-#                     schema=coreschema.Integer(description='虚拟机id'),
-#                     description='所属虚拟机'
-#                 ),
-#             ]
-#         }
-#     )
-#
-#     def list(self, request, *args, **kwargs):
-#         '''
-#         获取虚拟机列表
-#
-#             http code 200:
-#             {
-#               "count": 1,
-#               "next": null,
-#               "previous": null,
-#               "results": [
-#                 {
-#                   "id": 1,
-#                   "name": "group1云硬盘存储池",
-#                   "pool": {
-#                     "id": 1,
-#                     "name": "vm1"
-#                   },
-#                   "ceph": {
-#                     "id": 1,
-#                     "name": "对象存储集群"
-#                   },
-#                   "group": {
-#                     "id": 1,
-#                     "name": "宿主机组1"
-#                   }
-#                 },
-#                 "total": 100000,    # 总容量
-#                 "size_used": 30,    # 已用容量
-#                 "max_vdisk": 200    # 硬盘最大容量上限
-#               ]
-#             }
-#         '''
-#         group_id = int(request.query_params.get('group_id', 0))
-#         manager = VdiskManager()
-#
-#         if group_id > 0:
-#             queryset = manager.get_quota_queryset_by_group(group=group_id)
-#         else:
-#             queryset = manager.get_quota_queryset()
-#             queryset = queryset.select_related('cephpool', 'cephpool__ceph', 'group').all()
-#         try:
-#             page = self.paginate_queryset(queryset)
-#         except Exception as e:
-#             return  Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-#
-#         if page is not None:
-#             serializer = self.get_serializer(page, many=True)
-#             return self.get_paginated_response(serializer.data)
-#
-#         serializer = self.get_serializer(queryset, many=True)
-#         return Response(serializer.data)
-#
-#     def get_serializer_class(self):
-#         """
-#         Return the class to use for the serializer.
-#         Defaults to using `self.serializer_class`.
-#         Custom serializer_class
-#         """
-#         if self.action in ['list', 'retrieve']:
-#             return serializers.QuotaListSerializer
-#         return Serializer
 

@@ -12,7 +12,7 @@ class VmSerializer(serializers.ModelSerializer):
     虚拟机序列化器
     '''
     user = serializers.SerializerMethodField() # 自定义user字段内容
-    create_time = serializers.SerializerMethodField()  # 自定义字段内容
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     host = serializers.SerializerMethodField()
     mac_ip = serializers.SerializerMethodField()
     uuid = serializers.SerializerMethodField()
@@ -27,11 +27,6 @@ class VmSerializer(serializers.ModelSerializer):
 
     def get_user(selfself, obj):
         return {'id': obj.user.id, 'username': obj.user.username}
-
-    def get_create_time(self, obj):
-        if not obj.create_time:
-            return ''
-        return obj.create_time.strftime('%Y-%m-%d %H:%M:%S')
 
     def get_host(self, obj):
         return obj.host.ipv4
@@ -115,6 +110,7 @@ class ImageSerializer(serializers.ModelSerializer):
     '''
     tag = serializers.SerializerMethodField()
     sys_type = serializers.SerializerMethodField()
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = Image
         fields = ('id', 'name', 'version', 'sys_type', 'tag', 'enable', 'create_time', 'desc')
@@ -129,13 +125,10 @@ class ImageSerializer(serializers.ModelSerializer):
 class AuthTokenDumpSerializer(serializers.Serializer):
     key = serializers.CharField()
     user = serializers.SerializerMethodField()
-    created = serializers.SerializerMethodField()
+    created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
 
     def get_user(self, obj):
         return obj.user.username
-
-    def get_created(self, obj):
-        return obj.created.strftime('%Y-%m-%d %H:%M:%S')
 
 
 class UserSimpleSerializer(serializers.Serializer):
@@ -191,6 +184,8 @@ class VdiskSerializer(serializers.ModelSerializer):
     quota = serializers.SerializerMethodField()
     vm = serializers.SerializerMethodField()
     user = UserSimpleSerializer(required=False)  # May be an anonymous user
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    attach_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = Vdisk
         fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks', 'group')
@@ -222,6 +217,8 @@ class VdiskDetailSerializer(serializers.ModelSerializer):
     user = UserSimpleSerializer(required=False) # May be an anonymous user
     quota = QuotaSimpleSerializer(required=False)
     vm = serializers.SerializerMethodField()
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    attach_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = Vdisk
         fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks')
