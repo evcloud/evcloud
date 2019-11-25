@@ -13,9 +13,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from vms.manager import VmManager, VmAPI, VmError
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
-from compute.managers import HostManager, ComputeError
+from compute.managers import HostManager, CenterManager, ComputeError
 from network.models import Vlan
-from image.models import Image
 from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
@@ -693,14 +692,61 @@ class GroupViewSet(viewsets.GenericViewSet):
     # api docs
     schema = CustomAutoSchema(
         manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='center_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='分中心id'),
+                    description='所属分中心'
+                ),
+            ]
         }
     )
 
     def list(self, request, *args, **kwargs):
         '''
         获取宿主机组列表
+
+            http code 200:
+            {
+              "count": 2,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "name": "宿主机组1",
+                  "center": 1,
+                  "desc": "xxx"
+                },
+              ]
+            }
+            http code 400:
+            {
+              "code": 400,
+              "code_text": "xxx"
+            }
         '''
-        queryset = self.filter_queryset(self.get_queryset())
+        center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
+        if center_id < 0:
+            return Response(data={'code': 400, 'code_text': 'center_id参数无效'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        manager = CenterManager()
+        try:
+            if center_id > 0:
+                if user.is_superuser:
+                    queryset = manager.get_group_queryset_by_center(center_id)
+                else:
+                    queryset = manager.get_user_group_queryset_by_center(center_or_id=center_id, user=user)
+            else:
+                if user.is_superuser:
+                    queryset = self.get_queryset()
+                else:
+                    queryset = manager.get_user_group_queryset(user)
+        except ComputeError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
