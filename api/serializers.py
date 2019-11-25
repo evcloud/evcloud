@@ -113,9 +113,17 @@ class ImageSerializer(serializers.ModelSerializer):
     '''
     子网网段序列化器
     '''
+    tag = serializers.SerializerMethodField()
+    sys_type = serializers.SerializerMethodField()
     class Meta:
         model = Image
-        fields = ('id', 'name', 'version', 'type', 'enable', 'ceph_pool', 'base_image', 'snap', 'xml_tpl', 'create_time', 'desc')
+        fields = ('id', 'name', 'version', 'sys_type', 'tag', 'enable', 'create_time', 'desc')
+
+    def get_tag(self, obj):
+        return {'id': obj.tag, 'name': obj.tag_display}
+
+    def get_sys_type(self, obj):
+        return {'id': obj.sys_type, 'name': obj.sys_type_display}
 
 
 class AuthTokenDumpSerializer(serializers.Serializer):

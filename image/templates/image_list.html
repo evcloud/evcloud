@@ -25,12 +25,18 @@
                                 </option>
                             {% endfor %}
                         </select>
-
-                        <label class="input-group-addon" for="id-user">类型</label>
-                        <select name="type" class="form-control" id="id-user">
+                        <label class="input-group-addon" for="id-tag">标签</label>
+                        <select name="tag" class="form-control" id="id-tag">
                             <option value="">--</option>
-                            {% for u in types %}
-                                <option value="{{ u.id }}" {% if u.id == type_id %}selected {% endif %}>{{ u.name }}</option>
+                            {% for val, name in tags %}
+                                <option value="{{ val }}" {% if val == tag_value %}selected {% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        <label class="input-group-addon" for="id-sys-type">系统类型</label>
+                        <select name="sys_type" class="form-control" id="id-sys-type">
+                            <option value="">--</option>
+                            {% for val, name in sys_types %}
+                                <option value="{{ val }}" {% if val == sys_type_value %}selected {% endif %}>{{ name }}</option>
                             {% endfor %}
                         </select>
                         <label class="input-group-addon">关键字</label>

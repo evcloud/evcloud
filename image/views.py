@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from compute.managers import CenterManager, ComputeError
 from utils.paginators import NumsPaginator
 from .managers import ImageManager, ImageError
+from .models import Image
 
 User = get_user_model()
 
@@ -33,13 +34,13 @@ class ImageView(View):
 
     def get(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.GET.get('center', 0), 0)
-        type_id = str_to_int_or_default(request.GET.get('type', 0), 0)
+        tag = str_to_int_or_default(request.GET.get('tag', 0), 0)
+        sys_type = str_to_int_or_default(request.GET.get('sys_type', 0), 0)
         search = request.GET.get('search', '')
 
         try:
             api = ImageManager()
-            image_types = api.get_image_type_queryset()
-            queryset = api.filter_image_queryset(center_id=center_id, type_id=type_id, search=search,
+            queryset = api.filter_image_queryset(center_id=center_id, tag=tag, sys_type=sys_type, search=search,
                                                             all_no_filters=request.user.is_superuser)
         except ImageManager as e:
             return render(request, 'error.html', {'errors': ['查询镜像时错误', str(e)]})
@@ -52,8 +53,10 @@ class ImageView(View):
         context = {}
         context['center_id'] = center_id if center_id > 0 else None
         context['centers'] = centers
-        context['type_id'] = type_id
-        context['types'] = image_types
+        context['tag_value'] = tag
+        context['tags'] = Image.CHOICES_TAG
+        context['sys_type_value'] = sys_type
+        context['sys_types'] = Image.CHOICES_SYS_TYPE
         context['search'] = search
         context = self.get_page_context(request, queryset, context)
         return render(request, 'image_list.html', context=context)

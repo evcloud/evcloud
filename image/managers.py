@@ -95,13 +95,36 @@ class ImageManager:
         '''
         return self.get_image_queryset().filter(type=type_or_id).all()
 
-    def filter_image_queryset(self, center_id:int, type_id:int, search:str,
+    def get_image_queryset_by_systype(self, sys_type:int):
+        '''
+        获取一个系统类型的所有镜像查询集
+
+        :param sys_type: 系统类型
+        :return:
+             images: QuerySet   # success
+        :raise ImageError
+        '''
+        return self.get_image_queryset().filter(sys_type=sys_type).all()
+
+    def get_image_queryset_by_tag(self, tag:int):
+        '''
+        获取一个标签的所有镜像查询集
+
+        :param tag: 镜像标签
+        :return:
+             images: QuerySet   # success
+        :raise ImageError
+        '''
+        return self.get_image_queryset().filter(tag=tag).all()
+
+    def filter_image_queryset(self, center_id:int, sys_type:int, tag:int, search:str,
                               all_no_filters: bool = False, related_fields:tuple=()):
         '''
         通过条件筛选镜像查询集
 
         :param center_id: 分中心id,大于0有效
-        :param type_id: 镜像类型id,大于0有效
+        :param sys_type: 系统类型,大于0有效
+        :param tag: 镜像标签,大于0有效
         :param user_id: 用户id,大于0有效
         :param search: 关键字筛选条件
         :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
@@ -111,7 +134,7 @@ class ImageManager:
 
         :raises: ImageError
         '''
-        if center_id <= 0 and type_id <= 0 and not search:
+        if center_id <= 0 and sys_type <= 0 and tag <= 0 and not search:
             if not all_no_filters:
                 raise ImageError(msg='查询条件无效')
 
@@ -121,11 +144,17 @@ class ImageManager:
         if center_id > 0:
             queryset = self.get_image_queryset_by_center(center_id)
 
-        if type_id > 0:
+        if sys_type > 0:
             if queryset is not None:
-                queryset = queryset.filter(type=type_id).all()
+                queryset = queryset.filter(sys_type=sys_type).all()
             else:
-                queryset = self.get_image_queryset_by_type(type_id)
+                queryset = self.get_image_queryset_by_systype(sys_type)
+
+        if tag > 0:
+            if queryset is not None:
+                queryset = queryset.filter(tag=tag).all()
+            else:
+                queryset = self.get_image_queryset_by_tag(tag)
 
         if search:
             if queryset is not None:
