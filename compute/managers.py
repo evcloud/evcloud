@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Sum
 
 from compute.models import Center, Group, Host
 from network.models import Vlan
@@ -32,6 +33,19 @@ class ComputeError(Exception):
             return str(self.err)
 
         return '未知的错误'
+
+
+class DefaultSum(Sum):
+    '''
+    累加结果为None时，返回默认值
+    '''
+    def __init__(self, *expressions, distinct=False, filter=None, return_if_none=0, **extra):
+        self.return_if_none = return_if_none
+        super().__init__(*expressions, distinct=distinct, filter=filter, **extra)
+
+    def convert_value(self, value, expression, connection):
+        return self.return_if_none if value is None else value
+
 
 class CenterManager:
     '''
@@ -191,6 +205,19 @@ class CenterManager:
         pools = self.get_pool_queryset_by_center(center_or_id)
         return list(pools.values_list('id', flat=True).all())
 
+    def get_stat_center_queryset(self):
+        '''
+        分中心资源统计查询集
+        :return:
+            QuerySet   # success
+        '''
+        return Center.objects.annotate(
+            mem_total=DefaultSum('group_set__hosts_set__mem_total'),
+            mem_allocated=DefaultSum('group_set__hosts_set__mem_allocated'),
+            vcpu_total=DefaultSum('group_set__hosts_set__vcpu_total'),
+            vcpu_allocated=DefaultSum('group_set__hosts_set__vcpu_allocated'),
+            vm_created=DefaultSum('group_set__hosts_set__vm_created')).all()
+
 
 class GroupManager:
     '''
@@ -293,6 +320,17 @@ class GroupManager:
 
         raise ComputeError(msg='无效的宿主机组参数')
 
+    def get_stat_group_wueryset(self):
+        '''
+        资源统计宿主机组查询集
+
+        :return:
+            QuerySet()
+        '''
+        return Group.objects.select_related('center').annotate(
+            mem_total=DefaultSum('hosts_set__mem_total'), mem_allocated=DefaultSum('hosts_set__mem_allocated'),
+            vcpu_total=DefaultSum('hosts_set__vcpu_total'), vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
+            vm_created=DefaultSum('hosts_set__vm_created')).all()
 
 
 class HostManager:

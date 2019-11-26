@@ -28,8 +28,11 @@
                 <ul class="nav navbar-nav">
                     <li id="nav_vm_list"><a href="{% url "vms:vms-list" %}">云主机</a></li>
                     <li id="nav_vdisk_list"><a href="{% url "vdisk:vdisk-list" %}">云硬盘</a></li>
-                    <li id="nav_vlan_list"><a href="{% url "network:vlan_list" %}">网络</a></li>
                     <li id="nav_image_list"><a href="{% url "image:image-list" %}">镜像</a></li>
+                    {% if user.is_superuser %}
+                        <li id="nav_vlan_list"><a href="{% url "network:vlan_list" %}">网络</a></li>
+                        <li><a href="{% url 'reports:reports-list' %}">统计报表</a></li>
+                    {% endif %}
                 </ul>
                 <ul class="nav navbar-nav  navbar-right">
                     <li class="dropdown">
