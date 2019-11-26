@@ -35,6 +35,7 @@ urlpatterns = [
     path('novnc/',include('novnc.urls', namespace='novnc')),
     path('network/',include('network.urls', namespace='network')),
     path('image/',include('image.urls', namespace='image')),
+    path('reports/',include('reports.urls', namespace='reports')),
     path('apidocs/', get_swagger_view(title='EVCloud API'), name='apidocs'),
     path('docs/',include('docs.urls', namespace='docs')),
 ]

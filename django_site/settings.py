@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'novnc',
     'vdisk',
     'docs',
+    'reports',
 ]
 
 MIDDLEWARE = [
