@@ -6,10 +6,16 @@ from .managers import VlanManager
 
 # Create your views here.
 def vlan_list(request):
+    if not request.user.is_superuser:
+        return HttpResponse('您无权访问此页面')
+
     vlans = Vlan.objects.all()
     return render(request, 'vlan_list.html', {'vlans': vlans})
 
 def vlan_add(request):
+    if not request.user.is_superuser:
+        return HttpResponse('您无权访问此页面')
+
     if request.method == 'GET':
         vlan_id = request.GET.get('vlan')
         vlan = Vlan.objects.get(id=vlan_id)
@@ -35,6 +41,9 @@ def vlan_add(request):
         
 
 def vlan_show(request):
+    if not request.user.is_superuser:
+        return HttpResponse('您无权访问此页面')
+
     vlan = request.GET.get('vlan', None)
     vlan_id = request.GET.get('vlan_id', None)
     if vlan:

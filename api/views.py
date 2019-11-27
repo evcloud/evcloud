@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.schemas import AutoSchema
 from rest_framework.compat import coreapi, coreschema
 from rest_framework.pagination import LimitOffsetPagination
@@ -13,7 +13,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from vms.manager import VmManager, VmAPI, VmError
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
-from compute.managers import HostManager, CenterManager, ComputeError
+from compute.managers import HostManager, CenterManager, GroupManager, ComputeError
 from network.models import Vlan
 from image.managers import ImageManager
 from vdisk.models import Vdisk
@@ -36,6 +36,14 @@ def str_to_int_or_default(val, default):
         return int(val)
     except Exception:
         return default
+
+
+class IsSuperUser(BasePermission):
+    """
+    Allows access only to super users.
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_superuser)
 
 
 class CustomAutoSchema(AutoSchema):
@@ -1673,3 +1681,175 @@ class QuotaViewSet(viewsets.GenericViewSet):
         return Serializer
 
 
+class StatCenterViewSet(viewsets.GenericViewSet):
+    '''
+    资源统计类视图
+    '''
+    permission_classes = [IsAuthenticated, IsSuperUser]
+    pagination_class = None
+    lookup_field = 'id'
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取所有资源统计信息列表
+
+            http code 200:
+            {
+              "code": 200,
+              "code_text": "get ok",
+              "centers": [
+                {
+                  "id": 1,
+                  "name": "怀柔分中心",
+                  "mem_total": 165536,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 54,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ],
+              "groups": [
+                {
+                  "id": 1,
+                  "name": "宿主机组1",
+                  "center__name": "怀柔分中心",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ],
+              "hosts": [
+                {
+                  "id": 1,
+                  "ipv4": "10.100.50.121",
+                  "group__name": "宿主机组1",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ]
+            }
+        '''
+        centers = CenterManager().get_stat_center_queryset().values('id', 'name', 'mem_total', 'mem_allocated',
+                                         'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        groups = GroupManager().get_stat_group_wueryset().values('id', 'name', 'center__name', 'mem_total',
+                                        'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        hosts = Host.objects.select_related('group').values('id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
+                                            'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+        return Response(data={'code': 200, 'code_text': 'get ok', 'centers': centers, 'groups': groups, 'hosts': hosts})
+
+    @action(methods=['get'], detail=True, url_path='center', url_name='center_stat')
+    def center_stat(self, request, *args, **kwargs):
+        '''
+        获取一个分中心的资源统计信息列表
+
+            http code 200:
+            {
+              "code": 200,
+              "code_text": "get ok",
+              "center": {
+                  "id": 1,
+                  "name": "怀柔分中心",
+                  "mem_total": 165536,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 54,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                },
+              "groups": [
+                {
+                  "id": 1,
+                  "name": "宿主机组1",
+                  "center__name": "怀柔分中心",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ]
+            }
+        '''
+        c_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
+        if c_id > 0:
+            center = CenterManager().get_stat_center_queryset(filter={'id': c_id}).values('id', 'name', 'mem_total',
+                            'mem_allocated','mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').first()
+        else:
+            center = None
+        if not center:
+            return Response({'code': 200, 'code_text': '分中心不存在'}, status=status.HTTP_400_BAD_REQUEST)
+
+        groups = GroupManager().get_stat_group_wueryset(filter={'center': c_id}).values('id', 'name', 'center__name',
+                             'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
+
+    @action(methods=['get'], detail=True, url_path='group', url_name='group_stat')
+    def group_stat(self, request, *args, **kwargs):
+        '''
+        获取一个机组的资源统计信息列表
+
+            http code 200:
+            {
+              "code": 200,
+              "code_text": "get ok",
+              "group": {
+                  "id": 1,
+                  "name": "宿主机组1",
+                  "center__name": "怀柔分中心",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+              },
+              "hosts": [
+                {
+                  "id": 1,
+                  "ipv4": "10.100.50.121",
+                  "group__name": "宿主机组1",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ]
+            }
+        '''
+        g_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
+        if g_id > 0:
+            group = GroupManager().get_stat_group_wueryset(filter={'id': g_id}).values('id', 'name', 'center__name',
+                    'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total','vcpu_allocated', 'vm_created').first()
+        else:
+            group = None
+        if not group:
+            return Response({'code': 200, 'code_text': '机组不存在'}, status=status.HTTP_400_BAD_REQUEST)
+
+        hosts = Host.objects.select_related('group').filter(group=g_id).values('id', 'ipv4', 'group__name', 'mem_total',
+                        'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+        return Response(data={'code': 200, 'code_text': 'get ok', 'group': group, 'hosts': hosts})
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        return Serializer
