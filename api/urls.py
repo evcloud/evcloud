@@ -15,6 +15,7 @@ router.register(r'(?P<version>(v3|v4))/image', views.ImageViewSet, base_name='im
 router.register(r'(?P<version>(v3|v4))/vlan', views.VlanViewSet, base_name='vlan')
 router.register(r'(?P<version>(v3|v4))/vdisk', views.VDiskViewSet, base_name='vdisk')
 router.register(r'(?P<version>(v3|v4))/quota', views.QuotaViewSet, base_name='quota')
+router.register(r'(?P<version>(v3|v4))/stat', views.StatCenterViewSet, base_name='stat')
 
 urlpatterns = [
     path(r'', include(router.urls)),
