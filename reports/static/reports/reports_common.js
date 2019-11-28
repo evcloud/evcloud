@@ -1,4 +1,4 @@
-;
+;'use strict';
 
 window.chartColors = {
     red: 'rgb(255, 99, 132)',
@@ -99,6 +99,7 @@ function chart_init() {
                 label: '云主机数量',
                 backgroundColor: window.chartColors.blue,
                 maxBarThickness: 50,
+                minBarLength: 2,
                 data: []
             }]
         },
