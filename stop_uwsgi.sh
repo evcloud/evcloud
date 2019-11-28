@@ -1,0 +1,1 @@
+uwsgi --stop uwsgi-master.pid
