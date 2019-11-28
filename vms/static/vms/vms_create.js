@@ -1,4 +1,5 @@
-;(function () {
+;'use strict';
+(function () {
 
     //
     // 页面刷新时执行
