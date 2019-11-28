@@ -19,6 +19,7 @@ from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
 from . import serializers
+from utils.logs import log_user
 
 # Create your views here.
 
