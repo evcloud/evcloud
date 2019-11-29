@@ -316,14 +316,15 @@
                 if(snap_table[0]){
                     snap_table.find("tr:first").after(html);
                 }else{
-                    html = `<table class="table table-default table-vm-snap-list" style="word-wrap:break-word;word-break:break-all;">
+                    html = `<p><strong>云主机快照</strong></p>
+                            <table class="table table-default table-vm-snap-list" style="word-wrap:break-word;word-break:break-all;">
                             <tr>
                                 <th>ID</th>
                                 <th>快照</th>
                                 <th>创建时间</th>
                                 <th>备注</th>
                                 <th>操作</th>
-                            </tr>'` + html + '</table>';
+                            </tr>` + html + '</table>';
                     let snap_dom = $("#id-vm-snap-content");
                     snap_dom.empty();
                     snap_dom.append(html);
