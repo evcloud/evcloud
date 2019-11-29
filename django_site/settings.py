@@ -241,7 +241,7 @@ LOGGING = {
         'dubug_formatter': {
             'format': '%(levelname)s %(asctime)s %(message)s'
         },
-        'user': {
+        'user_formatter': {
             'format': '%(levelname)s %(asctime)s %(user_id)d %(username)s %(url)s %(method)s %(message)s'
         },
     },
@@ -285,8 +285,8 @@ LOGGING = {
         'user_handler': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/var/log/nginx/evcloud_user.log',
-            'formatter': 'user',
+            'filename': os.path.join(LOGGING_FILES_DIR, 'evcloud_user.log'),
+            'formatter': 'user_formatter',
             'maxBytes':  1024 * 1024 * 512
         }
     },
@@ -296,11 +296,6 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        # 'django.request': {
-        #     'handlers': ['file', 'console'],#'mail_admins'
-        #     'level': 'ERROR',
-        #     'propagate': False,
-        # },
         'debug': {
             'handlers': ['debug'],
             'level': 'DEBUG',

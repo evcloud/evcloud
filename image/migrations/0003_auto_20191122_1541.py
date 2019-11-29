@@ -16,12 +16,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='image',
             name='sys_type',
-            field=models.SmallIntegerField(choices=[(0, '其他'), (1, 'Windows'), (2, 'Linux'), (3, 'Unix'), (4, 'MacOS'), (5, 'Android')], default=0, verbose_name='系统类型'),
+            field=models.SmallIntegerField(choices=[(1, 'Windows'), (2, 'Linux'), (3, 'Unix'), (4, 'MacOS'), (5, 'Android'), (6, '其他')], default=6, verbose_name='系统类型'),
         ),
         migrations.AddField(
             model_name='image',
             name='tag',
-            field=models.SmallIntegerField(choices=[(0, '基础镜像'), (1, '用户镜像')], default=1, verbose_name='镜像标签'),
+            field=models.SmallIntegerField(choices=[(1, '基础镜像'), (2, '用户镜像')], default=2, verbose_name='镜像标签'),
         ),
         migrations.AddField(
             model_name='image',
