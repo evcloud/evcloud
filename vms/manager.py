@@ -10,6 +10,7 @@ from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from network.models import Vlan
 from vdisk.manager import VdiskManager, VdiskError
+from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError
 from .models import Vm, VmArchive, VmLog, VmDiskSnap
 from .xml import XMLEditor
@@ -521,6 +522,7 @@ class VmAPI:
         self._vlan_manager = VlanManager()
         self._macip_manager = MacIPManager()
         self._vdisk_manager = VdiskManager()
+        self._pci_manager = PCIDeviceManager()
 
     def new_uuid_obj(self):
         '''
@@ -1256,3 +1258,112 @@ class VmAPI:
             raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         return self._vm_manager.disk_rollback_to_snap(vm=vm, snap_id=snap_id)
+
+    def umount_pci_device(self, device_id:int, user):
+        '''
+        从虚拟机卸载pci设备
+
+        :param device_id: pci设备id
+        :param user: 用户
+        :return:
+            PCIDevice()    # success
+
+        :raises: VmError
+        '''
+        try:
+            device = self._pci_manager.get_device_by_id(device_id=device_id, related_fields=('host',))
+        except DeviceError as e:
+            raise VmError(msg='查询设备时错误')
+
+        if device is None:
+            raise VmError(msg='设备不存在')
+        if not device.enable:
+            raise VmError(msg='设备暂不可使用')
+        if not device.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此设备')
+
+        vm = device.vm
+        if vm is None:
+            return True
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        # 卸载设备
+        try:
+            self._pci_manager.umount_from_vm(device=device)
+        except DeviceError as e:
+            raise VmError(msg=str(e))
+
+        # 更新vm元数据中的xml
+        try:
+            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            vm.xml = xml_desc
+            vm.save(update_fields=['xml'])
+        except Exception:
+            pass
+
+        return device
+
+    def mount_pci_device(self, vm_uuid:str, device_id:int, user):
+        '''
+        向虚拟机挂载pci设备
+
+        :param vm_uuid: 虚拟机uuid
+        :param device_id: pci设备id
+        :param user: 用户
+        :return:
+            PCIDevice()   # success
+
+        :raises: VmError
+        '''
+        try:
+            device = self._pci_manager.get_device_by_id(device_id=device_id, related_fields=('host',))
+        except DeviceError as e:
+            raise VmError(msg='查询设备时错误')
+
+        if device is None:
+            raise VmError(msg='设备不存在')
+        if not device.enable:
+            raise VmError(msg='设备暂不可使用')
+        if not device.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此设备')
+
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        # 向虚拟机挂载硬盘
+        try:
+            self._pci_manager.mount_to_vm(vm=vm, device=device)
+        except DeviceError as e:
+            raise VmError(msg=str(e))
+
+        # 更新vm元数据中的xml
+        try:
+            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            vm.xml = xml_desc
+            vm.save(update_fields=['xml'])
+        except Exception:
+            pass
+
+        return device

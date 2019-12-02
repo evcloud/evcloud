@@ -75,6 +75,10 @@ class Vm(models.Model):
     def ipv4(self):
         return self.mac_ip.ipv4
 
+    @property
+    def host_ipv4(self):
+        return self.host.ipv4
+
     def rm_sys_disk(self):
         '''
         删除系统盘
