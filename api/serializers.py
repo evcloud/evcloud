@@ -5,6 +5,7 @@ from compute.models import Center, Group, Host
 from network.models import Vlan
 from image.models import Image
 from vdisk.models import Vdisk
+from device.models import PCIDevice
 
 
 class VmSerializer(serializers.ModelSerializer):
@@ -264,3 +265,27 @@ class VmDiskSnapSerializer(serializers.Serializer):
         if vm:
             return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
         return vm
+
+
+class PCIDeviceSerializer(serializers.Serializer):
+    '''
+    PCI设备序列化器
+    '''
+    id = serializers.IntegerField()
+    vm = serializers.SerializerMethodField()
+    host = serializers.SerializerMethodField()
+    snap = serializers.CharField()
+    attach_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    remarks = serializers.CharField()
+
+    def get_vm(self, obj):
+        vm = obj.vm
+        if vm:
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+        return vm
+
+    def get_host(self, obj):
+        host = obj.host
+        if host:
+            return {'id': host.id, 'ipv4': host.ipv4}
+        return host

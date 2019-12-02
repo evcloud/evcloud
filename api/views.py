@@ -18,6 +18,7 @@ from network.models import Vlan
 from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
+from device.manager import PCIDeviceManager
 from . import serializers
 
 
@@ -1853,4 +1854,121 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
+        return Serializer
+
+
+class PCIDeviceViewSet(viewsets.GenericViewSet):
+    '''
+    PCI设备类视图
+    '''
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='group_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='宿主机组id'),
+                    description='所属宿主机组'
+                ),
+            ],
+            'mount_pci': [
+                coreapi.Field(
+                    name='vm_uuid',
+                    location='query',
+                    required=True,
+                    schema=coreschema.String(description='虚拟机uuid'),
+                    description='虚拟机uuid'
+                ),
+            ]
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取PCI设备列表
+
+            http code 200:
+
+        '''
+        group_id = int(request.query_params.get('group_id', 0))
+        queryset = PCIDeviceManager().get_device_queryset().select_related('host', 'vm').all()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(methods=['post'], detail=True, url_path='mount', url_name='mount_pci')
+    def mount_pci(self, request, *args, **kwargs):
+        '''
+        挂载PCI设备
+
+            http code 201:
+            {
+                "code": 201,
+                "code_text": "挂载设备成功"
+            }
+            http code 400:
+            {
+                "code": 400,
+                "code_text": "挂载设备失败，xxx"
+            }
+
+        '''
+        dev_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
+        vm_uuid = request.query_params.get('vm_uuid', '')
+        if dev_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的设备ID'}, status=status.HTTP_400_BAD_REQUEST)
+        if not vm_uuid:
+            return Response(data={'code': 400, 'code_text': '无效的虚拟机ID'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+             dev = VmAPI().mount_pci_device(vm_uuid=vm_uuid, device_id=dev_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'挂载失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '挂载成功'}, status=status.HTTP_201_CREATED)
+
+    @action(methods=['post'], detail=True, url_path='umount', url_name='umount_pci')
+    def umount_pci(self, request, *args, **kwargs):
+        '''
+        卸载PCI设备
+
+            http code 201:
+            {
+                "code": 201,
+                "code_text": "卸载设备成功"
+            }
+            http code 400:
+            {
+                "code": 400,
+                "code_text": "卸载设备失败，xxx"
+            }
+
+        '''
+        dev_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
+        if dev_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的设备ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+             dev = VmAPI().umount_pci_device(device_id=dev_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'卸载失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '卸载成功'}, status=status.HTTP_201_CREATED)
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        if self.action in ['list', 'retrieve']:
+            return serializers.PCIDeviceSerializer
         return Serializer
