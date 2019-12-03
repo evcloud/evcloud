@@ -1,10 +1,22 @@
 ;'use strict';
 (function () {
+    var IMAGES = {};    // 缓存镜像信息
+
+    function get_image_from_cache(index){
+        if (IMAGES.hasOwnProperty(index)){
+            return IMAGES[index];
+        }
+        return null;
+    }
+    function set_image_to_cache(index, html){
+        IMAGES[index] = html;
+    }
 
     //
     // 页面刷新时执行
     window.onload = function() {
         nav_active_display();
+        set_image_to_cache($("#id-image-tag").val(), $('select[name="image_id"]').html())
     };
 
     // 激活虚拟机列表导航栏
@@ -98,19 +110,19 @@
         if ((obj.host_id <= 0)){
             delete obj.host_id;
         }
-        if (obj.vlan_id <= 0){
+        if (!obj.vlan_id ||obj.vlan_id <= 0){
             alert('请选择一个网段');
             return false;
         }
-        if(obj.image_id <= 0){
+        if(!obj.image_id || obj.image_id <= 0){
             alert('请选择一个系统镜像');
             return false;
         }
-        if(obj.vcpu <= 0){
+        if(!obj.vcpu ||obj.vcpu <= 0){
             alert('请选择或输入一个有效的CPU数');
             return false;
         }
-        if(obj.mem <= 0){
+        if(!obj.mem || obj.mem <= 0){
             alert('请选择或输入有效的内存大小');
             return false;
         }
@@ -162,6 +174,47 @@
                 btn_submit.attr('disabled', false); //激活对应按钮
             }
         })
+    });
+
+    //
+    // 加载宿主机下拉框渲染模板
+    //
+    let render_image_select_items = template.compile(`
+        {{ each results }}
+            <option value="{{ $value.id }}">{{ $value.name }}</option>
+        {{/each}}
+    `);
+
+    $("#id-image-tag").change(function (e) {
+        e.preventDefault();
+
+        let tag = $("#id-image-tag").val();
+        let html = get_image_from_cache(tag);
+        let image_select = $('select[name="image_id"]');
+        if (html !== null){
+            image_select.html(html);
+            return;
+        }
+
+        let center = $('select[name="center_id"]').val();
+        let query_str = encode_params({center_id:center, tag:tag});
+        $.ajax({
+            url: build_absolute_url('api/v3/image/?'+ query_str),
+            type: 'get',
+            contentType: 'application/json',
+            success: function (data, status, xhr) {
+                let html = render_image_select_items(data);
+                image_select.html(html);
+                set_image_to_cache(tag, html);
+            },
+            error: function (xhr) {
+                let msg = '获取镜像数据失败!';
+                try{
+                    msg = msg + xhr.responseJSON.code_text;
+                }catch (e) {}
+                alert(msg);
+            }
+        });
     });
 })();
 

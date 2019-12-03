@@ -312,14 +312,14 @@ LOGGING = {
 # api docs
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
-        # 'basic': {
-        #     'type': 'basic'
-        # },
-        # "api_key": {
-        #     "type": "apiKey",
-        #     "name": "Token",
-        #     "in": "header"
-        #   },
+        'basic': {
+            'type': 'basic'
+        },
+        "api_key": {
+            "type": "apiKey",
+            "name": "Token",
+            "in": "header"
+          },
     },
     'SHOW_REQUEST_HEADERS': True,
     'JSON_EDITOR': True,

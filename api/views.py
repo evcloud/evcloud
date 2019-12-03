@@ -456,7 +456,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机成功'})
 
-    @action(methods=['patch'], url_path='operations', detail=True, url_name='vm_operations')
+    @action(methods=['patch'], url_path='operations', detail=True, url_name='vm-operations')
     def vm_operations(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
@@ -479,7 +479,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': f'{op}虚拟机成功'})
 
-    @action(methods=['get'], url_path='status', detail=True, url_name='vm_status')
+    @action(methods=['get'], url_path='status', detail=True, url_name='vm-status')
     def vm_status(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
@@ -491,7 +491,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 200, 'code_text': '获取虚拟机状态成功',
                               'status': {'status_code': code, 'status_text': msg}})
 
-    @action(methods=['post'], url_path='vnc', detail=True, url_name='vm_vnc')
+    @action(methods=['post'], url_path='vnc', detail=True, url_name='vm-vnc')
     def vm_vnc(self, request, *args, **kwargs):
         '''
         创建虚拟机vnc
@@ -530,7 +530,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
                               'vnc': {'id': vnc_id, 'url': url}})
 
-    @action(methods=['patch'], url_path='remark', detail=True, url_name='vm_remark')
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='vm-remark')
     def vm_remark(self, request, *args, **kwargs):
         '''
         修改虚拟机备注信息
@@ -548,7 +548,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
 
-    @action(methods=['post'], url_path='snap', detail=True, url_name='vm_sys_snap')
+    @action(methods=['post'], url_path='snap', detail=True, url_name='vm-sys-snap')
     def vm_sys_snap(self, request, *args, **kwargs):
         '''
         创建虚拟机系统盘快照
@@ -565,7 +565,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 201, 'code_text': '创建虚拟机系统快照成功',
                               'snap': serializers.VmDiskSnapSerializer(snap).data}, status=status.HTTP_201_CREATED)
 
-    @action(methods=['delete'], url_path=r'snap/(?P<id>[0-9]+)', detail=False, url_name='delete_vm_snap')
+    @action(methods=['delete'], url_path=r'snap/(?P<id>[0-9]+)', detail=False, url_name='delete-vm-snap')
     def delete_vm_snap(self, request, *args, **kwargs):
         '''
         删除一个虚拟机系统快照
@@ -582,7 +582,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['patch'], url_path=r'snap/(?P<id>[0-9]+)/remark', detail=False, url_name='vm_snap_remark')
+    @action(methods=['patch'], url_path=r'snap/(?P<id>[0-9]+)/remark', detail=False, url_name='vm-snap-remark')
     def vm_snap_remark(self, request, *args, **kwargs):
         '''
         修改虚拟机快照备注信息
@@ -604,7 +604,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改快照备注信息成功'})
 
-    @action(methods=['post'], url_path=r'rollback/(?P<snap_id>[0-9]+)', detail=True, url_name='vm_rollback_snap')
+    @action(methods=['post'], url_path=r'rollback/(?P<snap_id>[0-9]+)', detail=True, url_name='vm-rollback-snap')
     def vm_rollback_snap(self, request, *args, **kwargs):
         '''
         虚拟机系统盘回滚到指定快照
@@ -1006,15 +1006,6 @@ class ImageViewSet(viewsets.GenericViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response({'results': serializer.data})
-
-    # def create(self, request, *args, **kwargs):
-    #     pass
-    #
-    # def retrieve(self, request, *args, **kwargs):
-    #     pass
-    #
-    # def destroy(self, request, *args, **kwargs):
-    #     pass
 
     def get_serializer_class(self):
         """
@@ -1513,7 +1504,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['patch'], url_path='mount', detail=True, url_name='disk_mount')
+    @action(methods=['patch'], url_path='mount', detail=True, url_name='disk-mount')
     def disk_mount(self, request, *args, **kwargs):
         '''
         挂载硬盘
@@ -1539,7 +1530,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '挂载硬盘成功'})
 
-    @action(methods=['patch'], url_path='umount', detail=True, url_name='disk_umount')
+    @action(methods=['patch'], url_path='umount', detail=True, url_name='disk-umount')
     def disk_umount(self, request, *args, **kwargs):
         '''
         卸载硬盘
@@ -1564,7 +1555,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '卸载硬盘成功'})
 
-    @action(methods=['patch'], url_path='remark', detail=True, url_name='disk_remark')
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='disk-remark')
     def disk_remark(self, request, *args, **kwargs):
         '''
         修改云硬盘备注信息
@@ -1753,7 +1744,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
                                             'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
         return Response(data={'code': 200, 'code_text': 'get ok', 'centers': centers, 'groups': groups, 'hosts': hosts})
 
-    @action(methods=['get'], detail=True, url_path='center', url_name='center_stat')
+    @action(methods=['get'], detail=True, url_path='center', url_name='center-stat')
     def center_stat(self, request, *args, **kwargs):
         '''
         获取一个分中心的资源统计信息列表
@@ -1800,7 +1791,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
                              'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
 
-    @action(methods=['get'], detail=True, url_path='group', url_name='group_stat')
+    @action(methods=['get'], detail=True, url_path='group', url_name='group-stat')
     def group_stat(self, request, *args, **kwargs):
         '''
         获取一个机组的资源统计信息列表
@@ -1905,7 +1896,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(methods=['post'], detail=True, url_path='mount', url_name='mount_pci')
+    @action(methods=['post'], detail=True, url_path='mount', url_name='mount-pci')
     def mount_pci(self, request, *args, **kwargs):
         '''
         挂载PCI设备
@@ -1935,7 +1926,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 201, 'code_text': '挂载成功'}, status=status.HTTP_201_CREATED)
 
-    @action(methods=['post'], detail=True, url_path='umount', url_name='umount_pci')
+    @action(methods=['post'], detail=True, url_path='umount', url_name='umount-pci')
     def umount_pci(self, request, *args, **kwargs):
         '''
         卸载PCI设备
