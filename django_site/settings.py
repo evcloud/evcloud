@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'network.apps.NetworkConfig',
     'novnc',
     'vdisk',
+    'docs',
+    'reports',
 ]
 
 MIDDLEWARE = [
@@ -219,7 +221,110 @@ SIMPLE_JWT = {
 
 # vnc
 VNCSERVER_BASE_PORT = 5900
+# NOVNC_SERVER_PORT = 84  # novnc代理服务websockify的端口； 默认为80（需要通过nginx代理）
 
+# 日志配置
+LOGGING_FILES_DIR = os.path.join('/var/log', os.path.basename(BASE_DIR))
+if not os.path.exists(LOGGING_FILES_DIR):
+    os.makedirs(LOGGING_FILES_DIR, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+        'dubug_formatter': {
+            'format': '%(levelname)s %(asctime)s %(message)s'
+        },
+        'user_formatter': {
+            'format': '%(levelname)s %(asctime)s %(user_id)d %(username)s %(url)s %(method)s %(message)s'
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        # logging file settings
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': os.path.join(LOGGING_FILES_DIR, 'webserver.log'),
+            'formatter': 'verbose'
+        },
+        # output to console settings
+        'console': {
+            'level': 'INFO',
+            'filters': ['require_debug_true'],# working with debug mode
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        # debug logging file settings
+        'debug': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],# working with debug mode
+            'class': 'logging.handlers.WatchedFileHandler',
+            'filename': os.path.join(LOGGING_FILES_DIR, 'debug.log'),
+            'formatter': 'dubug_formatter'
+        },
+        # 邮件通知
+        # 'mail_admins': {
+        #     'level': 'ERROR',
+        #     'class': 'django.utils.log.AdminEmailHandler',
+        #     'filters': ['special']
+        # }
+        'user_handler': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGGING_FILES_DIR, 'evcloud_user.log'),
+            'formatter': 'user_formatter',
+            'maxBytes':  1024 * 1024 * 512
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'debug': {
+            'handlers': ['debug'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'user': {
+            'handlers': ['user_handler', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# api docs
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'basic': {
+            'type': 'basic'
+        },
+        "api_key": {
+            "type": "apiKey",
+            "name": "Token",
+            "in": "header"
+          },
+    },
+    'SHOW_REQUEST_HEADERS': True,
+    'JSON_EDITOR': True,
+    'DOC_EXPANSION': 'list',
+}
 
 # 导入安全相关的settings
 from .security import *

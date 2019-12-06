@@ -1,6 +1,6 @@
-from rest_framework import viewsets, status, mixins
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from rest_framework.schemas import AutoSchema
 from rest_framework.compat import coreapi, coreschema
 from rest_framework.pagination import LimitOffsetPagination
@@ -13,14 +13,41 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from vms.manager import VmManager, VmAPI, VmError
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
-from compute.managers import CenterManager, HostManager, ComputeError
-from network.models import Vlan, MacIP
-from image.models import Image
+from compute.managers import HostManager, CenterManager, GroupManager, ComputeError
+from network.models import Vlan
+from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
+from device.manager import PCIDeviceManager
 from . import serializers
 
+
 # Create your views here.
+
+def str_to_int_or_default(val, default):
+    '''
+    字符串转int，转换失败返回设置的默认值
+
+    :param val: 待转化的字符串
+    :param default: 转换失败返回的值
+    :return:
+        int     # success
+        default # failed
+    '''
+    try:
+        return int(val)
+    except Exception:
+        return default
+
+
+class IsSuperUser(BasePermission):
+    """
+    Allows access only to super users.
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_superuser)
+
+
 class CustomAutoSchema(AutoSchema):
     '''
     自定义Schema
@@ -182,10 +209,6 @@ class VmsViewSet(viewsets.GenericViewSet):
             "status_text": "shut off"
           }
         }
-
-    partial_update:
-        修改虚拟机vcpu和内存大小
-
     '''
     permission_classes = [IsAuthenticated,]
     pagination_class = LimitOffsetPagination
@@ -258,15 +281,42 @@ class VmsViewSet(viewsets.GenericViewSet):
                     schema=coreschema.String(description='备注信息'),
                     description='新的备注信息'
                 ),
+            ],
+            'vm_sys_snap': [
+                coreapi.Field(
+                    name='remark',
+                    location='query',
+                    required=False,
+                    schema=coreschema.String(description='备注信息'),
+                    description='快照备注信息'
+                ),
+            ],
+            'delete_vm_snap': [
+                coreapi.Field(
+                    name='id',
+                    location='path',
+                    required=True,
+                    schema=coreschema.String(description='snap id'),
+                    description='快照id'
+                ),
+            ],
+            'vm_snap_remark': [
+                coreapi.Field(
+                    name='remark',
+                    location='query',
+                    required=True,
+                    schema=coreschema.String(description='新的备注信息'),
+                    description='快照备注信息'
+                ),
             ]
         }
     )
 
     def list(self, request, *args, **kwargs):
-        center_id = int(request.query_params.get('center_id', 0))
-        group_id = int(request.query_params.get('group_id', 0))
-        host_id = int(request.query_params.get('host_id', 0))
-        user_id = int(request.query_params.get('user_id', 0))
+        center_id = str_to_int_or_default(request.query_params.get('center_id', 0), default=0)
+        group_id = str_to_int_or_default(request.query_params.get('group_id', 0), default=0)
+        host_id = str_to_int_or_default(request.query_params.get('host_id', 0), default=0)
+        user_id = str_to_int_or_default(request.query_params.get('user_id', 0), default=0)
         search = request.query_params.get('search', '')
 
         user = request.user
@@ -359,6 +409,20 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def partial_update(self, request, *args, **kwargs):
+        '''
+        修改虚拟机vcpu和内存大小
+
+            http code 200 修改成功：
+            {
+                "code": 200,
+                "code_text": "修改虚拟机成功"
+            }
+            http code 400 修改失败：
+            {
+                "code": 400,
+                "code_text": "xxx"
+            }
+        '''
         vm_uuid = kwargs.get(self.lookup_field, '')
 
         serializer = self.get_serializer(data=request.data)
@@ -392,7 +456,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机成功'})
 
-    @action(methods=['patch'], url_path='operations', detail=True, url_name='vm_operations')
+    @action(methods=['patch'], url_path='operations', detail=True, url_name='vm-operations')
     def vm_operations(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
@@ -415,7 +479,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': f'{op}虚拟机成功'})
 
-    @action(methods=['get'], url_path='status', detail=True, url_name='vm_status')
+    @action(methods=['get'], url_path='status', detail=True, url_name='vm-status')
     def vm_status(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
@@ -427,7 +491,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 200, 'code_text': '获取虚拟机状态成功',
                               'status': {'status_code': code, 'status_text': msg}})
 
-    @action(methods=['post'], url_path='vnc', detail=True, url_name='vm_vnc')
+    @action(methods=['post'], url_path='vnc', detail=True, url_name='vm-vnc')
     def vm_vnc(self, request, *args, **kwargs):
         '''
         创建虚拟机vnc
@@ -466,7 +530,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
                               'vnc': {'id': vnc_id, 'url': url}})
 
-    @action(methods=['patch'], url_path='remark', detail=True, url_name='vm_remark')
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='vm-remark')
     def vm_remark(self, request, *args, **kwargs):
         '''
         修改虚拟机备注信息
@@ -483,6 +547,81 @@ class VmsViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 400, 'code_text': f'修改虚拟机备注信息失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
+
+    @action(methods=['post'], url_path='snap', detail=True, url_name='vm-sys-snap')
+    def vm_sys_snap(self, request, *args, **kwargs):
+        '''
+        创建虚拟机系统盘快照
+        '''
+        remark = request.query_params.get('remark', '')
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        api = VmAPI()
+        try:
+            snap = api.create_vm_sys_snap(vm_uuid=vm_uuid, remarks=remark, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'创建虚拟机系统快照失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '创建虚拟机系统快照成功',
+                              'snap': serializers.VmDiskSnapSerializer(snap).data}, status=status.HTTP_201_CREATED)
+
+    @action(methods=['delete'], url_path=r'snap/(?P<id>[0-9]+)', detail=False, url_name='delete-vm-snap')
+    def delete_vm_snap(self, request, *args, **kwargs):
+        '''
+        删除一个虚拟机系统快照
+        '''
+        snap_id = str_to_int_or_default(kwargs.get('id', '0'), default=0)
+        if snap_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmManager()
+        try:
+            ok = api.delete_sys_disk_snap(snap_id=snap_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'删除虚拟机系统快照失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['patch'], url_path=r'snap/(?P<id>[0-9]+)/remark', detail=False, url_name='vm-snap-remark')
+    def vm_snap_remark(self, request, *args, **kwargs):
+        '''
+        修改虚拟机快照备注信息
+        '''
+        remark = request.query_params.get('remark')
+        if not remark:
+            return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
+
+        snap_id = str_to_int_or_default(kwargs.get('id', '0'), default=0)
+        if snap_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmManager()
+        try:
+            snap = api.modify_sys_snap_remarks(snap_id=snap_id, remarks=remark, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'修改快照备注信息失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 200, 'code_text': '修改快照备注信息成功'})
+
+    @action(methods=['post'], url_path=r'rollback/(?P<snap_id>[0-9]+)', detail=True, url_name='vm-rollback-snap')
+    def vm_rollback_snap(self, request, *args, **kwargs):
+        '''
+        虚拟机系统盘回滚到指定快照
+        '''
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        snap_id = str_to_int_or_default(kwargs.get('snap_id', '0'), default=0)
+        if snap_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmAPI()
+        try:
+            ok = api.vm_rollback_to_snap(vm_uuid=vm_uuid, snap_id=snap_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'回滚虚拟机失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '回滚虚拟机成功'}, status=status.HTTP_201_CREATED)
 
     def get_serializer_class(self):
         """
@@ -515,6 +654,21 @@ class CenterViewSet(viewsets.GenericViewSet):
     def list(self, request, *args, **kwargs):
         '''
         获取分中心列表
+
+            http code 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "name": "怀柔分中心",
+                  "location": "怀柔",
+                  "desc": "xxx"
+                }
+              ]
+            }
         '''
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -548,14 +702,61 @@ class GroupViewSet(viewsets.GenericViewSet):
     # api docs
     schema = CustomAutoSchema(
         manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='center_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='分中心id'),
+                    description='所属分中心'
+                ),
+            ]
         }
     )
 
     def list(self, request, *args, **kwargs):
         '''
         获取宿主机组列表
+
+            http code 200:
+            {
+              "count": 2,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "name": "宿主机组1",
+                  "center": 1,
+                  "desc": "xxx"
+                },
+              ]
+            }
+            http code 400:
+            {
+              "code": 400,
+              "code_text": "xxx"
+            }
         '''
-        queryset = self.filter_queryset(self.get_queryset())
+        center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
+        if center_id < 0:
+            return Response(data={'code': 400, 'code_text': 'center_id参数无效'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        manager = CenterManager()
+        try:
+            if center_id > 0:
+                if user.is_superuser:
+                    queryset = manager.get_group_queryset_by_center(center_id)
+                else:
+                    queryset = manager.get_user_group_queryset_by_center(center_or_id=center_id, user=user)
+            else:
+                if user.is_superuser:
+                    queryset = self.get_queryset()
+                else:
+                    queryset = manager.get_user_group_queryset(user)
+        except ComputeError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -708,7 +909,6 @@ class ImageViewSet(viewsets.GenericViewSet):
     '''
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
-    queryset = Image.objects.all()
 
     # api docs
     schema = CustomAutoSchema(
@@ -720,7 +920,28 @@ class ImageViewSet(viewsets.GenericViewSet):
                     required=False,
                     schema=coreschema.Integer(description='分中心id'),
                     description='所属分中心'
-                )
+                ),
+                coreapi.Field(
+                    name='tag',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='标签'),
+                    description='镜像标签'
+                ),
+                coreapi.Field(
+                    name='sys_type',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='系统类型'),
+                    description='系统类型'
+                ),
+                coreapi.Field(
+                    name='search',
+                    location='query',
+                    required=False,
+                    schema=coreschema.String(description='关键字查询'),
+                    description='关键字查询'
+                ),
             ]
         }
     )
@@ -728,15 +949,55 @@ class ImageViewSet(viewsets.GenericViewSet):
     def list(self, request, *args, **kwargs):
         '''
         获取系统镜像列表
+
+            镜像标签: [
+                [1, "基础镜像" ],
+                [2, "用户镜像"]
+            ]
+            系统类型: [
+                [1,"Windows"],
+                [2,"Linux"],
+                [3,"Unix"],
+                [4,"MacOS"],
+                [5,"Android"],
+                [6,"其他"]
+            ]
+
+            http code 200:
+            {
+              "count": 2,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "name": "centos8",
+                  "version": "64bit",
+                  "sys_type": {
+                    "id": 2,
+                    "name": "Linux"
+                  },
+                  "tag": {
+                    "id": 0,
+                    "name": "基础镜像"
+                  },
+                  "enable": true,
+                  "create_time": "2019-10-15 16:25:26",
+                  "desc": "centos8"
+                }
+              ]
+            }
         '''
-        center_id = int(request.query_params.get('center_id', 0))
-        if center_id > 0:
-            try:
-                queryset = CenterManager().get_image_queryset_by_center(center_id)
-            except Exception as e:
-                return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            queryset = self.get_queryset()
+        center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
+        tag = str_to_int_or_default(request.query_params.get('tag', 0), 0)
+        sys_type = str_to_int_or_default(request.query_params.get('sys_type', 0), 0)
+        search = request.query_params.get('sys_type', '')
+
+        try:
+            queryset = ImageManager().filter_image_queryset(center_id=center_id, sys_type=sys_type, tag=tag,
+                                                            search=search, all_no_filters=request.user.is_superuser)
+        except Exception as e:
+            return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -744,16 +1005,7 @@ class ImageViewSet(viewsets.GenericViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
-    # def create(self, request, *args, **kwargs):
-    #     pass
-    #
-    # def retrieve(self, request, *args, **kwargs):
-    #     pass
-    #
-    # def destroy(self, request, *args, **kwargs):
-    #     pass
+        return Response({'results': serializer.data})
 
     def get_serializer_class(self):
         """
@@ -1041,8 +1293,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     "id": 1,
                     "name": "group1云硬盘存储池"
                   },
-                  "create_time": "2019-11-13T16:56:20.278780+08:00",
-                  "attach_time": "2019-11-14T09:11:44.291782+08:00",
+                  "create_time": "2019-11-13 16:56:20",
+                  "attach_time": "2019-11-14 09:11:44",
                   "enable": true,
                   "remarks": "test3",
                   "group": {
@@ -1104,7 +1356,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "vm": null,
                 "user": 1,
                 "quota": 1,
-                "create_time": "2019-11-07T11:21:44.116941+08:00",
+                "create_time": "2019-11-07 11:21:44",
                 "attach_time": null,
                 "enable": true,
                 "remarks": "test2"
@@ -1193,7 +1445,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     "name": "宿主机组1"
                   }
                 },
-                "create_time": "2019-11-07T11:19:55.496380+08:00",
+                "create_time": "2019-11-07 11:19:55",
                 "attach_time": null,
                 "enable": true,
                 "remarks": "test"
@@ -1252,7 +1504,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['patch'], url_path='mount', detail=True, url_name='disk_mount')
+    @action(methods=['patch'], url_path='mount', detail=True, url_name='disk-mount')
     def disk_mount(self, request, *args, **kwargs):
         '''
         挂载硬盘
@@ -1278,7 +1530,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '挂载硬盘成功'})
 
-    @action(methods=['patch'], url_path='umount', detail=True, url_name='disk_umount')
+    @action(methods=['patch'], url_path='umount', detail=True, url_name='disk-umount')
     def disk_umount(self, request, *args, **kwargs):
         '''
         卸载硬盘
@@ -1303,7 +1555,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '卸载硬盘成功'})
 
-    @action(methods=['patch'], url_path='remark', detail=True, url_name='disk_remark')
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='disk-remark')
     def disk_remark(self, request, *args, **kwargs):
         '''
         修改云硬盘备注信息
@@ -1421,3 +1673,293 @@ class QuotaViewSet(viewsets.GenericViewSet):
             return serializers.QuotaListSerializer
         return Serializer
 
+
+class StatCenterViewSet(viewsets.GenericViewSet):
+    '''
+    资源统计类视图
+    '''
+    permission_classes = [IsAuthenticated, IsSuperUser]
+    pagination_class = None
+    lookup_field = 'id'
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取所有资源统计信息列表
+
+            http code 200:
+            {
+              "code": 200,
+              "code_text": "get ok",
+              "centers": [
+                {
+                  "id": 1,
+                  "name": "怀柔分中心",
+                  "mem_total": 165536,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 54,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ],
+              "groups": [
+                {
+                  "id": 1,
+                  "name": "宿主机组1",
+                  "center__name": "怀柔分中心",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ],
+              "hosts": [
+                {
+                  "id": 1,
+                  "ipv4": "10.100.50.121",
+                  "group__name": "宿主机组1",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ]
+            }
+        '''
+        centers = CenterManager().get_stat_center_queryset().values('id', 'name', 'mem_total', 'mem_allocated',
+                                         'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        groups = GroupManager().get_stat_group_wueryset().values('id', 'name', 'center__name', 'mem_total',
+                                        'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        hosts = Host.objects.select_related('group').values('id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
+                                            'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+        return Response(data={'code': 200, 'code_text': 'get ok', 'centers': centers, 'groups': groups, 'hosts': hosts})
+
+    @action(methods=['get'], detail=True, url_path='center', url_name='center-stat')
+    def center_stat(self, request, *args, **kwargs):
+        '''
+        获取一个分中心的资源统计信息列表
+
+            http code 200:
+            {
+              "code": 200,
+              "code_text": "get ok",
+              "center": {
+                  "id": 1,
+                  "name": "怀柔分中心",
+                  "mem_total": 165536,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 54,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                },
+              "groups": [
+                {
+                  "id": 1,
+                  "name": "宿主机组1",
+                  "center__name": "怀柔分中心",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ]
+            }
+        '''
+        c_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
+        if c_id > 0:
+            center = CenterManager().get_stat_center_queryset(filter={'id': c_id}).values('id', 'name', 'mem_total',
+                            'mem_allocated','mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').first()
+        else:
+            center = None
+        if not center:
+            return Response({'code': 200, 'code_text': '分中心不存在'}, status=status.HTTP_400_BAD_REQUEST)
+
+        groups = GroupManager().get_stat_group_wueryset(filter={'center': c_id}).values('id', 'name', 'center__name',
+                             'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
+
+    @action(methods=['get'], detail=True, url_path='group', url_name='group-stat')
+    def group_stat(self, request, *args, **kwargs):
+        '''
+        获取一个机组的资源统计信息列表
+
+            http code 200:
+            {
+              "code": 200,
+              "code_text": "get ok",
+              "group": {
+                  "id": 1,
+                  "name": "宿主机组1",
+                  "center__name": "怀柔分中心",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+              },
+              "hosts": [
+                {
+                  "id": 1,
+                  "ipv4": "10.100.50.121",
+                  "group__name": "宿主机组1",
+                  "mem_total": 132768,
+                  "mem_allocated": 15360,
+                  "mem_reserved": 2038,
+                  "vcpu_total": 24,
+                  "vcpu_allocated": 24,
+                  "vm_created": 6
+                }
+              ]
+            }
+        '''
+        g_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
+        if g_id > 0:
+            group = GroupManager().get_stat_group_wueryset(filter={'id': g_id}).values('id', 'name', 'center__name',
+                    'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total','vcpu_allocated', 'vm_created').first()
+        else:
+            group = None
+        if not group:
+            return Response({'code': 200, 'code_text': '机组不存在'}, status=status.HTTP_400_BAD_REQUEST)
+
+        hosts = Host.objects.select_related('group').filter(group=g_id).values('id', 'ipv4', 'group__name', 'mem_total',
+                        'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+        return Response(data={'code': 200, 'code_text': 'get ok', 'group': group, 'hosts': hosts})
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        return Serializer
+
+
+class PCIDeviceViewSet(viewsets.GenericViewSet):
+    '''
+    PCI设备类视图
+    '''
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='group_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='宿主机组id'),
+                    description='所属宿主机组'
+                ),
+            ],
+            'mount_pci': [
+                coreapi.Field(
+                    name='vm_uuid',
+                    location='query',
+                    required=True,
+                    schema=coreschema.String(description='虚拟机uuid'),
+                    description='虚拟机uuid'
+                ),
+            ]
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取PCI设备列表
+
+            http code 200:
+
+        '''
+        group_id = int(request.query_params.get('group_id', 0))
+        queryset = PCIDeviceManager().get_device_queryset().select_related('host', 'vm').all()
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(methods=['post'], detail=True, url_path='mount', url_name='mount-pci')
+    def mount_pci(self, request, *args, **kwargs):
+        '''
+        挂载PCI设备
+
+            http code 201:
+            {
+                "code": 201,
+                "code_text": "挂载设备成功"
+            }
+            http code 400:
+            {
+                "code": 400,
+                "code_text": "挂载设备失败，xxx"
+            }
+
+        '''
+        dev_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
+        vm_uuid = request.query_params.get('vm_uuid', '')
+        if dev_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的设备ID'}, status=status.HTTP_400_BAD_REQUEST)
+        if not vm_uuid:
+            return Response(data={'code': 400, 'code_text': '无效的虚拟机ID'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+             dev = VmAPI().mount_pci_device(vm_uuid=vm_uuid, device_id=dev_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'挂载失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '挂载成功'}, status=status.HTTP_201_CREATED)
+
+    @action(methods=['post'], detail=True, url_path='umount', url_name='umount-pci')
+    def umount_pci(self, request, *args, **kwargs):
+        '''
+        卸载PCI设备
+
+            http code 201:
+            {
+                "code": 201,
+                "code_text": "卸载设备成功"
+            }
+            http code 400:
+            {
+                "code": 400,
+                "code_text": "卸载设备失败，xxx"
+            }
+
+        '''
+        dev_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
+        if dev_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的设备ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+             dev = VmAPI().umount_pci_device(device_id=dev_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'卸载失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '卸载成功'}, status=status.HTTP_201_CREATED)
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
+        if self.action in ['list', 'retrieve']:
+            return serializers.PCIDeviceSerializer
+        return Serializer

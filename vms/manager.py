@@ -3,15 +3,16 @@ import os
 
 from django.db.models import Q
 
-from ceph.managers import RadosError, RbdManager
+from ceph.managers import RadosError, get_rbd_manager
 from ceph.models import CephCluster
 from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
 from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from network.models import Vlan
 from vdisk.manager import VdiskManager, VdiskError
+from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError
-from .models import Vm, VmArchive, VmLog
+from .models import Vm, VmArchive, VmLog, VmDiskSnap
 from .xml import XMLEditor
 
 
@@ -217,7 +218,7 @@ class VmManager(VirtAPI):
                 vm_queryset = self.get_user_vms_queryset(user_id)
 
         if search:
-            if vm_queryset:
+            if vm_queryset is not None:
                 vm_queryset = vm_queryset.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
                                                  Q(uuid__icontains=search)).all()
             else:
@@ -328,6 +329,115 @@ class VmManager(VirtAPI):
         except self.VirtError as e:
             raise VmError(msg=f'卸载硬盘错误，{str(e)}')
 
+    def create_sys_disk_snap(self, vm:Vm, remarks:str):
+        '''
+        创建虚拟机系统盘快照
+        :param vm: 虚拟机对象
+        :param remarks: 备注信息
+        :return:
+            VmDiskSnap()    # success
+
+        ::raises: VmError
+        '''
+        image = vm.image
+        ceph_pool = image.ceph_pool
+        disk_snap = VmDiskSnap(disk=vm.disk, vm=vm, ceph_pool=ceph_pool, remarks=remarks)
+        try:
+            disk_snap.save()
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+        return disk_snap
+
+    def delete_sys_disk_snap(self, snap_id:int, user):
+        '''
+        删除虚拟机系统盘快照
+
+        :param snap_id: 快照id
+        :param user: 用户
+        :return:
+            True    # success
+
+        :raises: VmError
+        '''
+        snap = VmDiskSnap.objects.select_related('vm', 'vm__user').filter(pk=snap_id).first()
+        if not snap:
+            raise VmError(msg='快照不存在')
+
+        if not user.is_superuser:
+            if snap.vm and not snap.vm.user_has_perms(user):
+                raise VmError(msg='没有此快照的访问权限')
+
+        try:
+            snap.delete()
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+        return True
+
+    def modify_sys_snap_remarks(self, snap_id:int, remarks:str, user):
+        '''
+        修改虚拟机系统盘快照备注信息
+
+        :param snap_id: 快照id
+        :param remarks: 备注信息
+        :param user: 用户
+        :return:
+            VmDiskSnap()    # success
+        :raises: VmError
+        '''
+        snap = VmDiskSnap.objects.select_related('vm', 'vm__user').filter(pk=snap_id).first()
+        if not snap:
+            raise VmError(msg='快照不存在')
+
+        if not user.is_superuser:
+            if snap.vm and not snap.vm.user_has_perms(user):
+                raise VmError(msg='没有此快照的访问权限')
+
+        try:
+            snap.remarks = remarks
+            snap.save(update_fields=['remarks'])
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+        return snap
+
+    def disk_rollback_to_snap(self, vm:Vm, snap_id:int):
+        '''
+        回滚虚拟机系统盘到指定快照
+
+        :param vm: 虚拟机对象
+        :param snap_id: 快照id
+        :param user: 用户
+        :return:
+            True    # success
+
+        :raises: VmError
+        '''
+        snap = VmDiskSnap.objects.select_related('ceph_pool', 'ceph_pool__ceph').filter(pk=snap_id).first()
+        if not snap:
+            raise VmError(msg='快照不存在')
+
+        if snap.disk != vm.disk:
+            raise VmError(msg='快照不属于此主机')
+
+        ceph_pool = snap.ceph_pool
+        if not ceph_pool:
+            raise VmError(msg='can not get ceph pool')
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            raise VmError(msg='can not get ceph')
+
+        try:
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
+            rbd.image_rollback_to_snap(image_name=vm.disk, snap=snap.snap)
+        except (RadosError, Exception) as e:
+            raise VmError(msg=str(e))
+
+        return True
+
+
 
 class VmArchiveManager:
     '''
@@ -412,6 +522,7 @@ class VmAPI:
         self._vlan_manager = VlanManager()
         self._macip_manager = MacIPManager()
         self._vdisk_manager = VdiskManager()
+        self._pci_manager = PCIDeviceManager()
 
     def new_uuid_obj(self):
         '''
@@ -432,17 +543,8 @@ class VmAPI:
 
         :raise VmError
         '''
-        conf_file = ceph.config_file
-        keyring_file = ceph.keyring_file
-        # 当水平部署多个服务时，在后台添加ceph配置时，只有其中一个服务保存了配置文件，要检查当前服务是否保存到配置文件了
-        if not os.path.exists(conf_file) or not os.path.exists(keyring_file):
-            ceph.save()
-            conf_file = ceph.config_file
-            keyring_file = ceph.keyring_file
-
         try:
-            rbd_manager = RbdManager(conf_file=conf_file, keyring_file=keyring_file, pool_name=pool_name)
-            return rbd_manager
+            return get_rbd_manager(ceph=ceph, pool_name=pool_name)
         except RadosError as e:
             raise VmError(msg=str(e))
 
@@ -1100,3 +1202,168 @@ class VmAPI:
 
         return vdisk
 
+    def create_vm_sys_snap(self, vm_uuid:str, remarks:str, user):
+        '''
+        创建虚拟机系统盘快照
+        :param vm_uuid: 虚拟机id
+        :param remarks: 快照备注信息
+        :param user: 用户
+        :return:
+            VmDiskSnap()    # success
+        :raises: VmError
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        # host = vm.host
+        # try:
+        #     run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+        # except VirtError as e:
+        #     raise VmError(msg='获取虚拟机运行状态失败')
+        # if run:
+        #     raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        snap = self._vm_manager.create_sys_disk_snap(vm=vm, remarks=remarks)
+        return snap
+
+    def vm_rollback_to_snap(self, vm_uuid:str, snap_id:int, user):
+        '''
+        回滚虚拟机系统盘到指定快照
+
+        :param vm_uuid: 虚拟机id
+        :param snap_id: 快照id
+        :param user: 用户
+        :return:
+           True    # success
+
+        :raises: VmError
+        '''
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        return self._vm_manager.disk_rollback_to_snap(vm=vm, snap_id=snap_id)
+
+    def umount_pci_device(self, device_id:int, user):
+        '''
+        从虚拟机卸载pci设备
+
+        :param device_id: pci设备id
+        :param user: 用户
+        :return:
+            PCIDevice()    # success
+
+        :raises: VmError
+        '''
+        try:
+            device = self._pci_manager.get_device_by_id(device_id=device_id, related_fields=('host',))
+        except DeviceError as e:
+            raise VmError(msg='查询设备时错误')
+
+        if device is None:
+            raise VmError(msg='设备不存在')
+        if not device.enable:
+            raise VmError(msg='设备暂不可使用')
+        if not device.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此设备')
+
+        vm = device.vm
+        if vm is None:
+            return True
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        # 卸载设备
+        try:
+            self._pci_manager.umount_from_vm(device=device)
+        except DeviceError as e:
+            raise VmError(msg=str(e))
+
+        # 更新vm元数据中的xml
+        try:
+            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            vm.xml = xml_desc
+            vm.save(update_fields=['xml'])
+        except Exception:
+            pass
+
+        return device
+
+    def mount_pci_device(self, vm_uuid:str, device_id:int, user):
+        '''
+        向虚拟机挂载pci设备
+
+        :param vm_uuid: 虚拟机uuid
+        :param device_id: pci设备id
+        :param user: 用户
+        :return:
+            PCIDevice()   # success
+
+        :raises: VmError
+        '''
+        try:
+            device = self._pci_manager.get_device_by_id(device_id=device_id, related_fields=('host',))
+        except DeviceError as e:
+            raise VmError(msg='查询设备时错误')
+
+        if device is None:
+            raise VmError(msg='设备不存在')
+        if not device.enable:
+            raise VmError(msg='设备暂不可使用')
+        if not device.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此设备')
+
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        # 向虚拟机挂载硬盘
+        try:
+            self._pci_manager.mount_to_vm(vm=vm, device=device)
+        except DeviceError as e:
+            raise VmError(msg=str(e))
+
+        # 更新vm元数据中的xml
+        try:
+            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            vm.xml = xml_desc
+            vm.save(update_fields=['xml'])
+        except Exception:
+            pass
+
+        return device

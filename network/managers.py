@@ -69,9 +69,8 @@ class VlanManager:
         :return:
         '''
         reg = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-        if not re.match(reg, from_ip) and re.match(reg, to_ip):
+        if not (re.match(reg, from_ip) and re.match(reg, to_ip)):
             raise NetworkError(msg='输入的ip地址错误')
-
         ip_int = [[*map(int, ip.split('.'))] for ip in (from_ip, to_ip)]
         ip_hex = [ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3] for ip in ip_int]
         if ip_hex[0] > ip_hex[1]:
@@ -82,11 +81,12 @@ class VlanManager:
         submacs = ['C8:00:' + ':'.join(map(lambda x: x[2:].upper().rjust(2, '0'), map(lambda x: hex(int(x)), ip.split('.'))))
                    for ip in subips]
         if write_database:
-            for subip, submac in zip(subips, submacs):
-                try:
-                    MacIP.objects.create(vlan=vlan_id, ipv4=subip, mac=submac)
-                except Exception as error:
-                    raise NetworkError(msg='ip写入数据库失败' + str(error))
+            with transaction.atomic():
+                for subip, submac in zip(subips, submacs):
+                    try:
+                        MacIP.objects.create(vlan_id=vlan_id, ipv4=subip, mac=submac)
+                    except Exception as error:
+                        raise NetworkError(msg='ip写入数据库失败，部分ip数据库中已有')
 
         return [*zip(subips, submacs)]
 
@@ -109,11 +109,11 @@ class VlanManager:
         :param macips: 对应vlan下的所有macip组
         :return: 返回文件数据
         '''
-        lines = 'subnet %s netmask %s {\n' % (vlan.subnetip, vlan.netmask)
+        lines = 'subnet %s netmask %s {\n' % (vlan.subnet_ip, vlan.net_mask)
         lines += '\t' + 'option routers\t%s;\n' % vlan.gateway
-        lines += '\t' + 'option subnet-mask\t%s;\n' % vlan.netmask
-        lines += '\t' + 'option domain-name-servers\t%s;\n' % vlan.dnsserver
-        lines += '\t' + vlan.dhcp_config
+        lines += '\t' + 'option subnet-mask\t%s;\n' % vlan.net_mask
+        lines += '\t' + 'option domain-name-servers\t%s;\n' % vlan.dns_server
+        lines += '\t' + vlan.dhcp_config + '\n'
         # lines = lines + '\t' + 'option domain-name-servers\t8.8.8.8;\n'
         # lines = lines + '\t' + 'option time-offset\t-18000; # EAstern Standard Time\n'
         # lines = lines + '\t' + 'range dynamic-bootp 10.0.224.240 10.0.224.250;\n'
@@ -122,9 +122,9 @@ class VlanManager:
         # lines = lines + '\t' + 'next-server 159.226.50.246;   #tftp server\n'
         # lines = lines + '\t' + 'filename "/pxelinux.0";    #boot file\n'
 
-        for mac, ip in macips:
-            lines += '\t' + 'host %s{hardware ethernet %s;fixed-address %s;}\n' % ('v_' + ip.replace('.', '_'), mac, ip)
-        return StringIO(lines)
+        for macip in macips:
+            lines += '\t' + 'host %s{hardware ethernet %s;fixed-address %s;}\n}' % ('v_' + macip.ipv4.replace('.', '_'), macip.mac, macip.ipv4)
+        return vlan.subnet_ip + '_dhcpd.conf', StringIO(lines)
 
 
 class MacIPManager:

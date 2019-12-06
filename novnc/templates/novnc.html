@@ -1,48 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title></title>
-	<script type="text/javascript" src="/static/jquery2.2.4/dist/jquery-2.2.4.min.js"></script>
-	<style type="text/css">
-	.safe-close{
-		position:absolute;
-		top:10px; 
-		left:10px;
-	}
-	.safe-close button {
-		color:red;
-	}
-	</style>  
+    <title></title>
+    <style type="text/css">
+        .safe-close {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+
+        .safe-close button {
+            color: red;
+        }
+    </style>
 </head>
 <body onclick="setFocus()" onload="setFocus()">
-<div class="safe-close"><button onclick="javascript:window.open('?vncid={{vncid}}&close=1', '_self')">关闭</button></div>
-<div width="100%" height="100%">
-<iframe id="novnc" src="{{url}} " width="100%" onload="setHeight()" align="center"></iframe>
-</div>
-<script type="text/javascript">
-	function setFocus(){
-		// alert(document.getElementById("novnc"))
-		document.getElementById("novnc").focus();
-	}
-	function setHeight(){
-		document.getElementById("novnc").height = $(window).height()-10; 
-	}
+    <div class="safe-close">
+        <button onclick="javascript:window.open('?vncid={{ vncid }}&close=1', '_self')">关闭</button>
+    </div>
+    <div>
+        <iframe id="novnc" src="{{ url }} " width="100%" onload="setHeight()" align="center"></iframe>
+    </div>
+    <script type="text/javascript">
+        function setFocus() {
+            document.getElementById("novnc").focus();
+        }
 
-	document.body.onbeforeunload = function(event) { 
-		
-		// event.preventDefault();
-		$.ajax({
-			url: window.location.href,
-			type: 'get',
-			data: {
-				'vncid': '{{id}}',
-			},
-			success: function(data) {
-				window.close();
-			},
-		}, 'json');
-	}
-	
-</script>
+        function setHeight() {
+            var ifm = document.getElementById("novnc");
+            var old = ifm.height;
+            var now = document.documentElement.clientHeight;
+            if (now > old){
+                ifm.height = now;
+            }
+        }
+        window.onresize = function () {
+            setHeight();
+        }
+    </script>
 </body>
 </html>

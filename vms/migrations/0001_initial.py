@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('uuid', models.UUIDField(primary_key=True, serialize=False, verbose_name='虚拟机UUID')),
                 ('name', models.CharField(max_length=200, verbose_name='名称')),
                 ('vcpu', models.IntegerField(verbose_name='CPU数')),
-                ('mem', models.IntegerField(verbose_name='内存大小')),
+                ('mem', models.IntegerField(help_text='单位MB', verbose_name='内存大小')),
                 ('disk', models.CharField(help_text='vm自己的系统盘，保存于ceph中的rdb文件名称', max_length=100, unique=True, verbose_name='系统盘名称')),
                 ('create_time', models.DateTimeField(auto_now_add=True, verbose_name='创建日期')),
                 ('remarks', models.TextField(blank=True, default='', verbose_name='备注')),

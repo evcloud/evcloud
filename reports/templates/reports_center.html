@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}资源统计列表{% endblock %}
+
+{% block head %}{% endblock %}
+
+{% block boby %}
+    <div class="col-md-offset-2 col-md-8 col-lg-8">
+        <p class="h4">分中心资源统计:<strong id="id-current-center" data-center-id="{{ center_id }}"></strong></p>
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 class="panel-title">分中心</h3>
+            </div>
+            <table class="table" id="id-table-center">
+                <tr>
+                    <th>总cpu(/核)</th>
+                    <th>已分配cpu(/核)</th>
+                    <th>cpu分配率</th>
+                    <th>总内存</th>
+                    <th>已使用内存</th>
+                    <th>内存使用率</th>
+                    <th>云主机数</th>
+                </tr>
+            </table>
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h3 class="panel-title">宿主机组</h3>
+                </div>
+                <table class="table" id="id-table-group">
+                    <tr>
+                        <th>宿主机组</th>
+                        <th>总cpu(/核)</th>
+                        <th>已分配cpu(/核)</th>
+                        <th>cpu分配率</th>
+                        <th>总内存</th>
+                        <th>已使用内存</th>
+                        <th>内存使用率</th>
+                        <th>云主机数</th>
+                    </tr>
+                </table>
+            </div>
+            <div class="panel-body">
+                <canvas id="id-chart-vm" height="100"></canvas>
+                <hr/>
+                <canvas id="id-chart-cpu" height="100"></canvas>
+                <hr/>
+                <canvas id="id-chart-mem" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'chartjs/Chart-2.9.3.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
+    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/reports_common.js' %}"></script>
+    {% verbatim %}
+    <script>
+        window.onload = function () {
+            $("#nav_reports").addClass("active");
+            template.defaults.imports.percentageFormat = percentageFormat;
+            template.defaults.imports.sizeFormat = sizeFormat;
+            chart_init();
+            get_stat_data_ajax();
+        };
+
+        function get_stat_data_ajax() {
+            let center_name_dom = $("#id-current-center");
+            let center_id = center_name_dom.attr("data-center-id");
+            $.ajax({
+                url: build_absolute_url('/api/v3/stat/' + center_id + '/center/'),
+                type: 'get',
+                success: function (data) {
+                    center_name_dom.text(data.center.name);
+                    let center_html = render_center_table(data.center);
+                    $("#id-table-center").children(':first-child').append(center_html);
+                    let group_html = render_group_table(data.groups);
+                    $("#id-table-group").children(':first-child').append(group_html);
+                    let chart_data = getChartDataFromGroupArray(data.groups);
+
+                    window.chart_vm.data.labels = chart_data.names;
+                    window.chart_vm.data.datasets[0].data = chart_data.vms;
+                    window.chart_vm.update();
+
+                    window.chart_cpu.data.labels = chart_data.names;
+                    window.chart_cpu.data.datasets[0].data = chart_data.cpu_used;
+                    window.chart_cpu.data.datasets[1].data = chart_data.cpu_free;
+                    window.chart_cpu.update();
+
+                    window.chart_mem.data.labels = chart_data.names;
+                    window.chart_mem.data.datasets[0].data = chart_data.mem_reserved;
+                    window.chart_mem.data.datasets[1].data = chart_data.mem_used;
+                    window.chart_mem.data.datasets[2].data = chart_data.mem_free;
+                    window.chart_mem.update();
+                },
+                error: function (e) {
+                    alert('请求数据失败');
+                },
+            });
+        }
+
+        let render_center_table = template.compile(`
+        <tr>
+            {{ set c = $data }}
+            <td>{{c.vcpu_total}}</td>
+            <td>{{c.vcpu_allocated}}</td>
+            <td>{{c.vcpu_allocated | percentageFormat c.vcpu_total}}</td>
+            <td>{{c.mem_total | sizeFormat 'MB'}}</td>
+            <td>{{c.mem_allocated | sizeFormat 'MB'}}</td>
+            <td>{{c.mem_allocated | percentageFormat c.mem_total}}</td>
+            <td>{{c.vm_created}}</td>
+        </tr>
+    `);
+
+        let render_group_table = template.compile(`
+        {{each $data}}
+        {{ set c = $value }}
+        <tr>
+            <td><a href="/reports/group/{{c.id}}/">{{c.name}}</a></td>
+            <td>{{c.vcpu_total}}</td>
+            <td>{{c.vcpu_allocated}}</td>
+            <td>{{c.vcpu_allocated | percentageFormat c.vcpu_total}}</td>
+            <td>{{c.mem_total | sizeFormat 'MB'}}</td>
+            <td>{{c.mem_allocated | sizeFormat 'MB'}}</td>
+            <td>{{c.mem_allocated | percentageFormat c.mem_total}}</td>
+            <td>{{c.vm_created}}</td>
+        </tr>
+        {{/each}}
+    `);
+
+        function getChartDataFromGroupArray(groups) {
+            var names = [];
+            var mem_free = [];
+            var mem_used = [];
+            var mem_reserved = [];
+            var vms = [];
+            var cpu_used = [];
+            var cpu_free = [];
+            if (groups) {
+                groups.forEach(function (g) {
+                    names.push(g.name);
+                    vms.push(g.vm_created);
+                    mem_used.push(g.mem_allocated);
+                    mem_reserved.push(g.mem_reserved);
+                    mem_free.push(g.mem_total - g.mem_allocated - g.mem_reserved);
+                    cpu_used.push(g.vcpu_allocated);
+                    cpu_free.push(g.vcpu_total - g.vcpu_allocated);
+                });
+            }
+            return {
+                names: names, mem_free: mem_free, mem_used: mem_used, mem_reserved: mem_reserved, vms: vms,
+                cpu_used: cpu_used, cpu_free: cpu_free
+            };
+        }
+    </script>
+    {% endverbatim %}
+{% endblock %}

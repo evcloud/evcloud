@@ -55,6 +55,7 @@ class Migration(migrations.Migration):
                 ('xml_tpl', models.ForeignKey(help_text='使用此镜象创建虚拟机时要使用的XML模板，不同类型的镜像有不同的XML格式', on_delete=django.db.models.deletion.CASCADE, to='image.VmXmlTemplate', verbose_name='xml模板')),
             ],
             options={
+                'ordering': ['-id'],
                 'verbose_name': '操作系统镜像',
                 'verbose_name_plural': '10_操作系统镜像',
                 'unique_together': {('name', 'version')},

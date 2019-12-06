@@ -36,9 +36,7 @@
             <a class="btn btn-xs btn-info btn-block" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载磁盘</a>
         </li>
         <li>
-            <button class="btn btn-xs btn-info btn-block"
-                    onclick="alert('暂不支持此操作');">修改配置
-            </button>
+            <a class="btn btn-xs btn-info btn-block" href="{% url 'vms:vm-edit' vm_uuid=vm.hex_uuid %}">修改配置</a>
         </li>
         <li>
             <button class="btn btn-xs btn-info btn-block"
@@ -51,8 +49,7 @@
             </button>
         </li>
         <li>
-            <button class="btn btn-xs btn-info btn-block"
-                    onclick="alert('暂不支持此操作');">创建快照
+            <button class="btn btn-xs btn-info btn-block btn-vm-snap-create" data-vm-uuid="{{ vm.hex_uuid }}">创建快照
             </button>
         </li>
     </ul>

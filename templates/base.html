@@ -8,8 +8,8 @@
 	<title>{% block title %}{% endblock %}</title>
 </head>
 <body>
-    <nav class="navbar navbar-default navbar-fixed-top">
-        <div class="container-fluid">
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid col-xs-offset-1 col-xs-10">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
                 <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
@@ -28,7 +28,11 @@
                 <ul class="nav navbar-nav">
                     <li id="nav_vm_list"><a href="{% url "vms:vms-list" %}">云主机</a></li>
                     <li id="nav_vdisk_list"><a href="{% url "vdisk:vdisk-list" %}">云硬盘</a></li>
-                    <li id="nav_vlan_list"><a href="{% url "network:vlan_list" %}">网络</a></li>
+                    <li id="nav_image_list"><a href="{% url "image:image-list" %}">镜像</a></li>
+                    {% if user.is_superuser %}
+                        <li id="nav_vlan_list"><a href="{% url "network:vlan_list" %}">网络</a></li>
+                        <li id="nav_reports"><a href="{% url 'reports:reports-list' %}">统计报表</a></li>
+                    {% endif %}
                 </ul>
                 <ul class="nav navbar-nav  navbar-right">
                     <li class="dropdown">
@@ -36,7 +40,7 @@
                            aria-expanded="false">帮助&文档<span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             <li><a href="{% url 'apidocs' %}" target="view_window" >API文档</a></li>
-{#                            <li><a href="{% url 'docs:docs' %}">文档</a></li>#}
+                            <li><a href="{% url 'docs:docs' %}">文档</a></li>
                         </ul>
                     </li>
                     <li>

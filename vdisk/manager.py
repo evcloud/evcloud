@@ -289,8 +289,9 @@ class VdiskManager:
                 # 卸载
                 disk.vm = None
                 disk.dev = ''
+                disk.attach_time = None
                 try:
-                    disk.save(update_fields=['vm', 'dev'])
+                    disk.save(update_fields=['vm', 'dev', 'attach_time'])
                 except Exception:
                     raise VdiskError(msg='更新元数据失败')
         except Vdisk.DoesNotExist as e:
@@ -377,7 +378,7 @@ class VdiskManager:
                 queryset = self.get_user_vdisk_queryset(user_id)
 
         if search:
-            if queryset:
+            if queryset is not None:
                 queryset = queryset.filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()
             else:
                 queryset = self.get_vdisk_queryset().filter(Q(remarks__icontains=search) | Q(uuid__icontains=search)).all()

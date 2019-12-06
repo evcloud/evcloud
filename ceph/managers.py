@@ -9,6 +9,29 @@ class RadosError(rados.Error):
     '''def __init__(self, message, errno=None)'''
     pass
 
+def get_rbd_manager(ceph:CephCluster, pool_name:str):
+    '''
+    获取一个rbd管理接口对象
+
+    :param ceph: ceph配置模型对象CephCluster()
+    :param pool_name: pool名称
+    :return:
+        RbdManager()    # success
+        raise RadosError   # failed
+
+    :raise RadosError
+    '''
+    conf_file = ceph.config_file
+    keyring_file = ceph.keyring_file
+    # 当水平部署多个服务时，在后台添加ceph配置时，只有其中一个服务保存了配置文件，要检查当前服务是否保存到配置文件了
+    if not os.path.exists(conf_file) or not os.path.exists(keyring_file):
+        ceph.save()
+        conf_file = ceph.config_file
+        keyring_file = ceph.keyring_file
+
+    return RbdManager(conf_file=conf_file, keyring_file=keyring_file, pool_name=pool_name)
+
+
 class RbdManager:
     '''
     ceph rbd 操作管理接口
@@ -111,7 +134,7 @@ class RbdManager:
 
     def remove_image(self, image_name:str):
         '''
-        删除一个rbd image
+        删除一个rbd image，删除前需要删除所有的快照
 
         :param image_name: image name
         :return:
@@ -194,6 +217,85 @@ class RbdManager:
             raise RadosError(f'create_image error:{str(e)}')
 
         return True
+
+    def list_image_snaps(self, name:str):
+        '''
+        获取rbd image的所有快照
+        :param name: rbd image
+        :return:
+            list    # success
+        :raises: RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            with cluster.open_ioctx(self.pool_name) as ioctx:
+                with rbd.Image(ioctx=ioctx, name=name) as image:
+                    return list(image.list_snaps())
+        except Exception as e:
+            raise RadosError(f'list_image_snaps error:{str(e)}')
+
+    def remove_snap(self, image_name:str, snap:str):
+        '''
+        删除一个rbd image快照
+        :param snap: 快照名称
+        :param image_name: rbd image名称
+        :return:
+            True    # success
+        :raises: RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            with cluster.open_ioctx(self.pool_name) as ioctx:
+                with rbd.Image(ioctx=ioctx, name=image_name) as image:
+                    image.remove_snap(snap)
+        except rbd.ObjectNotFound as e:
+            return True
+        except Exception as e:
+            raise RadosError(f'remove_snap error:{str(e)}')
+        return True
+
+    def image_rollback_to_snap(self, image_name:str, snap:str):
+        '''
+        rbd image回滚到历史快照
+
+        :param snap: 快照名称
+        :param image_name: rbd image名称
+        :return:
+            True    # success
+        :raises: RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            with cluster.open_ioctx(self.pool_name) as ioctx:
+                with rbd.Image(ioctx=ioctx, name=image_name) as image:
+                    image.rollback_to_snap(snap)
+        except Exception as e:
+            raise RadosError(f'rollback_to_snap error:{str(e)}')
+        return True
+
+    def get_rbd_image(self, image_name:str):
+        '''
+        获取rbd image对象, 使用close_rbd_image()关闭
+
+        :param image_name: rbd image名称
+        :return:
+            rbd.Image()
+        :raises: RadosError
+        '''
+        cluster = self.get_cluster()
+        try:
+            ioctx = cluster.open_ioctx(self.pool_name)
+            image = rbd.Image(ioctx=ioctx, name=image_name)
+            return image
+        except Exception as e:
+            raise RadosError(f'rollback_to_snap error:{str(e)}')
+
+    def close_rbd_image(self, image):
+        try:
+            image.close()
+            image.ioctx.close()
+        except Exception:
+            pass
 
 
 class CephClusterManager:

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}修改云主机{% endblock %}
+
+{% block head %}{% endblock %}
+
+{% block boby %}
+    <div class="col-md-offset-3 col-md-6 col-lg-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title">修改云主机</span>
+                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vms:vms-list' %}">
+                    云主机列表
+                </a></span>
+            </div>
+            <div class="panel-body">
+                <div class="col-sm-offset-1">
+                    <dl class="dl-horizontal">
+                        <dt>云主机UUID:</dt> <dd id="id-edit-vm-uuid">{{ vm.hex_uuid }}</dd>
+                        <dt>云主机IP:</dt> <dd>{{ vm.ipv4 }}</dd>
+                        <dt>镜像:</dt> <dd>{{ vm.image }}</dd>
+                        <dt>分中心:</dt> <dd>{{ vm.host.group.center }}</dd>
+                        <dt>机组:</dt> <dd>{{ vm.host.group }}</dd>
+                        <dt>CPU:</dt> <dd>{{ vm.vcpu }}</dd>
+                        <dt>MEM:</dt> <dd>{{ vm.mem }}MB</dd>
+                        <dt>备注:</dt> <dd>{{ vm.remarks }}</dd>
+                    </dl>
+                </div>
+                <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
+                <form class="form-horizontal" id="id-form-vm-edit">
+                    <div class="form-group">
+                        <label for="id-vcpu" class="col-sm-offset-1 col-sm-2 control-label">新CPU数</label>
+                        <div class="col-sm-7 form-inline">
+                            {% if user.is_superuser %}
+                                <input name="vcpu" type="text" class="form-control" id="id-vcpu" value="{{ vm.vcpu }}" required>
+                            {% else %}
+                                <select name="vcpu" class="form-control" id="id-vcpu" required>
+                                    <option value="">--</option>
+                                    <option value="2">2</option>
+                                    <option value="4">4</option>
+                                    <option value="8">8</option>
+                                </select>
+                            {% endif %}
+                            <span>个</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id-mem" class="col-sm-offset-1 col-sm-2 control-label">新内存大小</label>
+                        <div class="col-sm-7 form-inline">
+                            {% if user.is_superuser %}
+                                <input name="mem" type="text" class="form-control" id="id-mem" value="{{ vm.mem }}">
+                            {% else %}
+                                <select name="mem" class="form-control" id="id-mem">
+                                    <option value="">--</option>
+                                    <option value="1024">1024</option>
+                                    <option value="2048">2048</option>
+                                    <option value="4096">4096</option>
+                                    <option value="8192">8192</option>
+                                    <option value="16384">16384</option>
+                                </select>
+                            {% endif %}
+                            <span>MB</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <button type="submit" class="btn btn-primary">修改</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_edit.js' %}"></script>
+{% endblock %}

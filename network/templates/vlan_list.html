@@ -38,7 +38,12 @@
                         <th>{{ vlan.net_mask }}</th>
                         <th>{{ vlan.gateway }}</th>
                         <th>{{ vlan.free_ip }}</th>
-                        <th>{{ vlan.enable }}</th>
+                        {% if vlan.enable %}
+                        <th><span class="glyphicon glyphicon-ok"></span></th>
+                        {% endif %}
+                        {% if not vlan.enable %}
+                        <th><span class="glyphicon glyphicon-remove"></span></th>
+                        {% endif %}
                         <th>{{ vlan.remarks }}</th>
                         <th>
                             <span><a class="btn btn-xs btn-primary" href="{% url 'network:vlan_add' %}?vlan={{ vlan.id }}">
