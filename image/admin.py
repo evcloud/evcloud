@@ -20,8 +20,8 @@ class ImageTypeAdmin(admin.ModelAdmin):
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'name',)
-    list_display = ( 'id', 'name', 'version', 'type', 'base_image', 'snap', 'enable', 'xml_tpl', 'desc')
+    list_display = ( 'id', 'name', 'version', 'tag', 'sys_type', 'type', 'base_image', 'snap', 'enable', 'xml_tpl', 'desc')
     search_fields = ['name',]
-    list_filter = ['type', 'enable']
+    list_filter = ['type', 'enable', 'tag', 'sys_type']
 
 

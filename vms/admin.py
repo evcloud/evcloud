@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Vm, VmArchive, VmLog
+from .models import Vm, VmArchive, VmLog, VmDiskSnap
 # Register your models here.
 
 @admin.register(Vm)
@@ -26,3 +26,11 @@ class VmLogAdmin(admin.ModelAdmin):
     list_display = ( 'id', 'title', 'about', 'create_time')
     search_fields = ['title', 'content']
     list_filter = ['about',]
+
+
+@admin.register(VmDiskSnap)
+class VmDiskSnapAdmin(admin.ModelAdmin):
+    list_display_links = ('id',)
+    list_display = ( 'id', 'snap', 'disk', 'vm', 'create_time', 'remarks')
+    search_fields = ['disk', 'remarks']
+    list_filter = ['vm',]

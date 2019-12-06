@@ -1,13 +1,12 @@
 #coding=utf-8
 from uuid import uuid4
 
-from django.db import models, transaction
+from django.db import models
 from django.db.models import F, Sum
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 from ceph.models import CephPool
-from ceph.managers import RbdManager, RadosError
+from ceph.managers import get_rbd_manager, RadosError
 from compute.models import Group
 from vms.models import Vm
 
@@ -198,12 +197,9 @@ class Vdisk(models.Model):
         except Exception:
             return False
 
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
-
         size = self.get_bytes_size()
         try:
-            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.create_image(name=self.uuid, size=size)
         except (RadosError, Exception) as e:
             return False
@@ -234,11 +230,8 @@ class Vdisk(models.Model):
         except Exception:
             return False
 
-        config_file = config.get_config_file()
-        keyring_file = config.get_keyring_file()
-
         try:
-            rbd = RbdManager(conf_file=config_file, keyring_file=keyring_file, pool_name=pool_name)
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.remove_image(image_name=self.uuid)
         except (RadosError, Exception) as e:
             return False
@@ -273,14 +266,15 @@ class Vdisk(models.Model):
                   <source protocol='rbd' name='{pool}/{name}'>
                     {hosts_xml}
                   </source>
-                    <target dev='{dev}' bus='virtio'/>   
+                    <target dev='{dev}' bus='{bus}'/>   
             </disk>
             '''
 
-    def xml_desc(self, dev:str=''):
+    def xml_desc(self, dev:str='', bus='virtio'):
         '''
         disk xml
         :param dev: 硬盘未挂载时，需要传入此参数；硬盘挂载后，self.dev会记录挂载后的硬盘逻辑名称
+        :param bus: 指定硬盘的总线驱动，默认 'virtio'
         :return: str
         '''
         if not dev:
@@ -289,7 +283,7 @@ class Vdisk(models.Model):
         cephpool = self.quota.cephpool
         ceph = cephpool.ceph
         xml = self.xml_tpl.format(auth_user=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
-                                  name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev)
+                                  name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
         return xml
 
     @property

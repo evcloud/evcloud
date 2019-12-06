@@ -78,7 +78,7 @@
                             <td title="{{ vm.hex_uuid }}"><a href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.mac_ip.ipv4 }}</b></a></td>
                             <td>{{ vm.user }}</td>
                             <td>{{ vm.image }}</td>
-                            <td>{{ vm.host }}</td>
+                            <td>{{ vm.host_ipv4 }}</td>
                             <td>
                                 {{ vm.vcpu }} / {{ vm.mem|sizeformat:'MB' }}
                             </td>
@@ -164,7 +164,7 @@
 {% endblock %}
 
 {% block script %}
-    <script type="text/javascript" src="{% static 'vms/vms_common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_list.js' %}"></script>
 {% endblock %}

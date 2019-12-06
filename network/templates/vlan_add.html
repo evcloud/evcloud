@@ -21,47 +21,49 @@
                         <th>子网掩码</th>
                         <th>网关</th>
                     </tr>
-                    {% for vlan in vlans %}
                     <tr>
                         <th>{{ vlan.name }}</th>
                         <th>{{ vlan.subnet_ip }}</th>
                         <th>{{ vlan.net_mask }}</th>
                         <th>{{ vlan.gateway }}</th>
                     </tr>
-                    {% endfor %}
                 </table>
             </div>
             <div class="panel-heading">
                 <span class="panel-title"><strong>生成子网主机IP列表</strong></span>
-                <span><a class="btn btn-xs btn-primary pull-right" href="">
+                <!-- <span><a class="btn btn-xs btn-primary pull-right" href="">
                     <span class="glyphicon glyphicon-plus"></span>全部导入
-                </a></span>
+                </a></span> -->
             </div>
             <div class="panel-body" style="">
-                <form role="form" class="form-horizontal" method="post" action="">
+                <form id="form-add" role="form" class="form-horizontal" method="post" action="{% url 'network:vlan_add' %}">
+                    {% csrf_token %}
                     <div class="input-group" style="">
                         <label class="input-group-addon">起始IP</label>
-                        <input class="form-control" type="text" value="" placeholder="输入起始IP"/>
+                        <input name="start_ip" class="form-control" type="text" value="" placeholder="输入起始IP"/>
                         <label class="input-group-addon">结束IP</label>
-                        <input class="form-control" type="text" value="" placeholder="输入结束IP"/>
+                        <input name="end_ip" class="form-control" type="text" value="" placeholder="输入结束IP"/>
                         <span class="input-group-addon"></span>
-                        <button type="submit" class="btn btn-primary form-control">生成</button>
+                        <button id="generate" type="submit" class="btn btn-primary form-control">生成</button>
+                        <span class="input-group-addon"></span>
+                        <button id="import" type="submit" class="btn btn-primary form-control"><span class="glyphicon glyphicon-plus"></span>全部导入</button>
+                        <input name="vlan_id" hidden value="{{ vlan.id }}"/>
+                        <input id="flag" name="write_database" hidden value=""/>
                     </div>
                 </form>
-                <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                <table id="table-add" class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                     <tr>
                         <th>主机名称</th>
                         <th>IP</th>
                         <th>MAC</th>
                     </tr>
-                    {% for macip in macips %}
+                    <!-- {% for macip in macips %}
                     <tr>
                         <th>{{ macip. }}</th>
                         <th>{{ macip. }}</th>
                         <th>{{ macip. }}</th>
-                        <th>{{ macip. }}</th>
                     </tr>
-                    {% endfor %}
+                    {% endfor %} -->
                 </table>
             </div>
         </div>
@@ -69,6 +71,7 @@
 {% endblock %}
 
 {% block script %}
-    <script type="text/javascript" src="{% static 'network/vms_list.js' %}"></script>
+    <script type="text/javascript" src="{% static 'network/jquery.form.js' %}"></script>
+    <script type="text/javascript" src="{% static 'network/vlan_add.js' %}"></script>
 {% endblock %}
 

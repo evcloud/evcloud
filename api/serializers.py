@@ -1,10 +1,11 @@
 from rest_framework import serializers
 
-from vms.models import Vm
+from vms.models import Vm, VmDiskSnap
 from compute.models import Center, Group, Host
 from network.models import Vlan
 from image.models import Image
 from vdisk.models import Vdisk
+from device.models import PCIDevice
 
 
 class VmSerializer(serializers.ModelSerializer):
@@ -12,7 +13,7 @@ class VmSerializer(serializers.ModelSerializer):
     虚拟机序列化器
     '''
     user = serializers.SerializerMethodField() # 自定义user字段内容
-    create_time = serializers.SerializerMethodField()  # 自定义字段内容
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     host = serializers.SerializerMethodField()
     mac_ip = serializers.SerializerMethodField()
     uuid = serializers.SerializerMethodField()
@@ -28,11 +29,6 @@ class VmSerializer(serializers.ModelSerializer):
     def get_user(selfself, obj):
         return {'id': obj.user.id, 'username': obj.user.username}
 
-    def get_create_time(self, obj):
-        if not obj.create_time:
-            return ''
-        return obj.create_time.strftime('%Y-%m-%d %H:%M:%S')
-
     def get_host(self, obj):
         return obj.host.ipv4
 
@@ -46,7 +42,7 @@ class VmCreateSerializer(serializers.Serializer):
     '''
     image_id = serializers.IntegerField(label='镜像id', required=True, min_value=1, help_text='系统镜像id')
     vcpu = serializers.IntegerField(label='cpu数', required=True, min_value=1, help_text='cpu数')
-    mem = serializers.IntegerField(label='内存大小', required=True, min_value=200)
+    mem = serializers.IntegerField(label='内存大小', required=True, min_value=200, help_text='单位MB')
     vlan_id = serializers.IntegerField(label='子网id', required=True, min_value=1, help_text='子网id')
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True, min_value=1, help_text='宿主机组id', default=None)
     host_id = serializers.IntegerField(label='宿主机id', required=False, allow_null=True, min_value=1, help_text='宿主机id', default=None)
@@ -113,21 +109,27 @@ class ImageSerializer(serializers.ModelSerializer):
     '''
     子网网段序列化器
     '''
+    tag = serializers.SerializerMethodField()
+    sys_type = serializers.SerializerMethodField()
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = Image
-        fields = ('id', 'name', 'version', 'type', 'enable', 'ceph_pool', 'base_image', 'snap', 'xml_tpl', 'create_time', 'desc')
+        fields = ('id', 'name', 'version', 'sys_type', 'tag', 'enable', 'create_time', 'desc')
+
+    def get_tag(self, obj):
+        return {'id': obj.tag, 'name': obj.tag_display}
+
+    def get_sys_type(self, obj):
+        return {'id': obj.sys_type, 'name': obj.sys_type_display}
 
 
 class AuthTokenDumpSerializer(serializers.Serializer):
     key = serializers.CharField()
     user = serializers.SerializerMethodField()
-    created = serializers.SerializerMethodField()
+    created = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
 
     def get_user(self, obj):
         return obj.user.username
-
-    def get_created(self, obj):
-        return obj.created.strftime('%Y-%m-%d %H:%M:%S')
 
 
 class UserSimpleSerializer(serializers.Serializer):
@@ -183,6 +185,8 @@ class VdiskSerializer(serializers.ModelSerializer):
     quota = serializers.SerializerMethodField()
     vm = serializers.SerializerMethodField()
     user = UserSimpleSerializer(required=False)  # May be an anonymous user
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    attach_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = Vdisk
         fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks', 'group')
@@ -214,6 +218,8 @@ class VdiskDetailSerializer(serializers.ModelSerializer):
     user = UserSimpleSerializer(required=False) # May be an anonymous user
     quota = QuotaSimpleSerializer(required=False)
     vm = serializers.SerializerMethodField()
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    attach_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     class Meta:
         model = Vdisk
         fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks')
@@ -243,3 +249,43 @@ class VdiskCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(detail={'code_text': 'group_id和quota_id参数必须提交其中一个'})
         return data
 
+
+class VmDiskSnapSerializer(serializers.Serializer):
+    '''
+    虚拟机系统盘快照序列化器
+    '''
+    id = serializers.IntegerField()
+    vm = serializers.SerializerMethodField()
+    snap = serializers.CharField()
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    remarks = serializers.CharField()
+
+    def get_vm(self, obj):
+        vm = obj.vm
+        if vm:
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+        return vm
+
+
+class PCIDeviceSerializer(serializers.Serializer):
+    '''
+    PCI设备序列化器
+    '''
+    id = serializers.IntegerField()
+    vm = serializers.SerializerMethodField()
+    host = serializers.SerializerMethodField()
+    snap = serializers.CharField()
+    attach_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    remarks = serializers.CharField()
+
+    def get_vm(self, obj):
+        vm = obj.vm
+        if vm:
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+        return vm
+
+    def get_host(self, obj):
+        host = obj.host
+        if host:
+            return {'id': host.id, 'ipv4': host.ipv4}
+        return host

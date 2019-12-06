@@ -1,98 +1,66 @@
 #coding=utf-8
-from .manager import DeviceError
-from .models import Device as DBDevice
-from vms.models import Vm as DBVm
+from .models import PCIDevice
 from django.db import transaction
 from django.utils import timezone
 
-class Device(object):
-    def __init__(self, db=None, db_id=None):
-        if db:
-            self._db = db
-        elif db_id:
-            try:
-                self._db = DBDevice.objects.get(pk=db_id)
-            except:
-                raise DeviceError(msg='DEVICE ID有误')
 
-        address = self._db.address.split(':')
-        if len(address) != 4:
-            raise DeviceError(msg='DEVICE BDF设备号有误')
-        self._domain = address[0]
-        self._bus = address[1]
-        self._slot = address[2]
-        self._function = address[3]
+class DeviceError(Exception):
+    '''
+    PCIe设备相关错误定义
+    '''
+    def __init__(self, code:int=0, msg:str='', err=None):
+        '''
+        :param code: 错误码
+        :param msg: 错误信息
+        :param err: 错误对象
+        '''
+        self.code = code
+        self.msg = msg
+        self.err = err
 
-        super().__init__()
+    def __str__(self):
+        return self.detail()
 
-    def set_remarks(self, content):
-        try:
-            self._db.remarks = content
-            self._db.save()
-        except:
-            return False
-        return True
+    def detail(self):
+        '''错误详情'''
+        if self.msg:
+            return self.msg
 
-    def mount(self, vm_id):
-        res = True
-        try:
-            with transaction.atomic():
-                db = DBDevice.objects.select_for_update().get(pk = self._db.pk)
-                vm = DBVm.objects.get(uuid=vm_id)
-                if db.vm == None and db.enable == True:
-                    db.vm = vm
-                    db.attach_time = timezone.now()
-                    db.save()
-                    self._db = db
-                else:
-                    res = False
-        except:
-            res = False
-        return res
+        if self.err:
+            return str(self.err)
 
-    def umount(self):
-        res = True
-        try:
-            with transaction.atomic():
-                db = DBDevice.objects.select_for_update().get(pk = self._db.pk)
-                if db.enable == True:
-                    db.vm = None
-                    db.attach_time = None
-                    db.save()
-                    self._db = db
-                else:
-                    res = False
-        except:
-            res = False
-        return res        
+        return '未知的错误'
 
-    def set_enable(self):
-        res = True
-        try:
-            with transaction.atomic():
-                db = DBDevice.objects.select_for_update().get(pk = self._db.pk)
-                db.enable = True
-                db.save()
-                self._db = db
-        except:
-            res = False
-        return res 
 
-    def set_disable(self):
-        res = True
-        try:
-            with transaction.atomic():
-                db = DBDevice.objects.select_for_update().get(pk = self._db.pk)
-                db.enable = False
-                db.save()
-                self._db = db
-        except:
-            res = False
-        return res 
+class BaseDevice():
+    def __init__(self, db):
+        self._db = db
+
+    def user_has_perms(self, user):
+        '''
+        用户是否有访问此设备的权限
+
+        :param user: 用户
+        :return:
+            True    # has
+            False   # no
+        '''
+        return self._db.user_has_perms(user)
+
+    def set_remarks(self, content:str):
+        '''
+        设置设备备注信息
+
+        :param content: 备注信息
+        :return:
+            True    # success
+            False   # failed
+        '''
+        return self._db.set_remarks(content=content)
 
     @property
     def type_name(self):
-        return self._db.type.name
+        return self._db.type_display()
 
     @property
     def host_ipv4(self):
@@ -105,7 +73,7 @@ class Device(object):
     @property
     def group_id(self):
         return self._db.host.group_id
-    
+
     @property
     def address(self):
         return self._db.address
@@ -117,32 +85,10 @@ class Device(object):
     @property
     def id(self):
         return self._db.id
-    
 
     @property
     def attach_time(self):
         return self._db.attach_time
-    
-    @property
-    def domain(self):
-        return self._domain
-
-    @property
-    def bus(self):
-        return self._bus
-    
-    @property
-    def slot(self):
-        return self._slot
-    
-    @property
-    def function(self):
-        return self._function
-    
-
-    @property
-    def administrator(self):
-        return self._db.user.username
 
     @property
     def enable(self):
@@ -151,18 +97,48 @@ class Device(object):
     @property
     def remarks(self):
         return self._db.remarks
-    
-    
+
+    @property
+    def device(self):
+        return self._db
+
+
+class BasePCIDevice(BaseDevice):
+    def __init__(self, db):
+        address = db.address.split(':')
+        if len(address) != 4:
+            raise DeviceError(msg='DEVICE BDF设备号有误')
+        self._domain = address[0]
+        self._bus = address[1]
+        self._slot = address[2]
+        self._function = address[3]
+        super().__init__(db)
+
+    @property
+    def domain(self):
+        return self._domain
+
+    @property
+    def bus(self):
+        return self._bus
+
+    @property
+    def slot(self):
+        return self._slot
+
+    @property
+    def function(self):
+        return self._function
 
     @property
     def xml_tpl(self):
         return '''
-<hostdev mode='%(mode)s' type='%(type)s' managed='yes'>
-    <source>
-        <address domain='0x%(domain)s' bus='0x%(bus)s' slot='0x%(slot)s' function='0x%(function)s'/>
-    </source>
-</hostdev>
-'''
+            <hostdev mode='%(mode)s' type='%(type)s' managed='yes'>
+                <source>
+                    <address domain='0x%(domain)s' bus='0x%(bus)s' slot='0x%(slot)s' function='0x%(function)s'/>
+                </source>
+            </hostdev>
+            '''
 
     @property
     def xml_desc(self):
@@ -174,9 +150,82 @@ class Device(object):
             'bus': self.bus,
             'slot': self.slot,
             'function': self.function
-        } 
-        
-    def managed_by(self, user):
-        if user.is_superuser:
-            return True
-        return user in self._db.host.group.admin_user.all()
+        }
+
+    def need_in_same_host(self):
+        '''
+        设备是否需要与挂载的虚拟机在用同一个宿主机上
+        '''
+        return self._db.need_in_same_host()
+
+    def mount(self, vm):
+        try:
+            with transaction.atomic():
+                db = PCIDevice.objects.select_for_update().get(pk = self._db.pk)
+                if db.vm_id == vm.hex_uuid:
+                    return True
+
+                if db.vm == None and db.enable == True:
+                    db.vm = vm
+                    db.attach_time = timezone.now()
+                    db.save()
+                    self._db = db
+                    return True
+                else:
+                    return False
+        except:
+            return False
+
+    def umount(self):
+        try:
+            with transaction.atomic():
+                db = PCIDevice.objects.select_for_update().get(pk = self._db.pk)
+                if db.enable == True:
+                    if not db.vm_id:
+                        return True
+
+                    db.vm = None
+                    db.attach_time = None
+                    db.save()
+                    self._db = db
+                    return True
+                else:
+                    return False
+        except:
+            return False
+
+    def set_enable(self):
+        res = True
+        try:
+            with transaction.atomic():
+                db = PCIDevice.objects.select_for_update().get(pk = self._db.pk)
+                db.enable = True
+                db.save()
+                self._db = db
+        except:
+            res = False
+        return res 
+
+    def set_disable(self):
+        res = True
+        try:
+            with transaction.atomic():
+                db = PCIDevice.objects.select_for_update().get(pk = self._db.pk)
+                db.enable = False
+                db.save()
+                self._db = db
+        except:
+            res = False
+        return res 
+
+
+class GPUDevice(BasePCIDevice):
+    '''
+    GPU设备
+    '''
+    pass
+
+
+
+
+

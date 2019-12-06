@@ -6,6 +6,8 @@ from .manager import VmManager, VmError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from network.managers import VlanManager
 from vdisk.manager import VdiskManager, VdiskError
+from image.managers import ImageManager, ImageError
+from image.models import Image
 from utils.paginators import NumsPaginator
 
 # Create your views here.
@@ -99,21 +101,22 @@ class VmCreateView(View):
     def get(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.GET.get('center_id', 0), 0)
 
+        groups = None
+        images = None
         try:
             c_manager = CenterManager()
             centers = c_manager.get_center_queryset()
-            groups = None
-            images = None
             if center_id > 0:
-                images = c_manager.get_image_queryset_by_center(center_id)
+                images = ImageManager().get_image_queryset_by_center(center_id).filter(tag=Image.TAG_BASE)
                 groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
-        except ComputeError as e:
+        except (ComputeError, ImageError) as e:
             return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
 
         context = {}
         context['center_id'] = center_id if center_id > 0 else None
         context['centers'] = centers
         context['groups'] = groups
+        context['image_tags'] = Image.CHOICES_TAG
         context['images'] = images
         context['vlans'] = VlanManager().get_vlan_queryset()
         return render(request, 'vms_create.html', context=context)
@@ -175,3 +178,16 @@ class VmDetailView(View):
             return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云主机不存在']})
 
         return render(request, 'vm_detail.html', context={'vm': vm})
+
+
+class VmEditView(View):
+    '''虚拟机修改类视图'''
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['云主机不存在']})
+
+        return render(request, 'vm_edit.html', context={'vm': vm})

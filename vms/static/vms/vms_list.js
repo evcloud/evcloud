@@ -387,4 +387,22 @@
         $("#nav_vm_list").addClass("active");
     }
 
+    // 创建虚拟机系统快照点击事件
+    $(".btn-vm-snap-create").click(function (e) {
+        e.preventDefault();
+
+        if(!confirm('确定创建云主机系统快照吗？'))
+		    return;
+
+        let remarks = prompt('请输入快照备注信息：');
+        if (remarks === null)
+            return;
+        let vm_uuid = $(this).attr('data-vm-uuid');
+        create_snap_vm_ajax(vm_uuid, remarks, null,
+            function (data) {
+                alert("创建快照成功");
+            }
+        ,null);
+    });
+
 })();

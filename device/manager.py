@@ -1,68 +1,110 @@
 #coding=utf-8
-from .models import Device as DBDevice
-from .models import DeviceType as DBDeviceType
-from .device import Device
+from utils.ev_libvirt.virt import VirtAPI, VirtError
+from .models import PCIDevice
+from .device import GPUDevice, DeviceError
 
-class DeviceError(Exception):
-    '''
-    PCIe设备相关错误定义
-    '''
-    def __init__(self, code:int=0, msg:str='', err=None):
+
+class PCIDeviceManager:
+    DeviceError = DeviceError
+
+    def get_device_queryset(self):
         '''
-        :param code: 错误码
-        :param msg: 错误信息
-        :param err: 错误对象
+        获取所有PCI设备的查询集
+        :return: QuerySet()
         '''
-        self.code = code
-        self.msg = msg
-        self.err = err
+        return PCIDevice.objects.all()
 
-    def __str__(self):
-        return self.detail()
+    def get_device_by_id(self, device_id:int, related_fields=('host',)):
+        '''
+        :return:
+            PCIDevice()     # success
+            None            # not exists
+        :raises:  DeviceError
+        '''
+        qs = self.get_device_queryset()
+        try:
+            if related_fields:
+                qs = qs.select_related(*related_fields).all()
+            return qs.filter(pk=device_id).first()
+        except Exception as e:
+            raise DeviceError(msg=str(e))
 
-    def detail(self):
-        '''错误详情'''
-        if self.msg:
-            return self.msg
+    def get_device_by_address(self, address:str):
+        '''
+        :return:
+            PCIDevice()     # success
+            None            # not exists
+        '''
+        return self.get_device_queryset().filter(address = address).first()
 
-        if self.err:
-            return str(self.err)
+    def device_wrapper(self, device:PCIDevice):
+        '''
+        PCI设备对象的包装器
 
-        return '未知的错误'
+        :param device:PCI设备对象
+        :return:
+            BasePCIDevice子类     # GPUDevice
 
-class Manager(object):
-    def get_device_by_id(self, device_id):
-        return Device(db_id=device_id)
+        :raises:  DeviceError
+        '''
+        if device.type == device.TYPE_GPU:
+            return GPUDevice(db=device)
 
-    def get_device_by_address(self, address):
-        db = DBDevice.objects.filter(address = address)
-        if not db.exists():
-            raise DeviceError(msg='DEVICE BDF设备号有误')
-        return Device(db=db[0])
+        return DeviceError(msg='未知设备')
 
-    def get_device_list(self, group_id=None, host_id=None, vm_uuid=None):
-        device_list = DBDevice.objects.all()
-        if host_id:
-            device_list = device_list.filter(host_id=host_id)
-        elif group_id:
-            device_list = device_list.filter(host__group_id=group_id)
-        elif vm_uuid:
-            device_list = device_list.filter(vm__uuid = vm_uuid)
-        ret_list = []
-        for device in device_list:
-            ret_list.append(device(db=device))
-        return ret_list
+    def mount_to_vm(self, device:PCIDevice, vm):
+        '''
+        挂载设备到虚拟机
 
-    def get_device_type_list(self):
-        types = DBDeviceType.objects.all()
-        ret_list = []
-        for t in types:
-            ret_list.append({
-                'id': t.id,
-                'name': t.name,
-                })
-        return ret_list
+        :param device: pci设备对象
+        :param vm: 虚拟机对象
+        :return:
+            True    # success
 
+        :raises: DeviceError
+        '''
+        host = vm.host
+        dev = self.device_wrapper(device)
+        if dev.need_in_same_host():
+            if dev.host_id != host.id:
+                raise DeviceError(msg='设备和虚拟机不在同一宿主机')
 
+        if dev.mount(vm=vm):
+            raise DeviceError(msg='与虚拟机建立挂载关系失败')
 
-    
+        xml_desc = dev.xml_desc
+        try:
+            if VirtAPI().attach_device(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid, xml=xml_desc):
+                return True
+            raise VirtError(msg='挂载到虚拟机失败')
+        except VirtError as e:
+            dev.umount()
+            raise DeviceError(msg=str(e))
+
+    def umount_from_vm(self, device: PCIDevice):
+        '''
+        卸载设备从虚拟机
+
+        :param device: pci设备对象
+        :return:
+            True    # success
+
+        :raises: DeviceError
+        '''
+        dev = self.device_wrapper(device)
+        vm = dev.vm
+        if not vm:
+            return True
+
+        host = vm.host
+        xml_desc = dev.xml_desc
+        try:
+            if not VirtAPI().detach_device(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid, xml=xml_desc):
+                raise VirtError(msg='从虚拟机卸载设备失败')
+        except VirtError as e:
+            raise DeviceError(msg=str(e))
+
+        if dev.umount():
+            return True
+
+        raise DeviceError(msg='虚拟机解除挂载关系失败')
