@@ -12,8 +12,8 @@
         <div class="card">
             <div class="card-header">
                 <span class="card-title"><strong>云主机列表 ({{ count }})</strong></span>
-                <span><a class="btn btn-xs btn-primary float-right" href="{% url 'vms:vm-create' %}">
-                    创建云主机<span class="glyphicon glyphicon-plus"></span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vm-create' %}">
+                    创建云主机
                 </a></span>
             </div>
             <div class="card-body">
@@ -69,7 +69,7 @@
                     </div>
                 </form>
             </div>
-            <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+            <table class="table table-hover table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                 <thead class="thead-light">
                 <tr>
                     <th></th>
@@ -151,14 +151,14 @@
                                     <li class="page-item"><a class="page-link" href="?{{ previous }}" aria-label="Previous"><span
                                             aria-hidden="true">&laquo;</span></a></li>
                                 {% else %}
-                                    <li class="page-item disable"><span aria-hidden="true">&laquo;</span></li>
+                                    <li class="page-item disable"><span class="page-link" aria-hidden="true">&laquo;</span></li>
                                 {% endif %}
                             {% endif %}
                             {% for disp, query, active in page_list %}
                                 {% if active %}
                                     <li class="page-item active"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
                                 {% else %}
-                                    <li class="page-item"><a href="?{{ query }}">{{ disp }}</a></li>
+                                    <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
                                 {% endif %}
                             {% endfor %}
                             {% if page_list %}
@@ -166,7 +166,7 @@
                                     <li class="page-item"><a class="page-link" href="?{{ next }}" aria-label="Next"><span
                                             aria-hidden="true">&raquo;</span></a></li>
                                 {% else %}
-                                    <li class="page-item disable"><span aria-hidden="true">&raquo;</span></li>
+                                    <li class="page-item disable"><span class="page-link" aria-hidden="true">&raquo;</span></li>
                                 {% endif %}
                             {% endif %}
                         {% endwith %}
