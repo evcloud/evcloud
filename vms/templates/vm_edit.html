@@ -6,31 +6,31 @@
 {% block head %}{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-3 col-md-6 col-lg-6">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title">修改云主机</span>
-                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vms:vms-list' %}">
+    <div class="offset-md-3 col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">修改云主机</span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vms-list' %}">
                     云主机列表
                 </a></span>
             </div>
-            <div class="panel-body">
-                <div class="col-sm-offset-1">
-                    <dl class="dl-horizontal">
-                        <dt>云主机UUID:</dt> <dd id="id-edit-vm-uuid">{{ vm.hex_uuid }}</dd>
-                        <dt>云主机IP:</dt> <dd>{{ vm.ipv4 }}</dd>
-                        <dt>镜像:</dt> <dd>{{ vm.image }}</dd>
-                        <dt>分中心:</dt> <dd>{{ vm.host.group.center }}</dd>
-                        <dt>机组:</dt> <dd>{{ vm.host.group }}</dd>
-                        <dt>CPU:</dt> <dd>{{ vm.vcpu }}</dd>
-                        <dt>MEM:</dt> <dd>{{ vm.mem }}MB</dd>
-                        <dt>备注:</dt> <dd>{{ vm.remarks }}</dd>
+            <div class="card-body">
+                <div class="offset-sm-1">
+                    <dl class="row">
+                        <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-edit-vm-uuid">{{ vm.hex_uuid }}</dd>
+                        <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                        <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
+                        <dt class="col-2 text-right">分中心:</dt> <dd class="col-10">{{ vm.host.group.center }}</dd>
+                        <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
+                        <dt class="col-2 text-right">CPU:</dt> <dd class="col-10">{{ vm.vcpu }}</dd>
+                        <dt class="col-2 text-right">MEM:</dt> <dd class="col-10">{{ vm.mem }}MB</dd>
+                        <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                     </dl>
                 </div>
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 <form class="form-horizontal" id="id-form-vm-edit">
-                    <div class="form-group">
-                        <label for="id-vcpu" class="col-sm-offset-1 col-sm-2 control-label">新CPU数</label>
+                    <div class="form-group row">
+                        <label for="id-vcpu" class="offset-sm-1 col-sm-2 col-form-label">新CPU数</label>
                         <div class="col-sm-7 form-inline">
                             {% if user.is_superuser %}
                                 <input name="vcpu" type="text" class="form-control" id="id-vcpu" value="{{ vm.vcpu }}" required>
@@ -45,8 +45,8 @@
                             <span>个</span>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="id-mem" class="col-sm-offset-1 col-sm-2 control-label">新内存大小</label>
+                    <div class="form-group row">
+                        <label for="id-mem" class="offset-sm-1 col-sm-2 col-form-label">新内存大小</label>
                         <div class="col-sm-7 form-inline">
                             {% if user.is_superuser %}
                                 <input name="mem" type="text" class="form-control" id="id-mem" value="{{ vm.mem }}">
@@ -63,8 +63,8 @@
                             <span>MB</span>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="col-sm-offset-2 col-sm-10">
+                    <div class="form-group row">
+                        <div class="offset-sm-2 col-sm-10">
                             <button type="submit" class="btn btn-primary">修改</button>
                         </div>
                     </div>

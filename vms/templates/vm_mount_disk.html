@@ -5,45 +5,51 @@
 {% block title %}挂载云硬盘{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-1 col-md-10 col-lg-10">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title"><strong>挂载云硬盘</strong></span>
-                <div class="pull-right">
-                    <a class="btn btn-xs btn-success" href="{% url 'vdisk:vdisk-create' %}">创建云硬盘</a>
-                    <a class="btn btn-xs btn-info" href="{% url 'vdisk:vdisk-list' %}">云硬盘列表</a>
+    <div class="offset-md-1 col-md-10 col-lg-10">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>挂载云硬盘</strong></span>
+                <div class="float-right">
+                    <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-create' %}">创建云硬盘</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'vdisk:vdisk-list' %}">云硬盘列表</a>
                 </div>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
                 <div class="">
                     <div class="text-primary h4">云主机信息:</div>
                     <div class="">
-                        <dl class="dl-horizontal">
-                            <dt>云主机UUID:</dt> <dd id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
-                            <dt>云主机IP:</dt> <dd>{{ vm.ipv4 }}</dd>
-                            <dt>镜像:</dt> <dd>{{ vm.image }}</dd>
-                            <dt>机组:</dt> <dd>{{ vm.host.group }}</dd>
-                            <dt>备注:</dt> <dd>{{ vm.remarks }}</dd>
+                        <dl class="row">
+                            <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
+                            <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
+                            <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
+                            <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                         </dl>
                     </div>
                 </div>
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 <div>
-                    <div class="text-success h4 col-sm-4">可供挂载的云硬盘：</div>
-                    <div class="pull-right col-sm-8">
-                        <form role="form" class="form-horizontal" method="get" action="">
-                            <div class="input-group" style="">
-                                <label class="input-group-addon">关键字</label>
-                                <input type="text" class="form-control" name="search" value="{{ search }}"
-                                       placeholder="搜 UUID、备注"/>
-                                <span class="input-group-addon"></span>
-                                <button type="submit" class="btn btn-primary form-control">筛选</button>
-                            </div>
-                        </form>
+                    <div class="row">
+                        <div class="text-success h4 col-sm-4">可供挂载的云硬盘：</div>
+                        <div class="float-right col-sm-8">
+                            <form role="form" class="form-horizontal" method="get" action="">
+                                <div class="input-group" style="">
+                                    <div class="input-group-prepend">
+                                        <label class="input-group-text" for="id-center">关键字</label>
+                                    </div>
+                                    <input type="text" class="form-control" name="search" value="{{ search }}"
+                                           id="id-center" placeholder="搜 UUID、备注"/>
+                                    <div class="input-group-append">
+                                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
             <table class="table table-bordered table-disk-list" style="word-wrap:break-word;word-break:break-all;">
+                <thead class="table-light">
                 <tr>
                     <th>UUID</th>
                     <th>机组</th>
@@ -55,6 +61,8 @@
                     <th>备注</th>
                     <th>操作</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% for disk in vdisks %}
                     <tr id="tr_{{ disk.uuid }}">
                         <td><b>{{ disk.uuid }}</b></td>
@@ -78,32 +86,33 @@
                         </td>
                     </tr>
                 {% endfor %}
+                </tbody>
             </table>
-            <div class="panel-footer">
-                <nav aria-label="Page navigation" >
-                    <ul class="pagination" style="margin:0;">
+            <div class="card-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination"  style="margin:0;">
                         {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
                             {% if page_list %}
                                 {% if previous %}
-                                    <li><a href="?{{ previous }}" aria-label="Previous"><span
+                                    <li class="page-item"><a class="page-link" href="?{{ previous }}" aria-label="Previous"><span
                                             aria-hidden="true">&laquo;</span></a></li>
                                 {% else %}
-                                    <li class="disable"><span aria-hidden="true">&laquo;</span></li>
+                                    <li class="page-item disable"><span class="page-link" aria-hidden="true">&laquo;</span></li>
                                 {% endif %}
                             {% endif %}
                             {% for disp, query, active in page_list %}
                                 {% if active %}
-                                    <li class="active"><a href="?{{ query }}">{{ disp }}</a></li>
+                                    <li class="page-item active"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
                                 {% else %}
-                                    <li><a href="?{{ query }}">{{ disp }}</a></li>
+                                    <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
                                 {% endif %}
                             {% endfor %}
                             {% if page_list %}
                                 {% if next %}
-                                    <li><a href="?{{ next }}" aria-label="Next"><span
+                                    <li class="page-item"><a class="page-link" href="?{{ next }}" aria-label="Next"><span
                                             aria-hidden="true">&raquo;</span></a></li>
                                 {% else %}
-                                    <li class="disable"><span aria-hidden="true">&raquo;</span></li>
+                                    <li class="page-item disable"><span class="page-link" aria-hidden="true">&raquo;</span></li>
                                 {% endif %}
                             {% endif %}
                         {% endwith %}

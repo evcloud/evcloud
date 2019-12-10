@@ -277,21 +277,21 @@
                 <div>
                     <span>{{ snap.remarks }}</span>
                     <span class="mouse-hover-show edit-vm-snap-remark" title="修改备注">
-                        <span class="glyphicon glyphicon-pencil"></span>
+                        <i class="fa fa-edit"></i>
                     </span>
                 </div>
                 <div style="display:none">
                     <textarea id="remarks">{{ snap.remarks }}</textarea>
                     <span class="save-vm-snap-remark" title="保存备注" data-snap-id="{{ snap.id }}">
-                        <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+                        <i class="fa fa-save"></i>
                     </span>
                 </div>
             </td>
             <td>
-                <button type="button" class="btn btn-xs btn-danger btn-vm-snap-delete"
+                <button type="button" class="btn btn-sm btn-danger btn-vm-snap-delete"
                         data-snap-id="{{ snap.id }}">删除
                 </button>
-                <button type="button" class="btn btn-xs btn-danger btn-vm-snap-rollback"
+                <button type="button" class="btn btn-sm btn-danger btn-vm-snap-rollback"
                         data-snap-id="{{ snap.id }}">回滚
                 </button>
             </td>
@@ -317,14 +317,15 @@
                     snap_table.find("tr:first").after(html);
                 }else{
                     html = `<p><strong>云主机快照</strong></p>
-                            <table class="table table-default table-vm-snap-list" style="word-wrap:break-word;word-break:break-all;">
+                            <table class="table table-vm-snap-list" style="word-wrap:break-word;word-break:break-all;">
+                            <thead class="thead-light">
                             <tr>
                                 <th>ID</th>
                                 <th>快照</th>
                                 <th>创建时间</th>
                                 <th>备注</th>
                                 <th>操作</th>
-                            </tr>` + html + '</table>';
+                            </tr></thead><tbody>` + html + '</tbody></table>';
                     let snap_dom = $("#id-vm-snap-content");
                     snap_dom.empty();
                     snap_dom.append(html);
