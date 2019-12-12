@@ -53,8 +53,8 @@ class NovncTokenManager(object):
         Token.objects.filter(ip = hostip).filter(port = vncport).filter(expiretime__lt=now).delete()
         #创建新的token记录
         novnc_token = str(uuid.uuid4())
-        new_token = Token.objects.create(token = novnc_token, ip = hostip, port = vncport)
-        new_token.save()
+        new_token = Token.objects.create(token = novnc_token, ip = hostip, port = vncport, expiretime = now)
+ 
         #删除（一年前 到 3天前）之间有更新的，现在过期的所有token记录
         start_time = now - datetime.timedelta(days=365)   #print(start_time);
         end_time   = now - datetime.timedelta(days=3)     #print(end_time);

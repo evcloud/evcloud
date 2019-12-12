@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='token',
             name='expiretime',
-            field=models.DateTimeField(auto_now=True),
+            field=models.DateTimeField(verbose_name='过期时间'),
         ),
     ]
