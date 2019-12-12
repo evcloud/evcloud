@@ -3,5 +3,5 @@ from .models import Token
 
 @admin.register(Token)
 class TokenAdmin(admin.ModelAdmin):
-    list_display = ('token','ip','port','updatetime')
+    list_display = ('token','ip','port','updatetime', 'desc', 'expiretime')
 
