@@ -6,13 +6,11 @@
 {% block head %}{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-2 col-md-8 col-lg-8">
+    <div class="container-fluid offset-md-1 offset-lg-2 col-md-10 col-lg-8">
         <p class="h4">机组资源统计:<strong id="id-current" data-id="{{ group_id }}"></strong></p>
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">机组</h3>
-            </div>
+        <div class="card border-info">
             <table class="table" id="id-table-group">
+                <thead class="thead-light">
                 <tr>
                     <th>总cpu(/核)</th>
                     <th>已分配cpu(/核)</th>
@@ -22,12 +20,15 @@
                     <th>内存使用率</th>
                     <th>云主机数</th>
                 </tr>
+                </thead>
+                <tbody></tbody>
             </table>
-            <div class="panel panel-danger">
-                <div class="panel-heading">
-                    <h3 class="panel-title">宿主机</h3>
+            <div class="card border-success">
+                <div class="card-header">
+                    <b class="card-title">宿主机</b>
                 </div>
                 <table class="table" id="id-table-host">
+                    <thead class="thead-light">
                     <tr>
                         <th>IP</th>
                         <th>宿主机组</th>
@@ -39,9 +40,11 @@
                         <th>内存使用率</th>
                         <th>云主机数</th>
                     </tr>
+                    </thead>
+                    <tbody></tbody>
                 </table>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
                 <canvas id="id-chart-vm" height="100"></canvas>
                 <hr/>
                 <canvas id="id-chart-cpu" height="100"></canvas>
@@ -57,7 +60,7 @@
     <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
     <script type="text/javascript" src="{% static 'reports/reports_common.js' %}"></script>
-    {% verbatim %}
+    {% verbatim script %}
     <script>
         window.onload = function() {
             $("#nav_reports").addClass("active");
@@ -154,5 +157,5 @@
                     cpu_used: cpu_used, cpu_free: cpu_free};
         }
     </script>
-    {% endverbatim %}
+    {% endverbatim script %}
 {% endblock %}

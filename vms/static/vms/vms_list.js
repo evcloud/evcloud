@@ -50,10 +50,10 @@
         let target = $(this).attr('data-check-target');
         if ($(this).prop('checked')) {
             $(target).prop('checked', true); // 全选
-            $(target).parents('tr').addClass('danger'); // 选中时添加 背景色类
+            $(target).parents('tr').addClass('bg-warning'); // 选中时添加 背景色类
         } else {
             $(target).prop('checked', false); // 全不选
-            $(target).parents('tr').removeClass('danger');// 不选中时移除 背景色类
+            $(target).parents('tr').removeClass('bg-warning');// 不选中时移除 背景色类
         }
     });
 
@@ -62,15 +62,15 @@
     //
     $(".item-checkbox").on('click', function () {
         if ($(this).prop('checked')){
-            $(this).parents('tr').addClass('danger');
+            $(this).parents('tr').addClass('bg-warning');
         }else{
-            $(this).parents('tr').removeClass('danger');
+            $(this).parents('tr').removeClass('bg-warning');
         }
     });
 
     // 有多少虚拟机被选中
     function get_checked_vm_count() {
-        return $(".item-checkbox:checked").size()
+        return $(".item-checkbox:checked").length
     }
 
     //

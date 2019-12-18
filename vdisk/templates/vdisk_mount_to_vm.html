@@ -5,27 +5,27 @@
 {% block title %}挂载云硬盘{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-1 col-md-10 col-lg-10">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title"><strong>挂载云硬盘</strong></span>
-                <div class="pull-right">
-                    <a class="btn btn-xs btn-success" href="{% url 'vdisk:vdisk-create' %}">创建云硬盘</a>
-                    <a class="btn btn-xs btn-info" href="{% url 'vdisk:vdisk-list' %}">云硬盘列表</a>
+    <div class="container-fluid offset-md-1 col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>挂载云硬盘</strong></span>
+                <div class="float-right">
+                    <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-create' %}">创建云硬盘</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'vdisk:vdisk-list' %}">云硬盘列表</a>
                 </div>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
                 <div class="">
                     <div class="text-primary h4">云硬盘信息:</div>
                     <div class="">
-                        <dl class="dl-horizontal">
-                            <dt>云硬盘UUID:</dt> <dd id="id-mount-disk-uuid">{{ disk.uuid }}</dd>
-                            <dt>云硬盘容量:</dt> <dd>{{ disk.size|sizeformat:"GB" }}</dd>
-                            <dt>创建时间:</dt> <dd>{{ disk.create_time }}</dd>
-                            <dt>存储池:</dt> <dd>{{ disk.quota }}</dd>
-                            <dt>机组:</dt> <dd>{{ disk.quota.group }}</dd>
-                            <dt>用户:</dt> <dd>{{ disk.user }}</dd>
-                            <dt>备注:</dt> <dd>{{ disk.remarks }}</dd>
+                        <dl class="row">
+                            <dt class="col-2 text-right">云硬盘UUID:</dt> <dd class="col-10" id="id-mount-disk-uuid">{{ disk.uuid }}</dd>
+                            <dt class="col-2 text-right">云硬盘容量:</dt> <dd class="col-10">{{ disk.size|sizeformat:"GB" }}</dd>
+                            <dt class="col-2 text-right">创建时间:</dt> <dd class="col-10">{{ disk.create_time }}</dd>
+                            <dt class="col-2 text-right">存储池:</dt> <dd class="col-10">{{ disk.quota }}</dd>
+                            <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ disk.quota.group }}</dd>
+                            <dt class="col-2 text-right">用户:</dt> <dd class="col-10">{{ disk.user }}</dd>
+                            <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ disk.remarks }}</dd>
                         </dl>
                     </div>
                 </div>
@@ -37,13 +37,15 @@
                 {% else %}
                     <div>
                         <div class="text-success h4 col-sm-4">可供挂载的云主机：</div>
-                        <div class="pull-right col-sm-8">
+                        <div class="float-right col-sm-8">
                             <form role="form" class="form-horizontal" method="get" action="">
                                 <div class="input-group" style="">
-                                    <label class="input-group-addon">关键字</label>
+                                    <div class="input-group-prepend">
+                                        <label class="input-group-text" for="id-center">关键字</label>
+                                    </div>
                                     <input type="text" class="form-control" name="search" value="{{ search }}"
                                            placeholder="搜 UUID、IP、备注"/>
-                                    <span class="input-group-addon"></span>
+                                    <span class="input-group-prepend"></span>
                                     <button type="submit" class="btn btn-primary form-control">筛选</button>
                                 </div>
                             </form>
@@ -52,13 +54,13 @@
                     <table class="table table-bordered table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                         <tr>
                             <th></th>
-                            <th width="120px">IP地址</th>
+                            <th>IP地址</th>
                             <th>创建者</th>
                             <th>镜像</th>
                             <th>CPU/MEM</th>
         {#                    <th>云硬盘</th>#}
                             <th>备注</th>
-                            <th>状态<button class="btn btn-sm btn-update-vm-status"><span class="glyphicon glyphicon-refresh"></span></button></th>
+                            <th>状态<button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button></th>
                             <th>操作</th>
                         </tr>
                         {% for vm in vms %}
@@ -84,38 +86,38 @@
                                 </td>
                                 <td><span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span></td>
                                 <td>
-                                    <button type="button" class="btn btn-xs btn-success btn-disk-mount" data-vm-uuid="{{ vm.hex_uuid }}">挂载</button>
-                                    <button type="button" class="btn btn-xs btn-warning btn-vm-shutdown" data-vm-uuid="{{ vm.hex_uuid }}">关机</button>
-                                    <button type="button" class="btn btn-xs btn-warning btn-vm-poweroff" data-vm-uuid="{{ vm.hex_uuid }}">强制断电</button>
+                                    <button type="button" class="btn btn-sm btn-success btn-disk-mount" data-vm-uuid="{{ vm.hex_uuid }}">挂载</button>
+                                    <button type="button" class="btn btn-sm btn-warning btn-vm-shutdown" data-vm-uuid="{{ vm.hex_uuid }}">关机</button>
+                                    <button type="button" class="btn btn-sm btn-warning btn-vm-poweroff" data-vm-uuid="{{ vm.hex_uuid }}">强制断电</button>
                                 </td>
                             </tr>
                         {% endfor %}
                     </table>
-                    <div>
-                        <nav aria-label="Page navigation" >
-                            <ul class="pagination" style="margin:0;">
+                    <div class="card-footer">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination"  style="margin:0;">
                                 {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
                                     {% if page_list %}
                                         {% if previous %}
-                                            <li><a href="?{{ previous }}" aria-label="Previous"><span
+                                            <li class="page-item"><a class="page-link" href="?{{ previous }}" aria-label="Previous"><span
                                                     aria-hidden="true">&laquo;</span></a></li>
                                         {% else %}
-                                            <li class="disable"><span aria-hidden="true">&laquo;</span></li>
+                                            <li class="page-item disable"><span class="page-link" aria-hidden="true">&laquo;</span></li>
                                         {% endif %}
                                     {% endif %}
                                     {% for disp, query, active in page_list %}
                                         {% if active %}
-                                            <li class="active"><a href="?{{ query }}">{{ disp }}</a></li>
+                                            <li class="page-item active"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
                                         {% else %}
-                                            <li><a href="?{{ query }}">{{ disp }}</a></li>
+                                            <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
                                         {% endif %}
                                     {% endfor %}
                                     {% if page_list %}
                                         {% if next %}
-                                            <li><a href="?{{ next }}" aria-label="Next"><span
+                                            <li class="page-item"><a class="page-link" href="?{{ next }}" aria-label="Next"><span
                                                     aria-hidden="true">&raquo;</span></a></li>
                                         {% else %}
-                                            <li class="disable"><span aria-hidden="true">&raquo;</span></li>
+                                            <li class="page-item disable"><span class="page-link" aria-hidden="true">&raquo;</span></li>
                                         {% endif %}
                                     {% endif %}
                                 {% endwith %}
