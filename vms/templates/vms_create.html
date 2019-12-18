@@ -6,18 +6,18 @@
 {% block head %}{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-2 col-lg-offset-3 col-md-8 col-lg-6">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title">创建云主机</span>
-                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vms:vms-list' %}">
+    <div class="container-fluid offset-md-2 offset-lg-3 col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">创建云主机</span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vms-list' %}">
                     云主机列表
                 </a></span>
             </div>
-            <div class="panel-body">
+            <div class="card-body align-content-center">
                 <form class="form-horizontal" >
-                    <div class="form-group">
-                        <label for="id-center" class="col-sm-offset-1 col-sm-2 control-label">分中心</label>
+                    <div class="form-group row">
+                        <label for="id-center" class="offset-sm-1 col-sm-2 col-form-label">分中心</label>
                         <div class="col-sm-7">
                             <select name="center_id" class="form-control" id="id-center">
                                 <option value="">--</option>
@@ -29,8 +29,8 @@
                     </div>
                 </form>
                 <form class="form-horizontal" id="id-form-vm-create">
-                    <div class="form-group">
-                        <label for="id-group" class="col-sm-offset-1 col-sm-2 control-label">机组</label>
+                    <div class="form-group row">
+                        <label for="id-group" class="offset-sm-1 col-sm-2 col-form-label">机组</label>
                         <div class="col-sm-7">
                             <select name="group_id" class="form-control" id="id-group">
                                 <option value="">--</option>
@@ -40,8 +40,8 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="id-vlan" class="col-sm-offset-1 col-sm-2 control-label">网段</label>
+                    <div class="form-group row">
+                        <label for="id-vlan" class="offset-sm-1 col-sm-2 col-form-label">网段</label>
                         <div class="col-sm-7">
                             <select name="vlan_id" class="form-control" id="id-vlan">
                                 <option value="">--</option>
@@ -51,16 +51,16 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="id-host" class="col-sm-offset-1 col-sm-2 control-label">宿主机</label>
+                    <div class="form-group row">
+                        <label for="id-host" class="offset-sm-1 col-sm-2 col-form-label">宿主机</label>
                         <div class="col-sm-7">
                             <select name="host_id" class="form-control" id="id-host">
                                 <option value="">自动选择</option>
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="id-image" class="col-sm-offset-1 col-sm-2 control-label">系统镜像</label>
+                    <div class="form-group row">
+                        <label for="id-image" class="offset-sm-1 col-sm-2 col-form-label">系统镜像</label>
                         <div class="col-sm-2">
                             <select class="form-control" id="id-image-tag">
                                 {% for id, tag in image_tags %}
@@ -76,8 +76,8 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="id-vcpu" class="col-sm-offset-1 col-sm-2 control-label">CPU数</label>
+                    <div class="form-group row">
+                        <label for="id-vcpu" class="offset-sm-1 col-sm-2 col-form-label">CPU数</label>
                         <div class="col-sm-7 form-inline">
                             {% if user.is_superuser %}
                                 <input name="vcpu" type="text" class="form-control" id="id-vcpu" value="2" required>
@@ -91,8 +91,8 @@
                             <span>个</span>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="id-mem" class="col-sm-offset-1 col-sm-2 control-label">内存大小</label>
+                    <div class="form-group row">
+                        <label for="id-mem" class="offset-sm-1 col-sm-2 col-form-label">内存大小</label>
                         <div class="col-sm-7 form-inline">
                             {% if user.is_superuser %}
                                 <input name="mem" type="text" class="form-control" id="id-mem" value="2048">
@@ -108,14 +108,14 @@
                             <span>MB</span>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="id-remarks" class="col-sm-offset-1 col-sm-2 control-label">备注</label>
+                    <div class="form-group row">
+                        <label for="id-remarks" class="offset-sm-1 col-sm-2 col-form-label">备注</label>
                         <div class="col-sm-7">
                             <input name="remarks" type="text" class="form-control" id="id-remarks">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="col-sm-offset-2 col-sm-10">
+                    <div class="form-group row">
+                        <div class="offset-sm-2 col-sm-10">
                             <button type="submit" class="btn btn-primary">创建</button>
                         </div>
                     </div>

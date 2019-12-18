@@ -16,16 +16,16 @@
 {% block title %}云主机详情{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-1 col-md-10 col-lg-10">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title"><strong>云主机详情</strong></span>
-                <div class="pull-right">
-                    <a class="btn btn-xs btn-success" href="{% url 'vms:vm-create' %}">创建云主机</a>
-                    <a class="btn btn-xs btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">云主机列表</a>
+    <div class="container-fluid offset-lg-1 col-lg-10">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>云主机详情</strong></span>
+                <div class="float-right">
+                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建云主机</a>
+                    <a class="btn btn-sm btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">云主机列表</a>
                 </div>
             </div>
-            <div class="panel-body">
+            <div class="card-body">
                 <div class="text-center h3">
                     <span id="id-vm-uuid">{{ vm.hex_uuid }}</span>
                     {% include 'vm_operations.html' %}
@@ -35,16 +35,16 @@
                     <ul class="list-group">
                         <li class="list-group-item list-group-item-info">
                             <div class="row">
-                                <div class="col-md-2">
-{#                                    <span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span>#}
-                                </div>
-                                <div class="col-md-10">
-                                    <div class="col-md-4">
-                                        <strong>运行状态：</strong><span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span>
-                                        <span class="btn btn-sm btn-update-vm-status"><span class="glyphicon glyphicon-refresh"></span></span>
+                                <div class="col-2"></div>
+                                <div class="col-10">
+                                    <div class="row">
+                                        <div class="col-4">
+                                            <strong>运行状态：</strong><span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span>
+                                            <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button>
+                                        </div>
+                                        <div class="col-4"><strong>创建者：</strong>{{vm.user}}</div>
+                                        <div class="col-4"><strong>创建时间：</strong>{{vm.create_time|date:'Y-m-d H:i:s'}}</div>
                                     </div>
-                                    <div class="col-md-4"><strong>创建者：</strong>{{vm.user}}</div>
-                                    <div class="col-md-4"><strong>创建时间：</strong>{{vm.create_time|date:'Y-m-d H:i:s'}}</div>
                                 </div>
                             </div>
                         </li>
@@ -52,9 +52,11 @@
                             <div class="row">
                                 <div class="col-md-2"><strong>位置信息</strong></div>
                                 <div class="col-md-10">
-                                    <div class="col-md-4"><strong>所属分中心：</strong>{{ vm.host.group.center.name }}</div>
-                                    <div class="col-md-4"><strong>所属集群：</strong>{{ vm.host.group.name }}</div>
-                                    <div class="col-md-4"><strong>宿主机IP：</strong>{{ vm.host.ipv4 }}</div>
+                                    <div class="row">
+                                        <div class="col-md-4"><strong>所属分中心：</strong>{{ vm.host.group.center.name }}</div>
+                                        <div class="col-md-4"><strong>所属集群：</strong>{{ vm.host.group.name }}</div>
+                                        <div class="col-md-4"><strong>宿主机IP：</strong>{{ vm.host.ipv4 }}</div>
+                                    </div>
                                 </div>
                             </div>
                         </li>
@@ -62,8 +64,10 @@
                             <div class="row row_style">
                                 <div class="col-md-2"><strong>配置信息</strong></div>
                                 <div class="col-md-10">
-                                    <div class="col-md-4"><strong>CPU：</strong>{{ vm.vcpu }}</div>
-                                    <div class="col-md-4"><strong>MEMORY：</strong>{{ vm.mem|sizeformat:'MB' }}</div>
+                                    <div class="row">
+                                        <div class="col-md-4"><strong>CPU：</strong>{{ vm.vcpu }}</div>
+                                        <div class="col-md-4"><strong>MEMORY：</strong>{{ vm.mem|sizeformat:'MB' }}</div>
+                                    </div>
                                 </div>
                             </div>
                         </li>
@@ -71,9 +75,11 @@
                             <div class="row">
                                 <div class="col-md-2"><strong>镜像信息</strong></div>
                                 <div class="col-md-10">
-                                    <div class="col-md-4"><strong>系统镜像</strong>：{{ vm.image }}</div>
-                                    <div class="col-md-4"><strong>CEPH集群</strong>：{{ vm.image.ceph_pool.ceph.name }}</div>
-                                    <div class="col-md-4"><strong>Pool Name</strong>：{{ vm.image.ceph_pool.pool_name }}</div>
+                                    <div class="row">
+                                        <div class="col-md-4"><strong>系统镜像</strong>：{{ vm.image }}</div>
+                                        <div class="col-md-4"><strong>CEPH集群</strong>：{{ vm.image.ceph_pool.ceph.name }}</div>
+                                        <div class="col-md-4"><strong>Pool Name</strong>：{{ vm.image.ceph_pool.pool_name }}</div>
+                                    </div>
                                 </div>
                             </div>
                         </li>
@@ -81,10 +87,12 @@
                             <div class="row">
                                 <div class="col-md-2"><strong>网络信息</strong></div>
                                 <div class="col-md-10">
-                                    <div class="col-md-4"><strong>IP：</strong>{{vm.ipv4}}</div>
-                                    <div class="col-md-4"><strong>MAC：</strong>{{ vm.mac_ip.mac }}</div>
-                                    <div class="col-md-4"><strong>子网：</strong>{{ vm.mac_ip.vlan }}</div>
-                                    <div class="col-md-4"><strong>网桥br：</strong>{{ vm.mac_ip.vlan.br }}</div>
+                                    <div class="row">
+                                        <div class="col-md-4"><strong>IP：</strong>{{vm.ipv4}}</div>
+                                        <div class="col-md-4"><strong>MAC：</strong>{{ vm.mac_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>子网：</strong>{{ vm.mac_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>网桥br：</strong>{{ vm.mac_ip.vlan.br }}</div>
+                                    </div>
                                 </div>
                             </div>
                         </li>
@@ -95,13 +103,13 @@
                                     <div>
                                         <span>{{ vm.remarks|default_if_none:'无' }}</span>
                                         <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.hex_uuid }}" title="修改备注">
-                                            <span class="glyphicon glyphicon-pencil"></span>
+                                            <i class="fa fa-edit"></i>
                                         </span>
                                     </div>
                                     <div id="remarks_edit" style="display:none">
                                         <textarea id="remarks">{{ vm.remarks|default_if_none:'' }}</textarea>
                                         <span class="save_vm_remark" title="保存备注" vm_uuid="{{ vm.hex_uuid }}">
-                                            <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+                                            <i class="fa fa-save"></i>
                                         </span>
                                     </div>
                                 </div>
@@ -112,6 +120,7 @@
                             {% if vm.vdisks %}
                                 <table class="table table-default table-disk-list"
                                        style="word-wrap:break-word;word-break:break-all;">
+                                    <thead class="thead-light">
                                     <tr>
                                         <th>设备</th>
                                         <th>UUID</th>
@@ -124,6 +133,8 @@
                                         <th>备注</th>
                                         <th>操作</th>
                                     </tr>
+                                    </thead>
+                                    <tbody>
                                     {% for disk in vm.vdisks %}
                                         <tr id="tr_{{ disk.uuid }}">
                                             <td>{{ disk.dev }}</td>
@@ -135,21 +146,22 @@
                                             <td>{{ disk.create_time }}</td>
                                             <td>
                                                 {% if disk.enable %}
-                                                    <span class="glyphicon glyphicon-ok"></span>
+                                                    <i class="fa fa-check"></i>
                                                 {% else %}
-                                                    <span class="glyphicon glyphicon-ok"></span>
+                                                    <i class="fa fa-times"></i>
                                                 {% endif %}
                                             </td>
                                             <td>
                                                 <span>{{ disk.remarks|default_if_none:'' }}</span>
                                             </td>
                                             <td>
-                                                <button type="button" class="btn btn-xs btn-success btn-disk-umount"
+                                                <button type="button" class="btn btn-sm btn-success btn-disk-umount"
                                                         data-disk-uuid="{{ disk.uuid }}">卸载
                                                 </button>
                                             </td>
                                         </tr>
                                     {% endfor %}
+                                    </tbody>
                                 </table>
                             {% else %}
                                 未挂载云硬盘
@@ -160,6 +172,7 @@
                             {% if vm.sys_snaps %}
                                 <table class="table table-default table-vm-snap-list"
                                        style="word-wrap:break-word;word-break:break-all;">
+                                    <thead class="thead-light">
                                     <tr>
                                         <th>ID</th>
                                         <th>快照</th>
@@ -167,6 +180,8 @@
                                         <th>备注</th>
                                         <th>操作</th>
                                     </tr>
+                                    </thead>
+                                    <tbody>
                                     {% for snap in vm.sys_snaps %}
                                         <tr id="tr_snap_{{ snap.id }}">
                                             <td>{{ snap.id }}</td>
@@ -176,26 +191,27 @@
                                                 <div>
                                                     <span>{{ snap.remarks|default_if_none:'' }}</span>
                                                     <span class="mouse-hover-show edit-vm-snap-remark" title="修改备注">
-                                                        <span class="glyphicon glyphicon-pencil"></span>
+                                                        <i class="fa fa-edit"></i>
                                                     </span>
                                                 </div>
                                                 <div style="display:none">
                                                     <textarea id="remarks">{{ snap.remarks|default_if_none:'' }}</textarea>
                                                     <span class="save-vm-snap-remark" title="保存备注" data-snap-id="{{ snap.id }}">
-                                                        <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+                                                        <i class="fa fa-save"></i>
                                                     </span>
                                                 </div>
                                             </td>
                                             <td>
-                                                <button type="button" class="btn btn-xs btn-danger btn-vm-snap-delete"
+                                                <button type="button" class="btn btn-sm btn-danger btn-vm-snap-delete"
                                                         data-snap-id="{{ snap.id }}">删除
                                                 </button>
-                                                <button type="button" class="btn btn-xs btn-danger btn-vm-snap-rollback"
+                                                <button type="button" class="btn btn-sm btn-danger btn-vm-snap-rollback"
                                                         data-snap-id="{{ snap.id }}">回滚
                                                 </button>
                                             </td>
                                         </tr>
                                     {% endfor %}
+                                    </tbody>
                                 </table>
                             {% else %}
                                 未创建快照

@@ -1,58 +1,22 @@
 <div class="btn-group">
-    <button type="button" class="btn btn-sm btn-success btn-vnc-open" data-vm-uuid="{{ vm.hex_uuid }}">
-        <img src="/static/images/display.png"></button>
-    <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
-            aria-expanded="false">
-        <span class="caret"></span>
-        <span class="sr-only">Toggle Dropdown</span>
+    <button type="button" class="btn btn-sm btn-info btn-vnc-open" data-vm-uuid="{{ vm.hex_uuid }}">
+        <i class="fa fa-desktop"></i></button>
+    <button type="button" class="btn btn-sm btn-success dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+        aria-expanded="false">操作
     </button>
-    <ul class="dropdown-menu">
-        <li>
-            <button class="btn btn-xs btn-primary btn-block btn-vm-start" data-vm-uuid="{{ vm.hex_uuid }}">开机
-            </button>
-        </li>
-        <li>
-            <button class="btn btn-xs btn-warning btn-block btn-vm-shutdown" data-vm-uuid="{{ vm.hex_uuid }}">
-                关机
-            </button>
-        </li>
-        <li>
-            <button class="btn btn-xs btn-warning btn-block btn-vm-reboot" data-vm-uuid="{{ vm.hex_uuid }}">
-                软重启
-            </button>
-        </li>
-        <li>
-            <button class="btn btn-xs btn-warning btn-block btn-vm-poweroff" data-vm-uuid="{{ vm.hex_uuid }}">
-                强制断电
-            </button>
-        </li>
-        <li>
-            <button class="btn btn-xs btn-danger btn-block btn-vm-delete" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
-        </li>
-        <li>
-            <button class="btn btn-xs btn-danger btn-block btn-vm-delete-force" data-vm-uuid="{{ vm.hex_uuid }}">强制删除</button>
-        </li>
-        <li>
-            <a class="btn btn-xs btn-info btn-block" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载磁盘</a>
-        </li>
-        <li>
-            <a class="btn btn-xs btn-info btn-block" href="{% url 'vms:vm-edit' vm_uuid=vm.hex_uuid %}">修改配置</a>
-        </li>
-        <li>
-            <button class="btn btn-xs btn-info btn-block"
-                    onclick="alert('暂不支持此操作');">重置镜像
-            </button>
-        </li>
-        <li>
-            <button class="btn btn-xs btn-info btn-block"
-                    onclick="alert('暂不支持此操作');">关机迁移
-            </button>
-        </li>
-        <li>
-            <button class="btn btn-xs btn-info btn-block btn-vm-snap-create" data-vm-uuid="{{ vm.hex_uuid }}">创建快照
-            </button>
-        </li>
-    </ul>
+    <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
+        <button class="dropdown-item bg-success btn-vm-start" type="button" data-vm-uuid="{{ vm.hex_uuid }}">开机</button>
+        <button class="dropdown-item bg-warning btn-vm-shutdown" type="button" data-vm-uuid="{{ vm.hex_uuid }}">关机</button>
+        <button class="dropdown-item bg-warning btn-vm-reboot" type="button" data-vm-uuid="{{ vm.hex_uuid }}">软重启</button>
+        <button class="dropdown-item bg-warning btn-vm-poweroff" type="button" data-vm-uuid="{{ vm.hex_uuid }}">强制断电</button>
+        <button class="dropdown-item bg-danger btn-vm-delete" type="button" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
+        <button class="dropdown-item bg-danger btn-vm-delete-force" type="button" data-vm-uuid="{{ vm.hex_uuid }}">强制删除</button>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载磁盘</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-edit' vm_uuid=vm.hex_uuid %}">修改配置</a>
+        <button class="dropdown-item bg-info" type="button" onclick="alert('暂不支持此操作');">重置镜像</button>
+        <button class="dropdown-item bg-info" type="button" onclick="alert('暂不支持此操作');">关机迁移</button>
+        <button class="dropdown-item bg-info btn-vm-snap-create" type="button" data-vm-uuid="{{ vm.hex_uuid }}">创建快照</button>
+    </div>
 </div>
 
 
