@@ -8,45 +8,53 @@
 {% block title %}VLAN信息{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-1 col-md-10 col-lg-10">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title"><strong>VLAN信息</strong></span>
+    <div class="offset-md-1 col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>VLAN信息</strong></span>
             </div>
-            <div class="panel-body" style="min-height:">
+            <div class="card-body">
                 <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                    <thead class="thead-light">
                     <tr>
                         <th>名称</th>
                         <th>子网IP</th>
                         <th>子网掩码</th>
                         <th>网关</th>
                     </tr>
+                    </thead>
+                    <tbody>
                     <tr>
                         <th>{{ vlan.name }}</th>
                         <th>{{ vlan.subnet_ip }}</th>
                         <th>{{ vlan.net_mask }}</th>
                         <th>{{ vlan.gateway }}</th>
                     </tr>
+                    </tbody>
                 </table>
             </div>
-            <div class="panel-heading">
-                <span class="panel-title"><strong>生成子网主机IP列表</strong></span>
+            <div class="card-header">
+                <span class="card-title"><strong>生成子网主机IP列表</strong></span>
                 <!-- <span><a class="btn btn-xs btn-primary pull-right" href="">
                     <span class="glyphicon glyphicon-plus"></span>全部导入
                 </a></span> -->
             </div>
-            <div class="panel-body" style="">
+            <div class="card-body" style="">
                 <form id="form-add" role="form" class="form-horizontal" method="post" action="{% url 'network:vlan_add' %}">
                     {% csrf_token %}
                     <div class="input-group" style="">
-                        <label class="input-group-addon">起始IP</label>
+                        <div class="input-group-prepend">
+                            <label class="input-group-text">起始IP</label>
+                        </div>
                         <input name="start_ip" class="form-control" type="text" value="" placeholder="输入起始IP"/>
-                        <label class="input-group-addon">结束IP</label>
+                        <div class="input-group-prepend">
+                            <label class="input-group-text">结束IP</label>
+                        </div>
                         <input name="end_ip" class="form-control" type="text" value="" placeholder="输入结束IP"/>
-                        <span class="input-group-addon"></span>
-                        <button id="generate" type="submit" class="btn btn-primary form-control">生成</button>
-                        <span class="input-group-addon"></span>
-                        <button id="import" type="submit" class="btn btn-primary form-control"><span class="glyphicon glyphicon-plus"></span>全部导入</button>
+                        <div class="input-group-append">
+                            <button id="generate" type="submit" class="btn btn-primary form-control">生成</button>
+                        </div>
+                        <button id="import" type="submit" class="btn btn-info"><i class="fa fa-plus"></i>全部导入</button>
                         <input name="vlan_id" hidden value="{{ vlan.id }}"/>
                         <input id="flag" name="write_database" hidden value=""/>
                     </div>
@@ -57,13 +65,13 @@
                         <th>IP</th>
                         <th>MAC</th>
                     </tr>
-                    <!-- {% for macip in macips %}
-                    <tr>
-                        <th>{{ macip. }}</th>
-                        <th>{{ macip. }}</th>
-                        <th>{{ macip. }}</th>
-                    </tr>
-                    {% endfor %} -->
+{#                    <!-- {% for macip in macips %}#}
+{#                    <tr>#}
+{#                        <th>{{ macip. }}</th>#}
+{#                        <th>{{ macip. }}</th>#}
+{#                        <th>{{ macip. }}</th>#}
+{#                    </tr>#}
+{#                    {% endfor %} -->#}
                 </table>
             </div>
         </div>

@@ -8,13 +8,14 @@
 {% block title %}VLAN列表{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-1 col-md-10 col-lg-10">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title"><strong>VLAN列表</strong></span>
+    <div class="offset-md-1 col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>VLAN列表</strong></span>
             </div>
-            <div class="panel-body" style="min-height: 400px;">
+            <div class="card-body" style="min-height: 400px;">
                 <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                     <thead class="thead-light">
                     <tr>
                         <th>编号</th>
                         <th>VLAN</th>
@@ -28,6 +29,8 @@
                         <th>备注</th>
                         <th>操作选项</th>
                     </tr>
+                    </thead>
+                    <tbody>
                     {% for vlan in vlans %}
                     <tr>
                         <th>{{ vlan.id }}</th>
@@ -39,22 +42,22 @@
                         <th>{{ vlan.gateway }}</th>
                         <th>{{ vlan.free_ip }}</th>
                         {% if vlan.enable %}
-                        <th><span class="glyphicon glyphicon-ok"></span></th>
-                        {% endif %}
-                        {% if not vlan.enable %}
-                        <th><span class="glyphicon glyphicon-remove"></span></th>
+                            <th><i class="fa fa-check"></i></th>
+                        {% else %}
+                            <th><i class="fa fa-times"></i></th>
                         {% endif %}
                         <th>{{ vlan.remarks }}</th>
                         <th>
-                            <span><a class="btn btn-xs btn-primary" href="{% url 'network:vlan_add' %}?vlan={{ vlan.id }}">
-                                <span class="glyphicon glyphicon-plus"></span>批量添加IP
+                            <span><a class="btn btn-sm btn-primary" href="{% url 'network:vlan_add' %}?vlan={{ vlan.id }}">
+                                <i class="fa fa-plus"></i> 批量添加IP
                             </a></span>
-                            <span><a class="btn btn-xs btn-primary" href="{% url 'network:vlan_show' %}?vlan={{ vlan.id }}">
-                                <span class="glyphicon glyphicon-search"></span>查看IP列表
+                            <span><a class="btn btn-sm btn-primary" href="{% url 'network:vlan_show' %}?vlan={{ vlan.id }}">
+                                <i class="fa fa-search"></i> 查看IP列表
                             </a></span>
                         </th>
                     </tr>
                     {% endfor %}
+                    </tbody>
                 </table>
             </div>
         </div>
