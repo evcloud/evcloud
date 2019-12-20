@@ -123,7 +123,7 @@ class VlanManager:
         # lines = lines + '\t' + 'filename "/pxelinux.0";    #boot file\n'
 
         for macip in macips:
-            lines += '\t' + 'host %s{hardware ethernet %s;fixed-address %s;}\n}' % ('v_' + macip.ipv4.replace('.', '_'), macip.mac, macip.ipv4)
+            lines += '\t' + 'host %s{hardware ethernet %s;fixed-address %s;}\n' % ('v_' + macip.ipv4.replace('.', '_'), macip.mac, macip.ipv4)
         return vlan.subnet_ip + '_dhcpd.conf', StringIO(lines)
 
 
