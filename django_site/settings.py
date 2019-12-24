@@ -221,7 +221,7 @@ SIMPLE_JWT = {
 
 # vnc
 VNCSERVER_BASE_PORT = 5900
-NOVNC_SERVER_PORT = 84  # novnc代理服务websockify的端口； 默认为80（需要通过nginx代理）
+# NOVNC_SERVER_PORT = 84  # novnc代理服务websockify的端口； 默认为80（需要通过nginx代理）
 
 # 日志配置
 LOGGING_FILES_DIR = os.path.join('/var/log', os.path.basename(BASE_DIR))

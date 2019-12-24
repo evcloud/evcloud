@@ -22,11 +22,11 @@ def vnc_view(req):
         http_host = http_host.split(':')[0]
 
         if NOVNC_PORT == 80:
-            dic['url'] = f'http://{http_host}/novnc_nginx/vnc_auto.html?path=websockify/?token={vncid}'
+            dic['url'] = f'http://{http_host}/novnc_nginx/vnc_lite.html?path=websockify/?token={vncid}'
             return render(req, 'novnc.html', dic)
 
         http_host = f'{http_host}:{NOVNC_PORT}'
-        url = f'http://{http_host}/vnc_auto.html?path=websockify/?token={vncid}'
+        url = f'http://{http_host}/vnc_lite.html?path=websockify/?token={vncid}'
         return redirect(to=url)
 
 
