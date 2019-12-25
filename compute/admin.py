@@ -30,7 +30,7 @@ class GroupAdmin(admin.ModelAdmin):
 @admin.register(Host)
 class HostAdmin(admin.ModelAdmin):
     list_display_links = ('ipv4',)
-    list_display = ( 'id', 'ipv4', 'group', 'vcpu_total', 'vcpu_allocated', 'mem_total', 'mem_allocated', 'vm_created', 'enable')
+    list_display = ( 'id', 'ipv4', 'group', 'real_cpu', 'vcpu_total', 'vcpu_allocated', 'mem_total', 'mem_allocated', 'vm_created', 'enable')
     list_filter = ['group']
     search_fields = ['ipv4']
     filter_horizontal = ['vlans']

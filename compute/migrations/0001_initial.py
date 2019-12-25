@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('ipv4', models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')),
-                ('vcpu_total', models.IntegerField(default=24, verbose_name='宿主机CPU总数')),
+                ('vcpu_total', models.IntegerField(default=24, verbose_name='虚拟CPU总数')),
                 ('vcpu_allocated', models.IntegerField(default=0, verbose_name='已分配CPU总数')),
                 ('mem_total', models.IntegerField(default=32768, verbose_name='宿主机总内存大小')),
                 ('mem_allocated', models.IntegerField(default=0, verbose_name='宿主机已分配内存大小')),

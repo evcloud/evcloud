@@ -216,6 +216,7 @@ class CenterManager:
             mem_total=DefaultSum('group_set__hosts_set__mem_total'),
             mem_allocated=DefaultSum('group_set__hosts_set__mem_allocated'),
             mem_reserved=DefaultSum('group_set__hosts_set__mem_reserved'),
+            real_cpu=DefaultSum('group_set__hosts_set__real_cpu'),
             vcpu_total=DefaultSum('group_set__hosts_set__vcpu_total'),
             vcpu_allocated=DefaultSum('group_set__hosts_set__vcpu_allocated'),
             vm_created=DefaultSum('group_set__hosts_set__vm_created')).all()
@@ -337,6 +338,7 @@ class GroupManager:
         return qs.select_related('center').annotate(
             mem_total=DefaultSum('hosts_set__mem_total'), mem_allocated=DefaultSum('hosts_set__mem_allocated'),
             vcpu_total=DefaultSum('hosts_set__vcpu_total'), vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
+            real_cpu=DefaultSum('hosts_set__real_cpu'),
             mem_reserved=DefaultSum('hosts_set__mem_reserved'),vm_created=DefaultSum('hosts_set__vm_created')).all()
 
 
