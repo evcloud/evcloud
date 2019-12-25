@@ -78,7 +78,8 @@ class Host(models.Model):
     group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set', verbose_name='宿主机所属的组')
     vlans = models.ManyToManyField(to=Vlan, verbose_name='VLAN子网', related_name='vlan_hosts') # 局域子网
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
-    vcpu_total = models.IntegerField(default=24, verbose_name='宿主机CPU总数')
+    real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU总数')
+    vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU总数')
     vcpu_allocated = models.IntegerField(default=0, verbose_name='已分配CPU总数')
     mem_total = models.IntegerField(default=32768, verbose_name='宿主机总内存大小')
     mem_allocated = models.IntegerField(default=0, verbose_name='宿主机已分配内存大小')

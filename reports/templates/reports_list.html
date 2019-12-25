@@ -18,7 +18,8 @@
                 <thead class="thead-light">
                 <tr>
                     <th>分中心</th>
-                    <th>总cpu(/核)</th>
+                    <th>总物理cpu(/核)</th>
+                    <th>总虚拟cpu(/核)</th>
                     <th>已分配cpu(/核)</th>
                     <th>cpu分配率</th>
                     <th>总内存</th>
@@ -31,6 +32,7 @@
                 {% for c in centers %}
                     <tr>
                         <td><a href="{% url 'reports:reports-center' id=c.id %}">{{c.name}}</a></td>
+                        <td>{{c.real_cpu}}</td>
                         <td>{{c.vcpu_total}}</td>
                         <td>{{c.vcpu_allocated}}</td>
                         <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
@@ -52,7 +54,8 @@
                 <tr>
                     <th>宿主机组</th>
                     <th>分中心</th>
-                    <th>总cpu(/核)</th>
+                    <th>总物理cpu(/核)</th>
+                    <th>总虚拟cpu(/核)</th>
                     <th>已分配cpu(/核)</th>
                     <th>cpu分配率</th>
                     <th>总内存</th>
@@ -66,6 +69,7 @@
                     <tr>
                         <td><a href="{% url 'reports:reports-group' id=c.id %}">{{c.name}}</a></td>
                         <td>{{c.center__name}}</td>
+                        <td>{{c.real_cpu}}</td>
                         <td>{{c.vcpu_total}}</td>
                         <td>{{c.vcpu_allocated}}</td>
                         <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
@@ -87,7 +91,8 @@
                 <tr>
                     <th>宿主机IP</th>
                     <th>机组</th>
-                    <th>总cpu(/核)</th>
+                    <th>物理cpu(/核)</th>
+                    <th>虚拟cpu(/核)</th>
                     <th>已分配cpu(/核)</th>
                     <th>cpu分配率</th>
                     <th>总内存</th>
@@ -101,6 +106,7 @@
                     <tr>
                         <td>{{c.ipv4}}</td>
                         <td>{{c.group__name}}</td>
+                        <td>{{c.real_cpu}}</td>
                         <td>{{c.vcpu_total}}</td>
                         <td>{{c.vcpu_allocated}}</td>
                         <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
