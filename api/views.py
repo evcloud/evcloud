@@ -1496,11 +1496,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
         if vdisk.is_mounted:
             return Response(data={'code': 400, 'code_text': '硬盘已被挂载使用，请先卸载后再销毁'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            vdisk.deleted = True
-            vdisk.save(update_fields=['deleted'])
-        except Exception as e:
-            return Response(data={'code': 400, 'code_text': f'销毁硬盘失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+        if not vdisk.soft_delete():
+            return Response(data={'code': 400, 'code_text': '销毁硬盘失败，数据库错误'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

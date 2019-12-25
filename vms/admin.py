@@ -19,6 +19,13 @@ class VmArchiveAdmin(admin.ModelAdmin):
     search_fields = ['uuid', 'center_name', 'remarks', 'user']
     list_filter = ['center_name', 'group_name', 'host_ipv4', 'user']
 
+    def delete_queryset(self, request, queryset):
+        '''
+        后台管理批量删除重写， 通过每个对象的delete()方法删除，同时会删除ceph rbd image
+        '''
+        for obj in queryset:
+            obj.delete()
+
 
 @admin.register(VmLog)
 class VmLogAdmin(admin.ModelAdmin):
