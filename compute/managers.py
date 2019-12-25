@@ -1,3 +1,5 @@
+import random
+
 from django.db import transaction
 from django.db.models import Sum
 from django.utils.functional import cached_property
@@ -530,6 +532,7 @@ class HostManager:
         if not isinstance(mem, int) or mem <= 0:
             raise ComputeError(msg='参数有误，mem必须是一个正整数')
 
+        random.shuffle(hosts)   # 随机打乱
         for host in hosts:
             # 宿主机是否满足资源需求
             if not host.meet_needs(vcpu=vcpu, mem=mem):
