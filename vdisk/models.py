@@ -299,3 +299,17 @@ class Vdisk(models.Model):
 
         return False
 
+    def soft_delete(self):
+        '''
+        软删除
+        :return:
+            True    # success
+            False   # failed
+        '''
+        try:
+            self.deleted = True
+            self.save(update_fields=['deleted'])
+        except Exception as e:
+            return False
+
+        return True
