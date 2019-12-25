@@ -24,9 +24,23 @@ def remove_image(ceph, pool_name: str, image_name: str):
     try:
         rbd = get_rbd_manager(ceph=ceph, pool_name=pool_name)
         rbd.remove_image(image_name=image_name)
-    except RadosError as e:
+    except (RadosError, Exception) as e:
         return False
-    except Exception as e:
+
+    return True
+
+def rename_image(ceph, pool_name: str, image_name: str, new_name: str):
+    '''
+    重命名一个镜像
+
+    :return:
+        True    # success
+        False   # failed
+    '''
+    try:
+        rbd = get_rbd_manager(ceph=ceph, pool_name=pool_name)
+        rbd.rename_image(image_name=image_name, new_name=new_name)
+    except (RadosError, Exception) as e:
         return False
 
     return True
@@ -235,6 +249,33 @@ class VmArchive(models.Model):
             return False
 
         return remove_image(ceph=config, pool_name=self.ceph_pool, image_name=self.disk)
+
+    def rename_sys_disk_archive(self):
+        '''
+        虚拟机归档后，系统盘RBD镜像修改了已删除归档的名称，格式：x_{time}_{disk_name}
+        :return:
+            True    # success
+            False   # failed
+        '''
+        config = self.get_ceph_cluster()
+        if not config:
+            return False
+
+        time_str = timezone.now().strftime('%Y%m%d%H%M%S')
+        old_name = self.disk
+        new_name = f"x_{time_str}_{old_name}"
+        ok = rename_image(ceph=config, pool_name=self.ceph_pool, image_name=old_name, new_name=new_name)
+        if not ok:
+            return False
+
+        self.disk = new_name
+        try:
+            self.save(update_fields=['disk'])
+        except Exception as e:
+            rename_image(ceph=config, pool_name=self.ceph_pool, image_name=new_name, new_name=old_name)
+            return False
+
+        return True
 
 
 class VmLog(models.Model):

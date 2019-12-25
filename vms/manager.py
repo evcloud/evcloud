@@ -829,6 +829,8 @@ class VmAPI:
                   f'未释放资源：mem={vm.mem}MB;vcpu={vm.vcpu}；\n请查看核对虚拟机是否已成功删除并归档，如果已删除请手动释放此宿主机资源'
             log_manager.add_log(title='释放宿主机men, cpu资源失败', about=log_manager.about.ABOUT_MEM_CPU, text=msg)
 
+        # vm系统盘RBD镜像修改了已删除归档的名称
+        vm_ahv.rename_sys_disk_archive()
         return True
 
     def edit_vm_vcpu_mem(self, vm_uuid:str, vcpu:int=0, mem:int=0, user=None, force=False):
