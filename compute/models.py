@@ -164,7 +164,7 @@ class Host(models.Model):
             True    # 属于
             False   # 不属于
         '''
-        if vlan in self.vlans.all():
+        if self.vlans.filter(pk=vlan.pk).exists():
             return True
 
         return False

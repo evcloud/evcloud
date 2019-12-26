@@ -44,7 +44,7 @@
                         <label for="id-vlan" class="offset-sm-1 col-sm-2 col-form-label">网段</label>
                         <div class="col-sm-7">
                             <select name="vlan_id" class="form-control" id="id-vlan">
-                                <option value="">--</option>
+                                <option value="">自动选择</option>
                                 {% for v in vlans %}
                                     <option value="{{ v.id }}" {% if v.id == vlan_id %}selected{% endif %}>{{ v.name }}</option>
                                 {% endfor %}
