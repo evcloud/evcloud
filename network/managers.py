@@ -130,6 +130,25 @@ class MacIPManager:
         except Exception as e:
             raise NetworkError(msg=f'查询MacIP时错误,{str(e)}')
 
+    def get_macip_by_ipv4(self, ipv4:str):
+        '''
+        通过ipv4获取mac ip
+
+        :param ipv4: ip地址
+        :return:
+            MacIP() # success
+            None    #不存在
+
+        :raise NetworkError
+        '''
+        if not ipv4 or not isinstance(ipv4, str):
+            raise NetworkError(msg='ipv4参数有误')
+
+        try:
+            return MacIP.objects.filter(ipv4=ipv4).first()
+        except Exception as e:
+            raise NetworkError(msg=f'查询MacIP时错误,{str(e)}')
+
     def has_free_ip_in_vlan(self, vlan_id:int):
         '''
         子网中是否有可用的IP
@@ -145,7 +164,7 @@ class MacIPManager:
 
         return False
 
-    def apply_for_free_ip(self, vlan_id:int, ipv4:str=''):
+    def apply_for_free_ip(self, vlan_id:int=0, ipv4:str=''):
         '''
         申请一个未使用的ip，申请成功的ip不再使用时需要通过free_used_ip()释放
 
@@ -155,17 +174,26 @@ class MacIPManager:
             MacIP() # 成功
             None    # 失败
         '''
+        if not vlan_id and not ipv4:
+            return None
+
         with transaction.atomic():
-            qs_ips = MacIP.objects.select_for_update().filter(vlan=vlan_id, used=False, enable=True)
+            qs_ips = MacIP.objects.select_for_update().filter(used=False, enable=True)
             if ipv4:
                 qs_ips = qs_ips.filter(ipv4=ipv4)
+
+            if vlan_id and vlan_id > 0:
+                qs_ips = qs_ips.filter(vlan=vlan_id)
 
             ip = qs_ips.first()
             if not ip:
                 return None
 
             ip.used = True
-            ip.save()
+            try:
+                ip.save(update_fields=['used'])
+            except Exception as e:
+                return None
 
         return ip
 
