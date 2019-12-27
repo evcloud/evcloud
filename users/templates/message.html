@@ -5,9 +5,9 @@
 {% endblock %}
 
 {% block boby %}
-    <div class="row text-center col-xs-offset-2 col-xs-8">
-        <div class="panel panel-default">
-            <div class="panel-body">
+    <div class="row">
+        <div class="card text-center offset-sm-2 col-sm-8">
+            <div class="card-body">
                 <div class="alert alert-success" role="alert">{{ message }}</div>
                 {% for url in urls %}
                     <a class="btn btn-primary" href="{{ url.url }}">{{ url.name }}</a>
