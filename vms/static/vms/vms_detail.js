@@ -57,7 +57,7 @@
         let vmid = get_vm_uuid();
         let api = build_vm_status_api(vmid);
         let node_status = $("#vm_status_" + vmid);
-        node_status.html(`<img src="/static/images/loading34.gif" width="43px"/>`);
+        node_status.html(`<i class="fa fa-spinner fa-pulse"></i>`);
         $.ajax({
             url: api,
             type: 'get',

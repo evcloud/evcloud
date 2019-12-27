@@ -109,7 +109,7 @@
     // 获取并设置虚拟机的运行状态
     function get_vm_status(url, vmid) {
         let node_status = $("#vm_status_" + vmid);
-        node_status.html(`<img src="/static/images/loading34.gif" width="43px"/>`);
+        node_status.html(`<i class="fa fa-spinner fa-pulse"></i>`);
         $.ajax({
             url: url,
             type: 'get',
