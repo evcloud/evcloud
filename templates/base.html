@@ -74,8 +74,8 @@
                         </div>
                     </li>
                 {% else %}
-                    <a class="dropdown-item" href="{% url 'users:login' %}">登录</a>
-                    <a class="dropdown-item" href="{% url 'users:register' %}">注册</a>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'users:login' %}">登录</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'users:register' %}">注册</a></li>
                 {% endif %}
             </ul>
         </div>
