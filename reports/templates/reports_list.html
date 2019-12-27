@@ -8,16 +8,18 @@
 {% block head %}{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-2 col-md-8 col-lg-8">
+    <div class="container-fluid offset-md-1 offset-lg-2 col-md-10 col-lg-8">
         <p class="h3">资源分配统计</p>
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">分中心</h3>
+        <div class="card border-info">
+            <div class="card-header">
+                <h3 class="card-title">分中心</h3>
             </div>
             <table class="table">
+                <thead class="thead-light">
                 <tr>
                     <th>分中心</th>
-                    <th>总cpu(/核)</th>
+                    <th>总物理cpu(/核)</th>
+                    <th>总虚拟cpu(/核)</th>
                     <th>已分配cpu(/核)</th>
                     <th>cpu分配率</th>
                     <th>总内存</th>
@@ -25,9 +27,12 @@
                     <th>内存使用率</th>
                     <th>云主机数</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% for c in centers %}
                     <tr>
                         <td><a href="{% url 'reports:reports-center' id=c.id %}">{{c.name}}</a></td>
+                        <td>{{c.real_cpu}}</td>
                         <td>{{c.vcpu_total}}</td>
                         <td>{{c.vcpu_allocated}}</td>
                         <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
@@ -37,17 +42,20 @@
                         <td>{{c.vm_created}}</td>
                     </tr>
                 {% endfor %}
+                </tbody>
             </table>
         </div>
-        <div class="panel panel-danger">
-            <div class="panel-heading">
-                <h3 class="panel-title">宿主机组</h3>
+        <div class="card border-danger">
+            <div class="card-header">
+                <h3 class="card-title">宿主机组</h3>
             </div>
             <table class="table">
+                <thead class="thead-light">
                 <tr>
                     <th>宿主机组</th>
                     <th>分中心</th>
-                    <th>总cpu(/核)</th>
+                    <th>总物理cpu(/核)</th>
+                    <th>总虚拟cpu(/核)</th>
                     <th>已分配cpu(/核)</th>
                     <th>cpu分配率</th>
                     <th>总内存</th>
@@ -55,10 +63,13 @@
                     <th>内存使用率</th>
                     <th>云主机数</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% for c in groups %}
                     <tr>
                         <td><a href="{% url 'reports:reports-group' id=c.id %}">{{c.name}}</a></td>
                         <td>{{c.center__name}}</td>
+                        <td>{{c.real_cpu}}</td>
                         <td>{{c.vcpu_total}}</td>
                         <td>{{c.vcpu_allocated}}</td>
                         <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
@@ -68,17 +79,20 @@
                         <td>{{c.vm_created}}</td>
                     </tr>
                 {% endfor %}
+                </tbody>
             </table>
         </div>
-        <div class="panel panel-success">
-            <div class="panel-heading">
-                <h3 class="panel-title">宿主机</h3>
+        <div class="card border-success">
+            <div class="card-header">
+                <h3 class="card-title">宿主机</h3>
             </div>
             <table class="table">
+                <thead class="thead-light">
                 <tr>
                     <th>宿主机IP</th>
                     <th>机组</th>
-                    <th>总cpu(/核)</th>
+                    <th>物理cpu(/核)</th>
+                    <th>虚拟cpu(/核)</th>
                     <th>已分配cpu(/核)</th>
                     <th>cpu分配率</th>
                     <th>总内存</th>
@@ -86,10 +100,13 @@
                     <th>内存使用率</th>
                     <th>云主机数</th>
                 </tr>
+                </thead>
+                <tbody>
                 {% for c in hosts %}
                     <tr>
                         <td>{{c.ipv4}}</td>
                         <td>{{c.group__name}}</td>
+                        <td>{{c.real_cpu}}</td>
                         <td>{{c.vcpu_total}}</td>
                         <td>{{c.vcpu_allocated}}</td>
                         <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
@@ -99,6 +116,7 @@
                         <td>{{c.vm_created}}</td>
                     </tr>
                 {% endfor %}
+                </tbody>
             </table>
         </div>
     </div>
