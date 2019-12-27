@@ -43,7 +43,7 @@ class VmCreateSerializer(serializers.Serializer):
     image_id = serializers.IntegerField(label='镜像id', required=True, min_value=1, help_text='系统镜像id')
     vcpu = serializers.IntegerField(label='cpu数', required=True, min_value=1, help_text='cpu数')
     mem = serializers.IntegerField(label='内存大小', required=True, min_value=200, help_text='单位MB')
-    vlan_id = serializers.IntegerField(label='子网id', required=True, min_value=1, help_text='子网id')
+    vlan_id = serializers.IntegerField(label='子网id', required=False, allow_null=True, min_value=1, help_text='子网id', default=None)
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True, min_value=1, help_text='宿主机组id', default=None)
     host_id = serializers.IntegerField(label='宿主机id', required=False, allow_null=True, min_value=1, help_text='宿主机id', default=None)
     remarks = serializers.CharField(label='备注', required=False, allow_blank=True, max_length=255, default='')

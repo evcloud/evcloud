@@ -14,34 +14,15 @@ from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError
 from .models import Vm, VmArchive, VmLog, VmDiskSnap
 from .xml import XMLEditor
+from utils.errors import Error
+from .scheduler import HostMacIPScheduler, ScheduleError
 
 
-class VmError(Exception):
+class VmError(Error):
     '''
     虚拟机相关错误定义
     '''
-    def __init__(self, code:int=0, msg:str='', err=None):
-        '''
-        :param code: 错误码
-        :param msg: 错误信息
-        :param err: 错误对象
-        '''
-        self.code = code
-        self.msg = msg
-        self.err = err
-
-    def __str__(self):
-        return self.detail()
-
-    def detail(self):
-        '''错误详情'''
-        if self.msg:
-            return self.msg
-
-        if self.err:
-            return str(self.err)
-
-        return '未知的错误'
+    pass
 
 
 class VmManager(VirtAPI):
@@ -589,36 +570,34 @@ class VmAPI:
 
         return vlan
 
-    def _get_host_list(self, vlan:Vlan, user, host_id=None, group_id=None):
+    def _get_group_host_check_perms(self, group_id:int, host_id:int, user):
         '''
-        获取属于vlan子网的指定宿主机列表
+        检查用户使用有宿主机组或宿主机访问权限，优先使用host_id
 
-        说明：group_id和host_id参数必须给定一个；host_id有效时，使用host_id；host_id无效时，使用group_id；
-
-        :param vlan: 子网对象Vlan()
-        :param host_id: 宿主机id，有效时只获取此宿主机
-        :param group_id: 宿主机组id, host_id==None时，只获取此组的宿主机
+        :param group_id: 宿主机组ID
+        :param host_id: 宿主机ID
+        :param user: 用户
         :return:
-            list    # success
-            raise VmError   # failed ,未找到宿主机或发生错误
+                (None, Host())  # host_id有效时
+                Group(), None   # host_id无效，group_id有效时
 
-        :raise VmError
+        :raises: VmError
         '''
-        host_list = []
         if host_id:
             try:
-                h = self._host_manager.get_host_by_id(host_id)
+                host = self._host_manager.get_host_by_id(host_id)
             except ComputeError as e:
                 raise VmError(msg=str(e))
 
+            if not host:
+                raise VmError(msg='指定宿主机不存在')
             # 用户访问宿主机权限检查
-            if not h.user_has_perms(user=user):
+            if not host.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
 
-            # 宿主机存在, 并符合子网要求
-            if h and h.contains_vlan(vlan):
-                host_list.append(h)
-        elif group_id:
+            return None, host
+
+        if group_id:
             try:
                 group = self._group_manager.get_group_by_id(group_id=group_id)
             except ComputeError as e:
@@ -630,66 +609,18 @@ class VmAPI:
             if not group.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
 
-            try:
-                host_list = self._host_manager.get_hosts_by_group_and_vlan(group_or_id=group_id, vlan=vlan)
-            except ComputeError as e:
-                raise VmError(msg=f'获取宿主机list错误，{str(e)}')
-        if not host_list:
-            raise VmError(msg='未找到指定的可用宿主机')
+            return group, None
 
-        return host_list
-
-    def _apply_for_macip(self, vlan:Vlan, ipv4=None):
-        '''
-        申请一个指定属于子网的mac ip
-
-        :param vlan: 子网对象Vlan()
-        :param ipv4: 指定要申请的ip
-        :return:
-            MacIP()    # success
-            raise VmError   # failed ,未找到可用mac ip或发生错误
-
-        :raise VmError
-        '''
-        if ipv4: # 如果指定了要使用的ip
-            macip = self._macip_manager.apply_for_free_ip(vlan_id=vlan.id, ipv4=ipv4)
-        else:
-            macip = self._macip_manager.apply_for_free_ip(vlan_id=vlan.id)
-        if not macip:
-            raise VmError(msg='申请mac ip失败')
-
-        return macip
-
-    def _apply_for_host(self, hosts:list, vcpu:int, mem:int, claim=False):
-        '''
-        向宿主机申请资源
-
-        :param hosts: 宿主机列表
-        :param vcpu: 要申请的cpu数
-        :param mem: 要申请的内存大小
-        :param claim: True:立即申请资源
-        :return:
-            Host()    # success
-            raise VmError   # failed ,未找到可用mac ip或发生错误
-
-        :raise VmError
-        '''
-        try:
-            host = self._host_manager.filter_meet_requirements(hosts=hosts, vcpu=vcpu, mem=mem, claim=True)
-        except ComputeError as e:
-            raise VmError(msg=f'无法创建虚拟机,{str(e)}')
-
-        # 没有满足资源需求的宿主机
-        if not host:
-            raise VmError(msg='无法创建虚拟机,没有足够资源的宿主机可用')
-
-        return host
+        raise VmError(msg='group id和host id不能同时为空')
 
     def create_vm(self, image_id:int, vcpu:int, mem:int, vlan_id:int, user, group_id=None, host_id=None, ipv4=None, remarks=None):
         '''
         创建一个虚拟机
 
-        说明：group_id和host_id参数必须给定一个；host_id有效时，使用host_id；host_id无效时，使用group_id；
+        说明：
+            group_id和host_id参数必须给定一个；host_id有效时，使用host_id；host_id无效时，使用group_id；
+            ipv4有效时，使用ipv4；ipv4无效时，使用vlan_id；都无效自动分配；
+
         备注：虚拟机的名称和系统盘名称同虚拟机的uuid
 
         :param image_id: 镜像id
@@ -707,16 +638,18 @@ class VmAPI:
         :raise VmError
         '''
         macip = None # 申请的macip
-        host = None # 申请的宿主机
+        vlan = None
         diskname = None # clone的系统镜像
         vm = None # 虚拟机
 
         if vcpu <= 0: raise VmError(msg='无法创建虚拟机,vcpu参数无效')
         if mem <= 0: raise VmError(msg='无法创建虚拟机,men参数无效')
+        if not ((group_id and group_id > 0) or (host_id and host_id > 0)):
+            raise VmError(msg='无法创建虚拟机,必须指定一个无效group_id或host_id参数')
 
+        # 权限检查
+        group, host = self._get_group_host_check_perms(group_id=group_id, host_id=host_id, user=user)
         image = self._get_image(image_id)    # 镜像
-        vlan = self._get_vlan(vlan_id)      # 局域子网
-        host_list = self._get_host_list(vlan=vlan, host_id=host_id, group_id=group_id, user=user) # 宿主机
 
         vm_uuid_obj = self.new_uuid_obj()
         vm_uuid = vm_uuid_obj.hex
@@ -726,9 +659,29 @@ class VmAPI:
         ceph_config = ceph_pool.ceph
         rbd_manager = self.get_rbd_manager(ceph=ceph_config, pool_name=pool_name)
 
+        # 如果指定了vlan或ip
+        if ipv4:
+            macip = self._macip_manager.apply_for_free_ip(ipv4=ipv4)
+            if not macip:
+                raise VmError(msg='指定的IP地址不存在')
+            vlan = macip.vlan
+        elif vlan_id and vlan_id > 0:
+            vlan = self._get_vlan(vlan_id)  # 局域子网
+
         try:
-            macip = self._apply_for_macip(vlan=vlan, ipv4=ipv4)  # mac ip资源申请
-            host = self._apply_for_host(hosts=host_list, vcpu=vcpu, mem=mem, claim=True)  # 向宿主机申请资源
+            # 向宿主机申请资源
+            scheduler = HostMacIPScheduler()
+            try:
+                if macip:
+                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host, vlan=vlan, need_mac_ip=False)
+                else:
+                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host, vlan=vlan)
+            except ScheduleError as e:
+                raise VmError(msg=f'申请资源错误,{str(e)}')
+            if not macip:
+                raise VmError(msg='申请mac ip失败')
+            if not vlan:
+                vlan = macip.vlan
 
             # 创建虚拟机的系统镜像disk
             try:
@@ -850,6 +803,8 @@ class VmAPI:
                   f'未释放资源：mem={vm.mem}MB;vcpu={vm.vcpu}；\n请查看核对虚拟机是否已成功删除并归档，如果已删除请手动释放此宿主机资源'
             log_manager.add_log(title='释放宿主机men, cpu资源失败', about=log_manager.about.ABOUT_MEM_CPU, text=msg)
 
+        # vm系统盘RBD镜像修改了已删除归档的名称
+        vm_ahv.rename_sys_disk_archive()
         return True
 
     def edit_vm_vcpu_mem(self, vm_uuid:str, vcpu:int=0, mem:int=0, user=None, force=False):

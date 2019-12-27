@@ -1,50 +1,46 @@
+import random
+
 from django.db import transaction
 from django.db.models import Sum
+from django.utils.functional import cached_property
 
 from compute.models import Center, Group, Host
 from network.models import Vlan
-from image.models import Image
 from ceph.models import CephPool
+from utils.errors import Error
 
 
-class ComputeError(Exception):
+class ComputeError(Error):
     '''
     计算资源相关错误定义
     '''
-    def __init__(self, code:int=0, msg:str='', err=None):
-        '''
-        :param code: 错误码
-        :param msg: 错误信息
-        :param err: 错误对象
-        '''
-        self.code = code
-        self.msg = msg
-        self.err = err
-
-    def __str__(self):
-        return self.detail()
-
-    def detail(self):
-        '''错误详情'''
-        if self.msg:
-            return self.msg
-
-        if self.err:
-            return str(self.err)
-
-        return '未知的错误'
+    pass
 
 
 class DefaultSum(Sum):
     '''
-    累加结果为None时，返回默认值
+    累加结果为None时，返回默认值, 只是用于int和float
     '''
     def __init__(self, *expressions, distinct=False, filter=None, return_if_none=0, **extra):
         self.return_if_none = return_if_none
         super().__init__(*expressions, distinct=distinct, filter=filter, **extra)
 
-    def convert_value(self, value, expression, connection):
-        return self.return_if_none if value is None else value
+    @cached_property
+    def convert_value(self):
+        """
+        Expressions provide their own converters because users have the option
+        of manually specifying the output_field which may be a different type
+        from the one the database returns.
+        """
+        field = self.output_field
+        internal_type = field.get_internal_type()
+        if internal_type == 'FloatField':
+            return lambda value, expression, connection: self.return_if_none if value is None else float(value)
+        elif internal_type.endswith('IntegerField'):
+            return lambda value, expression, connection: self.return_if_none if value is None else int(value)
+        # elif internal_type == 'DecimalField':
+        #     return lambda value, expression, connection: self.return_if_none if value is None else Decimal(value)
+        return self._convert_value_noop
 
 
 class CenterManager:
@@ -220,6 +216,7 @@ class CenterManager:
             mem_total=DefaultSum('group_set__hosts_set__mem_total'),
             mem_allocated=DefaultSum('group_set__hosts_set__mem_allocated'),
             mem_reserved=DefaultSum('group_set__hosts_set__mem_reserved'),
+            real_cpu=DefaultSum('group_set__hosts_set__real_cpu'),
             vcpu_total=DefaultSum('group_set__hosts_set__vcpu_total'),
             vcpu_allocated=DefaultSum('group_set__hosts_set__vcpu_allocated'),
             vm_created=DefaultSum('group_set__hosts_set__vm_created')).all()
@@ -341,6 +338,7 @@ class GroupManager:
         return qs.select_related('center').annotate(
             mem_total=DefaultSum('hosts_set__mem_total'), mem_allocated=DefaultSum('hosts_set__mem_allocated'),
             vcpu_total=DefaultSum('hosts_set__vcpu_total'), vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
+            real_cpu=DefaultSum('hosts_set__real_cpu'),
             mem_reserved=DefaultSum('hosts_set__mem_reserved'),vm_created=DefaultSum('hosts_set__vm_created')).all()
 
 
@@ -536,6 +534,7 @@ class HostManager:
         if not isinstance(mem, int) or mem <= 0:
             raise ComputeError(msg='参数有误，mem必须是一个正整数')
 
+        random.shuffle(hosts)   # 随机打乱
         for host in hosts:
             # 宿主机是否满足资源需求
             if not host.meet_needs(vcpu=vcpu, mem=mem):

@@ -38,7 +38,7 @@ function chart_init() {
         options: {
             title: {
                 display: true,
-                text: 'MEM of Group'
+                text: '内存 (MB)'
             },
             tooltips: {
                 mode: 'index',
@@ -74,7 +74,7 @@ function chart_init() {
         options: {
             title: {
                 display: true,
-                text: 'CPU of Group'
+                text: '虚拟CPU (核)'
             },
             tooltips: {
                 mode: 'index',
@@ -106,7 +106,7 @@ function chart_init() {
         options: {
             title: {
                 display: true,
-                text: 'Vm of Group'
+                text: '云主机 (个)'
             },
             tooltips: {
                 mode: 'index',
@@ -138,6 +138,9 @@ function percentageFormat(val, base){
 }
 
 function sizeFormat(val, unit){
+    if (isNaN(val))
+        return val + unit;
+    let value;
     switch (unit) {
         case "KB":
             if (val > 1024){
@@ -174,6 +177,8 @@ function sizeFormat(val, unit){
         case "PB":
             value = val.toFixed(2) + 'PB';
             break;
+        default:
+            value = val + unit;
     }
 
     return value

@@ -4,11 +4,12 @@
 主要技术栈：CEPH、MySQl、Django、libvirt。
 
 ### 展示
-![image](images/vm-list.jpg "Vm List")
+![image](images/vm-list.png "Vm List")
 
-![image](images/vm-create.png "Vm Create")
+![image](images/vdisk.png "VDick")
 
 ![image](images/vm-vnc.png "Vm VNC")
+![image](images/reports.png "reports")
 
 ## 环境搭建(CentOS7)
 ### 1 安装python和Git

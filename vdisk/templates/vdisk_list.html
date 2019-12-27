@@ -16,19 +16,21 @@
 {% block title %}云硬盘列表{% endblock %}
 
 {% block boby %}
-    <div class="col-md-offset-1 col-md-10 col-lg-10">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title"><strong>云硬盘列表 ({{ count }})</strong></span>
-                <span><a class="btn btn-xs btn-primary pull-right" href="{% url 'vdisk:vdisk-create' %}">
-                    创建云硬盘<span class="glyphicon glyphicon-plus"></span>
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>云硬盘列表 ({{ count }})</strong></span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vdisk:vdisk-create' %}">
+                    创建云硬盘 <i class="fa fa-plus"></i>
                 </a></span>
             </div>
-            <div class="panel-body" style="min-height: 400px;">
+            <div class="card-body">
                 <form role="form" class="form-horizontal" method="get" action="">
                     <div class="input-group" style="">
-                        <label class="input-group-addon" for="id-center">分中心</label>
-                        <select name="center" class="form-control" id="id-center">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="id-center">分中心</label>
+                        </div>
+                        <select name="center" class="custom-select" id="id-center">
                             <option value="">--</option>
                             {% for c in centers %}
                                 <option value="{{ c.id }}" {% if c.id == center_id %}selected{% endif %}>
@@ -36,40 +38,49 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <label class="input-group-addon" for="id-group">主机组</label>
-                        <select name="group" class="form-control" id="id-group">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="id-group">主机组</label>
+                        </div>
+                        <select name="group" class="custom-select" id="id-group">
                             <option value="">--</option>
                             {% for g in groups %}
                                 <option value="{{ g.id }}" {% if g.id == group_id|add:0 %}
                                         selected {% endif %}>{{ g.name }}</option>
                             {% endfor %}
                         </select>
-                        <label class="input-group-addon" for="id-quota">存储池</label>
-                        <select name="quota" class="form-control" id="id-quota">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="id-quota">存储池</label>
+                        </div>
+                        <select name="quota" class="custom-select" id="id-quota">
                             <option value="">--</option>
                             {% for q in quotas %}
                                 <option value="{{ q.id }}" {% if q.id == quota_id|add:0 %}
                                         selected {% endif %}>{{ q.name }}</option>
                             {% endfor %}
                         </select>
-                        <label class="input-group-addon" for="id-user">创建者</label>
-                        <select name="user" class="form-control" id="id-user">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="id-user">创建者</label>
+                        </div>
+                        <select name="user" class="custom-select" id="id-user">
                             <option value="">--</option>
                             {% for u in users %}
                                 <option value="{{ u.id }}" {% if u.id == user_id %}selected {% endif %}>{{ u.username }}</option>
                             {% endfor %}
                         </select>
-                        <label class="input-group-addon">关键字</label>
+                        <div class="input-group-prepend">
+                            <label class="input-group-text">关键字</label>
+                        </div>
                         <input type="text" class="form-control" name="search" value="{{ search }}"
                                placeholder="搜 UUID、IP、备注"/>
-                        <span class="input-group-addon"></span>
+                        <span class="input-group-text"></span>
                         <button type="submit" class="btn btn-primary form-control">筛选</button>
                     </div>
                 </form>
-                <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                <table class="table table-hover table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                    <thead class="thead-light">
                     <tr>
                         <th></th>
-                        <th width="120px">UUID</th>
+                        <th>UUID</th>
                         <th>机组</th>
                         <th>存储池</th>
                         <th>容量</th>
@@ -81,6 +92,8 @@
                         <th>备注</th>
                         <th>操作</th>
                     </tr>
+                    </thead>
+                    <tbody>
                     {% for disk in vdisks %}
                         <tr id="tr_{{ disk.uuid }}">
                             <td><input type="checkbox" class="item-checkbox" value="{{ disk.uuid }}" name="select_vm"></td>
@@ -99,62 +112,63 @@
                             {% endif %}
                             <td>
                                 {%if disk.enable%}
-                                    <span class="glyphicon glyphicon-ok"></span>
+                                    <i class="fa fa-check"></i>
                                 {%else%}
-                                    <span class="glyphicon glyphicon-ok"></span>
+                                    <i class="fa fa-times"></i>
                                 {%endif%}
                             </td>
                             <td>
                                 <div class="mouse-hover">
                                     <span>{{ disk.remarks|default_if_none:'' }}</span>
                                     <span class="mouse-hover-show edit_disk_remark" data-disk-uuid="{{ disk.uuid }}" title="修改备注">
-                                        <span class="glyphicon glyphicon-pencil"></span>
+                                        <i class="fa fa-edit"></i>
                                     </span>
                                 </div>
                                 <div id="remarks_edit" style="display:none">
                                     <textarea id="remarks">{{ disk.remarks|default_if_none:'' }}</textarea>
                                     <span class="save_disk_remark" title="保存备注" data-disk-uuid="{{ disk.uuid }}">
-                                        <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+                                        <i class="fa fa-save"></i>
                                     </span>
                                 </div>
                             </td>
                             <td>
                                 {% if disk.is_mounted %}
-                                    <button type="button" class="btn btn-xs btn-warning btn-disk-umount" data-disk-uuid="{{ disk.uuid }}">卸载</button>
+                                    <button type="button" class="btn btn-sm btn-warning btn-disk-umount" data-disk-uuid="{{ disk.uuid }}">卸载</button>
                                 {% else %}
-                                    <a class="btn btn-xs btn-success" href="{% url 'vdisk:vdisk-mount-to-vm' disk_uuid=disk.uuid %}">挂载</a>
+                                    <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-mount-to-vm' disk_uuid=disk.uuid %}">挂载</a>
                                 {% endif %}
-                                <button type="button" class="btn btn-xs btn-danger btn-disk-delete" data-disk-uuid="{{ disk.uuid }}">销毁</button>
+                                <button type="button" class="btn btn-sm btn-danger btn-disk-delete" data-disk-uuid="{{ disk.uuid }}">销毁</button>
                             </td>
                         </tr>
                     {% endfor %}
+                    </tbody>
                 </table>
             </div>
-            <div class="panel-footer">
+            <div class="card-footer">
                 <nav aria-label="Page navigation">
                     <ul class="pagination"  style="margin:0;">
                         {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
                             {% if page_list %}
                                 {% if previous %}
-                                    <li><a href="?{{ previous }}" aria-label="Previous"><span
+                                    <li class="page-item"><a class="page-link" href="?{{ previous }}" aria-label="Previous"><span
                                             aria-hidden="true">&laquo;</span></a></li>
                                 {% else %}
-                                    <li class="disable"><span aria-hidden="true">&laquo;</span></li>
+                                    <li class="page-item disable"><span class="page-link" aria-hidden="true">&laquo;</span></li>
                                 {% endif %}
                             {% endif %}
                             {% for disp, query, active in page_list %}
                                 {% if active %}
-                                    <li class="active"><a href="?{{ query }}">{{ disp }}</a></li>
+                                    <li class="page-item active"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
                                 {% else %}
-                                    <li><a href="?{{ query }}">{{ disp }}</a></li>
+                                    <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
                                 {% endif %}
                             {% endfor %}
                             {% if page_list %}
                                 {% if next %}
-                                    <li><a href="?{{ next }}" aria-label="Next"><span
+                                    <li class="page-item"><a class="page-link" href="?{{ next }}" aria-label="Next"><span
                                             aria-hidden="true">&raquo;</span></a></li>
                                 {% else %}
-                                    <li class="disable"><span aria-hidden="true">&raquo;</span></li>
+                                    <li class="page-item disable"><span class="page-link" aria-hidden="true">&raquo;</span></li>
                                 {% endif %}
                             {% endif %}
                         {% endwith %}

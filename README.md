@@ -4,11 +4,12 @@
 主要技术栈：CEPH、MySQl、Django、libvirt。
 
 ### 展示
-![image](https://github.com/evcloud/evcloud_dev/blob/develop/docs/static/docs/images/vm-list.jpg "Vm List")
+![image](https://github.com/evcloud/evcloud_dev/blob/develop/docs/static/docs/images/vm-list.png "Vm List")
 
-![image](https://github.com/evcloud/evcloud_dev/blob/develop/docs/static/docs/images/vm-create.png "Vm Create")
+![image](https://github.com/evcloud/evcloud_dev/blob/develop/docs/static/docs/images/vdisk.png "VDick")
 
 ![image](https://github.com/evcloud/evcloud_dev/blob/develop/docs/static/docs/images/vm-vnc.png "Vm VNC")
+![image](https://github.com/evcloud/evcloud_dev/blob/develop/docs/static/docs/images/reports.png "reports")
 
 ## 环境搭建(CentOS7)
 ### 1 安装python和Git

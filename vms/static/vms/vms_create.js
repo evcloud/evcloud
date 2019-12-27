@@ -111,8 +111,7 @@
             delete obj.host_id;
         }
         if (!obj.vlan_id ||obj.vlan_id <= 0){
-            alert('请选择一个网段');
-            return false;
+            delete obj.vlan_id;
         }
         if(!obj.image_id || obj.image_id <= 0){
             alert('请选择一个系统镜像');
