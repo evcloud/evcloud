@@ -207,18 +207,21 @@ class MacIPManager:
             True    # success
             False   # failed
         '''
-        with transaction.atomic():
-            if ip_id > 0:
-                ip = MacIP.objects.select_for_update().filter(id=ip_id).first()
-            elif ipv4:
-                ip = MacIP.objects.select_for_update().filter(ipv4=ipv4).first()
-            else:
-                return False
+        try:
+            with transaction.atomic():
+                if ip_id > 0:
+                    ip = MacIP.objects.select_for_update().filter(id=ip_id).first()
+                elif ipv4:
+                    ip = MacIP.objects.select_for_update().filter(ipv4=ipv4).first()
+                else:
+                    return False
 
-            if not ip:
-                return False
+                if not ip:
+                    return False
 
-            if not ip.set_free():
-                return False
-        return True
+                if not ip.set_free():
+                    return False
+            return True
+        except Exception as e:
+            return False
 
