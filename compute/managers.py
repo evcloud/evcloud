@@ -498,11 +498,14 @@ class HostManager:
             False   # failed
         '''
         # 释放资源
-        host = Host.objects.filter(id=host_id).first()
-        if not host:
-            return False
+        try:
+            host = Host.objects.filter(id=host_id).first()
+            if not host:
+                return False
 
-        return host.free(vcpu=vcpu, mem=mem)
+            return host.free(vcpu=vcpu, mem=mem)
+        except Exception as e:
+            return False
 
     def filter_meet_requirements(self, hosts:list, vcpu:int, mem:int, claim=False):
         '''

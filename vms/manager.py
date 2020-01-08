@@ -640,7 +640,6 @@ class VmAPI:
         macip = None # 申请的macip
         vlan = None
         diskname = None # clone的系统镜像
-        vm = None # 虚拟机
 
         if vcpu <= 0: raise VmError(msg='无法创建虚拟机,vcpu参数无效')
         if mem <= 0: raise VmError(msg='无法创建虚拟机,men参数无效')
@@ -690,35 +689,75 @@ class VmAPI:
             except RadosError as e:
                 raise VmError(msg=f'clone image error, {str(e)}')
 
-            # 虚拟机xml
-            xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
-            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph_config.uuid,
-                ceph_pool=pool_name, diskname=diskname, ceph_username=ceph_config.username,
-                ceph_hosts_xml=ceph_config.hosts_xml, mac=macip.mac, bridge=vlan.br)
-
-            # 创建虚拟机元数据
-            vm = Vm(uuid=vm_uuid_obj, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
-                    remarks=remarks, host=host, mac_ip=macip,xml=xml_desc, image=image)
-            vm.save()
-
             # 创建虚拟机
-            try:
-                self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
-            except VirtError as e:
-                raise VmError(msg=str(e))
-            host.vm_created_num_add_1() # 宿主机已创建虚拟机数量+1
-            return vm
+            vm = self._create_vm2(vm_uuid=vm_uuid, diskname=diskname, vcpu=vcpu, mem=mem, image=image,
+                             vlan=vlan, host=host, macip=macip, user=user, remarks=remarks)
         except Exception as e:
             if macip:
                 self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
             if host:
                 self._host_manager.free_to_host(host_id=host.id, vcpu=vcpu, mem=mem) # 释放已申请的宿主机资源
             if diskname:
-                rbd_manager.remove_image(image_name=diskname)
+                try:
+                    rbd_manager.remove_image(image_name=diskname)
+                except RadosError:
+                    pass
 
-            if vm:
-                vm.delete()
             raise VmError(msg=str(e))
+
+        host.vm_created_num_add_1()  # 宿主机已创建虚拟机数量+1
+        return vm
+
+    def _create_vm2(self, vm_uuid:str, diskname:str, vcpu:int, mem:int, image, vlan, host, macip, user, remarks:str=''):
+        '''
+        仅创建虚拟机，不会清理传入的各种资源
+
+        :param vm_uuid: 虚拟机uuid
+        :param diskname: 系统盘uuid
+        :param vcpu: cpu数
+        :param mem: 内存大小
+        :param vlan: 子网对象
+        :param host: 宿主机对象
+        :param macip: mac ip对象
+        :param user: 用户对象
+        :param remarks: 虚拟机备注信息
+        :return:
+            Vm()
+            raise VmError
+
+        :raises: VmError
+        '''
+        try:
+            vm_uuid_obj = uuid.UUID(hex=vm_uuid)
+        except (AttributeError, ValueError):
+            raise VmError(msg='无效的vm uuid')
+
+        ceph_pool = image.ceph_pool
+        pool_name = ceph_pool.pool_name
+        ceph_config = ceph_pool.ceph
+
+        # 虚拟机xml
+        xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+        xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph_config.uuid,
+                                  ceph_pool=pool_name, diskname=diskname, ceph_username=ceph_config.username,
+                                  ceph_hosts_xml=ceph_config.hosts_xml, mac=macip.mac, bridge=vlan.br)
+
+        try:
+            # 创建虚拟机元数据
+            vm = Vm(uuid=vm_uuid_obj, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
+                    remarks=remarks, host=host, mac_ip=macip, xml=xml_desc, image=image)
+            vm.save()
+        except Exception as e:
+            raise VmError(msg=f'创建虚拟机元数据错误,{str(e)}')
+
+        # 创建虚拟机
+        try:
+            self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
+        except VirtError as e:
+            vm.delete()     # 删除虚拟机元数据
+            raise VmError(msg=str(e))
+
+        return vm
 
     def delete_vm(self, vm_uuid:str, user=None, force=False):
         '''
