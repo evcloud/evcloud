@@ -995,7 +995,7 @@ class ImageViewSet(viewsets.GenericViewSet):
 
         try:
             queryset = ImageManager().filter_image_queryset(center_id=center_id, sys_type=sys_type, tag=tag,
-                                                            search=search, all_no_filters=request.user.is_superuser)
+                                                            search=search, all_no_filters=True)
         except Exception as e:
             return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
