@@ -727,11 +727,6 @@ class VmAPI:
 
         :raises: VmError
         '''
-        try:
-            vm_uuid_obj = uuid.UUID(hex=vm_uuid)
-        except (AttributeError, ValueError):
-            raise VmError(msg='无效的vm uuid')
-
         ceph_pool = image.ceph_pool
         pool_name = ceph_pool.pool_name
         ceph_config = ceph_pool.ceph
@@ -744,7 +739,7 @@ class VmAPI:
 
         try:
             # 创建虚拟机元数据
-            vm = Vm(uuid=vm_uuid_obj, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
+            vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
                     remarks=remarks, host=host, mac_ip=macip, xml=xml_desc, image=image)
             vm.save()
         except Exception as e:

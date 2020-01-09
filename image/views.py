@@ -41,8 +41,8 @@ class ImageView(View):
         try:
             api = ImageManager()
             queryset = api.filter_image_queryset(center_id=center_id, tag=tag, sys_type=sys_type, search=search,
-                                                            all_no_filters=request.user.is_superuser)
-        except ImageManager as e:
+                                                            all_no_filters=True)
+        except ImageError as e:
             return render(request, 'error.html', {'errors': ['查询镜像时错误', str(e)]})
 
         try:

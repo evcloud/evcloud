@@ -50,7 +50,7 @@ class Vm(models.Model):
     '''
     虚拟机模型
     '''
-    uuid = models.UUIDField(verbose_name='虚拟机UUID', primary_key=True)
+    uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=200)
     vcpu = models.IntegerField(verbose_name='CPU数')
     mem = models.IntegerField(verbose_name='内存大小', help_text='单位MB')
@@ -73,9 +73,7 @@ class Vm(models.Model):
         verbose_name_plural = '虚拟机'
 
     def get_uuid(self):
-        if isinstance(self.uuid, str):
-            return self.uuid
-        return self.uuid.hex
+        return self.uuid
 
     @property
     def hex_uuid(self):
