@@ -283,14 +283,14 @@ class Host(models.Model):
         '''
         from vms.models import Vm
 
-        if hasattr(self, '__stats_now_data'):   # 缓存
-            return self.__stats_now_data
+        if hasattr(self, '_stats_now_data'):   # 缓存
+            return self._stats_now_data
 
         err_ret = {'vcpu': -1, 'mem': -1, 'vm_num': -1}
         if not self.id:
             return err_ret
         try:
-            a = Vm.objects.filter(host=self.id).aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('id'))
+            a = Vm.objects.filter(host=self.id).aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('pk'))
         except Exception as e:
             return err_ret
 
@@ -306,5 +306,5 @@ class Host(models.Model):
         if not isinstance(count, int):
             count = 0
 
-        self.__stats_now_data = {'vcpu': vcpu_now, 'mem': mem_now, 'vm_num': count}
-        return self.__stats_now_data
+        self._stats_now_data = {'vcpu': vcpu_now, 'mem': mem_now, 'vm_num': count}
+        return self._stats_now_data
