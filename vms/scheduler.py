@@ -69,8 +69,10 @@ class HostMacIPScheduler:
             if vlan:
                 if host.contains_vlan(vlan):
                     mac_ip = manager.apply_for_free_ip(vlan_id=vlan.id)
+                    if not mac_ip:
+                        raise ScheduleError(msg=f'指定的子网vlan<{str(vlan)}>内没有可用的mac ip资源')
                 else:
-                    raise ScheduleError(msg='宿主机host不在指定的子网vlan内')
+                    raise ScheduleError(msg=f'宿主机host<{str(host)}>不在指定的子网vlan<{str(vlan)}>内')
             else:
                 vlans = list(host.vlans.all())
                 random.shuffle(vlans)   # 打乱顺序
@@ -81,7 +83,7 @@ class HostMacIPScheduler:
                         break
 
             if not mac_ip:
-                raise ScheduleError(msg='宿主机host不在指定的子网vlan内')
+                raise ScheduleError(msg='没有可用的mac ip资源')
 
         try:
             host = HostManager().claim_from_host(host_id=host.id, vcpu=vcpu, mem=mem)
