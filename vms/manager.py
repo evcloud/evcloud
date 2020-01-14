@@ -647,7 +647,7 @@ class VmAPI:
             raise VmError(msg='无法创建虚拟机,必须指定一个无效group_id或host_id参数')
 
         # 权限检查
-        group, host = self._get_group_host_check_perms(group_id=group_id, host_id=host_id, user=user)
+        group, host_or_none = self._get_group_host_check_perms(group_id=group_id, host_id=host_id, user=user)
         image = self._get_image(image_id)    # 镜像
 
         vm_uuid_obj = self.new_uuid_obj()
@@ -667,14 +667,15 @@ class VmAPI:
         elif vlan_id and vlan_id > 0:
             vlan = self._get_vlan(vlan_id)  # 局域子网
 
+        host = None     # 指示是否分配了宿主机和资源，指示创建失败时释放资源
         try:
             # 向宿主机申请资源
             scheduler = HostMacIPScheduler()
             try:
                 if macip:
-                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host, vlan=vlan, need_mac_ip=False)
+                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host_or_none, vlan=vlan, need_mac_ip=False)
                 else:
-                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host, vlan=vlan)
+                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host_or_none, vlan=vlan)
             except ScheduleError as e:
                 raise VmError(msg=f'申请资源错误,{str(e)}')
             if not macip:

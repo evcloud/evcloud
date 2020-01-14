@@ -1,8 +1,9 @@
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Sum, Count
 from django.contrib.auth import get_user_model
 
 from network.models import Vlan
+
 
 #获取用户模型
 User = get_user_model()
@@ -272,4 +273,38 @@ class Host(models.Model):
 
         return True
 
+    def stats_vcpu_mem_vms_now(self):
+        '''
+        实时从数据库统计此宿主机下的所有虚拟机的总vcpu数量、总内存大小和总虚拟机数
 
+        :return: dict
+            {'vcpu': int, 'mem': int, 'vm_num': int}       # success
+            {'vcpu': -1, 'mem': -1, 'vm_num': -1}          # error
+        '''
+        from vms.models import Vm
+
+        if hasattr(self, '__stats_now_data'):   # 缓存
+            return self.__stats_now_data
+
+        err_ret = {'vcpu': -1, 'mem': -1, 'vm_num': -1}
+        if not self.id:
+            return err_ret
+        try:
+            a = Vm.objects.filter(host=self.id).aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('id'))
+        except Exception as e:
+            return err_ret
+
+        vcpu_now = a.get('vcpu_now', -1)
+        if not isinstance(vcpu_now, int):
+            vcpu_now = 0
+
+        mem_now = a.get('mem_now', -1)
+        if not isinstance(mem_now, int):
+            mem_now = 0
+
+        count = a.get('count', -1)
+        if not isinstance(count, int):
+            count = 0
+
+        self.__stats_now_data = {'vcpu': vcpu_now, 'mem': mem_now, 'vm_num': count}
+        return self.__stats_now_data
