@@ -1042,18 +1042,9 @@ class AuthTokenViewSet(ObtainAuthToken):
         例如Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b；
         此外，可选Path参数,“new”，?new=true用于刷新生成一个新token；
     '''
-    common_manual_fields = [
-        coreapi.Field(
-            name='version',
-            required=True,
-            location='path',
-            schema=coreschema.String(description='API版本（v3, v4）')
-        ),
-    ]
-
     schema = CustomAutoSchema(
         manual_fields={
-            'POST': common_manual_fields + [
+            'POST': [
                 coreapi.Field(
                     name="username",
                     required=True,
@@ -1079,8 +1070,6 @@ class AuthTokenViewSet(ObtainAuthToken):
                     schema=coreschema.Boolean(description="为true时,生成一个新token"),
                 ),
             ],
-            'GET': common_manual_fields,
-            'PUT': common_manual_fields,
         }
     )
     def get(self, request, *args, **kwargs):

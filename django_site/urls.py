@@ -29,7 +29,7 @@ urlpatterns = [
     path('', home, name='home'),
     path('admin/', admin.site.urls),
     path('users/', include('users.urls', namespace='users')),
-    path('api/', include('api.urls', namespace='api')),
+    path('api/v3/', include('api.urls', namespace='api')),
     path('vms/',include('vms.urls', namespace='vms')),
     path('vdisk/',include('vdisk.urls', namespace='vdisk')),
     path('novnc/',include('novnc.urls', namespace='novnc')),
