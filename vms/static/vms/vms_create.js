@@ -57,6 +57,7 @@
     // 子网网段下拉框选项改变事件
     $('select[name="vlan_id"]').change(function () {
         update_host_select_items();
+        update_ipv4_select_items();
     });
 
     //
@@ -94,6 +95,44 @@
             },
             error: function (xhr) {
                 alert('加载宿主机下拉框选项失败');
+            }
+        })
+    }
+
+
+    // 加载MAC IP下拉框渲染模板
+    let render_ipv4_select_items = template.compile(`
+        <option value="">自动选择</option>
+        {{ each results }}
+            <option value="{{ $value.ipv4 }}">
+                {{ $value.ipv4 }}
+            </option>
+        {{/each}}
+    `);
+
+    // 加载MAC IP下拉框
+    function update_ipv4_select_items(){
+        let vlan = $('select[name="vlan_id"]').val();
+        if(!vlan){
+            html = '<option value="">自动选择</option>';
+            host.empty();
+            host.append(html);
+            return;
+        }
+        let qs = encode_params({vlan_id:vlan, used: false});
+        let api = build_absolute_url('/api/v3/macip/?'+ qs);
+        $.ajax({
+            url: api,
+            type: 'get',
+            async: false,
+            success: function (data) {
+                let html = render_ipv4_select_items(data);
+                let ipv4 = $('select[name="ipv4"]');
+                ipv4.empty();
+                ipv4.append(html);
+            },
+            error: function (xhr) {
+                alert('加载IP下拉框选项失败');
             }
         })
     }

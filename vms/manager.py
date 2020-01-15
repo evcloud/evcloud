@@ -613,7 +613,7 @@ class VmAPI:
 
         raise VmError(msg='group id和host id不能同时为空')
 
-    def create_vm(self, image_id:int, vcpu:int, mem:int, vlan_id:int, user, group_id=None, host_id=None, ipv4=None, remarks=None):
+    def create_vm(self, image_id:int, vcpu:int, mem:int, vlan_id:int, user, group_id=None, host_id=None, ipv4=None, remarks=None, **kwargs):
         '''
         创建一个虚拟机
 
@@ -662,7 +662,7 @@ class VmAPI:
         if ipv4:
             macip = self._macip_manager.apply_for_free_ip(ipv4=ipv4)
             if not macip:
-                raise VmError(msg='指定的IP地址不存在')
+                raise VmError(msg='指定的IP地址不可用，不存在或已被占用')
             vlan = macip.vlan
         elif vlan_id and vlan_id > 0:
             vlan = self._get_vlan(vlan_id)  # 局域子网

@@ -111,6 +111,36 @@ class MacIPManager:
     '''
     mac ip地址管理器
     '''
+    def get_macip_queryset(self):
+        return MacIP.objects.all()
+
+    def get_enable_macip_queryset(self):
+        '''所有开启使用的'''
+        return self.get_macip_queryset().filter(enable=True).all()
+
+    def get_enable_free_macip_queryset(self):
+        '''所有开启使用的未分配的'''
+        return self.get_enable_macip_queryset().filter(used=False).all()
+
+    def filter_macip_queryset(self, vlan=None, used=None):
+        '''
+        筛选macip查询集
+
+        :param vlan: None不参与筛选
+        :param used: None不参与筛选
+        :return:
+            QuerySet()
+        '''
+        queryset = self.get_enable_macip_queryset()
+        if vlan is not None:
+            queryset = queryset.filter(vlan=vlan).all()
+
+        if used is not None:
+            queryset = queryset.filter(used=used).all()
+
+        return queryset
+
+
     def get_macip_by_id(self, macip_id:int):
         '''
         通过id获取mac ip

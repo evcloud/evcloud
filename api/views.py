@@ -15,6 +15,7 @@ from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
 from compute.managers import HostManager, CenterManager, GroupManager, ComputeError
 from network.models import Vlan
+from network.managers import MacIPManager
 from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
@@ -1873,7 +1874,11 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
 
         '''
         group_id = int(request.query_params.get('group_id', 0))
-        queryset = PCIDeviceManager().get_device_queryset().select_related('host', 'vm').all()
+        if group_id > 0:
+            queryset = PCIDeviceManager().get_device_queryset().select_related('host', 'vm').all()
+        else:
+            queryset = PCIDeviceManager().get_device_queryset_by_group(group_id).select_related('host', 'vm').all()
+
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -1948,4 +1953,57 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         """
         if self.action in ['list', 'retrieve']:
             return serializers.PCIDeviceSerializer
+        return Serializer
+
+
+class MacIPViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+
+    # api docs
+    schema = CustomAutoSchema(
+        manual_fields={
+            'list': [
+                coreapi.Field(
+                    name='vlan_id',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Integer(description='筛选条件，子网id'),
+                    description='所属子网'
+                ),
+                coreapi.Field(
+                    name='used',
+                    location='query',
+                    required=False,
+                    schema=coreschema.Boolean(description='筛选条件，false(可用的未分配的)，其他值等同true(已分配的)'),
+                    description='是否已分配'
+                ),
+            ],
+        }
+    )
+
+    def list(self, request, *args, **kwargs):
+        '''
+        获取mac ip列表
+        '''
+        vlan_id = request.query_params.get('vlan_id', None)
+        if vlan_id is not None:
+            vlan_id = str_to_int_or_default(vlan_id, None)
+
+        used = request.query_params.get('used', None)
+        if used is not None:
+            used = False if (used.lower() == 'false') else True
+
+        queryset = MacIPManager().filter_macip_queryset(vlan=vlan_id, used=used)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        if self.action =='list':
+            return serializers.MacIPSerializer
         return Serializer

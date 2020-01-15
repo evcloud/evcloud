@@ -47,6 +47,7 @@ class VmCreateSerializer(serializers.Serializer):
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True, min_value=1, help_text='宿主机组id', default=None)
     host_id = serializers.IntegerField(label='宿主机id', required=False, allow_null=True, min_value=1, help_text='宿主机id', default=None)
     remarks = serializers.CharField(label='备注', required=False, allow_blank=True, max_length=255, default='')
+    ipv4 = serializers.CharField(label='ipv4', required=False, allow_blank=True, max_length=255, default='')
 
     def validate(self, data):
         group_id = data.get('group_id')
@@ -289,3 +290,15 @@ class PCIDeviceSerializer(serializers.Serializer):
         if host:
             return {'id': host.id, 'ipv4': host.ipv4}
         return host
+
+
+class MacIPSerializer(serializers.Serializer):
+    '''
+    MAC IP序列化器
+    '''
+    id = serializers.IntegerField()
+    mac = serializers.CharField(max_length=17, help_text='MAC地址')
+    ipv4 = serializers.IPAddressField(help_text='IP地址')
+    used = serializers.BooleanField(help_text='是否已分配给虚拟机使用')
+
+
