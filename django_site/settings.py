@@ -191,10 +191,10 @@ REST_FRAMEWORK = {
     #     'user': '20/minute'  # 登陆认证的用户默认请求访问限制每分钟次数
     # },
     # api version settings
-    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
-    'DEFAULT_VERSION': 'v3',
-    'ALLOWED_VERSIONS': ('v3', ),
-    'VERSION_PARAM': 'version',
+    # 'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    # 'DEFAULT_VERSION': 'v3',
+    # 'ALLOWED_VERSIONS': ('v3', ),
+    # 'VERSION_PARAM': 'version',
 
     # 分页
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
