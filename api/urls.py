@@ -16,6 +16,7 @@ router.register(r'vdisk', views.VDiskViewSet, base_name='vdisk')
 router.register(r'quota', views.QuotaViewSet, base_name='quota')
 router.register(r'stat', views.StatCenterViewSet, base_name='stat')
 router.register(r'pci', views.PCIDeviceViewSet, base_name='pci-device')
+router.register(r'macip', views.MacIPViewSet, base_name='macip')
 
 urlpatterns = [
     path('', include(router.urls)),

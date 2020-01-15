@@ -63,8 +63,11 @@
             type: 'get',
             cache:false,
             success: function(data) {
-                node_status.html("<span class='label label-" + VM_STATUS_LABEL[data.status.status_code] + "'>" + VM_STATUS_CN[data.status.status_code] + "</span>");
+                node_status.html('<span class="badge  badge-' + VM_STATUS_LABEL[data.status.status_code] + '">' + VM_STATUS_CN[data.status.status_code] + "</span>");
             },
+            error: function (xhr) {
+                node_status.html('<span class="badge  badge-danger">查询失败</span>');
+            }
         });
     }
 
@@ -79,11 +82,13 @@
                 window.open(vnc, '_blank');
             },
             error: function (xhr, msg, err) {
-                data = xhr.responseJSON;
                 msg = '打开vnc失败';
-                if (data.hasOwnProperty('code_text')){
-                    msg = '打开vnc失败,' + data.code_text;
-                }
+                try{
+                    data = xhr.responseJSON;
+                    if (data.hasOwnProperty('code_text')){
+                        msg = '打开vnc失败,' + data.code_text;
+                    }
+                }catch (e) {}
                 alert(msg);
             }
         });
@@ -117,11 +122,13 @@
                 alert('已成功卸载硬盘');
             },
             error: function (xhr, msg, err) {
-                data = xhr.responseJSON;
-                msg = '卸载硬盘失败' + msg;
-                if (data.hasOwnProperty('code_text')){
-                    msg = data.code_text;
-                }
+			    msg = '卸载硬盘失败' + msg;
+			    try {
+                    data = xhr.responseJSON;
+                    if (data.hasOwnProperty('code_text')) {
+                        msg = data.code_text;
+                    }
+                }catch (e) {}
                 alert(msg);
             }
 		});
