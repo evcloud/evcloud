@@ -226,6 +226,9 @@ class GroupManager:
     '''
     宿主机组管理器
     '''
+    def get_group_queryset(self):
+        return Group.objects.all()
+
     def get_group_by_id(self, group_id:int):
         '''
         通过id获取宿主机组

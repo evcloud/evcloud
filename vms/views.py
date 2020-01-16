@@ -58,13 +58,15 @@ class VmsView(View):
 
         try:
             c_manager = CenterManager()
+            g_manager = GroupManager()
             centers = c_manager.get_center_queryset()
             if center_id > 0:
                 groups = c_manager.get_group_queryset_by_center(center_id)
             else:
-                groups = None
+                groups = g_manager.get_group_queryset()
+
             if group_id > 0:
-                hosts = GroupManager().get_host_queryset_by_group(group_id)
+                hosts = g_manager.get_host_queryset_by_group(group_id)
             else:
                 hosts = None
         except ComputeError as e:
