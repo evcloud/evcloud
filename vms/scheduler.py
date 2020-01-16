@@ -5,10 +5,6 @@ from compute.managers import GroupManager, HostManager, ComputeError
 from utils.errors import Error
 
 
-class SchedulerErrCode:
-    ERR_CODE_NO_MACIP = 1
-
-
 class ScheduleError(Error):
     pass
 
