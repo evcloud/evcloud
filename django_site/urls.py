@@ -17,13 +17,24 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
-from rest_framework_swagger.views import get_swagger_view
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 admin.AdminSite.site_header = 'EVCloud后台管理（管理员登录）'
 admin.AdminSite.site_title = '管理员登录'
 
 def home(request):
     return redirect(to='vms:vms-list')
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="EVCloud API",
+      default_version='v3',
+   ),
+   public=False,
+   permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('', home, name='home'),
@@ -36,7 +47,8 @@ urlpatterns = [
     path('network/',include('network.urls', namespace='network')),
     path('image/',include('image.urls', namespace='image')),
     path('reports/',include('reports.urls', namespace='reports')),
-    path('apidocs/', get_swagger_view(title='EVCloud API'), name='apidocs'),
+    path('apidocs/', schema_view.with_ui('swagger', cache_timeout=0), name='apidocs'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
     path('docs/',include('docs.urls', namespace='docs')),
 ]
 

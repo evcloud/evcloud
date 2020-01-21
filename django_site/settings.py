@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework_swagger',
+    'drf_yasg',
 
     'vms',
     'users',
@@ -309,21 +309,25 @@ LOGGING = {
     },
 }
 
-# api docs
+# drf-yasg
 SWAGGER_SETTINGS = {
+    # 'LOGIN_URL': reverse_lazy('admin:login'),
+    # 'LOGOUT_URL': '/admin/logout',
+    'PERSIST_AUTH': True,
+    'REFETCH_SCHEMA_WITH_AUTH': True,
+    'REFETCH_SCHEMA_ON_LOGOUT': True,
+
+
     'SECURITY_DEFINITIONS': {
-        'basic': {
+        'Basic': {
             'type': 'basic'
         },
-        "api_key": {
-            "type": "apiKey",
-            "name": "Token",
-            "in": "header"
-          },
+        'Bearer': {
+            'in': 'header',
+            'name': 'Authorization',
+            'type': 'apiKey',
+        }
     },
-    'SHOW_REQUEST_HEADERS': True,
-    'JSON_EDITOR': True,
-    'DOC_EXPANSION': 'list',
 }
 
 # 导入安全相关的settings
