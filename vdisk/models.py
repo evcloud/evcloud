@@ -174,9 +174,12 @@ class Vdisk(models.Model):
         # 新的记录，要创建新的ceph rbd image,
         self.uuid = self.new_uuid_str()
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
-        if not self._create_ceph_disk():
+
+        try:
+            self._create_ceph_disk()
+        except Exception as e:
             self.delete()
-            raise Exception('create ceph rbd image failed')
+            raise Exception(f'create ceph rbd image failed,{str(e)}')
 
     def _create_ceph_disk(self):
         '''
@@ -184,25 +187,32 @@ class Vdisk(models.Model):
 
         :return:
             True    # success
-            False   # failed
+
+        :raises: Exception
         '''
         try:
             ceph_pool = self.quota.cephpool
             if not ceph_pool:
-                return False
+                raise Exception(f'硬盘存储池<{self.quota}>没有ceph pool信息')
+
+            if not ceph_pool.enable:
+                raise Exception(f'硬盘存储池<{self.quota}>的pool<{ceph_pool}>未开启使用')
+
             pool_name = ceph_pool.pool_name
+            data_pool = ceph_pool.data_pool if ceph_pool.has_data_pool else None
+
             config = ceph_pool.ceph
             if not config:
-                return False
-        except Exception:
-            return False
+                raise Exception(f'pool<{ceph_pool}>没有ceph集群配置信息')
+        except Exception as e:
+            raise e
 
         size = self.get_bytes_size()
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
-            rbd.create_image(name=self.uuid, size=size)
+            rbd.create_image(name=self.uuid, size=size, data_pool=data_pool)
         except (RadosError, Exception) as e:
-            return False
+            raise e
 
         return True
 

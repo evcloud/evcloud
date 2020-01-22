@@ -32,7 +32,7 @@ class VdiskAdmin(admin.ModelAdmin):
         后台管理批量删除重写， 通过每个对象的delete()方法删除，同时会删除ceph rbd image
         '''
         for obj in queryset:
-            if not obj.is_mounted():    # 硬盘已挂载，不删除
+            if not obj.is_mounted:    # 硬盘已挂载，不删除
                 obj.delete()
 
     def get_deleted(self, obj):
