@@ -1,5 +1,4 @@
 import uuid
-import os
 
 from django.db.models import Q
 
@@ -8,7 +7,6 @@ from ceph.models import CephCluster
 from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
 from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
-from network.models import Vlan
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError
@@ -265,7 +263,8 @@ class VmManager(VirtAPI):
             str     # success
             None    # 没有可用的dev了
         '''
-        for i in range(0, 26):
+        # 从vdb开始，系统xml模板中系统盘驱动和硬盘一样为virtio时，硬盘使用vda会冲突错误
+        for i in range(1, 26):
             dev = 'vd' + chr(ord('a') + i % 26)
             if dev not in dev_list:
                 return dev
