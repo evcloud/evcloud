@@ -154,13 +154,14 @@ class RbdManager:
 
         return True
 
-    def clone_image(self, snap_image_name:str, snap_name:str, new_image_name:str):
+    def clone_image(self, snap_image_name:str, snap_name:str, new_image_name:str, data_pool=None):
         '''
         从快照克隆一个rbd image
 
         :param snap_image_name: 快照父image名称
         :param snap_name: 快照名称
         :param new_image_name: 新克隆的image名称
+        :param data_pool: 如果指定，数据存储的到此pool
         :return:
             True    # success
             raise RadosError # failed
@@ -170,11 +171,11 @@ class RbdManager:
         cluster = self.get_cluster()
         try:
             with cluster.open_ioctx(self.pool_name) as p_ioctx:
-                c_ioctx = p_ioctx   # 克隆的image保存在同一个pool
+                c_ioctx = p_ioctx   # 克隆的image元数据保存在同一个pool，通过data_pool参数可指定数据块存储到data_pool
                 rbd.RBD().clone(p_ioctx=p_ioctx, p_name=snap_image_name, p_snapname=snap_name, c_ioctx=c_ioctx,
-                                c_name=new_image_name)
+                                c_name=new_image_name, data_pool=data_pool)
         except Exception as e:
-            raise RadosError(f'rename_image error:{str(e)}')
+            raise RadosError(f'clone_image error:{str(e)}')
 
         return True
 
@@ -195,12 +196,13 @@ class RbdManager:
         except Exception as e:
             raise RadosError(f'rename_image error:{str(e)}')
 
-    def create_image(self, name:str, size:int):
+    def create_image(self, name:str, size:int, data_pool=None):
         '''
         Create an rbd image.
 
         :param name: what the image is called
         :param size: how big the image is in bytes
+        :param data_pool: 如果指定，数据存储的到此pool
         :return:
             True    # success
             None    # image already exists
@@ -210,7 +212,7 @@ class RbdManager:
         cluster = self.get_cluster()
         try:
             with cluster.open_ioctx(self.pool_name) as ioctx:
-                rbd.RBD().create(ioctx=ioctx, name=name, size=size)
+                rbd.RBD().create(ioctx=ioctx, name=name, size=size, old_format=False, data_pool=data_pool)
         except rbd.ImageExists as e:
             return None
         except (TypeError, rbd.InvalidArgument, Exception) as e:

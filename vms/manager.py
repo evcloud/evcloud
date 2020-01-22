@@ -655,6 +655,7 @@ class VmAPI:
 
         ceph_pool = image.ceph_pool
         pool_name = ceph_pool.pool_name
+        data_pool = ceph_pool.data_pool if ceph_pool.has_data_pool else None
         ceph_config = ceph_pool.ceph
         rbd_manager = self.get_rbd_manager(ceph=ceph_config, pool_name=pool_name)
 
@@ -685,7 +686,7 @@ class VmAPI:
 
             # 创建虚拟机的系统镜像disk
             try:
-                rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap, new_image_name=vm_uuid)
+                rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap, new_image_name=vm_uuid, data_pool=data_pool)
                 diskname = vm_uuid
             except RadosError as e:
                 raise VmError(msg=f'clone image error, {str(e)}')
