@@ -91,7 +91,7 @@ class CephPool(models.Model):
     id = models.AutoField(primary_key=True)
     pool_name = models.CharField(verbose_name='POOL名称', max_length=100)
     has_data_pool = models.BooleanField(default=False, verbose_name='是否有独立存储POOL')
-    data_pool = models.CharField(verbose_name='数据存储POOL名称', max_length=100, default='')
+    data_pool = models.CharField(verbose_name='数据存储POOL名称', max_length=100, blank=True, default='')
     ceph = models.ForeignKey(to=CephCluster, on_delete=models.CASCADE)
     enable = models.BooleanField(default=True, verbose_name='是否启用')
     remarks = models.CharField(max_length=255, default='', blank=True, verbose_name='备注')

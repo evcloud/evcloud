@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cephpool',
             name='data_pool',
-            field=models.CharField(default='', max_length=100, verbose_name='数据存储POOL名称'),
+            field=models.CharField(blank=True, default='', max_length=100, verbose_name='数据存储POOL名称'),
         ),
         migrations.AddField(
             model_name='cephpool',
