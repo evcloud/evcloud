@@ -398,7 +398,7 @@ class VmDiskSnap(models.Model):
         now_timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
         try:
             disk = self.sys_disk
-            snap_name = f'{disk}@{now_timestamp}'
+            snap_name = f'{disk}-{now_timestamp}'
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.create_snap(image_name=disk, snap_name=snap_name)
         except (RadosError, Exception) as e:

@@ -41,3 +41,10 @@ class VmDiskSnapAdmin(admin.ModelAdmin):
     list_display = ( 'id', 'snap', 'disk', 'vm', 'create_time', 'remarks')
     search_fields = ['disk', 'remarks']
     list_filter = ['vm',]
+
+    def delete_queryset(self, request, queryset):
+        '''
+        后台管理批量删除重写， 通过每个对象的delete()方法删除，同时会删除ceph rbd image snap
+        '''
+        for obj in queryset:
+            obj.delete()

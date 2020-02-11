@@ -821,6 +821,14 @@ class VmAPI:
             except VirtError as e:
                 raise VmError(msg='强制关闭虚拟机失败')
 
+        # 删除系统盘快照
+        try:
+            snaps = vm.sys_disk_snaps.all()
+            for snap in snaps:
+                snap.delete()
+        except Exception as e:
+            raise VmError(msg=f'删除虚拟机系统盘快照失败,{str(e)}')
+
         # 归档虚拟机
         try:
             vm_ahv = VmArchiveManager().add_vm_archive(vm)
