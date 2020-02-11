@@ -264,15 +264,24 @@ class Vdisk(models.Model):
 
         return False
 
-    @property
-    def xml_tpl(self):
+    def xml_tpl(self, has_auth:bool=True):
         '''disk xml template'''
-        return '''
+        if has_auth:
+            return '''
             <disk type='network' device='disk'>
                   <driver name='qemu'/>
                   <auth username='{auth_user}'>
                     <secret type='ceph' uuid='{auth_uuid}'/>
                   </auth>
+                  <source protocol='rbd' name='{pool}/{name}'>
+                    {hosts_xml}
+                  </source>
+                    <target dev='{dev}' bus='{bus}'/>   
+            </disk>
+            '''
+        return '''
+            <disk type='network' device='disk'>
+                  <driver name='qemu'/>
                   <source protocol='rbd' name='{pool}/{name}'>
                     {hosts_xml}
                   </source>
@@ -292,7 +301,11 @@ class Vdisk(models.Model):
 
         cephpool = self.quota.cephpool
         ceph = cephpool.ceph
-        xml = self.xml_tpl.format(auth_user=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
+        if ceph.has_auth:
+            xml = self.xml_tpl().format(auth_user=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
+                                  name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
+        else:
+            xml = self.xml_tpl(has_auth=False).format(pool=cephpool.pool_name,
                                   name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
         return xml
 

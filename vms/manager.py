@@ -223,6 +223,36 @@ class VmManager(VirtAPI):
         except self.VirtError as e:
             raise VmError(msg=str(e))
 
+    def _xml_remove_sys_disk_auth(self, xml_desc:str):
+        '''
+        去除vm xml中系统盘节点ceph认证的auth
+
+        :param xml_desc: 定义虚拟机的xml内容
+        :return:
+            xml: str    # success
+
+        :raise:  VmError
+        '''
+        xml = XMLEditor()
+        if not xml.set_xml(xml_desc):
+            raise VmError(msg='虚拟机xml文本无效')
+
+        root = xml.get_root()
+        devices = root.getElementsByTagName('devices')
+        if not devices:
+            raise VmError(msg='虚拟机xml文本无效, 未找到devices节点')
+
+        disks = devices[0].getElementsByTagName('disk')
+        if not disks:
+            raise VmError(msg='虚拟机xml文本无效, 未找到devices>disk节点')
+        disk = disks[0]
+        auth = disk.getElementsByTagName('auth')
+        if not auth:
+            return xml_desc
+
+        disk.removeChild(auth[0])
+        return root.toxml()
+
     def get_vm_vdisk_dev_list(self, vm:Vm):
         '''
         获取虚拟机所有硬盘的dev
@@ -739,6 +769,9 @@ class VmAPI:
                                   ceph_hosts_xml=ceph_config.hosts_xml, mac=macip.mac, bridge=vlan.br)
 
         try:
+            if not ceph_config.has_auth:
+                xml_desc = self._vm_manager._xml_remove_sys_disk_auth(xml_desc)
+
             # 创建虚拟机元数据
             vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
                     remarks=remarks, host=host, mac_ip=macip, xml=xml_desc, image=image)
