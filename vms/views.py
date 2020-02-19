@@ -193,3 +193,17 @@ class VmEditView(View):
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
         return render(request, 'vm_edit.html', context={'vm': vm})
+
+
+class VmResetView(View):
+    """虚拟机重置系统镜像类视图"""
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['云主机不存在']})
+
+        images = ImageManager().get_image_queryset_by_tag(tag=Image.TAG_BASE)
+        return render(request, 'vm_reset.html', context={'vm': vm, 'images': images})
