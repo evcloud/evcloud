@@ -9,6 +9,10 @@ class RadosError(rados.Error):
     '''def __init__(self, message, errno=None)'''
     pass
 
+class ImageExistsError(RadosError):
+    '''def __init__(self, message, errno=None)'''
+    pass
+
 def get_rbd_manager(ceph:CephCluster, pool_name:str):
     '''
     获取一个rbd管理接口对象
@@ -166,7 +170,7 @@ class RbdManager:
             True    # success
             raise RadosError # failed
 
-        :raise class: `RadosError`
+        :raise class: `RadosError`, ImageExistsError
         '''
         cluster = self.get_cluster()
         try:
@@ -174,6 +178,8 @@ class RbdManager:
                 c_ioctx = p_ioctx   # 克隆的image元数据保存在同一个pool，通过data_pool参数可指定数据块存储到data_pool
                 rbd.RBD().clone(p_ioctx=p_ioctx, p_name=snap_image_name, p_snapname=snap_name, c_ioctx=c_ioctx,
                                 c_name=new_image_name, data_pool=data_pool)
+        except rbd.ImageExists as e:
+            raise ImageExistsError(f'clone_image error,image exists,{str(e)}')
         except Exception as e:
             raise RadosError(f'clone_image error:{str(e)}')
 

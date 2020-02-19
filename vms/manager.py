@@ -2,7 +2,7 @@ import uuid
 
 from django.db.models import Q
 
-from ceph.managers import RadosError, get_rbd_manager
+from ceph.managers import RadosError, get_rbd_manager, ImageExistsError
 from ceph.models import CephCluster
 from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
 from image.managers import ImageManager, ImageError
@@ -10,7 +10,7 @@ from network.managers import VlanManager, MacIPManager, NetworkError
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError
-from .models import Vm, VmArchive, VmLog, VmDiskSnap
+from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image)
 from .xml import XMLEditor
 from utils.errors import Error
 from .scheduler import HostMacIPScheduler, ScheduleError
@@ -1398,3 +1398,134 @@ class VmAPI:
             pass
 
         return device
+
+    def change_sys_disk(self, vm_uuid: str, image_id: int, user):
+        """
+        更换虚拟机系统镜像
+
+        :param vm_uuid: 虚拟机uuid
+        :param image_id: 系统镜像id
+        :param user: 用户
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        new_image = self._get_image(image_id)  # 镜像
+
+        # 同一个iamge
+        if new_image.pk == vm.image.pk:
+            raise VmError(msg='要更换的系统不能是虚拟机当前系统镜像')
+
+        # vm和image是否在同一个分中心
+        if host.group.center_id != new_image.ceph_pool.ceph.center_id:
+            raise VmError(msg='虚拟机和系统镜像不在同一个分中心')
+
+        # rename sys disk
+        disk_name = vm.disk
+        old_pool = vm.image.ceph_pool
+        old_pool_name = old_pool.pool_name
+        old_ceph = old_pool.ceph
+        ok, deleted_disk = rename_sys_disk_delete(ceph=old_ceph, pool_name=old_pool_name, disk_name=disk_name)
+        if not ok:
+            raise VmError(msg='虚拟机系统盘重命名失败')
+
+        # 删除快照记录
+        try:
+            vm.sys_snaps.delete()
+        except Exception as e:
+            raise VmError(msg=f'删除虚拟机系统盘快照失败，{str(e)}')
+
+        # 创建新的系统盘
+        new_pool = new_image.ceph_pool
+        new_pool_name = new_pool.pool_name
+        new_data_pool = new_pool.data_pool if new_pool.has_data_pool else None
+        new_ceph = new_pool.ceph
+        rbd_manager = self.get_rbd_manager(ceph=new_ceph, pool_name=new_pool_name)
+        try:
+            rbd_manager.clone_image(snap_image_name=new_image.base_image, snap_name=new_image.snap,
+                                    new_image_name=disk_name, data_pool=new_data_pool)
+        except ImageExistsError as e:
+            pass
+        except RadosError as e:
+            # 原系统盘改回原名
+            rename_image(ceph=old_ceph, pool_name=old_pool_name, image_name=deleted_disk, new_name=disk_name)
+            raise VmError(msg=f'创建新的系统盘失败，{str(e)}')
+
+        old_vm_xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm_uuid, host_ipv4=vm.host.ipv4)
+        old_vm_undefine_ok = False
+        new_vm_define_ok = False
+        try:
+            # 虚拟机xml
+            xml_tpl = new_image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, ceph_uuid=new_ceph.uuid,
+                                      ceph_pool=new_pool_name, diskname=disk_name, ceph_username=new_ceph.username,
+                                      ceph_hosts_xml=new_ceph.hosts_xml, mac=vm.mac_ip.mac, bridge=vm.mac_ip.vlan.br)
+
+            if not new_ceph.has_auth:
+                xml_desc = self._vm_manager._xml_remove_sys_disk_auth(xml_desc)
+
+            if not self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid):
+                raise VmError(msg='删除虚拟机失败')
+            old_vm_undefine_ok = True
+
+            # 创建虚拟机
+            try:
+                self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
+            except VirtError as e:
+                raise VmError(msg=str(e))
+            new_vm_define_ok = True
+
+            vm.image = new_image
+            vm.xml = xml_desc
+            try:
+                vm.save(update_fields=['image', 'xml'])
+            except Exception as e:
+                raise VmError(msg='更新虚拟机元数据失败')
+        except Exception as e:
+            try:
+                rbd_manager.remove_image(image_name=disk_name)  # 删除新的系统盘image
+            except RadosError as e:
+                pass
+            # 原系统盘改回原名
+            rename_image(ceph=old_ceph, pool_name=old_pool_name, image_name=deleted_disk, new_name=disk_name)
+            if new_vm_define_ok:
+                self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+
+            if old_vm_undefine_ok:
+                try:
+                    self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=old_vm_xml_desc)
+                except VirtError as e:
+                    pass
+
+            raise VmError(msg=str(e))
+
+        # 向虚拟机挂载硬盘
+        for vdisk in vm.vdisks:
+            vdisk_xml = vdisk.xml_desc(dev=vdisk.dev)
+            try:
+                self._vm_manager.mount_disk(vm=vm, disk_xml=vdisk_xml)
+            except VmError as e:
+                self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk.uuid)
+
+        return vm
+
+
+
+
+
