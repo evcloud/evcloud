@@ -255,14 +255,14 @@ class VmArchive(models.Model):
             True    # success
             False   # failed
         '''
+        old_name = self.disk
+        pool_name = self.ceph_pool
+
         config = self.get_ceph_cluster()
         if not config:
             return False
 
-        time_str = timezone.now().strftime('%Y%m%d%H%M%S')
-        old_name = self.disk
-        new_name = f"x_{time_str}_{old_name}"
-        ok = rename_image(ceph=config, pool_name=self.ceph_pool, image_name=old_name, new_name=new_name)
+        ok, new_name = rename_sys_disk_delete(ceph=config, pool_name=pool_name, disk_name=old_name)
         if not ok:
             return False
 
@@ -270,7 +270,7 @@ class VmArchive(models.Model):
         try:
             self.save(update_fields=['disk'])
         except Exception as e:
-            rename_image(ceph=config, pool_name=self.ceph_pool, image_name=new_name, new_name=old_name)
+            rename_image(ceph=config, pool_name=pool_name, image_name=new_name, new_name=old_name)
             return False
 
         return True
@@ -441,3 +441,23 @@ class VmDiskSnap(models.Model):
         if self.snap:
             self._remove_sys_snap()
         super().delete(using=using, keep_parents=keep_parents)
+
+
+def rename_sys_disk_delete(ceph, pool_name: str, disk_name: str):
+    """
+    虚拟机系统盘RBD镜像修改已删除归档的名称，格式：x_{time}_{disk_name}
+    :return:
+        True, new_disk_name    # success
+        False,new_disk_name   # failed
+    """
+    if disk_name.startswith('x_'):
+        return True, disk_name
+
+    time_str = timezone.now().strftime('%Y%m%d%H%M%S')
+    new_name = f"x_{time_str}_{disk_name}"
+    ok = rename_image(ceph=ceph, pool_name=pool_name, image_name=disk_name, new_name=new_name)
+    if not ok:
+        return False, disk_name
+
+    return True, new_name
+

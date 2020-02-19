@@ -768,6 +768,43 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 201, 'code_text': '回滚虚拟机成功'}, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='更换虚拟机系统',
+        request_body=no_body,
+        responses={
+            201: '''
+                {
+                    'code': 201,
+                    'code_text': '更换虚拟机系统成功'
+                }
+                ''',
+            400: '''
+                {
+                    'code': 400,
+                    'code_text': 'xxx'
+                }
+                '''
+        }
+    )
+    @action(methods=['post'], url_path=r'reset/(?P<image_id>[0-9]+)', detail=True, url_name='vm-reset')
+    def vm_reset(self, request, *args, **kwargs):
+        """
+        更换虚拟机系统
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        image_id = str_to_int_or_default(kwargs.get('image_id', '0'), default=0)
+        if image_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmAPI()
+        try:
+            vm = api.change_sys_disk(vm_uuid=vm_uuid, image_id=image_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'更换虚拟机系统失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '更换虚拟机系统成功'}, status=status.HTTP_201_CREATED)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
