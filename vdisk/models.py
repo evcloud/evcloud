@@ -219,6 +219,7 @@ class Vdisk(models.Model):
     def delete(self, using=None, keep_parents=False):
         if not self._remove_ceph_disk():
             raise Exception('remove ceph rbd image failed')
+        self.quota.free(size=self.size)  # 释放硬盘存储池资源
         super().delete(using=using, keep_parents=keep_parents)
 
     def _remove_ceph_disk(self):
