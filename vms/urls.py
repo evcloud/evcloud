@@ -11,6 +11,7 @@ urlpatterns = [
     re_path(r'^detail/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmDetailView.as_view()), name='vm-detail'),
     re_path(r'^mount/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmMountDiskView.as_view()), name='vm-mount-disk'),
     re_path(r'^edit/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmEditView.as_view()), name='vm-edit'),
-    re_path(r'^reset/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmResetView.as_view()), name='vm-reset')
+    re_path(r'^reset/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmResetView.as_view()), name='vm-reset'),
+    re_path(r'^migrate/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmMigrateView.as_view()), name='vm-migrate')
 ]
 
