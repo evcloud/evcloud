@@ -443,6 +443,23 @@ class VmDiskSnap(models.Model):
         super().delete(using=using, keep_parents=keep_parents)
 
 
+class MigrateLog(models.Model):
+    id = models.AutoField(primary_key=True)
+    vm_uuid = models.CharField(max_length=36, verbose_name='虚拟机UUID')
+    src_host_id = models.IntegerField(verbose_name='源宿主机ID')
+    src_host_ipv4 = models.GenericIPAddressField(verbose_name='源宿主机IP')
+    dst_host_id = models.IntegerField(verbose_name='目标宿主机ID')
+    dst_host_ipv4 = models.GenericIPAddressField(verbose_name='目标宿主机IP')
+    migrate_time = models.DateTimeField(auto_now_add=True, verbose_name='迁移时间')
+    result = models.BooleanField(verbose_name='迁移结果(无错误)')
+    content = models.TextField(null=True, blank=True, verbose_name='文字记录')
+    src_undefined = models.BooleanField(default=False, verbose_name="已清理源云主机")
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = '虚拟机迁移记录'
+        verbose_name_plural = '虚拟机迁移记录表'
+
 def rename_sys_disk_delete(ceph, pool_name: str, disk_name: str):
     """
     虚拟机系统盘RBD镜像修改已删除归档的名称，格式：x_{time}_{disk_name}

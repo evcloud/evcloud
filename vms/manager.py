@@ -10,7 +10,7 @@ from network.managers import VlanManager, MacIPManager, NetworkError
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError
-from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image)
+from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog)
 from .xml import XMLEditor
 from utils.errors import Error
 from .scheduler import HostMacIPScheduler, ScheduleError
@@ -447,6 +447,58 @@ class VmManager(VirtAPI):
 
         return True
 
+    def migrate_create_vm(self, vm, new_host):
+        """
+        虚拟机迁移目标宿主机上创建虚拟机
+
+        :param vm: 虚拟机Vm()
+        :param new_host: 目标宿主机Host()
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        # 虚拟机xml
+        try:
+            vm_uuid = vm.uuid
+            image = vm.image
+            pool = image.ceph_pool
+            ceph = pool.ceph
+            xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, ceph_uuid=ceph.uuid,
+                                      ceph_pool=pool.pool_name, diskname=vm.disk, ceph_username=ceph.username,
+                                      ceph_hosts_xml=ceph.hosts_xml, mac=vm.mac_ip.mac, bridge=vm.mac_ip.vlan.br)
+
+            if not ceph.has_auth:
+                xml_desc = self._xml_remove_sys_disk_auth(xml_desc)
+        except Exception as e:
+            raise VmError(msg=f'构建虚拟机xml错误，{str(e)}')
+
+        new_vm_define_ok = False
+        try:
+            # 创建虚拟机
+            try:
+                self.define(host_ipv4=new_host.ipv4, xml_desc=xml_desc)
+            except VirtError as e:
+                raise VmError(msg=str(e))
+            new_vm_define_ok = True
+
+            vm.host = new_host
+            vm.xml = xml_desc
+            try:
+                vm.save(update_fields=['host', 'xml'])
+            except Exception as e:
+                raise VmError(msg='更新虚拟机元数据失败')
+
+            return vm
+        except Exception as e:
+            # 目标宿主机删除虚拟机
+            if new_vm_define_ok:
+                try:
+                    self.undefine(host_ipv4=new_host.ipv4, vm_uuid=vm_uuid)
+                except VirtError:
+                    pass
+            raise VmError(msg=str(e))
 
 
 class VmArchiveManager:
@@ -485,7 +537,7 @@ class VmArchiveManager:
         return va
 
 
-class VmLogManager():
+class VmLogManager:
     '''
     虚拟机错误日志记录管理
     '''
@@ -1525,7 +1577,114 @@ class VmAPI:
 
         return vm
 
+    def migrate_vm(self, vm_uuid: str, host_id: int, user):
+        """
+        迁移虚拟机
 
+        :param vm_uuid: 虚拟机uuid
+        :param host_id: 宿主机id
+        :param user: 用户
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        # 虚拟机的状态
+        old_host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=old_host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机运行状态失败')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        # 是否同宿主机组
+        try:
+            new_host = self._host_manager.get_host_by_id(host_id=host_id)
+        except ComputeError as e:
+            raise VmError(msg=str(e))
+        if not new_host:
+            raise VmError(msg='指定的目标宿主机不存在')
+
+        if old_host.id == new_host.id:
+            raise VmError(msg='不能在同一个宿主机上迁移')
+        if new_host.group_id != old_host.group_id:
+            raise VmError(msg='目标宿主机和云主机宿主机不在同一个机组')
+
+        # 目标宿主机资源申请
+        try:
+            new_host = HostManager().claim_from_host(host_id=host_id, vcpu=vm.vcpu, mem=vm.mem)
+        except ComputeError as e:
+            raise VmError(msg=str(e))
+
+        # 目标宿主机创建虚拟机
+        try:
+            vm = self._vm_manager.migrate_create_vm(vm=vm, new_host=new_host)
+        except Exception as e:
+            # 释放目标宿主机资源
+            new_host.free(vcpu=vm.vcpu, mem=vm.mem)
+            raise VmError(msg=str(e))
+
+        new_host.vm_created_num_add_1()  # 宿主机虚拟机数+1
+
+        log_msg = ''
+        # 向虚拟机挂载硬盘
+        vdisks = vm.vdisks
+        for vdisk in vdisks:
+            try:
+                xml = vdisk.xml_desc(dev=vdisk.dev)
+                self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
+            except (VmError, Exception) as e:
+                log_msg += f'vdisk(uuid={vdisk.uuid}) 挂载失败,err={str(e)}；\n'
+                try:
+                    self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk.uuid)
+                except VdiskError as e2:
+                    log_msg += f'vdisk(uuid={vdisk.uuid})和vm(uuid={vm_uuid}元数据挂载关系解除失败),err={str(e2)}；\n'
+
+        # 删除原宿主机上的虚拟机
+        src_vm_undefined = False
+        try:
+            ok = self._vm_manager.undefine(host_ipv4=old_host.ipv4, vm_uuid=vm_uuid)
+            if not ok:
+                raise VirtError(msg='删除原宿主机上的虚拟机失败')
+            src_vm_undefined = True
+            old_host.vm_created_num_sub_1()  # 宿主机虚拟机数-1
+        except VirtError as e:
+            log_msg += f'源host({old_host.ipv4})上的vm(uuid={vm_uuid})删除失败，err={str(e)};\n'
+
+        # 源宿主机资源释放
+        if not old_host.free(vcpu=vm.vcpu, mem=vm.mem):
+            log_msg += f'源host({old_host.ipv4})资源(vcpu={vm.vcpu}, mem={vm.mem}MB)释放失败;\n'
+
+        # 迁移日志
+        result = False
+        if not log_msg:
+            log_msg = '迁移正常'
+            result = True
+        try:
+            m_log = MigrateLog(vm_uuid=vm_uuid, src_host_id=old_host.id, src_host_ipv4=old_host.ipv4,
+                               dst_host_id=new_host.id, dst_host_ipv4=new_host.ipv4, result=result,
+                               content=log_msg, src_undefined=src_vm_undefined)
+            m_log.save()
+        except Exception as e:
+            pass
+
+        # 如果挂载了硬盘，更新vm元数据中的xml
+        if vdisks:
+            try:
+                xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+                vm.xml = xml_desc
+                vm.save(update_fields=['xml'])
+            except Exception:
+                pass
+
+        return vm
 
 
 

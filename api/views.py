@@ -805,6 +805,43 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 201, 'code_text': '更换虚拟机系统成功'}, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='迁移虚拟机到指定宿主机',
+        request_body=no_body,
+        responses={
+            201: '''
+                    {
+                        'code': 201,
+                        'code_text': '迁移虚拟机成功'
+                    }
+                    ''',
+            400: '''
+                    {
+                        'code': 400,
+                        'code_text': 'xxx'
+                    }
+                    '''
+        }
+    )
+    @action(methods=['post'], url_path=r'migrate/(?P<host_id>[0-9]+)', detail=True, url_name='vm_migrate')
+    def vm_migrate(self, request, *args, **kwargs):
+        """
+        迁移虚拟机到指定宿主机
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        host_id = str_to_int_or_default(kwargs.get('host_id', '0'), default=0)
+        if host_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的host id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmAPI()
+        try:
+            vm = api.migrate_vm(vm_uuid=vm_uuid, host_id=host_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'迁移虚拟机失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '迁移虚拟机成功'}, status=status.HTTP_201_CREATED)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
