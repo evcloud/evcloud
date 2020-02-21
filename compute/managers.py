@@ -471,7 +471,7 @@ class HostManager:
         :param mem: 要申请的内存大小
         :return:
             Host()  # success
-            None    #宿主机不存在，或没有足够的资源
+            None    #宿主机不存在
         :raise ComputeError
         '''
         with transaction.atomic():

@@ -1,7 +1,8 @@
 from django.contrib import admin
 
-from .models import Vm, VmArchive, VmLog, VmDiskSnap
+from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateLog
 # Register your models here.
+
 
 @admin.register(Vm)
 class VmAdmin(admin.ModelAdmin):
@@ -48,3 +49,11 @@ class VmDiskSnapAdmin(admin.ModelAdmin):
         '''
         for obj in queryset:
             obj.delete()
+
+
+@admin.register(MigrateLog)
+class MigrateLogAdmin(admin.ModelAdmin):
+    list_display_links = ('id',)
+    list_display = ('id', 'vm_uuid', 'src_host_ipv4', 'dst_host_ipv4', 'result', 'src_undefined', 'migrate_time')
+    search_fields = ('vm_uuid', 'content')
+    list_filter = ('result', 'src_undefined')

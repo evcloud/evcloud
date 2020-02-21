@@ -4,10 +4,11 @@ from .models import Center, Group, Host
 
 # Register your models here.
 
+
 @admin.register(Center)
 class CenterAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
-    list_display = ( 'id', 'name', 'location', 'desc','ceph_clusters_list')
+    list_display = ('id', 'name', 'location', 'desc', 'ceph_clusters_list')
     list_filter = ['location']
     search_fields = ['name', 'location']
 
@@ -21,7 +22,7 @@ class CenterAdmin(admin.ModelAdmin):
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
-    list_display = ( 'id', 'name', 'center', 'desc')
+    list_display = ('id', 'name', 'center', 'desc')
     list_filter = ['center']
     search_fields = ['name']
     filter_horizontal = ['users']
@@ -30,11 +31,11 @@ class GroupAdmin(admin.ModelAdmin):
 @admin.register(Host)
 class HostAdmin(admin.ModelAdmin):
     list_display_links = ('ipv4',)
-    list_display = ( 'id', 'ipv4', 'group', 'real_cpu', 'vcpu_total', 'vcpu_allocated', 'vcpu_allocated_now', 'mem_total', 'mem_allocated', 'mem_allocated_now', 'vm_created', 'vm_created_now', 'enable')
+    list_display = ('id', 'ipv4', 'group', 'real_cpu', 'vcpu_total', 'vcpu_allocated', 'vcpu_allocated_now',
+                    'mem_total', 'mem_allocated', 'mem_allocated_now', 'vm_created', 'vm_created_now', 'enable', 'desc')
     list_filter = ['group']
     search_fields = ['ipv4']
     filter_horizontal = ['vlans']
-
 
     def vcpu_allocated_now(self, obj):
         s = obj.stats_vcpu_mem_vms_now()
