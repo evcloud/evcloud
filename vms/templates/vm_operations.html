@@ -14,7 +14,7 @@
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载磁盘</a>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-edit' vm_uuid=vm.hex_uuid %}">修改配置</a>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-reset' vm_uuid=vm.hex_uuid %}">重置镜像</a>
-        <button class="dropdown-item bg-info" type="button" onclick="alert('暂不支持此操作');">关机迁移</button>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-migrate' vm_uuid=vm.hex_uuid %}">关机迁移</a>
         <button class="dropdown-item bg-info btn-vm-snap-create" type="button" data-vm-uuid="{{ vm.hex_uuid }}">创建快照</button>
     </div>
 </div>
