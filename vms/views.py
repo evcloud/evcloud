@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views.generic.base import View
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
 
 from .manager import VmManager, VmError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
@@ -56,6 +57,7 @@ class VmsView(View):
         except VmError as e:
             return render(request, 'error.html', {'errors': ['查询虚拟机时错误',str(e)]})
 
+        queryset = queryset.prefetch_related('vdisk_set')   # 反向预查询硬盘（避免多次访问数据库）
         try:
             c_manager = CenterManager()
             g_manager = GroupManager()
