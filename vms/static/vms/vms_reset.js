@@ -47,7 +47,7 @@
             error: function (xhr) {
                 let msg = '创重置系统镜像失败!';
                 try{
-                    msg = msg + xhr.responseJSON.code_text;
+                    msg = xhr.responseJSON.code_text;
                 }catch (e) {}
                 alert(msg);
             },

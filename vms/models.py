@@ -343,7 +343,7 @@ class VmDiskSnap(models.Model):
     vm = models.ForeignKey(to=Vm, on_delete=models.SET_NULL, related_name='sys_disk_snaps', null=True, verbose_name='虚拟机')
     ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.SET_NULL, null=True, verbose_name='CEPH POOL')
     disk = models.CharField(max_length=100, verbose_name='虚拟机系统盘')  # 同虚拟机uuid
-    snap = models.CharField(max_length=100, verbose_name='系统盘CEPH快照') # 默认名称为 disk@snap创建日期
+    snap = models.CharField(max_length=100, verbose_name='系统盘CEPH快照')  # 默认名称为 disk-snap创建日期
     create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
     remarks = models.TextField(default='', null=True, blank=True, verbose_name='备注')
 

@@ -12,23 +12,26 @@ class ImageError(Error):
 
 
 class ImageManager:
-    '''
+    """
     镜像管理器
-    '''
-    def get_image_by_id(self, image_id:int):
-        '''
+    """
+    def get_image_by_id(self, image_id: int, related_fields: tuple = ()):
+        """
         通过id获取镜像元数据模型对象
         :param image_id: 镜像id
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
         :return:
             Image() # success
             None    #不存在
 
         :raise ImageError
-        '''
+        """
         if not isinstance(image_id, int) or image_id < 0:
             raise ImageError(msg='镜像ID参数有误')
 
         try:
+            if related_fields:
+                return Image.objects.select_related(*related_fields).filter(id=image_id).first()
             return Image.objects.filter(id=image_id).first()
         except Exception as e:
             raise ImageError(msg=f'查询镜像时错误,{str(e)}')
