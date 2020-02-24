@@ -500,6 +500,126 @@ class VmManager(VirtAPI):
                     pass
             raise VmError(msg=str(e))
 
+    def reset_image_create_vm(self, vm, new_image):
+        """
+        更换镜像创建虚拟机
+
+        :param vm: 虚拟机Vm()
+        :param new_image: 新系统镜像 Image()
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        try:
+            vm_uuid = vm.uuid
+            host = vm.host
+            disk_name = vm.disk
+            new_pool = new_image.ceph_pool
+            new_pool_name = new_pool.pool_name
+            new_data_pool = new_pool.data_pool if new_pool.has_data_pool else None
+            new_ceph = new_pool.ceph
+
+            old_vm_xml_desc = self.get_domain_xml_desc(vm_uuid=vm_uuid, host_ipv4=vm.host.ipv4)
+
+            # 虚拟机xml
+            xml_tpl = new_image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, ceph_uuid=new_ceph.uuid,
+                                      ceph_pool=new_pool_name, diskname=disk_name, ceph_username=new_ceph.username,
+                                      ceph_hosts_xml=new_ceph.hosts_xml, mac=vm.mac_ip.mac, bridge=vm.mac_ip.vlan.br)
+            if not new_ceph.has_auth:
+                xml_desc = self._xml_remove_sys_disk_auth(xml_desc)
+
+            rbd_manager = get_rbd_manager(ceph=new_ceph, pool_name=new_pool_name)
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+        new_vm_define_ok = False
+        new_disk_ok = False
+        try:
+            try:
+                rbd_manager.clone_image(snap_image_name=new_image.base_image, snap_name=new_image.snap,
+                                        new_image_name=disk_name, data_pool=new_data_pool)
+            except ImageExistsError as e:
+                pass
+            new_disk_ok = True
+
+            try:
+                self.define(host_ipv4=host.ipv4, xml_desc=xml_desc)  # 新xml覆盖定义虚拟机
+            except VirtError as e:
+                raise VmError(msg=str(e))
+            new_vm_define_ok = True
+
+            vm.image = new_image
+            vm.xml = xml_desc
+            try:
+                vm.save(update_fields=['image', 'xml'])
+            except Exception as e:
+                raise VmError(msg='更新虚拟机元数据失败')
+            return vm
+        except Exception as e:
+            if new_disk_ok:
+                try:
+                    rbd_manager.remove_image(image_name=disk_name)  # 删除新的系统盘image
+                except RadosError:
+                    pass
+            if new_vm_define_ok:
+                try:
+                    self.define(host_ipv4=host.ipv4, xml_desc=old_vm_xml_desc)  # 覆盖定义回原虚拟机
+                except VirtError:
+                    pass
+
+            raise VmError(msg=str(e))
+
+    def modify_vm_remark(self, vm_uuid: str, remark: str, user):
+        """
+        修改虚拟机备注信息
+
+        :param vm_uuid: 虚拟机uuid
+        :param remark: 新的备注信息
+        :param user: 用户
+        :return:
+            True       # success
+        :raise VmError()
+        """
+        vm = self.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        vm.remarks = remark
+        try:
+            vm.save(update_fields=['remarks'])
+        except Exception as e:
+            raise VmError(msg='更新备注信息失败')
+
+        return True
+
+    def get_vm_status(self, vm_uuid: str, user):
+        """
+        获取虚拟机的运行状态
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :return:
+            (state_code:int, state_str:str)     # success
+
+        :raise VmError()
+        """
+        vm = self.get_vm_by_uuid(vm_uuid=vm_uuid)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        host = vm.host
+        host_ip = host.ipv4
+        try:
+            return self.domain_status(host_ipv4=host_ip, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg='获取虚拟机状态失败')
+
 
 class VmArchiveManager:
     '''
@@ -610,7 +730,7 @@ class VmAPI:
         except RadosError as e:
             raise VmError(msg=str(e))
 
-    def _get_image(self, image_id:int):
+    def _get_image(self, image_id: int):
         '''
         获取image
 
@@ -621,7 +741,7 @@ class VmAPI:
         :raise VmError
         '''
         try:
-            image = self._image_manager.get_image_by_id(image_id)
+            image = self._image_manager.get_image_by_id(image_id, related_fields=('ceph_pool__ceph', 'xml_tpl'))
         except ImageError as e:
             raise VmError(err=e)
         if not image:
@@ -1101,18 +1221,7 @@ class VmAPI:
 
         :raise VmError()
         '''
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        host = vm.host
-        host_ip = host.ipv4
-        try:
-            return self._vm_manager.domain_status(host_ipv4=host_ip, vm_uuid=vm_uuid)
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机状态失败')
+        return self._vm_manager.get_vm_status(vm_uuid=vm_uuid, user=user)
 
     def modify_vm_remark(self, vm_uuid:str, remark:str, user):
         '''
@@ -1125,19 +1234,7 @@ class VmAPI:
             True       # success
         :raise VmError()
         '''
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        vm.remarks = remark
-        try:
-            vm.save(update_fields=['remarks'])
-        except Exception as e:
-            raise VmError(msg='更新备注信息失败')
-
-        return True
+        return self._vm_manager.modify_vm_remark(vm_uuid=vm_uuid, remark=remark, user=user)
 
     def mount_disk(self, vm_uuid:str, vdisk_uuid:str, user):
         '''
@@ -1463,7 +1560,8 @@ class VmAPI:
 
         :raises: VmError
         """
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
+            'user', 'host__group', 'image__ceph_pool__ceph'))
         if vm is None:
             raise VmError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
@@ -1488,6 +1586,12 @@ class VmAPI:
         if host.group.center_id != new_image.ceph_pool.ceph.center_id:
             raise VmError(msg='虚拟机和系统镜像不在同一个分中心')
 
+        # 删除快照记录
+        try:
+            vm.sys_snaps.delete()
+        except Exception as e:
+            raise VmError(msg=f'删除虚拟机系统盘快照失败，{str(e)}')
+
         # rename sys disk
         disk_name = vm.disk
         old_pool = vm.image.ceph_pool
@@ -1497,74 +1601,11 @@ class VmAPI:
         if not ok:
             raise VmError(msg='虚拟机系统盘重命名失败')
 
-        # 删除快照记录
         try:
-            vm.sys_snaps.delete()
-        except Exception as e:
-            raise VmError(msg=f'删除虚拟机系统盘快照失败，{str(e)}')
-
-        # 创建新的系统盘
-        new_pool = new_image.ceph_pool
-        new_pool_name = new_pool.pool_name
-        new_data_pool = new_pool.data_pool if new_pool.has_data_pool else None
-        new_ceph = new_pool.ceph
-        rbd_manager = self.get_rbd_manager(ceph=new_ceph, pool_name=new_pool_name)
-        try:
-            rbd_manager.clone_image(snap_image_name=new_image.base_image, snap_name=new_image.snap,
-                                    new_image_name=disk_name, data_pool=new_data_pool)
-        except ImageExistsError as e:
-            pass
-        except RadosError as e:
+            vm = self._vm_manager.reset_image_create_vm(vm=vm, new_image=new_image)
+        except VmError as e:
             # 原系统盘改回原名
             rename_image(ceph=old_ceph, pool_name=old_pool_name, image_name=deleted_disk, new_name=disk_name)
-            raise VmError(msg=f'创建新的系统盘失败，{str(e)}')
-
-        old_vm_xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm_uuid, host_ipv4=vm.host.ipv4)
-        old_vm_undefine_ok = False
-        new_vm_define_ok = False
-        try:
-            # 虚拟机xml
-            xml_tpl = new_image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
-            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, ceph_uuid=new_ceph.uuid,
-                                      ceph_pool=new_pool_name, diskname=disk_name, ceph_username=new_ceph.username,
-                                      ceph_hosts_xml=new_ceph.hosts_xml, mac=vm.mac_ip.mac, bridge=vm.mac_ip.vlan.br)
-
-            if not new_ceph.has_auth:
-                xml_desc = self._vm_manager._xml_remove_sys_disk_auth(xml_desc)
-
-            if not self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid):
-                raise VmError(msg='删除虚拟机失败')
-            old_vm_undefine_ok = True
-
-            # 创建虚拟机
-            try:
-                self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
-            except VirtError as e:
-                raise VmError(msg=str(e))
-            new_vm_define_ok = True
-
-            vm.image = new_image
-            vm.xml = xml_desc
-            try:
-                vm.save(update_fields=['image', 'xml'])
-            except Exception as e:
-                raise VmError(msg='更新虚拟机元数据失败')
-        except Exception as e:
-            try:
-                rbd_manager.remove_image(image_name=disk_name)  # 删除新的系统盘image
-            except RadosError as e:
-                pass
-            # 原系统盘改回原名
-            rename_image(ceph=old_ceph, pool_name=old_pool_name, image_name=deleted_disk, new_name=disk_name)
-            if new_vm_define_ok:
-                self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-
-            if old_vm_undefine_ok:
-                try:
-                    self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=old_vm_xml_desc)
-                except VirtError as e:
-                    pass
-
             raise VmError(msg=str(e))
 
         # 向虚拟机挂载硬盘

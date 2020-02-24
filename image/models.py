@@ -128,8 +128,7 @@ class Image(models.Model):
         if not config:
             raise Exception('create_snap failed, can not get ceph')
 
-        now_timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
-        snap_name = f'{self.base_image}@{now_timestamp}'
+        snap_name = timezone.now().strftime("%Y%m%d_%H%M%S")
         self.create_newsnap = False
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
