@@ -730,6 +730,51 @@ class VmAPI:
         except RadosError as e:
             raise VmError(msg=str(e))
 
+    def _get_user_perms_vm(self, vm_uuid: str, user, related_fields: tuple = ()):
+        """
+        获取用户有访问权的的虚拟机
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=related_fields)
+        if vm is None:
+            raise VmError(msg='虚拟机不存在')
+        if not vm.user_has_perms(user=user):
+            raise VmError(msg='当前用户没有权限访问此虚拟机')
+
+        return vm
+
+    def _get_user_shutdown_vm(self, vm_uuid: str, user, related_fields: tuple = ()):
+        """
+        获取用户有访问权的 关闭状态的 虚拟机
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=related_fields)
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        except VirtError as e:
+            raise VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
+        if run:
+            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        return vm
+
     def _get_image(self, image_id: int):
         '''
         获取image
@@ -973,12 +1018,7 @@ class VmAPI:
 
         :raise VmError
         '''
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         host = vm.host
         # 虚拟机的状态
         try:
@@ -1076,12 +1116,7 @@ class VmAPI:
         if vcpu == 0 and mem == 0:
             return True
 
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         # 没有变化直接返回
         if vm.vcpu == vcpu and vm.mem == mem:
             return True
@@ -1187,14 +1222,8 @@ class VmAPI:
             raise e
 
         # 普通操作
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        host = vm.host
-        host_ip = host.ipv4
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
+        host_ip = vm.host.ipv4
 
         try:
             if op == 'start':
@@ -1260,23 +1289,10 @@ class VmAPI:
         if not vdisk.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此硬盘')
 
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        # 虚拟机的状态
+        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
         host = vm.host
         if host.group != vdisk.quota.group:
             raise VmError(msg='虚拟机和硬盘不再同一个机组')
-
-        try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         disk_list, dev_list = self._vm_manager.get_vm_vdisk_dev_list(vm=vm)
         if vdisk_uuid in disk_list:
@@ -1392,11 +1408,7 @@ class VmAPI:
             VmDiskSnap()    # success
         :raises: VmError
         '''
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'image__ceph_pool__ceph'))
 
         # 虚拟机的状态
         # host = vm.host
@@ -1422,21 +1434,7 @@ class VmAPI:
 
         :raises: VmError
         '''
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        # 虚拟机的状态
-        host = vm.host
-        try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
-
+        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=())
         return self._vm_manager.disk_rollback_to_snap(vm=vm, snap_id=snap_id)
 
     def umount_pci_device(self, device_id:int, user):
@@ -1517,21 +1515,7 @@ class VmAPI:
         if not device.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此设备')
 
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        # 虚拟机的状态
-        host = vm.host
-        try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
-
+        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'host__group'))
         # 向虚拟机挂载硬盘
         try:
             self._pci_manager.mount_to_vm(vm=vm, device=device)
@@ -1560,29 +1544,16 @@ class VmAPI:
 
         :raises: VmError
         """
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
+        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        # 虚拟机的状态
-        host = vm.host
-        try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         new_image = self._get_image(image_id)  # 镜像
-
         # 同一个iamge
         if new_image.pk == vm.image.pk:
             raise VmError(msg='要更换的系统不能是虚拟机当前系统镜像')
 
         # vm和image是否在同一个分中心
+        host = vm.host
         if host.group.center_id != new_image.ceph_pool.ceph.center_id:
             raise VmError(msg='虚拟机和系统镜像不在同一个分中心')
 
@@ -1630,22 +1601,11 @@ class VmAPI:
 
         :raises: VmError
         """
-        vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('user', 'host', 'host__group'))
-        if vm is None:
-            raise VmError(msg='虚拟机不存在')
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
-
-        # 虚拟机的状态
-        old_host = vm.host
-        try:
-            run = self._vm_manager.is_running(host_ipv4=old_host.ipv4, vm_uuid=vm_uuid)
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=(
+            'user', 'host__group', 'image__ceph_pool__ceph'))
 
         # 是否同宿主机组
+        old_host = vm.host
         try:
             new_host = self._host_manager.get_host_by_id(host_id=host_id)
         except ComputeError as e:
