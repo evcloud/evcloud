@@ -9,3 +9,4 @@
 /collect_static/
 /django_site/security.py
 /data/
+/ignore*

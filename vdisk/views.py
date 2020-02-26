@@ -60,7 +60,7 @@ class VdiskView(View):
             if center_id > 0:
                 groups = c_manager.get_group_queryset_by_center(center_id)
             else:
-                groups = None
+                groups = GroupManager().get_group_queryset()
         except ComputeError as e:
             return render(request, 'error.html', {'errors': ['查询机组时错误', str(e)]})
 

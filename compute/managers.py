@@ -226,6 +226,9 @@ class GroupManager:
     '''
     宿主机组管理器
     '''
+    def get_group_queryset(self):
+        return Group.objects.all()
+
     def get_group_by_id(self, group_id:int):
         '''
         通过id获取宿主机组
@@ -468,7 +471,7 @@ class HostManager:
         :param mem: 要申请的内存大小
         :return:
             Host()  # success
-            None    #宿主机不存在，或没有足够的资源
+            None    #宿主机不存在
         :raise ComputeError
         '''
         with transaction.atomic():
@@ -498,11 +501,14 @@ class HostManager:
             False   # failed
         '''
         # 释放资源
-        host = Host.objects.filter(id=host_id).first()
-        if not host:
-            return False
+        try:
+            host = Host.objects.filter(id=host_id).first()
+            if not host:
+                return False
 
-        return host.free(vcpu=vcpu, mem=mem)
+            return host.free(vcpu=vcpu, mem=mem)
+        except Exception as e:
+            return False
 
     def filter_meet_requirements(self, hosts:list, vcpu:int, mem:int, claim=False):
         '''

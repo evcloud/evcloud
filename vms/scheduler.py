@@ -4,6 +4,7 @@ from network.managers import MacIPManager
 from compute.managers import GroupManager, HostManager, ComputeError
 from utils.errors import Error
 
+
 class ScheduleError(Error):
     pass
 
@@ -69,8 +70,10 @@ class HostMacIPScheduler:
             if vlan:
                 if host.contains_vlan(vlan):
                     mac_ip = manager.apply_for_free_ip(vlan_id=vlan.id)
+                    if not mac_ip:
+                        raise ScheduleError(msg=f'指定的子网vlan<{str(vlan)}>内没有可用的mac ip资源')
                 else:
-                    raise ScheduleError(msg='宿主机host不在指定的子网vlan内')
+                    raise ScheduleError(msg=f'宿主机host<{str(host)}>不在指定的子网vlan<{str(vlan)}>内')
             else:
                 vlans = list(host.vlans.all())
                 random.shuffle(vlans)   # 打乱顺序
@@ -81,7 +84,7 @@ class HostMacIPScheduler:
                         break
 
             if not mac_ip:
-                raise ScheduleError(msg='宿主机host不在指定的子网vlan内')
+                raise ScheduleError(msg='没有可用的mac ip资源')
 
         try:
             host = HostManager().claim_from_host(host_id=host.id, vcpu=vcpu, mem=mem)
@@ -123,8 +126,13 @@ class HostMacIPScheduler:
                 break
             elif mac_ip:
                 break
+
         if not host:
-            raise ScheduleError(msg='没有足够资源的宿主机可用')
+            if not need_mac_ip:
+                msg = '没有足够资源的宿主机可用'
+            else:
+                msg = '没有足够资源的宿主机或mac ip可用'
+            raise ScheduleError(msg=msg)
 
         return host, mac_ip
 
@@ -145,7 +153,7 @@ class HostMacIPScheduler:
                 host_list = HostManager().get_hosts_by_group_and_vlan(group_or_id=group, vlan=vlan)
             else:
                 host_list = list(GroupManager().get_host_queryset_by_group(group_or_id=group))
-        except ComputeError as e:
+        except (ComputeError, Exception) as e:
             raise ScheduleError(msg=f'获取宿主机list错误，{str(e)}')
 
         return host_list

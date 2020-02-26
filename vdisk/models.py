@@ -174,9 +174,12 @@ class Vdisk(models.Model):
         # 新的记录，要创建新的ceph rbd image,
         self.uuid = self.new_uuid_str()
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
-        if not self._create_ceph_disk():
+
+        try:
+            self._create_ceph_disk()
+        except Exception as e:
             self.delete()
-            raise Exception('create ceph rbd image failed')
+            raise Exception(f'create ceph rbd image failed,{str(e)}')
 
     def _create_ceph_disk(self):
         '''
@@ -184,31 +187,39 @@ class Vdisk(models.Model):
 
         :return:
             True    # success
-            False   # failed
+
+        :raises: Exception
         '''
         try:
             ceph_pool = self.quota.cephpool
             if not ceph_pool:
-                return False
+                raise Exception(f'硬盘存储池<{self.quota}>没有ceph pool信息')
+
+            if not ceph_pool.enable:
+                raise Exception(f'硬盘存储池<{self.quota}>的pool<{ceph_pool}>未开启使用')
+
             pool_name = ceph_pool.pool_name
+            data_pool = ceph_pool.data_pool if ceph_pool.has_data_pool else None
+
             config = ceph_pool.ceph
             if not config:
-                return False
-        except Exception:
-            return False
+                raise Exception(f'pool<{ceph_pool}>没有ceph集群配置信息')
+        except Exception as e:
+            raise e
 
         size = self.get_bytes_size()
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
-            rbd.create_image(name=self.uuid, size=size)
+            rbd.create_image(name=self.uuid, size=size, data_pool=data_pool)
         except (RadosError, Exception) as e:
-            return False
+            raise e
 
         return True
 
     def delete(self, using=None, keep_parents=False):
         if not self._remove_ceph_disk():
             raise Exception('remove ceph rbd image failed')
+        self.quota.free(size=self.size)  # 释放硬盘存储池资源
         super().delete(using=using, keep_parents=keep_parents)
 
     def _remove_ceph_disk(self):
@@ -254,15 +265,24 @@ class Vdisk(models.Model):
 
         return False
 
-    @property
-    def xml_tpl(self):
+    def xml_tpl(self, has_auth:bool=True):
         '''disk xml template'''
-        return '''
+        if has_auth:
+            return '''
             <disk type='network' device='disk'>
                   <driver name='qemu'/>
                   <auth username='{auth_user}'>
                     <secret type='ceph' uuid='{auth_uuid}'/>
                   </auth>
+                  <source protocol='rbd' name='{pool}/{name}'>
+                    {hosts_xml}
+                  </source>
+                    <target dev='{dev}' bus='{bus}'/>   
+            </disk>
+            '''
+        return '''
+            <disk type='network' device='disk'>
+                  <driver name='qemu'/>
                   <source protocol='rbd' name='{pool}/{name}'>
                     {hosts_xml}
                   </source>
@@ -282,7 +302,11 @@ class Vdisk(models.Model):
 
         cephpool = self.quota.cephpool
         ceph = cephpool.ceph
-        xml = self.xml_tpl.format(auth_user=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
+        if ceph.has_auth:
+            xml = self.xml_tpl().format(auth_user=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
+                                  name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
+        else:
+            xml = self.xml_tpl(has_auth=False).format(pool=cephpool.pool_name,
                                   name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
         return xml
 

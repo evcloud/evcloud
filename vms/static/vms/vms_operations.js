@@ -49,6 +49,19 @@ function build_vm_snap_create_api(vm_uuid, remarks){
     return build_absolute_url(url);
 }
 
+function get_err_msg_or_default(xhr, default_msg) {
+    msg = default_msg;
+    try {
+        data = xhr.responseJSON;
+        if (data.hasOwnProperty('code_text')) {
+            msg = default_msg + data.code_text;
+        }
+    }catch (e) {
+
+    }
+    return msg;
+}
+
 // 启动虚拟机
 function start_vm_ajax(vm_uuid, before_func, complate_func){
     let api = build_vm_operations_api(vm_uuid);
@@ -64,11 +77,7 @@ function start_vm_ajax(vm_uuid, before_func, complate_func){
         success: function (data, status_text) {
         },
         error: function (xhr, msg, err) {
-            data = xhr.responseJSON;
-            msg = '启动虚拟机失败,';
-            if (data.hasOwnProperty('code_text')){
-                msg = '启动虚拟机失败,' + data.code_text;
-            }
+            msg = get_err_msg_or_default(xhr, '启动虚拟机失败;');
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -94,11 +103,7 @@ function reboot_vm_ajax(vm_uuid, before_func, complate_func){
         success: function (data, status_text) {
         },
         error: function (xhr, msg, err) {
-            data = xhr.responseJSON;
-            msg = '重启虚拟机失败,';
-            if (data.hasOwnProperty('code_text')){
-                msg = '重启虚拟机失败,' + data.code_text;
-            }
+            msg = get_err_msg_or_default(xhr, '重启虚拟机失败;');
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -124,11 +129,7 @@ function shutdown_vm_ajax(vm_uuid, before_func, complate_func){
         success: function (data, status_text) {
         },
         error: function (xhr, msg, err) {
-            data = xhr.responseJSON;
-            msg = '虚拟机关机失败,';
-            if (data.hasOwnProperty('code_text')){
-                msg = '虚拟机关机失败,' + data.code_text;
-            }
+            msg = get_err_msg_or_default(xhr, '虚拟机关机失败;');
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -154,11 +155,7 @@ function poweroff_vm_ajax(vm_uuid, before_func, complate_func){
         success: function (data, status_text) {
         },
         error: function (xhr, msg, err) {
-            data = xhr.responseJSON;
-            msg = '强制断电失败,';
-            if (data.hasOwnProperty('code_text')){
-                msg = '强制断电失败,' + data.code_text;
-            }
+            msg = get_err_msg_or_default(xhr, '强制断电失败;');
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -187,11 +184,7 @@ function delete_vm_ajax(vm_uuid, op='delete', before_func, success_func, complat
             }
         },
         error: function (xhr, msg, err) {
-            data = xhr.responseJSON;
-            msg = '删除虚拟机失败,';
-            if (data.hasOwnProperty('code_text')){
-                msg = '删除虚拟机失败,' + data.code_text;
-            }
+            msg = get_err_msg_or_default(xhr, '删除虚拟机失败;');
             alert(msg);
             if(typeof(complate_func) === "function"){
                 complate_func();
@@ -216,11 +209,7 @@ function create_snap_vm_ajax(vm_uuid, remarks, before_func, success_func, compla
             }
         },
         error: function (xhr, msg, err) {
-            data = xhr.responseJSON;
-            msg = '创建主机快照失败';
-            if (data.hasOwnProperty('code_text')){
-                msg = '创建主机快照失败,' + data.code_text;
-            }
+            msg = get_err_msg_or_default(xhr, '创建主机快照失败;');
             alert(msg);
         },
         complete:function (xhr, ts) {

@@ -1,5 +1,6 @@
 #coding=utf-8
 from utils.ev_libvirt.virt import VirtAPI, VirtError
+from compute.managers import GroupManager, ComputeError
 from .models import PCIDevice
 from .device import GPUDevice, DeviceError
 
@@ -36,6 +37,23 @@ class PCIDeviceManager:
             None            # not exists
         '''
         return self.get_device_queryset().filter(address = address).first()
+
+    def get_device_queryset_by_group(self, group):
+        '''
+        宿主机组下的PCI设备查询集
+
+        :param group: Group对象或id
+        :return:
+            QuerySet()
+
+        :raises: DeviceError
+        '''
+        try:
+            ids = GroupManager().get_host_ids_by_group(group_or_id=group)
+        except ComputeError as e:
+            raise DeviceError(msg=str(e))
+
+        return self.get_device_queryset().filter(host__in=ids).all()
 
     def device_wrapper(self, device:PCIDevice):
         '''
