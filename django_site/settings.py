@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework.authtoken',
-    'rest_framework_swagger',
+    'drf_yasg',
 
     'vms',
     'users',
@@ -191,10 +191,10 @@ REST_FRAMEWORK = {
     #     'user': '20/minute'  # 登陆认证的用户默认请求访问限制每分钟次数
     # },
     # api version settings
-    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
-    'DEFAULT_VERSION': 'v3',
-    'ALLOWED_VERSIONS': ('v3', ),
-    'VERSION_PARAM': 'version',
+    # 'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+    # 'DEFAULT_VERSION': 'v3',
+    # 'ALLOWED_VERSIONS': ('v3', ),
+    # 'VERSION_PARAM': 'version',
 
     # 分页
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
@@ -309,21 +309,25 @@ LOGGING = {
     },
 }
 
-# api docs
+# drf-yasg
 SWAGGER_SETTINGS = {
+    # 'LOGIN_URL': reverse_lazy('admin:login'),
+    # 'LOGOUT_URL': '/admin/logout',
+    'PERSIST_AUTH': True,
+    'REFETCH_SCHEMA_WITH_AUTH': True,
+    'REFETCH_SCHEMA_ON_LOGOUT': True,
+
+
     'SECURITY_DEFINITIONS': {
-        'basic': {
+        'Basic': {
             'type': 'basic'
         },
-        "api_key": {
-            "type": "apiKey",
-            "name": "Token",
-            "in": "header"
-          },
+        'Bearer': {
+            'in': 'header',
+            'name': 'Authorization',
+            'type': 'apiKey',
+        }
     },
-    'SHOW_REQUEST_HEADERS': True,
-    'JSON_EDITOR': True,
-    'DOC_EXPANSION': 'list',
 }
 
 # 导入安全相关的settings

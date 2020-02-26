@@ -1,20 +1,22 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, BasePermission
-from rest_framework.schemas import AutoSchema
-from rest_framework.compat import coreapi, coreschema
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.serializers import Serializer
 from rest_framework.decorators import action
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+from drf_yasg.utils import swagger_auto_schema, no_body
+from drf_yasg import openapi
 
 from vms.manager import VmManager, VmAPI, VmError
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
 from compute.managers import HostManager, CenterManager, GroupManager, ComputeError
 from network.models import Vlan
+from network.managers import MacIPManager
 from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
@@ -46,31 +48,6 @@ class IsSuperUser(BasePermission):
     """
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_superuser)
-
-
-class CustomAutoSchema(AutoSchema):
-    '''
-    自定义Schema
-    '''
-    def get_manual_fields(self, path, method):
-        '''
-        重写方法，为每个方法自定义参数字段, action或method做key
-        '''
-        extra_fields = []
-        action = None
-        try:
-            action = self.view.action
-        except AttributeError:
-            pass
-
-        if action and type(self._manual_fields) is dict and action in self._manual_fields:
-            extra_fields = self._manual_fields[action]
-            return extra_fields
-
-        if type(self._manual_fields) is dict and method in self._manual_fields:
-            extra_fields = self._manual_fields[method]
-
-        return extra_fields
 
 
 class VmsViewSet(viewsets.GenericViewSet):
@@ -158,6 +135,8 @@ class VmsViewSet(viewsets.GenericViewSet):
     retrieve:
         获取虚拟机元数据信息
 
+        获取虚拟机详细信息
+
         http code: 200, 请求成功：
         {
           "code": 200,
@@ -215,103 +194,46 @@ class VmsViewSet(viewsets.GenericViewSet):
     lookup_field = 'uuid'
     lookup_value_regex = '[0-9a-z-]+'
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-            'list': [
-                coreapi.Field(
-                    name='center_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='分中心id'),
-                    description='所属分中心'
-                ),
-                coreapi.Field(
-                    name='group_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='宿主机组id'),
-                    description='所属宿主机组'
-                ),
-                coreapi.Field(
-                    name='host_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='宿主机id'),
-                    description='所属宿主机'
-                ),
-                coreapi.Field(
-                    name='user_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='用户id'),
-                    description='所属用户，当前为超级用户时此参数有效'
-                ),
-                coreapi.Field(
-                    name='search',
-                    location='query',
-                    required=False,
-                    schema=coreschema.String(description='关键字'),
-                    description='关键字查询'
-                )
-            ],
-            'destroy': [
-                coreapi.Field(
-                    name='force',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Boolean(description='强制删除'),
-                    description='true:强制删除'
-                ),
-            ],
-            'vm_operations': [
-                coreapi.Field(
-                    name='op',
-                    location='form',
-                    required=True,
-                    schema=coreschema.Enum(enum=['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force'], description='操作'),
-                    description="选项：['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']"
-                ),
-            ],
-            'vm_remark': [
-                coreapi.Field(
-                    name='remark',
-                    location='query',
-                    required=True,
-                    schema=coreschema.String(description='备注信息'),
-                    description='新的备注信息'
-                ),
-            ],
-            'vm_sys_snap': [
-                coreapi.Field(
-                    name='remark',
-                    location='query',
-                    required=False,
-                    schema=coreschema.String(description='备注信息'),
-                    description='快照备注信息'
-                ),
-            ],
-            'delete_vm_snap': [
-                coreapi.Field(
-                    name='id',
-                    location='path',
-                    required=True,
-                    schema=coreschema.String(description='snap id'),
-                    description='快照id'
-                ),
-            ],
-            'vm_snap_remark': [
-                coreapi.Field(
-                    name='remark',
-                    location='query',
-                    required=True,
-                    schema=coreschema.String(description='新的备注信息'),
-                    description='快照备注信息'
-                ),
-            ]
-        }
+    @swagger_auto_schema(
+        operation_summary='虚拟机列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='center_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属分中心id'
+            ),
+            openapi.Parameter(
+                name='group_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属宿主机组id'
+            ),
+            openapi.Parameter(
+                name='host_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属宿主机id'
+            ),
+            openapi.Parameter(
+                name='user_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属用户id，当前为超级用户时此参数有效'
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='关键字查询'
+            )
+        ]
     )
-
     def list(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.query_params.get('center_id', 0), default=0)
         group_id = str_to_int_or_default(request.query_params.get('group_id', 0), default=0)
@@ -341,6 +263,12 @@ class VmsViewSet(viewsets.GenericViewSet):
             data = {'code': 200, 'vms': serializer.data, }
         return Response(data)
 
+    @swagger_auto_schema(
+        operation_summary='创建虚拟机',
+        responses={
+            201: ''
+        }
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid(raise_exception=False):
@@ -395,6 +323,21 @@ class VmsViewSet(viewsets.GenericViewSet):
             'vm': serializers.VmSerializer(vm).data
         })
 
+    @swagger_auto_schema(
+        operation_summary='删除虚拟机',
+        manual_parameters=[
+            openapi.Parameter(
+                name='force',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description='true:强制删除'
+            )
+        ],
+        responses={
+            204: 'SUCCESS NO CONTENT'
+        }
+    )
     def destroy(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         force = request.query_params.get('force', '').lower()
@@ -408,6 +351,17 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        operation_summary='修改虚拟机vcpu和内存大小',
+        responses={
+            200: '''
+                {
+                    "code": 200,
+                    "code_text": "修改虚拟机成功"
+                }
+            '''
+        }
+    )
     def partial_update(self, request, *args, **kwargs):
         '''
         修改虚拟机vcpu和内存大小
@@ -456,6 +410,28 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机成功'})
 
+    @swagger_auto_schema(
+        operation_summary='操作虚拟机',
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'op': openapi.Schema(
+                    title='操作',
+                    type=openapi.TYPE_STRING,
+                    enum=['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force'],
+                    description="操作选项",
+                )
+            }
+        ),
+        responses={
+            200: '''
+            {
+                'code': 200,
+                'code_text': '操作虚拟机成功'
+            }
+            '''
+        }
+    )
     @action(methods=['patch'], url_path='operations', detail=True, url_name='vm-operations')
     def vm_operations(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
@@ -479,6 +455,22 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': f'{op}虚拟机成功'})
 
+    @swagger_auto_schema(
+        operation_summary='获取虚拟机当前运行状态',
+        request_body=no_body,
+        responses={
+            200: '''
+            {
+              "code": 200,
+              "code_text": "获取信息成功",
+              "status": {
+                "status_code": 5,
+                "status_text": "shut off"
+              }
+            }
+            '''
+        }
+    )
     @action(methods=['get'], url_path='status', detail=True, url_name='vm-status')
     def vm_status(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
@@ -491,6 +483,22 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 200, 'code_text': '获取虚拟机状态成功',
                               'status': {'status_code': code, 'status_text': msg}})
 
+    @swagger_auto_schema(
+        operation_summary='创建虚拟机vnc',
+        request_body=no_body,
+        responses={
+            200: '''
+            {
+              "code": 200,
+              "code_text": "创建虚拟机vnc成功",
+              "vnc": {
+                "id": "42bfe71e-6419-474a-bc99-9e519637797d",
+                "url": "http://159.226.91.140:8000/novnc/?vncid=42bfe71e-6419-474a-bc99-9e519637797d"
+              }
+            }
+            '''
+        }
+    )
     @action(methods=['post'], url_path='vnc', detail=True, url_name='vm-vnc')
     def vm_vnc(self, request, *args, **kwargs):
         '''
@@ -530,6 +538,33 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
                               'vnc': {'id': vnc_id, 'url': url}})
 
+    @swagger_auto_schema(
+        operation_summary='修改虚拟机备注信息',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='remark',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='虚拟机备注信息'
+            )
+        ],
+        responses={
+            200: '''
+            {
+                'code': 200,
+                'code_text': '修改虚拟机备注信息成功'
+            }
+            ''',
+            400: '''
+                {
+                    'code': 400,
+                    'code_text': 'xxx'
+                }
+                '''
+        }
+    )
     @action(methods=['patch'], url_path='remark', detail=True, url_name='vm-remark')
     def vm_remark(self, request, *args, **kwargs):
         '''
@@ -548,6 +583,43 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
 
+    @swagger_auto_schema(
+        operation_summary='创建虚拟机系统盘快照',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='remark',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='快照备注信息'
+            )
+        ],
+        responses={
+            201: '''
+            {
+              "code": 201,
+              "code_text": "创建虚拟机系统快照成功",
+              "snap": {
+                "id": 45,
+                "vm": {
+                  "uuid": "598fb694a75c49c49c9574f9f3ea6174",
+                  "ipv4": "10.107.50.2"
+                },
+                "snap": "598fb694a75c49c49c9574f9f3ea6174@20200121_073930",
+                "create_time": "2020-01-21 15:39:31",
+                "remarks": "sss"
+              }
+            }
+            ''',
+            400: '''
+            {
+                'code': 400,
+                'code_text': 'xxx'
+            }
+            '''
+        }
+    )
     @action(methods=['post'], url_path='snap', detail=True, url_name='vm-sys-snap')
     def vm_sys_snap(self, request, *args, **kwargs):
         '''
@@ -565,6 +637,27 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={'code': 201, 'code_text': '创建虚拟机系统快照成功',
                               'snap': serializers.VmDiskSnapSerializer(snap).data}, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='删除一个虚拟机系统快照',
+        manual_parameters=[
+            openapi.Parameter(
+                name='id',
+                in_=openapi.IN_PATH,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='快照id'
+            )
+        ],
+        responses={
+            204: '''SUCCESS NO CONTENT''',
+            400: '''
+                {
+                    'code': 400,
+                    'code_text': 'xxx'
+                }
+            '''
+        }
+    )
     @action(methods=['delete'], url_path=r'snap/(?P<id>[0-9]+)', detail=False, url_name='delete-vm-snap')
     def delete_vm_snap(self, request, *args, **kwargs):
         '''
@@ -582,6 +675,40 @@ class VmsViewSet(viewsets.GenericViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        operation_summary='修改虚拟机快照备注信息',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='id',
+                in_=openapi.IN_PATH,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='快照id'
+            ),
+            openapi.Parameter(
+                name='remark',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='快照备注信息'
+            )
+        ],
+        responses={
+            200: '''
+                {
+                    'code': 200,
+                    'code_text': '修改快照备注信息成功'
+                }
+            ''',
+            400: '''
+                {
+                    'code': 400,
+                    'code_text': 'xxx'
+                }
+            '''
+        }
+    )
     @action(methods=['patch'], url_path=r'snap/(?P<id>[0-9]+)/remark', detail=False, url_name='vm-snap-remark')
     def vm_snap_remark(self, request, *args, **kwargs):
         '''
@@ -604,6 +731,24 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改快照备注信息成功'})
 
+    @swagger_auto_schema(
+        operation_summary='虚拟机系统盘回滚到指定快照',
+        request_body=no_body,
+        responses={
+            201: '''
+            {
+                'code': 201,
+                'code_text': '回滚虚拟机成功'
+            }
+            ''',
+            400: '''
+            {
+                'code': 400,
+                'code_text': 'xxx'
+            }
+            '''
+        }
+    )
     @action(methods=['post'], url_path=r'rollback/(?P<snap_id>[0-9]+)', detail=True, url_name='vm-rollback-snap')
     def vm_rollback_snap(self, request, *args, **kwargs):
         '''
@@ -622,6 +767,80 @@ class VmsViewSet(viewsets.GenericViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 201, 'code_text': '回滚虚拟机成功'}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='更换虚拟机系统',
+        request_body=no_body,
+        responses={
+            201: '''
+                {
+                    'code': 201,
+                    'code_text': '更换虚拟机系统成功'
+                }
+                ''',
+            400: '''
+                {
+                    'code': 400,
+                    'code_text': 'xxx'
+                }
+                '''
+        }
+    )
+    @action(methods=['post'], url_path=r'reset/(?P<image_id>[0-9]+)', detail=True, url_name='vm-reset')
+    def vm_reset(self, request, *args, **kwargs):
+        """
+        更换虚拟机系统
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        image_id = str_to_int_or_default(kwargs.get('image_id', '0'), default=0)
+        if image_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmAPI()
+        try:
+            vm = api.change_sys_disk(vm_uuid=vm_uuid, image_id=image_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'更换虚拟机系统失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '更换虚拟机系统成功'}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='迁移虚拟机到指定宿主机',
+        request_body=no_body,
+        responses={
+            201: '''
+                    {
+                        'code': 201,
+                        'code_text': '迁移虚拟机成功'
+                    }
+                    ''',
+            400: '''
+                    {
+                        'code': 400,
+                        'code_text': 'xxx'
+                    }
+                    '''
+        }
+    )
+    @action(methods=['post'], url_path=r'migrate/(?P<host_id>[0-9]+)', detail=True, url_name='vm_migrate')
+    def vm_migrate(self, request, *args, **kwargs):
+        """
+        迁移虚拟机到指定宿主机
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        host_id = str_to_int_or_default(kwargs.get('host_id', '0'), default=0)
+        if host_id <= 0:
+            return Response(data={'code': 400, 'code_text': '无效的host id参数'}, status=status.HTTP_400_BAD_REQUEST)
+
+        api = VmAPI()
+        try:
+            vm = api.migrate_vm(vm_uuid=vm_uuid, host_id=host_id, user=request.user)
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': f'迁移虚拟机失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(data={'code': 201, 'code_text': '迁移虚拟机成功'}, status=status.HTTP_201_CREATED)
 
     def get_serializer_class(self):
         """
@@ -646,14 +865,11 @@ class CenterViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     queryset = Center.objects.all()
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-        }
-    )
     def list(self, request, *args, **kwargs):
         '''
         获取分中心列表
+
+            获取分中心列表信息
 
             http code 200:
             {
@@ -699,24 +915,11 @@ class GroupViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     queryset = Group.objects.all()
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-            'list': [
-                coreapi.Field(
-                    name='center_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='分中心id'),
-                    description='所属分中心'
-                ),
-            ]
-        }
-    )
-
     def list(self, request, *args, **kwargs):
         '''
         获取宿主机组列表
+
+            获取宿主机组列表信息
 
             http code 200:
             {
@@ -785,28 +988,23 @@ class HostViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     queryset = Host.objects.all()
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-            'list': [
-                coreapi.Field(
-                    name='group_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='宿主机组id'),
-                    description='所属宿主机组'
-                ),
-                coreapi.Field(
-                    name='vlan_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='子网网段id'),
-                    description='所属子网网段'
-                )
-            ]
-        }
+    @swagger_auto_schema(
+        operation_summary='获取宿主机列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='group_id', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='宿主机组id'
+            ),
+            openapi.Parameter(
+                name='vlan_id', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                description="子网网段id",
+                required=False
+            )
+        ]
     )
-
     def list(self, request, *args, **kwargs):
         '''
         获取宿主机列表
@@ -872,11 +1070,6 @@ class VlanViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     queryset = Vlan.objects.all()
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-        }
-    )
 
     def list(self, request, *args, **kwargs):
         '''
@@ -910,42 +1103,35 @@ class ImageViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-            'list': [
-                coreapi.Field(
-                    name='center_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='分中心id'),
-                    description='所属分中心'
-                ),
-                coreapi.Field(
-                    name='tag',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='标签'),
-                    description='镜像标签'
-                ),
-                coreapi.Field(
-                    name='sys_type',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='系统类型'),
-                    description='系统类型'
-                ),
-                coreapi.Field(
-                    name='search',
-                    location='query',
-                    required=False,
-                    schema=coreschema.String(description='关键字查询'),
-                    description='关键字查询'
-                ),
-            ]
-        }
+    @swagger_auto_schema(
+        operation_summary='获取系统镜像列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='center_id', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属分中心id'
+            ),
+            openapi.Parameter(
+                name='tag', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                description="镜像标签",
+                required=False
+            ),
+            openapi.Parameter(
+                name='sys_type', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='系统类型'
+            ),
+            openapi.Parameter(
+                name='search', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="关键字查询",
+                required=False
+            )
+        ]
     )
-
     def list(self, request, *args, **kwargs):
         '''
         获取系统镜像列表
@@ -995,7 +1181,7 @@ class ImageViewSet(viewsets.GenericViewSet):
 
         try:
             queryset = ImageManager().filter_image_queryset(center_id=center_id, sys_type=sys_type, tag=tag,
-                                                            search=search, all_no_filters=request.user.is_superuser)
+                                                            search=search, all_no_filters=True)
         except Exception as e:
             return Response({'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1021,9 +1207,11 @@ class ImageViewSet(viewsets.GenericViewSet):
 class AuthTokenViewSet(ObtainAuthToken):
     '''
     get:
-    获取当前用户的token，需要通过身份认证权限(如session认证)
+    获取当前用户的token
 
-        返回内容：
+        获取当前用户的token，需要通过身份认证权限(如session认证)
+
+        code 200 返回内容：
         {
             "token": {
                 "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
@@ -1032,9 +1220,6 @@ class AuthTokenViewSet(ObtainAuthToken):
             }
         }
 
-    put:
-    刷新当前用户的token，旧token失效，需要通过身份认证权限
-
     post:
     身份验证并返回一个token，用于其他API验证身份
 
@@ -1042,47 +1227,7 @@ class AuthTokenViewSet(ObtainAuthToken):
         例如Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b；
         此外，可选Path参数,“new”，?new=true用于刷新生成一个新token；
     '''
-    common_manual_fields = [
-        coreapi.Field(
-            name='version',
-            required=True,
-            location='path',
-            schema=coreschema.String(description='API版本（v3, v4）')
-        ),
-    ]
 
-    schema = CustomAutoSchema(
-        manual_fields={
-            'POST': common_manual_fields + [
-                coreapi.Field(
-                    name="username",
-                    required=True,
-                    location='form',
-                    schema=coreschema.String(
-                        title="Username",
-                        description="Valid username for authentication",
-                    ),
-                ),
-                coreapi.Field(
-                    name="password",
-                    required=True,
-                    location='form',
-                    schema=coreschema.String(
-                        title="Password",
-                        description="Valid password for authentication",
-                    ),
-                ),
-                coreapi.Field(
-                    name="new",
-                    required=False,
-                    location='query',
-                    schema=coreschema.Boolean(description="为true时,生成一个新token"),
-                ),
-            ],
-            'GET': common_manual_fields,
-            'PUT': common_manual_fields,
-        }
-    )
     def get(self, request, *args, **kwargs):
         user = request.user
         if user.is_authenticated:
@@ -1091,7 +1236,24 @@ class AuthTokenViewSet(ObtainAuthToken):
             return Response({'token': slr.data})
         return Response({'code': 403, 'code_text': '您没有访问权限'}, status=status.HTTP_403_FORBIDDEN)
 
+    @swagger_auto_schema(
+        operation_summary='刷新当前用户的token',
+        responses={
+            200:'''
+            {
+                "token": {
+                    "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
+                    "user": "username",
+                    "created": "2018-12-10 14:04:01"
+                }
+            }
+            '''
+        }
+    )
     def put(self, request, *args, **kwargs):
+        '''
+        刷新当前用户的token，旧token失效，需要通过身份认证权限
+        '''
         user = request.user
         if user.is_authenticated:
             token, created = Token.objects.get_or_create(user=user)
@@ -1103,6 +1265,30 @@ class AuthTokenViewSet(ObtainAuthToken):
             return Response({'token': slr.data})
         return Response({'code': 403, 'code_text': '您没有访问权限'}, status=status.HTTP_403_FORBIDDEN)
 
+    @swagger_auto_schema(
+        operation_summary='身份验证获取一个token',
+        request_body=AuthTokenSerializer(),
+        manual_parameters=[
+            openapi.Parameter(
+                name='new',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description='为true时,生成一个新token'
+            )
+        ],
+        responses={
+            200: '''
+                {
+                    "token": {
+                        "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
+                        "user": "username",
+                        "created": "2018-12-10 14:04:01"
+                    }
+                }
+            '''
+        }
+    )
     def post(self, request, *args, **kwargs):
         new = request.query_params.get('new', None)
         serializer = self.serializer_class(data=request.data,
@@ -1131,6 +1317,18 @@ class JWTObtainPairView(TokenObtainPairView):
     '''
     JWT登录认证视图
     '''
+
+    @swagger_auto_schema(
+        operation_summary='登录认证，获取JWT',
+        responses={
+            200: '''
+                {
+                  "refresh": "xxx",     # refresh JWT, 此JWT通过刷新API可以获取新的access JWT
+                  "access": "xxx"       # access JWT, 用于身份认证，如 'Authorization Bearer accessJWT'
+                }
+            '''
+        }
+    )
     def post(self, request, *args, **kwargs):
         '''
         登录认证，获取JWT
@@ -1152,6 +1350,16 @@ class JWTRefreshView(TokenRefreshView):
     '''
     Refresh JWT视图
     '''
+    @swagger_auto_schema(
+        operation_summary='刷新access JWT',
+        responses={
+            200: '''
+                {
+                  "access": "xxx"
+                }
+            '''
+        }
+    )
     def post(self, request, *args, **kwargs):
         '''
         通过refresh JWT获取新的access JWT
@@ -1173,6 +1381,13 @@ class JWTVerifyView(TokenVerifyView):
     '''
     校验access JWT视图
     '''
+
+    @swagger_auto_schema(
+        operation_summary='校验access JWT是否有效',
+        responses={
+            200: '''{ }'''
+        }
+    )
     def post(self, request, *args, **kwargs):
         '''
         校验access JWT是否有效
@@ -1199,75 +1414,53 @@ class VDiskViewSet(viewsets.GenericViewSet):
     lookup_value_regex = '[0-9a-z-]+'
     queryset = Vdisk.objects.all()
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-            'list': [
-                coreapi.Field(
-                    name='center_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='分中心id'),
-                    description='所属分中心',
-                    type='int'
-                ),
-                coreapi.Field(
-                    name='group_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='机组id'),
-                    description='所属机组'
-                ),
-                coreapi.Field(
-                    name='quota_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='硬盘存储池id'),
-                    description='所属硬盘存储池'
-                ),
-                coreapi.Field(
-                    name='user_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='用户id'),
-                    description='所属用户，当前为超级用户时此参数有效'
-                ),
-                coreapi.Field(
-                    name='search',
-                    location='query',
-                    required=False,
-                    schema=coreschema.String(description='查询关键字'),
-                    description='查询关键字'
-                ),
-                coreapi.Field(
-                    name='mounted',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Boolean(description='true=已挂载；false=未挂载'),
-                    description='是否挂载查询条件'
-                ),
-            ],
-            'disk_mount': [
-                coreapi.Field(
-                    name='vm_uuid',
-                    location='query',
-                    required=True,
-                    schema=coreschema.String(description='虚拟机uuid'),
-                    description='要挂载的虚拟机uuid'
-                )
-            ],
-            'disk_remark': [
-                coreapi.Field(
-                    name='remark',
-                    location='query',
-                    required=True,
-                    schema=coreschema.String(description='备注信息'),
-                    description='新的备注信息'
-                ),
-            ]
-        }
+    @swagger_auto_schema(
+        operation_summary='获取云硬盘列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='center_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属分中心id'
+            ),
+            openapi.Parameter(
+                name='group_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属机组id'
+            ),
+            openapi.Parameter(
+                name='quota_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属硬盘存储池id'
+            ),
+            openapi.Parameter(
+                name='user_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属用户id，当前为超级用户时此参数有效'
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='查询关键字'
+            ),
+            openapi.Parameter(
+                name='mounted',
+                in_=openapi.IN_QUERY,
+                required=False,
+                type=openapi.TYPE_BOOLEAN,
+                description='是否挂载查询条件，true=已挂载；false=未挂载'
+            )
+        ]
     )
-
     def list(self, request, *args, **kwargs):
         '''
         获取云硬盘列表
@@ -1342,6 +1535,12 @@ class VDiskViewSet(viewsets.GenericViewSet):
             data = {'code': 200, 'disks': serializer.data, }
         return Response(data)
 
+    @swagger_auto_schema(
+        operation_summary='创建云硬盘',
+        responses={
+            201: ''''''
+        }
+    )
     def create(self, request, *args, **kwargs):
         '''
         创建云硬盘
@@ -1417,6 +1616,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
         '''
         获取硬盘详细数据
 
+            获取硬盘详细数据
+
             http code 200:
             {
               "code": 200,
@@ -1473,6 +1674,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
         '''
         销毁硬盘
 
+            销毁硬盘
+
             http code 204: 销毁成功
             http code 400,403, 404: 销毁失败
             {
@@ -1501,6 +1704,27 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        operation_summary='挂载硬盘',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='vm_uuid',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='要挂载的虚拟机uuid'
+            )
+        ],
+        responses={
+            200: '''
+                {
+                    "code": 200,
+                    "code_text": "挂载硬盘成功"
+                }
+            '''
+        }
+    )
     @action(methods=['patch'], url_path='mount', detail=True, url_name='disk-mount')
     def disk_mount(self, request, *args, **kwargs):
         '''
@@ -1527,6 +1751,18 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '挂载硬盘成功'})
 
+    @swagger_auto_schema(
+        operation_summary='卸载硬盘',
+        request_body=no_body,
+        responses={
+            200: '''
+                {
+                    "code": 200,
+                    "code_text": "卸载硬盘成功"
+                }
+            '''
+        }
+    )
     @action(methods=['patch'], url_path='umount', detail=True, url_name='disk-umount')
     def disk_umount(self, request, *args, **kwargs):
         '''
@@ -1552,6 +1788,33 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '卸载硬盘成功'})
 
+    @swagger_auto_schema(
+        operation_summary='修改云硬盘备注信息',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='remark',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='新的备注信息'
+            )
+        ],
+        responses={
+            200: '''
+                {
+                    "code": 200,
+                    "code_text": "修改硬盘备注信息成功"
+                }
+            ''',
+            400: '''
+                    {
+                        "code": 400,
+                        "code_text": "xxx"
+                    }
+                '''
+        }
+    )
     @action(methods=['patch'], url_path='remark', detail=True, url_name='disk-remark')
     def disk_remark(self, request, *args, **kwargs):
         '''
@@ -1593,21 +1856,18 @@ class QuotaViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-            'list': [
-                coreapi.Field(
-                    name='group_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='宿主机组id'),
-                    description='所属宿主机组'
-                ),
-            ]
-        }
+    @swagger_auto_schema(
+        operation_summary='获取硬盘储存池配额列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='group_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，所属宿主机组id'
+            )
+        ],
     )
-
     def list(self, request, *args, **kwargs):
         '''
         获取硬盘储存池配额列表
@@ -1679,12 +1939,12 @@ class StatCenterViewSet(viewsets.GenericViewSet):
     pagination_class = None
     lookup_field = 'id'
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
+    @swagger_auto_schema(
+        operation_summary='获取所有资源统计信息',
+        responses={
+            200: ''
         }
     )
-
     def list(self, request, *args, **kwargs):
         '''
         获取所有资源统计信息列表
@@ -1741,6 +2001,12 @@ class StatCenterViewSet(viewsets.GenericViewSet):
                                             'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
         return Response(data={'code': 200, 'code_text': 'get ok', 'centers': centers, 'groups': groups, 'hosts': hosts})
 
+    @swagger_auto_schema(
+        operation_summary='获取一个分中心的资源统计信息',
+        responses={
+            200: ''
+        }
+    )
     @action(methods=['get'], detail=True, url_path='center', url_name='center-stat')
     def center_stat(self, request, *args, **kwargs):
         '''
@@ -1788,6 +2054,12 @@ class StatCenterViewSet(viewsets.GenericViewSet):
                              'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
 
+    @swagger_auto_schema(
+        operation_summary='获取一个机组的资源统计信息',
+        responses={
+            200: ''
+        }
+    )
     @action(methods=['get'], detail=True, url_path='group', url_name='group-stat')
     def group_stat(self, request, *args, **kwargs):
         '''
@@ -1852,39 +2124,36 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
 
-    # api docs
-    schema = CustomAutoSchema(
-        manual_fields={
-            'list': [
-                coreapi.Field(
-                    name='group_id',
-                    location='query',
-                    required=False,
-                    schema=coreschema.Integer(description='宿主机组id'),
-                    description='所属宿主机组'
-                ),
-            ],
-            'mount_pci': [
-                coreapi.Field(
-                    name='vm_uuid',
-                    location='query',
-                    required=True,
-                    schema=coreschema.String(description='虚拟机uuid'),
-                    description='虚拟机uuid'
-                ),
-            ]
-        }
+    @swagger_auto_schema(
+        operation_summary='获取PCI设备列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='group_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，所属宿主机组id'
+            )
+        ],
     )
-
     def list(self, request, *args, **kwargs):
         '''
         获取PCI设备列表
 
             http code 200:
-
+                {
+                  "count": 0,
+                  "next": null,
+                  "previous": null,
+                  "results": []
+                }
         '''
         group_id = int(request.query_params.get('group_id', 0))
-        queryset = PCIDeviceManager().get_device_queryset().select_related('host', 'vm').all()
+        if group_id > 0:
+            queryset = PCIDeviceManager().get_device_queryset_by_group(group_id).select_related('host', 'vm').all()
+        else:
+            queryset = PCIDeviceManager().get_device_queryset().select_related('host', 'vm').all()
+
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -1893,6 +2162,27 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_summary='挂载PCI设备',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='vm_uuid',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='虚拟机uuid'
+            )
+        ],
+        responses={
+            201: """
+                {
+                    "code": 201,
+                    "code_text": "挂载设备成功"
+                }
+            """
+        }
+    )
     @action(methods=['post'], detail=True, url_path='mount', url_name='mount-pci')
     def mount_pci(self, request, *args, **kwargs):
         '''
@@ -1923,6 +2213,18 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 201, 'code_text': '挂载成功'}, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='卸载PCI设备',
+        request_body=no_body,
+        responses={
+            201: """
+                {
+                    "code": 201,
+                    "code_text": "卸载设备成功"
+                }
+            """
+        }
+    )
     @action(methods=['post'], detail=True, url_path='umount', url_name='umount-pci')
     def umount_pci(self, request, *args, **kwargs):
         '''
@@ -1959,4 +2261,70 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         """
         if self.action in ['list', 'retrieve']:
             return serializers.PCIDeviceSerializer
+        return Serializer
+
+
+class MacIPViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+
+    @swagger_auto_schema(
+        operation_summary='获取mac ip列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='vlan_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，子网id'
+            ),
+            openapi.Parameter(
+                name='used',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description='筛选条件，false(可用的未分配的)，其他值等同true(已分配的)'
+            )
+        ],
+
+    )
+    def list(self, request, *args, **kwargs):
+        '''
+        获取mac ip列表
+
+            http code 200:
+                {
+                  "count": 1,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "id": 1,
+                      "mac": "C8:00:0A:6B:32:FD",
+                      "ipv4": "10.107.50.253",
+                      "used": true
+                    }
+                  ]
+                }
+        '''
+        vlan_id = request.query_params.get('vlan_id', None)
+        if vlan_id is not None:
+            vlan_id = str_to_int_or_default(vlan_id, None)
+
+        used = request.query_params.get('used', None)
+        if used is not None:
+            used = False if (used.lower() == 'false') else True
+
+        queryset = MacIPManager().filter_macip_queryset(vlan=vlan_id, used=used)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        if self.action =='list':
+            return serializers.MacIPSerializer
         return Serializer

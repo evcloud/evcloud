@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load  sizeformat %}
+
+{% block title %}重置系统镜像{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid offset-lg-1 col-lg-10">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>重置云主机系统镜像</strong></span>
+                <div class="float-right">
+                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建云主机</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'vms:vms-list' %}">云主机列表</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="">
+                    <div class="text-primary h4">云主机信息:</div>
+                    <div class="">
+                        <dl class="row">
+                            <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-vm-uuid">{{ vm.hex_uuid }}</dd>
+                            <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                            <dt class="col-2 text-right">CPU数:</dt> <dd class="col-10">{{ vm.vcpu }}</dd>
+                            <dt class="col-2 text-right">内存:</dt> <dd class="col-10">{{ vm.mem }} MB</dd>
+                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
+                            <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
+                            <dt class="col-2 text-right">宿主机:</dt> <dd class="col-10">{{ vm.host.ipv4 }}</dd>
+                            <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
+                        </dl>
+                        <form id="id-form-vm-reset">
+                            <div class="form-group row">
+                                <label for="id-image" class="offset-sm-1 col-sm-2 col-form-label">选择系统镜像</label>
+                                <div class="col-sm-7">
+                                    <select name="image_id" class="form-control" id="id-image">
+                                        <option value="">--</option>
+                                        {% for img in images %}
+                                            <option value="{{ img.id }}">{{ img.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="offset-1">
+                                <button class="btn btn-primary" id="btn-vm-reset">重置</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_reset.js' %}"></script>
+{% endblock %}

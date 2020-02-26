@@ -51,7 +51,7 @@ DATABASES = {
 }
 ```   
 
-### 5 CEOPH依赖库安装
+### 5 CEPH依赖库安装
 与ceph的通信默认使用官方librados的python包python36-rados，python36-rbd的rpm包安装成功后，python包会自动安装到
 系统python3第三方扩展包路径下（/usr/lib64/python3.6/site-packages/）。    
 使用python虚拟环境的，需要手动把路径下的python包文件rados*和rbd*复制到你的虚拟python环境*/site-packages/下。

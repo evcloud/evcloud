@@ -4,8 +4,8 @@
 
 {% block boby %}
     <div class="container">
-        <div class="row">
-            <div class="col-sm-offset-4 col-sm-4">
+        <div class="d-flex align-items-center justify-content-center" style="height: 80vh;">
+            <div class="col-sm-8 col-md-7 col-lg-5">
                 {% if tips_msg %}
                     <div>
                         <div class="alert alert-warning alert-dismissible" role="alert">
@@ -15,11 +15,11 @@
                         </div>
                     </div>
                 {% endif %}
-                <div class="panel panel-default panel-info">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">{{ form_title }}</h3>
+                <div class="card border-info">
+                    <div class="card-header bg-info text-center">
+                        <span class="card-title h5">{{ form_title }}</span>
                     </div>
-                    <div class="panel-body">
+                    <div class="card-body">
                         <form method="POST" action="{{ action_url }}" enctype="multipart/form-data">
                             {% csrf_token %}
                             {% for field in form %}
@@ -30,9 +30,9 @@
                                     <p class="text-danger">{{ field.errors.as_text }}</p>
                                 {% endif %}
                             {% endfor %}
-                            <p id="tip_text" class="text-danger pull-left">{{ form.non_field_errors.as_text }}</p>
+                            <p id="tip_text" class="text-danger float-left">{{ form.non_field_errors.as_text }}</p>
                             <div class="clearfix"></div>
-                            <button type="submit" class="btn btn-primary pull-left">{{ submit_text }}</button>
+                            <button type="submit" class="btn btn-primary float-left">{{ submit_text }}</button>
                         </form>
                         {% block form_extend %}{% endblock %}
                     </div>

@@ -299,7 +299,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg='启动虚拟机失败', err=e)
+            raise VirtError(msg=f'启动虚拟机失败,{str(e)}', err=e)
 
     def reboot(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -323,7 +323,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg='重启虚拟机失败', err=e)
+            raise VirtError(msg=f'重启虚拟机失败, {str(e)}', err=e)
 
     def shutdown(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -347,7 +347,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg='关闭虚拟机失败', err=e)
+            raise VirtError(msg=f'关闭虚拟机失败, {str(e)}', err=e)
 
     def poweroff(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -371,7 +371,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg='关闭虚拟机电源失败', err=e)
+            raise VirtError(msg=f'关闭虚拟机电源失败, {str(e)}', err=e)
 
     def get_domain_xml_desc(self, host_ipv4:str, vm_uuid:str):
         '''

@@ -50,7 +50,7 @@ class Vm(models.Model):
     '''
     虚拟机模型
     '''
-    uuid = models.UUIDField(verbose_name='虚拟机UUID', primary_key=True)
+    uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=200)
     vcpu = models.IntegerField(verbose_name='CPU数')
     mem = models.IntegerField(verbose_name='内存大小', help_text='单位MB')
@@ -73,9 +73,7 @@ class Vm(models.Model):
         verbose_name_plural = '虚拟机'
 
     def get_uuid(self):
-        if isinstance(self.uuid, str):
-            return self.uuid
-        return self.uuid.hex
+        return self.uuid
 
     @property
     def hex_uuid(self):
@@ -257,14 +255,14 @@ class VmArchive(models.Model):
             True    # success
             False   # failed
         '''
+        old_name = self.disk
+        pool_name = self.ceph_pool
+
         config = self.get_ceph_cluster()
         if not config:
             return False
 
-        time_str = timezone.now().strftime('%Y%m%d%H%M%S')
-        old_name = self.disk
-        new_name = f"x_{time_str}_{old_name}"
-        ok = rename_image(ceph=config, pool_name=self.ceph_pool, image_name=old_name, new_name=new_name)
+        ok, new_name = rename_sys_disk_delete(ceph=config, pool_name=pool_name, disk_name=old_name)
         if not ok:
             return False
 
@@ -272,7 +270,7 @@ class VmArchive(models.Model):
         try:
             self.save(update_fields=['disk'])
         except Exception as e:
-            rename_image(ceph=config, pool_name=self.ceph_pool, image_name=new_name, new_name=old_name)
+            rename_image(ceph=config, pool_name=pool_name, image_name=new_name, new_name=old_name)
             return False
 
         return True
@@ -345,7 +343,7 @@ class VmDiskSnap(models.Model):
     vm = models.ForeignKey(to=Vm, on_delete=models.SET_NULL, related_name='sys_disk_snaps', null=True, verbose_name='虚拟机')
     ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.SET_NULL, null=True, verbose_name='CEPH POOL')
     disk = models.CharField(max_length=100, verbose_name='虚拟机系统盘')  # 同虚拟机uuid
-    snap = models.CharField(max_length=100, verbose_name='系统盘CEPH快照') # 默认名称为 disk@snap创建日期
+    snap = models.CharField(max_length=100, verbose_name='系统盘CEPH快照')  # 默认名称为 disk-snap创建日期
     create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
     remarks = models.TextField(default='', null=True, blank=True, verbose_name='备注')
 
@@ -400,7 +398,7 @@ class VmDiskSnap(models.Model):
         now_timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
         try:
             disk = self.sys_disk
-            snap_name = f'{disk}@{now_timestamp}'
+            snap_name = f'{disk}-{now_timestamp}'
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.create_snap(image_name=disk, snap_name=snap_name)
         except (RadosError, Exception) as e:
@@ -443,3 +441,40 @@ class VmDiskSnap(models.Model):
         if self.snap:
             self._remove_sys_snap()
         super().delete(using=using, keep_parents=keep_parents)
+
+
+class MigrateLog(models.Model):
+    id = models.AutoField(primary_key=True)
+    vm_uuid = models.CharField(max_length=36, verbose_name='虚拟机UUID')
+    src_host_id = models.IntegerField(verbose_name='源宿主机ID')
+    src_host_ipv4 = models.GenericIPAddressField(verbose_name='源宿主机IP')
+    dst_host_id = models.IntegerField(verbose_name='目标宿主机ID')
+    dst_host_ipv4 = models.GenericIPAddressField(verbose_name='目标宿主机IP')
+    migrate_time = models.DateTimeField(auto_now_add=True, verbose_name='迁移时间')
+    result = models.BooleanField(verbose_name='迁移结果(无错误)')
+    content = models.TextField(null=True, blank=True, verbose_name='文字记录')
+    src_undefined = models.BooleanField(default=False, verbose_name="已清理源云主机")
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = '虚拟机迁移记录'
+        verbose_name_plural = '虚拟机迁移记录表'
+
+def rename_sys_disk_delete(ceph, pool_name: str, disk_name: str):
+    """
+    虚拟机系统盘RBD镜像修改已删除归档的名称，格式：x_{time}_{disk_name}
+    :return:
+        True, new_disk_name    # success
+        False,new_disk_name   # failed
+    """
+    if disk_name.startswith('x_'):
+        return True, disk_name
+
+    time_str = timezone.now().strftime('%Y%m%d%H%M%S')
+    new_name = f"x_{time_str}_{disk_name}"
+    ok = rename_image(ceph=ceph, pool_name=pool_name, image_name=disk_name, new_name=new_name)
+    if not ok:
+        return False, disk_name
+
+    return True, new_name
+

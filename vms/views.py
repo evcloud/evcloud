@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views.generic.base import View
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
 
 from .manager import VmManager, VmError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
@@ -56,15 +57,18 @@ class VmsView(View):
         except VmError as e:
             return render(request, 'error.html', {'errors': ['查询虚拟机时错误',str(e)]})
 
+        queryset = queryset.prefetch_related('vdisk_set')   # 反向预查询硬盘（避免多次访问数据库）
         try:
             c_manager = CenterManager()
+            g_manager = GroupManager()
             centers = c_manager.get_center_queryset()
             if center_id > 0:
                 groups = c_manager.get_group_queryset_by_center(center_id)
             else:
-                groups = None
+                groups = g_manager.get_group_queryset()
+
             if group_id > 0:
-                hosts = GroupManager().get_host_queryset_by_group(group_id)
+                hosts = g_manager.get_host_queryset_by_group(group_id)
             else:
                 hosts = None
         except ComputeError as e:
@@ -191,3 +195,31 @@ class VmEditView(View):
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
         return render(request, 'vm_edit.html', context={'vm': vm})
+
+
+class VmResetView(View):
+    """虚拟机重置系统镜像类视图"""
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['云主机不存在']})
+
+        images = ImageManager().get_image_queryset_by_tag(tag=Image.TAG_BASE)
+        return render(request, 'vm_reset.html', context={'vm': vm, 'images': images})
+
+
+class VmMigrateView(View):
+    """虚拟机迁移类视图"""
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['云主机不存在']})
+
+        hosts = HostManager().get_hosts_by_group_id(group_id=vm.host.group_id)
+        return render(request, 'vm_migrate.html', context={'vm': vm, 'hosts': hosts})
