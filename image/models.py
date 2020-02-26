@@ -132,8 +132,12 @@ class Image(models.Model):
         self.create_newsnap = False
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
+            try:
+                rbd.remove_snap(image_name=self.base_image, snap=self.snap)     # 删除旧快照
+            except RadosError as e:
+                pass
             rbd.create_snap(image_name=self.base_image, snap_name=snap_name)
-        except (RadosError, Exception) as e:
+        except RadosError as e:
             raise Exception(f'create_snap error, {str(e)}')
 
         self.snap = snap_name

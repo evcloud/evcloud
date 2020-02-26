@@ -91,12 +91,13 @@ class RbdManager:
             msg = e.args[0] if e.args else 'error connecting to the cluster'
             raise RadosError(msg)
 
-    def create_snap(self,image_name:str, snap_name:str):
+    def create_snap(self, image_name: str, snap_name: str, protected: bool = False):
         '''
         为一个rbd image(卷)创建快照
 
         :param image_name: 要创建快照的rbd卷名称
         :param snap_name: 快照名称
+        :param protected: 是否设置快照protect; 默认False(不protect)
         :return:
             True    # success
             raise RadosError # failed
@@ -108,6 +109,8 @@ class RbdManager:
             with cluster.open_ioctx(self.pool_name) as ioctx:
                 with rbd.Image(ioctx=ioctx, name=image_name) as image:
                     image.create_snap(snap_name)  # Create a snapshot of the image.
+                    if protected:
+                        image.protect_snap(snap_name)
         except Exception as e:
             raise RadosError(f'create_snap error:{str(e)}')
 
@@ -255,6 +258,8 @@ class RbdManager:
         try:
             with cluster.open_ioctx(self.pool_name) as ioctx:
                 with rbd.Image(ioctx=ioctx, name=image_name) as image:
+                    if image.is_protected_snap(snap):   # protected snap check
+                        image.unprotect_snap(snap)
                     image.remove_snap(snap)
         except rbd.ObjectNotFound as e:
             return True
