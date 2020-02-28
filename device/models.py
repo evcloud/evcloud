@@ -80,9 +80,9 @@ class PCIDevice(Device):
         return False
 
     def need_in_same_host(self):
-        '''
-        设备是否需要与挂载的虚拟机在用同一个宿主机上
-        '''
+        """
+        设备是否需要与挂载的虚拟机在同一个宿主机上
+        """
         if self.type in [self.TYPE_GPU]:
             return True
         return False

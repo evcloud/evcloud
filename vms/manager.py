@@ -454,25 +454,37 @@ class VmManager(VirtAPI):
         :param vm: 虚拟机Vm()
         :param new_host: 目标宿主机Host()
         :return:
-            Vm()   # success
+            Vm(), begin_create  # success
+                begin_create: type bool; True：从新构建vm xml desc定义的vm，硬盘等设备需要重新挂载;
+                            False：实时获取源vm xml desc, 原挂载的设备不受影响
 
         :raises: VmError
         """
-        # 虚拟机xml
-        try:
-            vm_uuid = vm.uuid
-            image = vm.image
-            pool = image.ceph_pool
-            ceph = pool.ceph
-            xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
-            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, ceph_uuid=ceph.uuid,
-                                      ceph_pool=pool.pool_name, diskname=vm.disk, ceph_username=ceph.username,
-                                      ceph_hosts_xml=ceph.hosts_xml, mac=vm.mac_ip.mac, bridge=vm.mac_ip.vlan.br)
+        vm_uuid = vm.uuid
+        xml_desc = None
+        begin_create = False    # vm xml不是从新构建的
 
-            if not ceph.has_auth:
-                xml_desc = self._xml_remove_sys_disk_auth(xml_desc)
+        # 实时获取vm xml desc
+        try:
+            xml_desc = self.get_vm_xml_desc(host_ipv4=vm.host.ipv4, vm_uuid=vm_uuid)
         except Exception as e:
-            raise VmError(msg=f'构建虚拟机xml错误，{str(e)}')
+            pass
+
+        if not xml_desc:  # 实时获取vm xml, 从新构建虚拟机xml
+            begin_create = True     # vm xml从新构建的
+            try:
+                image = vm.image
+                pool = image.ceph_pool
+                ceph = pool.ceph
+                xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+                xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, ceph_uuid=ceph.uuid,
+                                          ceph_pool=pool.pool_name, diskname=vm.disk, ceph_username=ceph.username,
+                                          ceph_hosts_xml=ceph.hosts_xml, mac=vm.mac_ip.mac, bridge=vm.mac_ip.vlan.br)
+
+                if not ceph.has_auth:
+                    xml_desc = self._xml_remove_sys_disk_auth(xml_desc)
+            except Exception as e:
+                raise VmError(msg=f'构建虚拟机xml错误，{str(e)}')
 
         new_vm_define_ok = False
         try:
@@ -490,7 +502,7 @@ class VmManager(VirtAPI):
             except Exception as e:
                 raise VmError(msg='更新虚拟机元数据失败')
 
-            return vm
+            return vm, begin_create
         except Exception as e:
             # 目标宿主机删除虚拟机
             if new_vm_define_ok:
@@ -1626,7 +1638,7 @@ class VmAPI:
 
         # 目标宿主机创建虚拟机
         try:
-            vm = self._vm_manager.migrate_create_vm(vm=vm, new_host=new_host)
+            vm, from_begin_create = self._vm_manager.migrate_create_vm(vm=vm, new_host=new_host)
         except Exception as e:
             # 释放目标宿主机资源
             new_host.free(vcpu=vm.vcpu, mem=vm.mem)
@@ -1635,18 +1647,28 @@ class VmAPI:
         new_host.vm_created_num_add_1()  # 宿主机虚拟机数+1
 
         log_msg = ''
-        # 向虚拟机挂载硬盘
-        vdisks = vm.vdisks
-        for vdisk in vdisks:
-            try:
-                xml = vdisk.xml_desc(dev=vdisk.dev)
-                self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
-            except (VmError, Exception) as e:
-                log_msg += f'vdisk(uuid={vdisk.uuid}) 挂载失败,err={str(e)}；\n'
+        if from_begin_create:   # 从新构建vm xml创建的vm, 需要重新挂载硬盘等设备
+            # 向虚拟机挂载硬盘
+            vdisks = vm.vdisks
+            for vdisk in vdisks:
                 try:
-                    self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk.uuid)
-                except VdiskError as e2:
-                    log_msg += f'vdisk(uuid={vdisk.uuid})和vm(uuid={vm_uuid}元数据挂载关系解除失败),err={str(e2)}；\n'
+                    xml = vdisk.xml_desc(dev=vdisk.dev)
+                    self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
+                except (VmError, Exception) as e:
+                    log_msg += f'vdisk(uuid={vdisk.uuid}) 挂载失败,err={str(e)}；\n'
+                    try:
+                        self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk.uuid)
+                    except VdiskError as e2:
+                        log_msg += f'vdisk(uuid={vdisk.uuid})和vm(uuid={vm_uuid}元数据挂载关系解除失败),err={str(e2)}；\n'
+
+            # 如果挂载了硬盘，更新vm元数据中的xml
+            if vdisks:
+                try:
+                    xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+                    vm.xml = xml_desc
+                    vm.save(update_fields=['xml'])
+                except Exception:
+                    pass
 
         # 删除原宿主机上的虚拟机
         src_vm_undefined = False
@@ -1675,15 +1697,6 @@ class VmAPI:
             m_log.save()
         except Exception as e:
             pass
-
-        # 如果挂载了硬盘，更新vm元数据中的xml
-        if vdisks:
-            try:
-                xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
-                vm.xml = xml_desc
-                vm.save(update_fields=['xml'])
-            except Exception:
-                pass
 
         return vm
 

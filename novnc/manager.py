@@ -2,10 +2,12 @@
 #@author:   hai #@email:   zhhaim@qq.cn #@date:     2019-10-16
 #@desc:    novnc token管理模块。完成读写novnc的token配置文件到数据库			
 
-import os, uuid
+import uuid
 import subprocess
-import datetime
+
 from django.conf import settings
+from django.utils import timezone
+
 from .models import Token
 from utils.errors import Error
 
@@ -30,7 +32,7 @@ class NovncTokenManager(object):
         :raise: NovncError
         '''
         vncport = self.get_vm_vncinfo(vmid, hostip)
-        now = datetime.datetime.now()
+        now = timezone.now()
         #删除该hostip和vncport的历史token记录
         Token.objects.filter(ip = hostip).filter(port = vncport).filter(expiretime__lt=now).delete()
         #创建新的token记录
@@ -38,8 +40,8 @@ class NovncTokenManager(object):
         new_token = Token.objects.create(token = novnc_token, ip = hostip, port = vncport, expiretime = now)
  
         #删除（一年前 到 3天前）之间有更新的，现在过期的所有token记录
-        start_time = now - datetime.timedelta(days=365)   #print(start_time);
-        end_time   = now - datetime.timedelta(days=3)     #print(end_time);
+        start_time = now - timezone.timedelta(days=365)   #print(start_time);
+        end_time   = now - timezone.timedelta(days=3)     #print(end_time);
         Token.objects.filter(updatetime__range=(start_time, end_time)).filter(expiretime__lt=now).delete()   #注意 __range表示范围
         return(novnc_token, f"/novnc/?vncid={novnc_token}")
 
