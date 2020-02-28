@@ -5,6 +5,7 @@ from django.utils import timezone
 from .models import PCIDevice
 from utils.errors import Error
 
+
 class DeviceError(Error):
     '''
     PCIe设备相关错误定义
@@ -12,7 +13,7 @@ class DeviceError(Error):
     pass
 
 
-class BaseDevice():
+class BaseDevice:
     def __init__(self, db):
         self._db = db
 
@@ -141,11 +142,11 @@ class BasePCIDevice(BaseDevice):
     def mount(self, vm):
         try:
             with transaction.atomic():
-                db = PCIDevice.objects.select_for_update().get(pk = self._db.pk)
+                db = PCIDevice.objects.select_for_update().get(pk=self._db.pk)
                 if db.vm_id == vm.hex_uuid:
                     return True
 
-                if db.vm == None and db.enable == True:
+                if not db.vm and db.enable:
                     db.vm = vm
                     db.attach_time = timezone.now()
                     db.save()
@@ -159,8 +160,8 @@ class BasePCIDevice(BaseDevice):
     def umount(self):
         try:
             with transaction.atomic():
-                db = PCIDevice.objects.select_for_update().get(pk = self._db.pk)
-                if db.enable == True:
+                db = PCIDevice.objects.select_for_update().get(pk=self._db.pk)
+                if db.enable:
                     if not db.vm_id:
                         return True
 
@@ -178,7 +179,7 @@ class BasePCIDevice(BaseDevice):
         res = True
         try:
             with transaction.atomic():
-                db = PCIDevice.objects.select_for_update().get(pk = self._db.pk)
+                db = PCIDevice.objects.select_for_update().get(pk=self._db.pk)
                 db.enable = True
                 db.save()
                 self._db = db
@@ -190,7 +191,7 @@ class BasePCIDevice(BaseDevice):
         res = True
         try:
             with transaction.atomic():
-                db = PCIDevice.objects.select_for_update().get(pk = self._db.pk)
+                db = PCIDevice.objects.select_for_update().get(pk=self._db.pk)
                 db.enable = False
                 db.save()
                 self._db = db
