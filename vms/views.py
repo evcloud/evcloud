@@ -1,7 +1,6 @@
 from django.shortcuts import render
 from django.views.generic.base import View
 from django.contrib.auth import get_user_model
-from django.db.models import Prefetch
 
 from .manager import VmManager, VmError
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError

@@ -3,31 +3,41 @@ from django.db import models
 from compute.models import Host
 from vms.models import Vm
 
-class Device(models.Model):
+
+class PCIDevice(models.Model):
     '''
-    设备抽象基类
+    PCIe设备
     '''
-    TYPE_NOKNOW = 0
+    TYPE_UNKNOW = 0
     TYPE_GPU = 1
     CHOICES_TYPE = (
-        (TYPE_NOKNOW, '未知设备'),
+        (TYPE_UNKNOW, '未知设备'),
         (TYPE_GPU, 'GPU')
     )
 
     id = models.AutoField(primary_key=True)
-    type = models.SmallIntegerField(choices=CHOICES_TYPE, default=TYPE_NOKNOW, verbose_name='设备类型')
-    vm = models.ForeignKey(to=Vm, null=True, blank=True, related_name='device_set', on_delete=models.SET_NULL, verbose_name='挂载于虚拟机')
+    type = models.SmallIntegerField(choices=CHOICES_TYPE, default=TYPE_UNKNOW, verbose_name='设备类型')
+    vm = models.ForeignKey(to=Vm, null=True, blank=True, related_name='device_set', on_delete=models.SET_NULL,
+                           verbose_name='挂载于虚拟机')
     attach_time = models.DateTimeField(null=True, blank=True, verbose_name='挂载时间')
     enable = models.BooleanField(default=True, verbose_name='状态')
     remarks = models.TextField(null=True, blank=True, verbose_name='备注')
+    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, related_name='pci_devices', verbose_name='宿主机')
+    address = models.CharField(max_length=100, help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0')
 
     class Meta:
-        abstract = True
+        ordering = ['-id']
+        verbose_name = 'PCIe设备' 
+        verbose_name_plural = 'PCIe设备'
 
+    def __str__(self):
+        return self.host.ipv4 + '_' + self.address
+
+    @property
     def type_display(self):
         return self.get_type_display()
 
-    def set_remarks(self, content:str):
+    def set_remarks(self, content: str):
         '''
         设置设备备注信息
 
@@ -42,22 +52,6 @@ class Device(models.Model):
         except Exception:
             return False
         return True
-
-
-class PCIDevice(Device):
-    '''
-    PCIe设备
-    '''
-    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, related_name='pci_devices', verbose_name='宿主机')
-    address = models.CharField(max_length=100, help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0')
-
-    class Meta:
-        ordering = ['-id']
-        verbose_name = 'PCIe设备' 
-        verbose_name_plural = 'PCIe设备'
-
-    def __str__(self):
-        return self.host.ipv4 + '_' + self.address
 
     def user_has_perms(self, user):
         '''

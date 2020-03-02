@@ -1,6 +1,8 @@
 #coding=utf-8
+from django.db.models import Q
+
 from utils.ev_libvirt.virt import VirtAPI, VirtError
-from compute.managers import GroupManager, ComputeError
+from compute.managers import GroupManager, ComputeError, CenterManager
 from .models import PCIDevice
 from .device import GPUDevice, DeviceError
 
@@ -36,9 +38,27 @@ class PCIDeviceManager:
             PCIDevice()     # success
             None            # not exists
         '''
-        return self.get_device_queryset().filter(address = address).first()
+        return self.get_device_queryset().filter(address=address).first()
 
-    def get_device_queryset_by_group(self, group):
+    def get_pci_queryset_by_center(self, center):
+        """
+        分中心下的PCI设备查询集
+
+        :param center: Center对象或id
+        :return:
+            QuerySet()
+
+        :raises: DeviceError
+        """
+        try:
+            group_ids = CenterManager().get_group_ids_by_center(center)
+            host_ids = GroupManager().get_hsot_ids_by_group_ids(group_ids)
+        except ComputeError as e:
+            raise DeviceError(msg=str(e))
+
+        return self.get_device_queryset().filter(host__in=host_ids).all()
+
+    def get_pci_queryset_by_group(self, group):
         '''
         宿主机组下的PCI设备查询集
 
@@ -55,6 +75,18 @@ class PCIDeviceManager:
 
         return self.get_device_queryset().filter(host__in=ids).all()
 
+    def get_pci_queryset_by_host(self, host):
+        """
+        宿主机的PCI设备查询集
+
+        :param host: Host对象或id
+        :return:
+            QuerySet()
+
+        :raises: DeviceError
+        """
+        return self.get_device_queryset().filter(host=host).all()
+
     def device_wrapper(self, device:PCIDevice):
         '''
         PCI设备对象的包装器
@@ -70,7 +102,7 @@ class PCIDeviceManager:
 
         return DeviceError(msg='未知设备')
 
-    def mount_to_vm(self, device:PCIDevice, vm):
+    def mount_to_vm(self, device: PCIDevice, vm):
         '''
         挂载设备到虚拟机
 
@@ -126,3 +158,51 @@ class PCIDeviceManager:
             return True
 
         raise DeviceError(msg='虚拟机解除挂载关系失败')
+
+    def filter_pci_queryset(self, center_id: int = 0, group_id: int = 0, host_id: int = 0, type_id: int = 0,
+                            search: str = '', all_no_filters: bool = False, related_fields: tuple = ()):
+        """
+        通过条件筛选虚拟机查询集
+
+        :param center_id: 分中心id,大于0有效
+        :param group_id: 机组id,大于0有效
+        :param host_id: 宿主机id,大于0有效
+        :param type_id: 设备类型id,大于0有效
+        :param search: 关键字筛选条件
+        :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
+        :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
+        :return:
+            QuerySet    # success
+
+        :raise: DeviceError
+        """
+        if not related_fields:
+            related_fields = ('host__group', 'vm__mac_ip')
+
+        if center_id <= 0 and group_id <= 0 and host_id <= 0 and type_id <= 0 and not search:
+            if not all_no_filters:
+                raise DeviceError(msg='无有效的查询条件')
+
+            return self.get_device_queryset().select_related(*related_fields).all()
+
+        queryset = None
+        if host_id > 0:
+            queryset = self.get_pci_queryset_by_host(host=host_id)
+        elif group_id > 0:
+            queryset = self.get_pci_queryset_by_group(group_id)
+        elif center_id > 0:
+            queryset = self.get_pci_queryset_by_center(center_id)
+
+        if type_id > 0:
+            if queryset is not None:
+                queryset = queryset.filter(type=type_id).all()
+            else:
+                queryset = self.get_device_queryset().filter(type=type_id).all()
+
+        if search:
+            if queryset is not None:
+                queryset = queryset.filter(Q(remarks__icontains=search) | Q(host__ipv4__icontains=search)).all()
+            else:
+                queryset = self.get_device_queryset().filter(Q(remarks__icontains=search) | Q(host__ipv4__icontains=search)).all()
+
+        return queryset.select_related(*related_fields).all()
