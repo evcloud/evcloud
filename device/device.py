@@ -41,7 +41,7 @@ class BaseDevice:
 
     @property
     def type_name(self):
-        return self._db.type_display()
+        return self._db.type_display
 
     @property
     def host_ipv4(self):

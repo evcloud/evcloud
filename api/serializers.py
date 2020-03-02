@@ -273,9 +273,9 @@ class PCIDeviceSerializer(serializers.Serializer):
     PCI设备序列化器
     '''
     id = serializers.IntegerField()
+    type = serializers.SerializerMethodField()
     vm = serializers.SerializerMethodField()
     host = serializers.SerializerMethodField()
-    snap = serializers.CharField()
     attach_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     remarks = serializers.CharField()
 
@@ -290,6 +290,9 @@ class PCIDeviceSerializer(serializers.Serializer):
         if host:
             return {'id': host.id, 'ipv4': host.ipv4}
         return host
+
+    def get_type(self, obj):
+        return {'val': obj.type, 'name': obj.type_display}
 
 
 class MacIPSerializer(serializers.Serializer):

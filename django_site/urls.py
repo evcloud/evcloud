@@ -43,6 +43,7 @@ urlpatterns = [
     path('api/v3/', include('api.urls', namespace='api')),
     path('vms/',include('vms.urls', namespace='vms')),
     path('vdisk/',include('vdisk.urls', namespace='vdisk')),
+    path('device/', include('device.urls', namespace='device')),
     path('novnc/',include('novnc.urls', namespace='novnc')),
     path('network/',include('network.urls', namespace='network')),
     path('image/',include('image.urls', namespace='image')),

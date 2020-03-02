@@ -20,7 +20,7 @@ from network.managers import MacIPManager
 from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
-from device.manager import PCIDeviceManager
+from device.manager import PCIDeviceManager, DeviceError
 from . import serializers
 
 
@@ -2128,12 +2128,40 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         operation_summary='获取PCI设备列表',
         manual_parameters=[
             openapi.Parameter(
+                name='center_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，所属分中心id'
+            ),
+            openapi.Parameter(
                 name='group_id',
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
                 description='筛选条件，所属宿主机组id'
-            )
+            ),
+            openapi.Parameter(
+                name='host_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，所属宿主机id'
+            ),
+            openapi.Parameter(
+                name='type',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，设备类型'
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='筛选条件，关键字'
+            ),
         ],
     )
     def list(self, request, *args, **kwargs):
@@ -2141,18 +2169,39 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         获取PCI设备列表
 
             http code 200:
+            {
+                "count": 1,
+                "next": null,
+                "previous": null,
+                "results": [
                 {
-                  "count": 0,
-                  "next": null,
-                  "previous": null,
-                  "results": []
+                  "id": 1,
+                  "type": {
+                    "val": 1,
+                    "name": "GPU"
+                  },
+                  "vm": null,
+                  "host": {
+                    "id": 1,
+                    "ipv4": "10.100.50.121"
+                  },
+                  "attach_time": null,
+                  "remarks": ""
                 }
+                ]
+            }
         '''
-        group_id = int(request.query_params.get('group_id', 0))
-        if group_id > 0:
-            queryset = PCIDeviceManager().get_device_queryset_by_group(group_id).select_related('host', 'vm').all()
-        else:
-            queryset = PCIDeviceManager().get_device_queryset().select_related('host', 'vm').all()
+        center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
+        group_id = str_to_int_or_default(request.query_params.get('group_id', 0), 0)
+        host_id = str_to_int_or_default(request.query_params.get('host_id', 0), 0)
+        type_val = str_to_int_or_default(request.query_params.get('type', 0), 0)
+        search = str_to_int_or_default(request.query_params.get('search', 0), 0)
+
+        try:
+            queryset = PCIDeviceManager().filter_pci_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
+                       type_id=type_val, search=search, all_no_filters=True, related_fields=('host', 'vm'))
+        except DeviceError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
