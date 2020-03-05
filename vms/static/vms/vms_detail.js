@@ -278,7 +278,7 @@
     let render_vm_snap_item = template.compile(`
         <tr id="tr_snap_{{ snap.id }}">
             <td>{{ snap.id }}</td>
-            <td>{{ snap.snap }}</td>
+            <td class="line-limit-length" style="max-width: 150px;" title="{{ snap.snap }}">{{ snap.snap }}</td>
             <td>{{ snap.create_time }}</td>
             <td class="mouse-hover">
                 <div>

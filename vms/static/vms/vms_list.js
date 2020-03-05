@@ -12,7 +12,7 @@
     $('.edit_vm_remark').click(function (e) {
         e.preventDefault();
 
-        vm_uuid = $(this).attr('vm_uuid');
+        let vm_uuid = $(this).attr('vm_uuid');
         let div_show = $(this).parent();
         div_show.hide();
 		div_show.next().show();

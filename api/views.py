@@ -570,8 +570,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         '''
         修改虚拟机备注信息
         '''
-        remark = request.query_params.get('remark')
-        if not remark:
+        remark = request.query_params.get('remark', None)
+        if remark is None:
             return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
 
         vm_uuid = kwargs.get(self.lookup_field, '')
@@ -714,8 +714,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         '''
         修改虚拟机快照备注信息
         '''
-        remark = request.query_params.get('remark')
-        if not remark:
+        remark = request.query_params.get('remark', None)
+        if remark is None:
             return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
 
         snap_id = str_to_int_or_default(kwargs.get('id', '0'), default=0)
@@ -1820,9 +1820,9 @@ class VDiskViewSet(viewsets.GenericViewSet):
         '''
         修改云硬盘备注信息
         '''
-        remark = request.query_params.get('remark')
-        if not remark:
-            return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
+        remark = request.query_params.get('remark', None)
+        if remark is None:
+            return Response(data={'code': 400, 'code_text': '参数有误，未提交remark参数'}, status=status.HTTP_400_BAD_REQUEST)
 
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VdiskManager()
