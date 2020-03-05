@@ -406,7 +406,7 @@ class VdiskManager:
 
         disk.remarks = remarks
         try:
-            disk.save()
+            disk.save(update_fields=['remarks'])
         except Exception as e:
             raise VdiskError(msg=str(e))
 
