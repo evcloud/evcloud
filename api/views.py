@@ -1995,7 +1995,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         centers = CenterManager().get_stat_center_queryset().values('id', 'name', 'mem_total', 'mem_allocated',
                                          'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
-        groups = GroupManager().get_stat_group_wueryset().values('id', 'name', 'center__name', 'mem_total',
+        groups = GroupManager().get_stat_group_queryset().values('id', 'name', 'center__name', 'mem_total',
                                         'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         hosts = Host.objects.select_related('group').values('id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
                                             'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
@@ -2050,7 +2050,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         if not center:
             return Response({'code': 200, 'code_text': '分中心不存在'}, status=status.HTTP_400_BAD_REQUEST)
 
-        groups = GroupManager().get_stat_group_wueryset(filter={'center': c_id}).values('id', 'name', 'center__name',
+        groups = GroupManager().get_stat_group_queryset(filter={'center': c_id}).values('id', 'name', 'center__name',
                              'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
 
@@ -2097,7 +2097,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         g_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if g_id > 0:
-            group = GroupManager().get_stat_group_wueryset(filter={'id': g_id}).values('id', 'name', 'center__name',
+            group = GroupManager().get_stat_group_queryset(filter={'id': g_id}).values('id', 'name', 'center__name',
                     'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total','vcpu_allocated', 'vm_created').first()
         else:
             group = None
@@ -2197,9 +2197,13 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         type_val = str_to_int_or_default(request.query_params.get('type', 0), 0)
         search = str_to_int_or_default(request.query_params.get('search', 0), 0)
 
+        user = request.user
+        if not (user and user.is_authenticated):
+            return Response(data={'code': 401, 'code_text': '未身份认证，无权限'}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             queryset = PCIDeviceManager().filter_pci_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
-                       type_id=type_val, search=search, all_no_filters=True, related_fields=('host', 'vm'))
+                       type_id=type_val, search=search, user=user, related_fields=('host', 'vm'))
         except DeviceError as e:
             return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

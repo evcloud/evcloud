@@ -38,22 +38,24 @@ class PCIView(View):
         host_id = str_to_int_or_default(request.GET.get('host', 0), 0)
         type_id = str_to_int_or_default(request.GET.get('type', 0), 0)
         search = request.GET.get('search', '')
+        user = request.user
 
+        c_manager = CenterManager()
+        g_manager = GroupManager()
         p_manager = PCIDeviceManager()
+        p_manager._group_manager = g_manager
         try:
             queryset = p_manager.filter_pci_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
-                                                     search=search, type_id=type_id, all_no_filters=True)
+                                                     search=search, type_id=type_id, user=user, all_no_filters=True)
         except DeviceError as e:
             return render(request, 'error.html', {'errors': ['查询PCI设备时错误', str(e)]})
 
         try:
-            c_manager = CenterManager()
-            g_manager = GroupManager()
             centers = c_manager.get_center_queryset()
             if center_id > 0:
-                groups = c_manager.get_group_queryset_by_center(center_id)
+                groups = c_manager.get_user_group_queryset_by_center(center_or_id=center_id, user=user)
             else:
-                groups = g_manager.get_group_queryset()
+                groups = c_manager.get_user_group_queryset(user=user)
 
             if group_id > 0:
                 hosts = g_manager.get_host_queryset_by_group(group_id)

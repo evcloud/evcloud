@@ -2,13 +2,18 @@
 from django.db.models import Q
 
 from utils.ev_libvirt.virt import VirtAPI, VirtError
-from compute.managers import GroupManager, ComputeError, CenterManager
+from compute.managers import GroupManager, ComputeError, CenterManager, HostManager
 from .models import PCIDevice
 from .device import GPUDevice, DeviceError
 
 
 class PCIDeviceManager:
     DeviceError = DeviceError
+
+    def __init__(self):
+        self._center_manager = CenterManager()
+        self._group_manager = GroupManager()
+        self._host_manager = HostManager()
 
     def get_device_queryset(self):
         '''
@@ -51,8 +56,27 @@ class PCIDeviceManager:
         :raises: DeviceError
         """
         try:
-            group_ids = CenterManager().get_group_ids_by_center(center)
-            host_ids = GroupManager().get_hsot_ids_by_group_ids(group_ids)
+            group_ids = self._center_manager.get_group_ids_by_center(center)
+            host_ids = self._group_manager.get_host_ids_by_group_ids(group_ids)
+        except ComputeError as e:
+            raise DeviceError(msg=str(e))
+
+        return self.get_device_queryset().filter(host__in=host_ids).all()
+
+    def get_user_pci_queryset_by_center(self, center, user):
+        """
+        用户有访问权限的，分中心下的PCI设备查询集
+
+        :param center: Center对象或id
+        :param user: 用户对象
+        :return:
+            QuerySet()
+
+        :raises: DeviceError
+        """
+        try:
+            group_ids = self._center_manager.get_user_group_ids_by_center(center=center, user=user)
+            host_ids = self._group_manager.get_host_ids_by_group_ids(group_ids)
         except ComputeError as e:
             raise DeviceError(msg=str(e))
 
@@ -69,7 +93,30 @@ class PCIDeviceManager:
         :raises: DeviceError
         '''
         try:
-            ids = GroupManager().get_host_ids_by_group(group_or_id=group)
+            ids = self._group_manager.get_host_ids_by_group(group_or_id=group)
+        except ComputeError as e:
+            raise DeviceError(msg=str(e))
+
+        return self.get_device_queryset().filter(host__in=ids).all()
+
+    def get_user_pci_queryset_by_group(self, group, user):
+        '''
+        用户有访问权限的，机组下的PCI设备查询集
+
+        :param group: Group对象或id
+        :param user: 用户对象
+        :return:
+            QuerySet()
+
+        :raises: DeviceError
+        '''
+        gm = self._group_manager
+
+        try:
+            group = gm.enforce_group_obj(group)
+            if not group.user_has_perms(user=user):
+                raise DeviceError(msg='无宿主机组的访问权限')
+            ids = gm.get_host_ids_by_group(group_or_id=group)
         except ComputeError as e:
             raise DeviceError(msg=str(e))
 
@@ -85,6 +132,27 @@ class PCIDeviceManager:
 
         :raises: DeviceError
         """
+        return self.get_device_queryset().filter(host=host).all()
+
+    def get_user_pci_queryset_by_host(self, host, user):
+        """
+        用户有访问权限的，宿主机的PCI设备查询集
+
+        :param host: Host对象或id
+        :param user: 用户对象
+        :return:
+            QuerySet()
+
+        :raises: DeviceError
+        """
+        try:
+            host = self._host_manager.enforce_host_obj(host)
+        except ComputeError as e:
+            raise DeviceError(msg=str(e))
+
+        if not host.user_has_perms(user=user):
+            raise DeviceError(msg='无宿主机的访问权限')
+
         return self.get_device_queryset().filter(host=host).all()
 
     def device_wrapper(self, device:PCIDevice):
@@ -160,7 +228,7 @@ class PCIDeviceManager:
         raise DeviceError(msg='虚拟机解除挂载关系失败')
 
     def filter_pci_queryset(self, center_id: int = 0, group_id: int = 0, host_id: int = 0, type_id: int = 0,
-                            search: str = '', all_no_filters: bool = False, related_fields: tuple = ()):
+                            search: str = '', user=None, all_no_filters: bool = False, related_fields: tuple = ()):
         """
         通过条件筛选虚拟机查询集
 
@@ -169,6 +237,7 @@ class PCIDeviceManager:
         :param host_id: 宿主机id,大于0有效
         :param type_id: 设备类型id,大于0有效
         :param search: 关键字筛选条件
+        :param user: 用户对象
         :param all_no_filters: 筛选条件都无效时；True: 返回所有； False: 抛出错误
         :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
         :return:
@@ -179,7 +248,7 @@ class PCIDeviceManager:
         if not related_fields:
             related_fields = ('host__group', 'vm__mac_ip')
 
-        if center_id <= 0 and group_id <= 0 and host_id <= 0 and type_id <= 0 and not search:
+        if center_id <= 0 and group_id <= 0 and host_id <= 0 and type_id <= 0 and not search and not user:
             if not all_no_filters:
                 raise DeviceError(msg='无有效的查询条件')
 
@@ -187,11 +256,11 @@ class PCIDeviceManager:
 
         queryset = None
         if host_id > 0:
-            queryset = self.get_pci_queryset_by_host(host=host_id)
+            queryset = self.get_user_pci_queryset_by_host(host=host_id, user=user)
         elif group_id > 0:
-            queryset = self.get_pci_queryset_by_group(group_id)
+            queryset = self.get_user_pci_queryset_by_group(group_id, user=user)
         elif center_id > 0:
-            queryset = self.get_pci_queryset_by_center(center_id)
+            queryset = self.get_user_pci_queryset_by_center(center=center_id, user=user)
 
         if type_id > 0:
             if queryset is not None:

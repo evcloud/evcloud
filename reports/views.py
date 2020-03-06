@@ -15,7 +15,7 @@ class ReportsListView(View):
 
         centers = CenterManager().get_stat_center_queryset().values('id', 'name', 'mem_total', 'mem_allocated',
                                                             'real_cpu', 'vcpu_total', 'vcpu_allocated', 'vm_created')
-        groups = GroupManager().get_stat_group_wueryset().values('id', 'name', 'center__name', 'mem_total', 'mem_allocated',
+        groups = GroupManager().get_stat_group_queryset().values('id', 'name', 'center__name', 'mem_total', 'mem_allocated',
                                                             'real_cpu', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         hosts = Host.objects.select_related('group').values('id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
                                                         'real_cpu', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
