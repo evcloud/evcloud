@@ -296,7 +296,7 @@
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
-        for (let i in vm_uuids){
+        for (let i=0, len=vm_uuids.length; i < len; i++){
             start_vm(vm_uuids[i]);
         }
     });
@@ -310,7 +310,7 @@
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
-        for (let i in vm_uuids){
+        for (let i=0, len=vm_uuids.length; i < len; i++){
             shutdown_vm(vm_uuids[i]);
         }
     });
@@ -324,7 +324,7 @@
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
-        for (let i in vm_uuids){
+        for (let i=0, len=vm_uuids.length; i < len; i++){
             poweroff_vm(vm_uuids[i]);
         }
     });
@@ -338,7 +338,7 @@
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
-        for (let i in vm_uuids){
+        for (let i=0, len=vm_uuids.length; i < len; i++){
             delete_vm(vm_uuids[i], 'delete');
         }
     });
@@ -352,7 +352,7 @@
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
-        for (let i in vm_uuids){
+        for (let i=0, len=vm_uuids.length; i < len; i++){
             delete_vm(vm_uuids[i], 'delete_force');
         }
     });
@@ -370,7 +370,7 @@
             error: function (xhr, msg, err) {
                 msg = '打开vnc失败';
                 try {
-                    data = xhr.responseJSON;
+                    let data = xhr.responseJSON;
                     if (data.hasOwnProperty('code_text')) {
                         msg = '打开vnc失败,' + data.code_text;
                     }

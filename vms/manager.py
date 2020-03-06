@@ -124,7 +124,7 @@ class VmManager(VirtAPI):
         '''
         try:
             group_ids = CenterManager().get_group_ids_by_center(center_or_id)
-            host_ids = GroupManager().get_hsot_ids_by_group_ids(group_ids)
+            host_ids = GroupManager().get_host_ids_by_group_ids(group_ids)
         except ComputeError as e:
             raise VmError(msg=str(e))
 
