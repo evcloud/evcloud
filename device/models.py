@@ -71,3 +71,10 @@ class PCIDevice(models.Model):
         if self.type in [self.TYPE_GPU]:
             return True
         return False
+
+    @property
+    def is_mounted(self):
+        """是否已挂载"""
+        if self.vm_id:
+            return True
+        return False
