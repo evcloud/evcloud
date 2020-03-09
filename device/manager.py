@@ -22,7 +22,7 @@ class PCIDeviceManager:
         '''
         return PCIDevice.objects.all()
 
-    def get_device_by_id(self, device_id:int, related_fields=('host',)):
+    def get_device_by_id(self, device_id: int, related_fields=('host',)):
         '''
         :return:
             PCIDevice()     # success
@@ -44,6 +44,23 @@ class PCIDeviceManager:
             None            # not exists
         '''
         return self.get_device_queryset().filter(address=address).first()
+
+    def get_user_pci_queryset(self, user):
+        """
+        用户有访问权限的PCI设备查询集
+
+        :param user: 用户对象
+        :return:
+            QuerySet()
+
+        :raises: DeviceError
+        """
+        try:
+            h_ids = GroupManager().get_user_host_ids(user=user)
+            qs = self.get_device_queryset().filter(id__in=h_ids).all()
+        except ComputeError as e:
+            raise DeviceError(msg=str(e))
+        return qs
 
     def get_pci_queryset_by_center(self, center):
         """
@@ -187,8 +204,10 @@ class PCIDeviceManager:
             if dev.host_id != host.id:
                 raise DeviceError(msg='设备和虚拟机不在同一宿主机')
 
-        if dev.mount(vm=vm):
-            raise DeviceError(msg='与虚拟机建立挂载关系失败')
+        try:
+            dev.mount(vm=vm)
+        except DeviceError as e:
+            raise DeviceError(msg=f'与虚拟机建立挂载关系失败, {str(e)}')
 
         xml_desc = dev.xml_desc
         try:
@@ -196,7 +215,10 @@ class PCIDeviceManager:
                 return True
             raise VirtError(msg='挂载到虚拟机失败')
         except VirtError as e:
-            dev.umount()
+            try:
+                dev.umount()
+            except:
+                pass
             raise DeviceError(msg=str(e))
 
     def umount_from_vm(self, device: PCIDevice):
@@ -216,16 +238,20 @@ class PCIDeviceManager:
 
         host = vm.host
         xml_desc = dev.xml_desc
+        v_api = VirtAPI()
         try:
-            if not VirtAPI().detach_device(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid, xml=xml_desc):
+            if not v_api.detach_device(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid, xml=xml_desc):
                 raise VirtError(msg='从虚拟机卸载设备失败')
         except VirtError as e:
             raise DeviceError(msg=str(e))
 
-        if dev.umount():
-            return True
+        try:
+            dev.umount()
+        except DeviceError as e:
+            v_api.attach_device(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid, xml=xml_desc)
+            raise DeviceError(msg=f'与虚拟机解除挂载关系失败, {str(e)}')
 
-        raise DeviceError(msg='虚拟机解除挂载关系失败')
+        return True
 
     def filter_pci_queryset(self, center_id: int = 0, group_id: int = 0, host_id: int = 0, type_id: int = 0,
                             search: str = '', user=None, all_no_filters: bool = False, related_fields: tuple = ()):
@@ -248,7 +274,10 @@ class PCIDeviceManager:
         if not related_fields:
             related_fields = ('host__group', 'vm__mac_ip')
 
-        if center_id <= 0 and group_id <= 0 and host_id <= 0 and type_id <= 0 and not search and not user:
+        if center_id <= 0 and group_id <= 0 and host_id <= 0 and type_id <= 0 and not search:
+            if user and user.id:
+                return self.get_user_pci_queryset(user=user)
+
             if not all_no_filters:
                 raise DeviceError(msg='无有效的查询条件')
 

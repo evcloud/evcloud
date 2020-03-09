@@ -62,16 +62,7 @@ class PCIDevice(models.Model):
             True    # has
             False   # no
         '''
-        if not isinstance(user.id, int): # 未认证用户
-            return False
-
-        if user.is_superuser:
-            return True
-
-        if self.host.group.users.filter(pk=user.pk).exists():
-            return True
-
-        return False
+        return self.host.user_has_perms(user=user)
 
     def need_in_same_host(self):
         """

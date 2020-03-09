@@ -140,40 +140,58 @@ class BasePCIDevice(BaseDevice):
         return self._db.need_in_same_host()
 
     def mount(self, vm):
+        """
+        设备元数据层面与虚拟机建立挂载关系
+
+        :return:
+            True                # success
+            raise DeviceError   # failed
+
+        :raise: DeviceError
+        """
         try:
             with transaction.atomic():
                 db = PCIDevice.objects.select_for_update().get(pk=self._db.pk)
+                if not db.enable:
+                    raise DeviceError(msg='设备未开启使用')
+
                 if db.vm_id == vm.hex_uuid:
                     return True
 
-                if not db.vm and db.enable:
-                    db.vm = vm
-                    db.attach_time = timezone.now()
-                    db.save()
-                    self._db = db
-                    return True
-                else:
-                    return False
-        except:
-            return False
+                if db.vm_id:
+                    raise DeviceError(msg='设备已被挂载于其他主机')
+
+                db.vm = vm
+                db.attach_time = timezone.now()
+                db.save(update_fields=['vm', 'attach_time'])
+                self._db = db
+                return True
+        except Exception as e:
+            raise DeviceError(msg=str(e))
 
     def umount(self):
+        """
+        设备元数据层面与虚拟机解除挂载关系
+
+        :return:
+            True                # success
+            raise DeviceError   # failed
+
+        :raise: DeviceError
+        """
         try:
             with transaction.atomic():
                 db = PCIDevice.objects.select_for_update().get(pk=self._db.pk)
-                if db.enable:
-                    if not db.vm_id:
-                        return True
-
-                    db.vm = None
-                    db.attach_time = None
-                    db.save()
-                    self._db = db
+                if not db.vm_id:
                     return True
-                else:
-                    return False
-        except:
-            return False
+
+                db.vm = None
+                db.attach_time = None
+                db.save(update_fields=['vm', 'attach_time'])
+                self._db = db
+                return True
+        except Exception as e:
+            raise DeviceError(msg=str(e))
 
     def set_enable(self):
         res = True
@@ -181,7 +199,7 @@ class BasePCIDevice(BaseDevice):
             with transaction.atomic():
                 db = PCIDevice.objects.select_for_update().get(pk=self._db.pk)
                 db.enable = True
-                db.save()
+                db.save(update_fields=['enable'])
                 self._db = db
         except:
             res = False
@@ -193,7 +211,7 @@ class BasePCIDevice(BaseDevice):
             with transaction.atomic():
                 db = PCIDevice.objects.select_for_update().get(pk=self._db.pk)
                 db.enable = False
-                db.save()
+                db.save(update_fields=['enable'])
                 self._db = db
         except:
             res = False

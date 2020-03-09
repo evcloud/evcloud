@@ -58,7 +58,7 @@ class Group(models.Model):
             True    # has
             False   # no
         '''
-        if not user:
+        if not user or not user.id:
             return False
 
         if user.is_superuser:   # 超级用户

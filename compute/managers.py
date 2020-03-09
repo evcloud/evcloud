@@ -175,6 +175,23 @@ class CenterManager:
 
         return user.group_set.all()
 
+    def get_user_group_ids(self, user):
+        """
+        获取用户有权限的宿主机组id list
+
+        :param user: 用户对象
+        :return:
+            ids: list   # success
+
+        :raise ComputeError
+        """
+        qs = self.get_user_group_queryset(user=user)
+        try:
+            ids = list(qs.values_list('id', flat=True).all())
+        except Exception as e:
+            raise ComputeError(msg=f'查询宿主机组id错误，{str(e)}')
+        return ids
+
     def get_user_group_queryset_by_center(self, center_or_id, user):
         '''
         获取分中心下的宿主机组查询集
@@ -443,6 +460,36 @@ class GroupManager:
             return self.get_host_ids_by_group(group_or_ids)
 
         raise ComputeError(msg='无效的宿主机组参数')
+
+    def get_user_host_queryset(self, user):
+        """
+        获取用户有权限访问的宿主机查询集
+
+        :param user: 用户对象
+        :return:
+            QuerySet   # success
+
+        :raise ComputeError
+        """
+        g_ids = CenterManager().get_user_group_ids(user=user)
+        return self.get_host_queryset_by_group_ids(ids=g_ids)
+
+    def get_user_host_ids(self, user):
+        """
+        获取用户有权限访问的宿主机id list
+
+        :param user: 用户对象
+        :return:
+            ids: list   # success
+
+        :raise ComputeError
+        """
+        hosts = self.get_user_host_queryset(user=user)
+        try:
+            ids = list(hosts.values_list('id', flat=True).all())
+        except Exception as e:
+            raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
+        return ids
 
     @staticmethod
     def get_stat_group_queryset(filters: dict = None):
