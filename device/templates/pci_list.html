@@ -81,6 +81,7 @@
                     <th>虚拟机</th>
                     <th>挂载时间</th>
                     <th width="180px">备注</th>
+                    <th>操作</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -98,6 +99,13 @@
                             <td>无</td>
                         {% endif %}
                         <td>{{ dev.remarks | default:'无' }}</td>
+                        <td>
+                            {% if dev.is_mounted %}
+                                <button class="btn btn-sm btn-danger btn-pci-unmount" data-pci-id="{{ dev.id }}">卸载</button>
+                            {% else %}
+                                <a class="btn btn-sm btn-success" href="{% url 'device:pci-mount' pci_id=dev.id %}">挂载</a>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

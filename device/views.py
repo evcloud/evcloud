@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.views import View
 
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
+from vms.manager import VmManager
 from utils.paginators import NumsPaginator
 from .manager import PCIDeviceManager, DeviceError
 from .models import PCIDevice
@@ -64,16 +65,10 @@ class PCIView(View):
         except ComputeError as e:
             return render(request, 'error.html', {'errors': ['查询PCI设备时错误', str(e)]})
 
-        context = {}
-        context['center_id'] = center_id if center_id > 0 else None
-        context['centers'] = centers
-        context['groups'] = groups
-        context['group_id'] = group_id if group_id > 0 else None
-        context['hosts'] = hosts
-        context['host_id'] = host_id if host_id > 0 else None
-        context['search'] = search
-        context['types'] = PCIDevice.CHOICES_TYPE
-        context['type_id'] = type_id
+        context = {'center_id': center_id if center_id > 0 else None, 'centers': centers, 'groups': groups,
+                   'group_id': group_id if group_id > 0 else None, 'hosts': hosts,
+                   'host_id': host_id if host_id > 0 else None, 'search': search, 'types': PCIDevice.CHOICES_TYPE,
+                   'type_id': type_id}
         context = self.get_vms_list_context(request, queryset, context)
         return render(request, 'pci_list.html', context=context)
 
@@ -86,6 +81,54 @@ class PCIView(View):
 
         context['page_nav'] = page_nav
         context['devices'] = vms_page
+        context['count'] = paginator.count
+        return context
+
+
+class PCIMountView(View):
+    NUM_PER_PAGE = 20
+
+    def get(self, request, *args, **kwargs):
+        pci_id = kwargs.get('pci_id', '')
+        search = request.GET.get('search', '')
+
+        mgr = PCIDeviceManager()
+        dev = mgr.get_device_by_id(device_id=pci_id, related_fields=('host__group', 'vm'))
+        if not dev:
+            return render(request, 'error.html', {'errors': ['挂载PCI设备时错误', 'PCI设备不存在']})
+
+        context = {'device': dev, 'search': search}
+        # 如果已被挂载
+        if dev.vm:
+            return render(request, 'pci_mount.html', context=context)
+
+        host = dev.host
+        user = request.user
+
+        vm_manager = VmManager()
+        related_fields = ('user', 'image', 'mac_ip')
+        try:
+            if user.is_superuser:
+                queryset = vm_manager.filter_vms_queryset(host_id=host.id, search=search,
+                                                          related_fields=related_fields)
+            else:
+                queryset = vm_manager.filter_vms_queryset(host_id=host.id, search=search, user_id=user.id,
+                                                          related_fields=related_fields)
+        except vm_manager.VmError as e:
+            return render(request, 'error.html', {'errors': ['查询挂载云主机列表时错误', str(e)]})
+
+        context = self.get_vms_list_context(request=request, queryset=queryset, context=context)
+        return render(request, 'pci_mount.html', context=context)
+
+    def get_vms_list_context(self, request, queryset, context: dict):
+        # 分页显示
+        paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
+        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page = paginator.get_page(page_num)
+        page_nav = paginator.get_page_nav(page)
+
+        context['page_nav'] = page_nav
+        context['vms'] = page
         context['count'] = paginator.count
         return context
 

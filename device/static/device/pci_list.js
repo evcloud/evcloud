@@ -28,4 +28,30 @@
         this.form.submit();
     });
 
+    // 卸载设备
+    $(".btn-pci-unmount").click(function (e) {
+        e.preventDefault();
+
+        if(!confirm("确定卸载设备？"))
+            return;
+
+        let pci_id = $(this).attr("data-pci-id");
+        let api = build_absolute_url('api/v3/pci/' + pci_id + '/umount/');
+        $.ajax({
+            url: api,
+            type: 'post',
+            success: function (data, status_text) {
+                alert('已成功卸载设备');
+            },
+            error: function (xhr, msg, err) {
+                let data = xhr.responseJSON;
+                msg = '卸载设备失败';
+                if (data && data.hasOwnProperty('code_text')){
+                    msg = data.code_text;
+                }
+                alert(msg);
+            }
+        });
+    });
+
 })();
