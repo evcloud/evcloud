@@ -122,7 +122,7 @@ class Vm(models.Model):
         if user.is_superuser:
             return True
 
-        if self.user == user:
+        if self.user_id == user.id:
             return True
 
         return False
