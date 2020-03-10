@@ -8,6 +8,7 @@ from network.managers import VlanManager
 from vdisk.manager import VdiskManager, VdiskError
 from image.managers import ImageManager, ImageError
 from image.models import Image
+from device.manager import PCIDeviceManager, DeviceError
 from utils.paginators import NumsPaginator
 
 # Create your views here.
@@ -149,7 +150,7 @@ class VmMountDiskView(View):
             else:
                 queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search, user_id=user.id, related_fields=related_fields)
         except VdiskError as e:
-            return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
+            return render(request, 'error.html', {'errors': ['查询硬盘列表时错误', str(e)]})
         queryset = queryset.filter(vm=None).all()
         context = {}
         context['vm'] = vm
@@ -222,3 +223,46 @@ class VmMigrateView(View):
 
         hosts = HostManager().get_hosts_by_group_id(group_id=vm.host.group_id)
         return render(request, 'vm_migrate.html', context={'vm': vm, 'hosts': hosts})
+
+
+class VmMountPCIView(View):
+    '''虚拟机挂载PCI设备类视图'''
+    NUM_PER_PAGE = 20
+
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+        search = request.GET.get('search', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['挂载PCI设备时错误', '云主机不存在']})
+
+        host = vm.host
+        user = request.user
+
+        mgr = PCIDeviceManager()
+        try:
+            if user.is_superuser:
+                queryset = mgr.filter_pci_queryset(host_id=host.id, search=search, related_fields=('host__group',))
+            else:
+                queryset = mgr.filter_pci_queryset(host_id=host.id, search=search, user=user, related_fields=('host__group',))
+        except DeviceError as e:
+            return render(request, 'error.html', {'errors': ['查询PCI设备列表时错误', str(e)]})
+        # queryset = queryset.filter(vm=None).all()
+        context = {'vm': vm, 'search': search}
+        context = self.get_pci_list_context(request=request, queryset=queryset, context=context)
+        return render(request, 'vm_mount_pci.html', context=context)
+
+    def get_pci_list_context(self, request, queryset, context: dict):
+        # 分页显示
+        paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
+        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page = paginator.get_page(page_num)
+        page_nav = paginator.get_page_nav(page)
+
+        context['page_nav'] = page_nav
+        context['devices'] = page
+        context['count'] = paginator.count
+        return context
+
