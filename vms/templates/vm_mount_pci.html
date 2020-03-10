@@ -10,8 +10,7 @@
             <div class="card-header">
                 <span class="card-title"><strong>挂载云硬盘</strong></span>
                 <div class="float-right">
-                    <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-create' %}">创建云硬盘</a>
-                    <a class="btn btn-sm btn-info" href="{% url 'vdisk:vdisk-list' %}">云硬盘列表</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'device:pci-list' %}">PCI设备列表</a>
                 </div>
             </div>
             <div class="card-body">
@@ -22,6 +21,7 @@
                             <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
                             <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
                             <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
+                            <dt class="col-2 text-right">宿主机:</dt> <dd class="col-10">{{ vm.host }}</dd>
                             <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
                             <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                         </dl>
@@ -30,7 +30,7 @@
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 <div>
                     <div class="row">
-                        <div class="text-success h4 col-sm-4">可供挂载的云硬盘：</div>
+                        <div class="text-success h4 col-sm-4">可供挂载的设备：</div>
                         <div class="float-right col-sm-8">
                             <form role="form" class="form-horizontal" method="get" action="">
                                 <div class="input-group" style="">
@@ -38,7 +38,7 @@
                                         <label class="input-group-text" for="id-center">关键字</label>
                                     </div>
                                     <input type="text" class="form-control" name="search" value="{{ search }}"
-                                           id="id-center" placeholder="搜 UUID、备注"/>
+                                           id="id-center" placeholder="搜 IP、备注"/>
                                     <div class="input-group-append">
                                         <button type="submit" class="btn btn-primary form-control">筛选</button>
                                     </div>
@@ -51,39 +51,37 @@
             <table class="table table-bordered table-disk-list" style="word-wrap:break-word;word-break:break-all;">
                 <thead class="table-light">
                 <tr>
-                    <th>UUID</th>
+                    <th>ID</th>
+                    <th>类型</th>
                     <th>机组</th>
-                    <th>存储池</th>
-                    <th>容量</th>
-                    <th>用户</th>
-                    <th>创建时间</th>
+                    <th>宿主机</th>
                     <th>状态</th>
                     <th>备注</th>
                     <th>操作</th>
                 </tr>
                 </thead>
                 <tbody>
-                {% for disk in vdisks %}
-                    <tr id="tr_{{ disk.uuid }}">
-                        <td><b>{{ disk.uuid }}</b></td>
-                        <td>{{ disk.quota.group }}</td>
-                        <td>{{ disk.quota }}</td>
-                        <td>{{ disk.size|sizeformat:'GB' }}</td>
-                        <td>{{ disk.user }}</td>
-                        <td>{{ disk.create_time }}</td>
-                         <td>
-                            {%if disk.enable%}
+                {% for dev in devices %}
+                    <tr id="tr_{{ dev.id }}">
+                        <td><b>{{ dev.id }}</b></td>
+                        <td>{{ dev.type_display }}</td>
+                        <td>{{ dev.host.group }}</td>
+                        <td>{{ dev.host }}</td>
+                        <td>
+                            {%if dev.enable%}
                                 <i class="fa fa-check"></i>
                             {%else%}
                                 <i class="fa fa-times"></i>
                             {%endif%}
                         </td>
-                        <td>
-                            <span>{{ disk.remarks|default_if_none:'' }}</span>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-xs btn-success btn-disk-mount" data-disk-uuid="{{ disk.uuid }}">挂载</button>
-                        </td>
+                        <td><span>{{ dev.remarks|default_if_none:'' }}</span></td>
+                        {% if dev.is_mounted %}
+                            <td>已被挂载</td>
+                        {% else %}
+                            <td>
+                                <button type="button" class="btn btn-xs btn-success btn-pci-mount" data-pci-id="{{ dev.id }}">挂载</button>
+                            </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -125,6 +123,5 @@
 
 {% block script %}
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
-    <script type="text/javascript" src="{% static 'vms/vms_mount_disk.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_mount_pci.js' %}"></script>
 {% endblock %}
-
