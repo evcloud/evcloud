@@ -1528,7 +1528,7 @@ class VmAPI:
             raise VmError(msg='当前用户没有权限访问此设备')
 
         vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'host__group'))
-        # 向虚拟机挂载硬盘
+        # 向虚拟机挂载
         try:
             self._pci_manager.mount_to_vm(vm=vm, device=device)
         except DeviceError as e:
@@ -1599,6 +1599,21 @@ class VmAPI:
             except VmError as e:
                 self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk.uuid)
 
+        # PCI设备
+        for dev in vm.pci_devices:
+            try:
+                self._pci_manager.mount_to_vm(vm=vm, device=dev)
+            except DeviceError as e:
+                raise VmError(msg=str(e))
+
+        # 更新vm元数据中的xml
+        try:
+            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            vm.xml = xml_desc
+            vm.save(update_fields=['xml'])
+        except Exception:
+            pass
+
         return vm
 
     def migrate_vm(self, vm_uuid: str, host_id: int, user):
@@ -1629,6 +1644,10 @@ class VmAPI:
             raise VmError(msg='不能在同一个宿主机上迁移')
         if new_host.group_id != old_host.group_id:
             raise VmError(msg='目标宿主机和云主机宿主机不在同一个机组')
+
+        # PCI设备
+        if vm.pci_devices.exists():
+            raise VmError(msg='请先卸载主机挂载的PCI设备')
 
         # 目标宿主机资源申请
         try:

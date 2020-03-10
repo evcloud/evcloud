@@ -160,6 +160,16 @@ class Vm(models.Model):
         qs = self.get_mounted_vdisk_queryset()
         return qs.count()
 
+    @property
+    def pci_devices(self):
+        """
+        获取挂载到虚拟机下的所有PCI设备查询集
+
+        :return:
+            QuerySet()
+        """
+        return self.device_set.all()
+
 
 class VmArchive(models.Model):
     '''

@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load  sizeformat %}
 
-{% block title %}挂载云硬盘{% endblock %}
+{% block title %}挂载PCI设备{% endblock %}
 
 {% block boby %}
     <div class="container-fluid offset-lg-1 col-lg-10">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>挂载云硬盘</strong></span>
+                <span class="card-title"><strong>挂载PCI设备</strong></span>
                 <div class="float-right">
                     <a class="btn btn-sm btn-info" href="{% url 'device:pci-list' %}">PCI设备列表</a>
                 </div>
