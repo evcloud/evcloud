@@ -71,10 +71,10 @@
                     </div>
                 </form>
             </div>
-            <table class="table table-hover table-pci-list" style="word-wrap:break-word;word-break:break-all;">
+            <table class="table table-hover text-center table-pci-list" style="word-wrap:break-word;word-break:break-all;">
                 <thead class="thead-light">
                 <tr>
-                    <th></th>
+{#                    <th></th>#}
                     <th>ID</th>
                     <th>设备类型</th>
                     <th>宿主机</th>
@@ -87,7 +87,7 @@
                 <tbody>
                 {% for dev in devices %}
                     <tr id="tr_{{ vm.hex_uuid }}">
-                        <td><input type="checkbox" class="item-checkbox" value="{{ dev.id }}" name="select_dev"></td>
+{#                        <td><input type="checkbox" class="item-checkbox" value="{{ dev.id }}" name="select_dev"></td>#}
                         <td>{{ dev.id }}</td>
                         <td>{{ dev.type_display }}</td>
                         <td>{{ dev.host.ipv4 }}</td>

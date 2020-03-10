@@ -69,7 +69,7 @@
                     </div>
                 </form>
             </div>
-            <table class="table table-hover table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+            <table class="table table-hover text-center table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                 <thead class="thead-light">
                 <tr>
                     <th></th>
@@ -97,13 +97,15 @@
                             {{ vm.vcpu }} / {{ vm.mem|sizeformat:'MB' }}
                         </td>
                         <td>
-                            {% if vm.vdisks %}
-                                {% for v in vm.vdisks %}
-                                    {{ v.dev }} {{ v.size }}GB <br>
-                                {% endfor %}
-                            {% else %}
-                                    无
-                            {% endif %}
+                            {% with vm.vdisks as vdisks %}
+                                {% if vdisks %}
+                                    {% for v in vdisks %}
+                                        {{ v.dev }} {{ v.size }}GB <br>
+                                    {% endfor %}
+                                {% else %}
+                                        无
+                                {% endif %}
+                            {% endwith %}
                         </td>
                         <td class="mouse-hover">
                             <div>
@@ -130,7 +132,7 @@
                 {% if vms %}
                     <tr title="批量操作">
                         <td><input type="checkbox" data-check-target=".item-checkbox" /></td>
-                        <td colspan="10">
+                        <td class="text-left" colspan="10">
                             <button class="btn btn-sm btn-primary" id="id-btn-batch-vm-start">开机</button>
                             <button class="btn btn-sm btn-warning" id="id-btn-batch-vm-shutdown">正常关机</button>
                             <button class="btn btn-sm btn-warning" id="id-btn-batch-vm-poweroff">强制断电</button>

@@ -168,7 +168,7 @@ class Vm(models.Model):
         :return:
             QuerySet()
         """
-        return self.device_set.all()
+        return self.device_set.select_related('host__group').all()
 
 
 class VmArchive(models.Model):
