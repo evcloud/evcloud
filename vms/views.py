@@ -57,7 +57,7 @@ class VmsView(View):
         except VmError as e:
             return render(request, 'error.html', {'errors': ['查询虚拟机时错误',str(e)]})
 
-        queryset = queryset.prefetch_related('vdisk_set')   # 反向预查询硬盘（避免多次访问数据库）
+        queryset = queryset.prefetch_related('vdisk_set')  # 反向预查询硬盘（避免多次访问数据库）
         try:
             c_manager = CenterManager()
             g_manager = GroupManager()
@@ -74,16 +74,9 @@ class VmsView(View):
         except ComputeError as e:
             return render(request, 'error.html', {'errors': ['查询虚拟机时错误', str(e)]})
 
-        context = {}
-        context['center_id'] = center_id if center_id > 0 else None
-        context['centers'] = centers
-        context['groups'] = groups
-        context['group_id'] = group_id if group_id > 0 else None
-        context['hosts'] = hosts
-        context['host_id'] = host_id if host_id > 0 else None
-        context['search'] = search
-        context['users'] = users
-        context['user_id'] = user_id
+        context = {'center_id': center_id if center_id > 0 else None, 'centers': centers, 'groups': groups,
+                   'group_id': group_id if group_id > 0 else None, 'hosts': hosts,
+                   'host_id': host_id if host_id > 0 else None, 'search': search, 'users': users, 'user_id': user_id}
         context = self.get_vms_list_context(request, queryset, context)
         return render(request, 'vms_list.html', context=context)
 
@@ -152,9 +145,7 @@ class VmMountDiskView(View):
         except VdiskError as e:
             return render(request, 'error.html', {'errors': ['查询硬盘列表时错误', str(e)]})
         queryset = queryset.filter(vm=None).all()
-        context = {}
-        context['vm'] = vm
-        context['search'] =search
+        context = {'vm': vm, 'search': search}
         context = self.get_vdisks_list_context(request=request, queryset=queryset, context=context)
         return render(request, 'vm_mount_disk.html', context=context)
 
@@ -177,7 +168,8 @@ class VmDetailView(View):
         vm_uuid = kwargs.get('vm_uuid', '')
 
         vm_manager = VmManager()
-        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host__group', 'image__ceph_pool',
+                                                                        'mac_ip__vlan'))
         if not vm:
             return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云主机不存在']})
 
@@ -234,7 +226,7 @@ class VmMountPCIView(View):
         search = request.GET.get('search', '')
 
         vm_manager = VmManager()
-        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host__group', 'image'))
         if not vm:
             return render(request, 'error.html', {'errors': ['挂载PCI设备时错误', '云主机不存在']})
 
@@ -243,13 +235,10 @@ class VmMountPCIView(View):
 
         mgr = PCIDeviceManager()
         try:
-            if user.is_superuser:
-                queryset = mgr.filter_pci_queryset(host_id=host.id, search=search, related_fields=('host__group',))
-            else:
-                queryset = mgr.filter_pci_queryset(host_id=host.id, search=search, user=user, related_fields=('host__group',))
+            queryset = mgr.filter_pci_queryset(host_id=host.id, search=search, user=user, related_fields=('host__group',))
         except DeviceError as e:
             return render(request, 'error.html', {'errors': ['查询PCI设备列表时错误', str(e)]})
-        # queryset = queryset.filter(vm=None).all()
+        
         context = {'vm': vm, 'search': search}
         context = self.get_pci_list_context(request=request, queryset=queryset, context=context)
         return render(request, 'vm_mount_pci.html', context=context)
