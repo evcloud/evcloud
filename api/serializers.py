@@ -16,17 +16,14 @@ class VmSerializer(serializers.ModelSerializer):
     create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     host = serializers.SerializerMethodField()
     mac_ip = serializers.SerializerMethodField()
-    uuid = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Vm
-        fields = ('uuid', 'name', 'vcpu', 'mem', 'disk', 'host', 'mac_ip', 'user', 'create_time')
+        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'host', 'mac_ip', 'user', 'create_time')
         # depth = 1
 
-    def get_uuid(self, obj):
-        return obj.get_uuid()
-
-    def get_user(selfself, obj):
+    def get_user(self, obj):
         return {'id': obj.user.id, 'username': obj.user.username}
 
     def get_host(self, obj):
@@ -34,6 +31,10 @@ class VmSerializer(serializers.ModelSerializer):
 
     def get_mac_ip(self, obj):
         return obj.mac_ip.ipv4
+
+    def get_image(self, obj):
+        img = obj.image
+        return img.name if img else ""
 
 
 class VmCreateSerializer(serializers.Serializer):
@@ -113,6 +114,7 @@ class ImageSerializer(serializers.ModelSerializer):
     tag = serializers.SerializerMethodField()
     sys_type = serializers.SerializerMethodField()
     create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+
     class Meta:
         model = Image
         fields = ('id', 'name', 'version', 'sys_type', 'tag', 'enable', 'create_time', 'desc')
@@ -188,6 +190,7 @@ class VdiskSerializer(serializers.ModelSerializer):
     user = UserSimpleSerializer(required=False)  # May be an anonymous user
     create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
     attach_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+
     class Meta:
         model = Vdisk
         fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks', 'group')
@@ -304,4 +307,43 @@ class MacIPSerializer(serializers.Serializer):
     ipv4 = serializers.IPAddressField(help_text='IP地址')
     used = serializers.BooleanField(help_text='是否已分配给虚拟机使用')
 
+
+class VmDetailSerializer(serializers.ModelSerializer):
+    '''
+    虚拟机详情序列化器
+    '''
+    user = serializers.SerializerMethodField()  # 自定义user字段内容
+    create_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S')
+    host = serializers.SerializerMethodField()
+    mac_ip = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
+    vdisks = serializers.SerializerMethodField()
+    pci_devices = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Vm
+        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'host', 'mac_ip', 'user', 'create_time',
+                  'vdisks', 'pci_devices')
+        # depth = 1
+
+    def get_user(self, obj):
+        return {'id': obj.user.id, 'username': obj.user.username}
+
+    def get_host(self, obj):
+        return obj.host.ipv4
+
+    def get_mac_ip(self, obj):
+        return obj.mac_ip.ipv4
+
+    def get_image(self, obj):
+        img = obj.image
+        return img.name if img else ""
+
+    def get_vdisks(self, obj):
+        vdisks = obj.vdisks.select_related('quota__group', 'vm__mac_ip', 'user')
+        return VdiskSerializer(instance=vdisks, many=True, required=False).data
+
+    def get_pci_devices(self, obj):
+        devs = obj.pci_devices.select_related('host__group', 'vm')
+        return PCIDeviceSerializer(instance=devs, many=True, required=False).data
 

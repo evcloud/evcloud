@@ -68,6 +68,7 @@ class VmsViewSet(viewsets.GenericViewSet):
               "name": "4c0cdba7fe97405bac174baa03f3d036",
               "vcpu": 2,
               "mem": 2048,
+              "image": "centos8",
               "disk": "4c0cdba7fe97405bac174baa03f3d036",
               "host": "10.100.50.121",
               "mac_ip": "10.107.50.252",
@@ -145,7 +146,7 @@ class VmsViewSet(viewsets.GenericViewSet):
             "uuid": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "name": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "vcpu": 2,
-            "mem": 2048,
+            "mem": 2048,        # MB
             "disk": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "host": "10.100.50.121",
             "mac_ip": "10.107.50.253",
@@ -153,7 +154,52 @@ class VmsViewSet(viewsets.GenericViewSet):
               "id": 1,
               "username": "shun"
             },
-            "create_time": "2019-10-12 08:09:27"
+            "create_time": "2019-10-12 08:09:27",
+            "vdisks": [
+              {
+                "uuid": "063fc7830cce4b04a01a48572ea80198",
+                "size": 6,      # GB
+                "vm": {
+                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "ipv4": "10.107.50.15"
+                },
+                "user": {
+                  "id": 1,
+                  "username": "shun"
+                },
+                "quota": {
+                  "id": 1,
+                  "name": "group1云硬盘存储池"
+                },
+                "create_time": "2020-02-11 14:50:30",
+                "attach_time": "2020-03-10 14:55:20",
+                "enable": true,
+                "remarks": "",
+                "group": {
+                  "id": 1,
+                  "name": "宿主机组1"
+                }
+              }
+            ],
+            "pci_devices": [
+              {
+                "id": 1,
+                "type": {
+                  "val": 1,
+                  "name": "GPU"
+                },
+                "vm": {
+                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "ipv4": "10.107.50.15"
+                },
+                "host": {
+                  "id": 1,
+                  "ipv4": "10.100.50.121"
+                },
+                "attach_time": "2020-03-11 11:38:05",
+                "remarks": ""
+              }
+            ]
           }
         }
         >>Http Code: 状态码400：请求失败;
@@ -305,12 +351,18 @@ class VmsViewSet(viewsets.GenericViewSet):
             'vm': serializers.VmSerializer(vm).data
         }, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='获取虚拟机详细信息',
+        responses={
+            200: ''
+        }
+    )
     def retrieve(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
-            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid)
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('image', 'mac_ip', 'host', 'user'))
         except VmError as e:
-            return  Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not vm:
             return Response(data={'code': 404, 'code_text': '虚拟机不存在'}, status=status.HTTP_404_NOT_FOUND)
@@ -320,7 +372,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={
             'code': 200,
             'code_text': '获取虚拟机信息成功',
-            'vm': serializers.VmSerializer(vm).data
+            'vm': serializers.VmDetailSerializer(vm).data
         })
 
     @swagger_auto_schema(
