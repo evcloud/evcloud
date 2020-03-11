@@ -299,6 +299,9 @@
 		});
     });
 
+    //art-template渲染模板注册过滤器
+    template.defaults.imports.isoTimeToLocal = isoTimeToLocal;
+
     //
     // 创建快照渲染模板
     //
@@ -306,7 +309,7 @@
         <tr id="tr_snap_{{ snap.id }}">
             <td>{{ snap.id }}</td>
             <td class="line-limit-length" style="max-width: 150px;" title="{{ snap.snap }}">{{ snap.snap }}</td>
-            <td>{{ snap.create_time }}</td>
+            <td>{{ $imports.isoTimeToLocal(snap.create_time) }}</td>
             <td class="mouse-hover">
                 <div>
                     <span>{{ snap.remarks }}</span>

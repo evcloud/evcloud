@@ -273,17 +273,17 @@ class CenterManager:
         pools = self.get_pool_queryset_by_center(center_or_id)
         return list(pools.values_list('id', flat=True).all())
 
-    def get_stat_center_queryset(self, filter:dict=None):
+    def get_stat_center_queryset(self, filters: dict = None):
         '''
         分中心资源统计查询集
 
-        :param filter: center的过滤条件
+        :param filters: center的过滤条件
         :return:
             QuerySet   # success
         '''
         qs = Center.objects.all()
-        if filter:
-            qs = qs.filter(**filter).all()
+        if filters:
+            qs = qs.filter(**filters).all()
         return qs.annotate(
             mem_total=DefaultSum('group_set__hosts_set__mem_total'),
             mem_allocated=DefaultSum('group_set__hosts_set__mem_allocated'),
@@ -501,7 +501,7 @@ class GroupManager:
             QuerySet()
         '''
         qs = Group.objects.all()
-        if filter:
+        if filters:
             qs = qs.filter(**filters).all()
 
         return qs.select_related('center').annotate(

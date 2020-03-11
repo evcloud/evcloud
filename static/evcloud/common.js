@@ -124,3 +124,44 @@ function encode_params(obj) {
     return params.join('&');
 }
 
+// 将 Date 转化为指定格式的String
+// 月(M)、日(d)、小时(H)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
+// 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
+// 例子：
+// dateFormat("yyyy-MM-dd HH:mm:ss.S", date) ==> 2006-07-02 08:09:04.423
+// dateFormat("yyyy-M-d H:m:s.S", date)      ==> 2006-7-2 8:9:4.18
+function dateFormat(fmt, date) {
+    let ret;
+    let opt = {
+        "y+": date.getFullYear().toString(),
+        "M+": (date.getMonth() + 1).toString(),
+        "d+": date.getDate().toString(),
+        "H+": date.getHours().toString(),
+        "m+": date.getMinutes().toString(),
+        "s+": date.getSeconds().toString(),
+        "S+": date.getMilliseconds().toString()
+    };
+    for (let k in opt) {
+        ret = new RegExp("(" + k + ")").exec(fmt);
+        if (ret) {
+            fmt = fmt.replace(ret[1], (ret[1].length === 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+        }
+    }
+    return fmt;
+}
+
+// iso格式时间转本地时间
+// "'2020-03-04T09:09:49.032064+07:00'" ==> ""2020-03-04 10:09:49""
+function isoTimeToLocal(isoTime) {
+    let lTime;
+    if (!isoTime){
+        return isoTime;
+    }
+    try{
+        let d = new Date(isoTime);
+        lTime = dateFormat("yyyy-MM-dd HH:mm:ss", d);
+    }catch (e) {
+        lTime = isoTime;
+    }
+    return lTime;
+}
