@@ -76,7 +76,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                 "id": 3,
                 "username": "test"
               },
-              "create_time": "2019-10-11 07:03:44"
+              "create_time": "2020-03-06T14:46:27.149648+08:00"
             },
           ]
         }
@@ -101,7 +101,7 @@ class VmsViewSet(viewsets.GenericViewSet):
               "id": 3,
               "username": "test"
             },
-            "create_time": "2019-10-11 07:03:44"
+            "create_time": "2020-03-06T14:46:27.149648+08:00"
           }
         }
         >> http code 200: 创建失败
@@ -154,7 +154,7 @@ class VmsViewSet(viewsets.GenericViewSet):
               "id": 1,
               "username": "shun"
             },
-            "create_time": "2019-10-12 08:09:27",
+            "create_time": "2020-03-06T14:46:27.149648+08:00"
             "vdisks": [
               {
                 "uuid": "063fc7830cce4b04a01a48572ea80198",
@@ -171,8 +171,8 @@ class VmsViewSet(viewsets.GenericViewSet):
                   "id": 1,
                   "name": "group1云硬盘存储池"
                 },
-                "create_time": "2020-02-11 14:50:30",
-                "attach_time": "2020-03-10 14:55:20",
+                "create_time": "2020-03-06T14:46:27.149648+08:00"
+                "attach_time": "2020-03-06T14:46:27.149648+08:00"
                 "enable": true,
                 "remarks": "",
                 "group": {
@@ -196,7 +196,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                   "id": 1,
                   "ipv4": "10.100.50.121"
                 },
-                "attach_time": "2020-03-11 11:38:05",
+                "attach_time": "2020-03-06T14:46:27.149648+08:00"
                 "remarks": ""
               }
             ]
@@ -659,7 +659,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                   "ipv4": "10.107.50.2"
                 },
                 "snap": "598fb694a75c49c49c9574f9f3ea6174@20200121_073930",
-                "create_time": "2020-01-21 15:39:31",
+                "create_time": "2020-03-06T14:46:27.149648+08:00",
                 "remarks": "sss"
               }
             }
@@ -1220,7 +1220,7 @@ class ImageViewSet(viewsets.GenericViewSet):
                     "name": "基础镜像"
                   },
                   "enable": true,
-                  "create_time": "2019-10-15 16:25:26",
+                  "create_time": "2020-03-06T14:46:27.149648+08:00",
                   "desc": "centos8"
                 }
               ]
@@ -1268,7 +1268,7 @@ class AuthTokenViewSet(ObtainAuthToken):
             "token": {
                 "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
                 "user": "username",
-                "created": "2018-12-10 14:04:01"
+                "created": "2020-03-06T14:46:27.149648+08:00"
             }
         }
 
@@ -1296,7 +1296,7 @@ class AuthTokenViewSet(ObtainAuthToken):
                 "token": {
                     "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
                     "user": "username",
-                    "created": "2018-12-10 14:04:01"
+                    "created": "2020-03-06T14:46:27.149648+08:00"
                 }
             }
             '''
@@ -1335,7 +1335,7 @@ class AuthTokenViewSet(ObtainAuthToken):
                     "token": {
                         "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
                         "user": "username",
-                        "created": "2018-12-10 14:04:01"
+                        "created": "2020-03-06T14:46:27.149648+08:00"
                     }
                 }
             '''
@@ -1538,8 +1538,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     "id": 1,
                     "name": "group1云硬盘存储池"
                   },
-                  "create_time": "2019-11-13 16:56:20",
-                  "attach_time": "2019-11-14 09:11:44",
+                  "create_time": "2020-03-06T14:46:27.149648+08:00",
+                  "attach_time": "2020-03-06T14:46:27.149648+08:00",
                   "enable": true,
                   "remarks": "test3",
                   "group": {
@@ -1607,7 +1607,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "vm": null,
                 "user": 1,
                 "quota": 1,
-                "create_time": "2019-11-07 11:21:44",
+                "create_time": "2020-03-06T14:46:27.149648+08:00",
                 "attach_time": null,
                 "enable": true,
                 "remarks": "test2"
@@ -1698,7 +1698,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     "name": "宿主机组1"
                   }
                 },
-                "create_time": "2019-11-07 11:19:55",
+                "create_time": "2020-03-06T14:46:27.149648+08:00",
                 "attach_time": null,
                 "enable": true,
                 "remarks": "test"
@@ -2095,14 +2095,14 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         c_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if c_id > 0:
-            center = CenterManager().get_stat_center_queryset(filter={'id': c_id}).values('id', 'name', 'mem_total',
+            center = CenterManager().get_stat_center_queryset(filters={'id': c_id}).values('id', 'name', 'mem_total',
                             'mem_allocated','mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').first()
         else:
             center = None
         if not center:
             return Response({'code': 200, 'code_text': '分中心不存在'}, status=status.HTTP_400_BAD_REQUEST)
 
-        groups = GroupManager().get_stat_group_queryset(filter={'center': c_id}).values('id', 'name', 'center__name',
+        groups = GroupManager().get_stat_group_queryset(filters={'center': c_id}).values('id', 'name', 'center__name',
                              'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
 
@@ -2149,7 +2149,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         g_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if g_id > 0:
-            group = GroupManager().get_stat_group_queryset(filter={'id': g_id}).values('id', 'name', 'center__name',
+            group = GroupManager().get_stat_group_queryset(filters={'id': g_id}).values('id', 'name', 'center__name',
                     'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total','vcpu_allocated', 'vm_created').first()
         else:
             group = None
@@ -2430,6 +2430,6 @@ class MacIPViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     def get_serializer_class(self):
-        if self.action =='list':
+        if self.action == 'list':
             return serializers.MacIPSerializer
         return Serializer
