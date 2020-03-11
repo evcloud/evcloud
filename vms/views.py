@@ -238,7 +238,7 @@ class VmMountPCIView(View):
             queryset = mgr.filter_pci_queryset(host_id=host.id, search=search, user=user, related_fields=('host__group',))
         except DeviceError as e:
             return render(request, 'error.html', {'errors': ['查询PCI设备列表时错误', str(e)]})
-        
+
         context = {'vm': vm, 'search': search}
         context = self.get_pci_list_context(request=request, queryset=queryset, context=context)
         return render(request, 'vm_mount_pci.html', context=context)
