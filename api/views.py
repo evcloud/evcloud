@@ -304,9 +304,73 @@ class VmsViewSet(viewsets.GenericViewSet):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        else:
-            serializer = self.get_serializer(queryset, many=True)
-            data = {'code': 200, 'vms': serializer.data, }
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = {'results': serializer.data}
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_summary='查询PCI设备可挂载的虚拟机',
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'pci/(?P<pci_id>[0-9]+)', url_name='can_mount_pci')
+    def can_mount_pci(self, request, *args, **kwargs):
+        """
+        查询PCI设备可挂载的虚拟机
+
+            HTTP CODE 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "name": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "vcpu": 2,
+                  "mem": 1024,
+                  "image": "centos8",
+                  "disk": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "host": "10.100.50.121",
+                  "mac_ip": "10.107.50.15",
+                  "user": {
+                    "id": 4,
+                    "username": "869588058@qq.com"
+                  },
+                  "create_time": "2020-03-06T14:46:27.149648+08:00"
+                }
+              ]
+            }
+        """
+        pci_id = str_to_int_or_default(kwargs.get('pci_id', 0), 0)
+        if pci_id <= 0:
+            return Response({'code': 400, 'code_text': '无效的PCI ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            dev = PCIDeviceManager().get_device_by_id(device_id=pci_id)
+        except DeviceError as e:
+            return Response({'code': 400, 'code_text': f'查询PCI设备错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        host = dev.host
+        user = request.user
+        mgr = VmManager()
+        try:
+            qs = mgr.get_vms_queryset_by_host(host)
+            qs = qs.select_related('user', 'image', 'mac_ip', 'host')
+            if not user.is_superuser:
+                qs = qs.filter(user=user).all()
+        except VmError as e:
+            return Response({'code': 400, 'code_text': f'查询主机错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(qs, many=True)
+        data = {'results': serializer.data}
         return Response(data)
 
     @swagger_auto_schema(
@@ -900,7 +964,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'can_mount_pci']:
             return serializers.VmSerializer
         elif self.action == 'create':
             return serializers.VmCreateSerializer
@@ -1121,7 +1185,6 @@ class VlanViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     queryset = Vlan.objects.all()
-
 
     def list(self, request, *args, **kwargs):
         '''
@@ -2268,6 +2331,74 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     @swagger_auto_schema(
+        operation_summary='查询主机可挂载的PCI设备',
+        request_body=no_body,
+        responses={
+            201: """
+                    {
+                        "code": 201,
+                        "code_text": "挂载设备成功"
+                    }
+                """
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'vm/(?P<vm_uuid>[0-9a-z-]+)', url_name='vm_can_mount')
+    def vm_can_mount(self, request, *args, **kwargs):
+        """
+        查询主机可挂载的PCI设备
+
+            http code 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "type": {
+                    "val": 1,
+                    "name": "GPU"
+                  },
+                  "vm": {                           # 已挂载于主机；未挂载时为 null
+                    "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                    "ipv4": "10.107.50.15"
+                  },
+                  "host": {
+                    "id": 1,
+                    "ipv4": "10.100.50.121"
+                  },
+                  "attach_time": "2020-03-11T11:38:05.102522+08:00",    # 挂载时间； 未挂载时为 null
+                  "remarks": ""
+                }
+              ]
+            }
+            http code 400:
+            {
+                "code": 400,
+                "code_text": "xxx"
+            }
+        """
+        vm_uuid = kwargs.get('vm_uuid', '')
+        try:
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', ))
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            queryset = PCIDeviceManager().get_pci_queryset_by_host(host=vm.host)
+            queryset = queryset.select_related('host', 'vm').all()
+        except DeviceError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
         operation_summary='挂载PCI设备',
         request_body=no_body,
         manual_parameters=[
@@ -2364,7 +2495,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'vm_can_mount']:
             return serializers.PCIDeviceSerializer
         return Serializer
 
