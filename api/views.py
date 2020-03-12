@@ -353,6 +353,9 @@ class VmsViewSet(viewsets.GenericViewSet):
         except DeviceError as e:
             return Response({'code': 400, 'code_text': f'查询PCI设备错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if not dev:
+            return Response({'code': 404, 'code_text': 'PCI设备不存在'}, status=status.HTTP_404_NOT_FOUND)
+
         host = dev.host
         user = request.user
         mgr = VmManager()
@@ -370,6 +373,73 @@ class VmsViewSet(viewsets.GenericViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(qs, many=True)
+        data = {'results': serializer.data}
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_summary='查询硬盘可挂载的虚拟机',
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'vdisk/(?P<vdisk_uuid>[0-9a-z-]+)', url_name='can_mount_vdisk')
+    def can_mount_vdisk(self, request, *args, **kwargs):
+        """
+        查询硬盘可挂载的虚拟机
+
+            HTTP CODE 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "name": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "vcpu": 2,
+                  "mem": 1024,
+                  "image": "centos8",
+                  "disk": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "host": "10.100.50.121",
+                  "mac_ip": "10.107.50.15",
+                  "user": {
+                    "id": 4,
+                    "username": "869588058@qq.com"
+                  },
+                  "create_time": "2020-03-06T14:46:27.149648+08:00"
+                }
+              ]
+            }
+        """
+        vdisk_uuid = kwargs.get('vdisk_uuid', '')
+        if not vdisk_uuid:
+            return Response({'code': 400, 'code_text': '无效的VDisk UUID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            vdisk = VdiskManager().get_vdisk_by_uuid(uuid=vdisk_uuid, related_fields=('quota__group',))
+        except DeviceError as e:
+            return Response({'code': 400, 'code_text': f'查询硬盘错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not vdisk:
+            return Response({'code': 404, 'code_text': '硬盘不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        group = vdisk.quota.group
+        user = request.user
+        mgr = VmManager()
+        try:
+            queryset = mgr.get_vms_queryset_by_group(group)
+            queryset = queryset.select_related('user', 'image', 'mac_ip', 'host').all()
+            if not user.is_superuser:
+                queryset = queryset.filter(user=user).all()
+        except VmError as e:
+            return Response({'code': 400, 'code_text': f'查询主机错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
         data = {'results': serializer.data}
         return Response(data)
 
@@ -964,7 +1034,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action in ['list', 'retrieve', 'can_mount_pci']:
+        if self.action in ['list', 'retrieve', 'can_mount_pci', 'can_mount_vdisk']:
             return serializers.VmSerializer
         elif self.action == 'create':
             return serializers.VmCreateSerializer
@@ -1651,6 +1721,81 @@ class VDiskViewSet(viewsets.GenericViewSet):
         return Response(data)
 
     @swagger_auto_schema(
+        operation_summary='查询虚拟机可挂载的云硬盘',
+        responses={
+            200: ''''''
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'vm/(?P<vm_uuid>[0-9a-z-]+)', url_name='vm_can_mount')
+    def vm_can_mount(self, request, *args, **kwargs):
+        """
+        查询虚拟机可挂载的云硬盘
+
+            HTTP CODE 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "uuid": "6111402f379b444092218101c72016c4",
+                  "size": 10,
+                  "vm": {                                          # 已挂载于主机；未挂载时为 null
+                    "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                    "ipv4": "10.107.50.15"
+                  },
+                  "user": {
+                    "id": 4,
+                    "username": "869588058@qq.com"
+                  },
+                  "quota": {
+                    "id": 1,
+                    "name": "group1云硬盘存储池"
+                  },
+                  "create_time": "2020-03-09T16:36:53.717507+08:00",
+                  "attach_time": "2020-03-12T16:02:00.738921+08:00",    # 挂载时间；未挂载时为 null
+                  "enable": true,
+                  "remarks": "",
+                  "group": {
+                    "id": 1,
+                    "name": "宿主机组1"
+                  }
+                }
+              ]
+            }
+        """
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        mgr = VmManager()
+        try:
+            vm = mgr.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
+        except VmError as e:
+            return Response({'code': 400, 'code_text': f'查询云主机错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not vm:
+            return Response({'code': 404, 'code_text': '云主机不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        group = vm.host.group
+        user = request.user
+
+        disk_manager = VdiskManager()
+        related_fields = ('user', 'quota', 'quota__group')
+        try:
+            if user.is_superuser:
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, related_fields=related_fields)
+            else:
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, user_id=user.id, related_fields=related_fields)
+        except VdiskError as e:
+            return Response({'code': 400, 'code_text': f'查询硬盘列表时错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            page = self.paginate_queryset(queryset)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        except Exception as e:
+            return Response(data={'code': 400, 'code_text': f'查询云硬盘时错误, {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
         operation_summary='创建云硬盘',
         responses={
             201: ''''''
@@ -1955,7 +2100,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action == 'list':
+        if self.action in ['list', 'vm_can_mount']:
             return serializers.VdiskSerializer
         elif self.action == 'retrieve':
             return serializers.VdiskDetailSerializer
@@ -2379,10 +2524,14 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
             }
         """
         vm_uuid = kwargs.get('vm_uuid', '')
+
         try:
             vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', ))
         except VmError as e:
             return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not vm:
+            return Response({'code': 404, 'code_text': '云主机不存在'}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             queryset = PCIDeviceManager().get_pci_queryset_by_host(host=vm.host)
