@@ -20,7 +20,7 @@ from network.managers import MacIPManager
 from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
-from device.manager import PCIDeviceManager
+from device.manager import PCIDeviceManager, DeviceError
 from . import serializers
 
 
@@ -68,6 +68,7 @@ class VmsViewSet(viewsets.GenericViewSet):
               "name": "4c0cdba7fe97405bac174baa03f3d036",
               "vcpu": 2,
               "mem": 2048,
+              "image": "centos8",
               "disk": "4c0cdba7fe97405bac174baa03f3d036",
               "host": "10.100.50.121",
               "mac_ip": "10.107.50.252",
@@ -75,7 +76,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                 "id": 3,
                 "username": "test"
               },
-              "create_time": "2019-10-11 07:03:44"
+              "create_time": "2020-03-06T14:46:27.149648+08:00"
             },
           ]
         }
@@ -100,7 +101,7 @@ class VmsViewSet(viewsets.GenericViewSet):
               "id": 3,
               "username": "test"
             },
-            "create_time": "2019-10-11 07:03:44"
+            "create_time": "2020-03-06T14:46:27.149648+08:00"
           }
         }
         >> http code 200: 创建失败
@@ -145,7 +146,7 @@ class VmsViewSet(viewsets.GenericViewSet):
             "uuid": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "name": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "vcpu": 2,
-            "mem": 2048,
+            "mem": 2048,        # MB
             "disk": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "host": "10.100.50.121",
             "mac_ip": "10.107.50.253",
@@ -153,7 +154,52 @@ class VmsViewSet(viewsets.GenericViewSet):
               "id": 1,
               "username": "shun"
             },
-            "create_time": "2019-10-12 08:09:27"
+            "create_time": "2020-03-06T14:46:27.149648+08:00"
+            "vdisks": [
+              {
+                "uuid": "063fc7830cce4b04a01a48572ea80198",
+                "size": 6,      # GB
+                "vm": {
+                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "ipv4": "10.107.50.15"
+                },
+                "user": {
+                  "id": 1,
+                  "username": "shun"
+                },
+                "quota": {
+                  "id": 1,
+                  "name": "group1云硬盘存储池"
+                },
+                "create_time": "2020-03-06T14:46:27.149648+08:00"
+                "attach_time": "2020-03-06T14:46:27.149648+08:00"
+                "enable": true,
+                "remarks": "",
+                "group": {
+                  "id": 1,
+                  "name": "宿主机组1"
+                }
+              }
+            ],
+            "pci_devices": [
+              {
+                "id": 1,
+                "type": {
+                  "val": 1,
+                  "name": "GPU"
+                },
+                "vm": {
+                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "ipv4": "10.107.50.15"
+                },
+                "host": {
+                  "id": 1,
+                  "ipv4": "10.100.50.121"
+                },
+                "attach_time": "2020-03-06T14:46:27.149648+08:00"
+                "remarks": ""
+              }
+            ]
           }
         }
         >>Http Code: 状态码400：请求失败;
@@ -258,9 +304,143 @@ class VmsViewSet(viewsets.GenericViewSet):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        else:
-            serializer = self.get_serializer(queryset, many=True)
-            data = {'code': 200, 'vms': serializer.data, }
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = {'results': serializer.data}
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_summary='查询PCI设备可挂载的虚拟机',
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'pci/(?P<pci_id>[0-9]+)', url_name='can_mount_pci')
+    def can_mount_pci(self, request, *args, **kwargs):
+        """
+        查询PCI设备可挂载的虚拟机
+
+            HTTP CODE 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "name": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "vcpu": 2,
+                  "mem": 1024,
+                  "image": "centos8",
+                  "disk": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "host": "10.100.50.121",
+                  "mac_ip": "10.107.50.15",
+                  "user": {
+                    "id": 4,
+                    "username": "869588058@qq.com"
+                  },
+                  "create_time": "2020-03-06T14:46:27.149648+08:00"
+                }
+              ]
+            }
+        """
+        pci_id = str_to_int_or_default(kwargs.get('pci_id', 0), 0)
+        if pci_id <= 0:
+            return Response({'code': 400, 'code_text': '无效的PCI ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            dev = PCIDeviceManager().get_device_by_id(device_id=pci_id)
+        except DeviceError as e:
+            return Response({'code': 400, 'code_text': f'查询PCI设备错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not dev:
+            return Response({'code': 404, 'code_text': 'PCI设备不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        host = dev.host
+        user = request.user
+        mgr = VmManager()
+        try:
+            qs = mgr.get_vms_queryset_by_host(host)
+            qs = qs.select_related('user', 'image', 'mac_ip', 'host')
+            if not user.is_superuser:
+                qs = qs.filter(user=user).all()
+        except VmError as e:
+            return Response({'code': 400, 'code_text': f'查询主机错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(qs, many=True)
+        data = {'results': serializer.data}
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_summary='查询硬盘可挂载的虚拟机',
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'vdisk/(?P<vdisk_uuid>[0-9a-z-]+)', url_name='can_mount_vdisk')
+    def can_mount_vdisk(self, request, *args, **kwargs):
+        """
+        查询硬盘可挂载的虚拟机
+
+            HTTP CODE 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "name": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "vcpu": 2,
+                  "mem": 1024,
+                  "image": "centos8",
+                  "disk": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "host": "10.100.50.121",
+                  "mac_ip": "10.107.50.15",
+                  "user": {
+                    "id": 4,
+                    "username": "869588058@qq.com"
+                  },
+                  "create_time": "2020-03-06T14:46:27.149648+08:00"
+                }
+              ]
+            }
+        """
+        vdisk_uuid = kwargs.get('vdisk_uuid', '')
+        if not vdisk_uuid:
+            return Response({'code': 400, 'code_text': '无效的VDisk UUID'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            vdisk = VdiskManager().get_vdisk_by_uuid(uuid=vdisk_uuid, related_fields=('quota__group',))
+        except DeviceError as e:
+            return Response({'code': 400, 'code_text': f'查询硬盘错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not vdisk:
+            return Response({'code': 404, 'code_text': '硬盘不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        group = vdisk.quota.group
+        user = request.user
+        mgr = VmManager()
+        try:
+            queryset = mgr.get_vms_queryset_by_group(group)
+            queryset = queryset.select_related('user', 'image', 'mac_ip', 'host').all()
+            if not user.is_superuser:
+                queryset = queryset.filter(user=user).all()
+        except VmError as e:
+            return Response({'code': 400, 'code_text': f'查询主机错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = {'results': serializer.data}
         return Response(data)
 
     @swagger_auto_schema(
@@ -305,12 +485,18 @@ class VmsViewSet(viewsets.GenericViewSet):
             'vm': serializers.VmSerializer(vm).data
         }, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='获取虚拟机详细信息',
+        responses={
+            200: ''
+        }
+    )
     def retrieve(self, request, *args, **kwargs):
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
-            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid)
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('image', 'mac_ip', 'host', 'user'))
         except VmError as e:
-            return  Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not vm:
             return Response(data={'code': 404, 'code_text': '虚拟机不存在'}, status=status.HTTP_404_NOT_FOUND)
@@ -320,7 +506,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={
             'code': 200,
             'code_text': '获取虚拟机信息成功',
-            'vm': serializers.VmSerializer(vm).data
+            'vm': serializers.VmDetailSerializer(vm).data
         })
 
     @swagger_auto_schema(
@@ -570,8 +756,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         '''
         修改虚拟机备注信息
         '''
-        remark = request.query_params.get('remark')
-        if not remark:
+        remark = request.query_params.get('remark', None)
+        if remark is None:
             return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
 
         vm_uuid = kwargs.get(self.lookup_field, '')
@@ -607,7 +793,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                   "ipv4": "10.107.50.2"
                 },
                 "snap": "598fb694a75c49c49c9574f9f3ea6174@20200121_073930",
-                "create_time": "2020-01-21 15:39:31",
+                "create_time": "2020-03-06T14:46:27.149648+08:00",
                 "remarks": "sss"
               }
             }
@@ -714,8 +900,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         '''
         修改虚拟机快照备注信息
         '''
-        remark = request.query_params.get('remark')
-        if not remark:
+        remark = request.query_params.get('remark', None)
+        if remark is None:
             return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
 
         snap_id = str_to_int_or_default(kwargs.get('id', '0'), default=0)
@@ -848,7 +1034,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'can_mount_pci', 'can_mount_vdisk']:
             return serializers.VmSerializer
         elif self.action == 'create':
             return serializers.VmCreateSerializer
@@ -1070,7 +1256,6 @@ class VlanViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     queryset = Vlan.objects.all()
 
-
     def list(self, request, *args, **kwargs):
         '''
         获取网段列表
@@ -1168,7 +1353,7 @@ class ImageViewSet(viewsets.GenericViewSet):
                     "name": "基础镜像"
                   },
                   "enable": true,
-                  "create_time": "2019-10-15 16:25:26",
+                  "create_time": "2020-03-06T14:46:27.149648+08:00",
                   "desc": "centos8"
                 }
               ]
@@ -1216,7 +1401,7 @@ class AuthTokenViewSet(ObtainAuthToken):
             "token": {
                 "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
                 "user": "username",
-                "created": "2018-12-10 14:04:01"
+                "created": "2020-03-06T14:46:27.149648+08:00"
             }
         }
 
@@ -1244,7 +1429,7 @@ class AuthTokenViewSet(ObtainAuthToken):
                 "token": {
                     "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
                     "user": "username",
-                    "created": "2018-12-10 14:04:01"
+                    "created": "2020-03-06T14:46:27.149648+08:00"
                 }
             }
             '''
@@ -1283,7 +1468,7 @@ class AuthTokenViewSet(ObtainAuthToken):
                     "token": {
                         "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
                         "user": "username",
-                        "created": "2018-12-10 14:04:01"
+                        "created": "2020-03-06T14:46:27.149648+08:00"
                     }
                 }
             '''
@@ -1486,8 +1671,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     "id": 1,
                     "name": "group1云硬盘存储池"
                   },
-                  "create_time": "2019-11-13 16:56:20",
-                  "attach_time": "2019-11-14 09:11:44",
+                  "create_time": "2020-03-06T14:46:27.149648+08:00",
+                  "attach_time": "2020-03-06T14:46:27.149648+08:00",
                   "enable": true,
                   "remarks": "test3",
                   "group": {
@@ -1536,6 +1721,81 @@ class VDiskViewSet(viewsets.GenericViewSet):
         return Response(data)
 
     @swagger_auto_schema(
+        operation_summary='查询虚拟机可挂载的云硬盘',
+        responses={
+            200: ''''''
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'vm/(?P<vm_uuid>[0-9a-z-]+)', url_name='vm_can_mount')
+    def vm_can_mount(self, request, *args, **kwargs):
+        """
+        查询虚拟机可挂载的云硬盘
+
+            HTTP CODE 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "uuid": "6111402f379b444092218101c72016c4",
+                  "size": 10,
+                  "vm": {                                          # 已挂载于主机；未挂载时为 null
+                    "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                    "ipv4": "10.107.50.15"
+                  },
+                  "user": {
+                    "id": 4,
+                    "username": "869588058@qq.com"
+                  },
+                  "quota": {
+                    "id": 1,
+                    "name": "group1云硬盘存储池"
+                  },
+                  "create_time": "2020-03-09T16:36:53.717507+08:00",
+                  "attach_time": "2020-03-12T16:02:00.738921+08:00",    # 挂载时间；未挂载时为 null
+                  "enable": true,
+                  "remarks": "",
+                  "group": {
+                    "id": 1,
+                    "name": "宿主机组1"
+                  }
+                }
+              ]
+            }
+        """
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        mgr = VmManager()
+        try:
+            vm = mgr.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
+        except VmError as e:
+            return Response({'code': 400, 'code_text': f'查询云主机错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not vm:
+            return Response({'code': 404, 'code_text': '云主机不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        group = vm.host.group
+        user = request.user
+
+        disk_manager = VdiskManager()
+        related_fields = ('user', 'quota', 'quota__group')
+        try:
+            if user.is_superuser:
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, related_fields=related_fields)
+            else:
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, user_id=user.id, related_fields=related_fields)
+        except VdiskError as e:
+            return Response({'code': 400, 'code_text': f'查询硬盘列表时错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            page = self.paginate_queryset(queryset)
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        except Exception as e:
+            return Response(data={'code': 400, 'code_text': f'查询云硬盘时错误, {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
         operation_summary='创建云硬盘',
         responses={
             201: ''''''
@@ -1555,7 +1815,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "vm": null,
                 "user": 1,
                 "quota": 1,
-                "create_time": "2019-11-07 11:21:44",
+                "create_time": "2020-03-06T14:46:27.149648+08:00",
                 "attach_time": null,
                 "enable": true,
                 "remarks": "test2"
@@ -1646,7 +1906,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     "name": "宿主机组1"
                   }
                 },
-                "create_time": "2019-11-07 11:19:55",
+                "create_time": "2020-03-06T14:46:27.149648+08:00",
                 "attach_time": null,
                 "enable": true,
                 "remarks": "test"
@@ -1820,9 +2080,9 @@ class VDiskViewSet(viewsets.GenericViewSet):
         '''
         修改云硬盘备注信息
         '''
-        remark = request.query_params.get('remark')
-        if not remark:
-            return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
+        remark = request.query_params.get('remark', None)
+        if remark is None:
+            return Response(data={'code': 400, 'code_text': '参数有误，未提交remark参数'}, status=status.HTTP_400_BAD_REQUEST)
 
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VdiskManager()
@@ -1840,7 +2100,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action == 'list':
+        if self.action in ['list', 'vm_can_mount']:
             return serializers.VdiskSerializer
         elif self.action == 'retrieve':
             return serializers.VdiskDetailSerializer
@@ -1995,7 +2255,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         centers = CenterManager().get_stat_center_queryset().values('id', 'name', 'mem_total', 'mem_allocated',
                                          'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
-        groups = GroupManager().get_stat_group_wueryset().values('id', 'name', 'center__name', 'mem_total',
+        groups = GroupManager().get_stat_group_queryset().values('id', 'name', 'center__name', 'mem_total',
                                         'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         hosts = Host.objects.select_related('group').values('id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
                                             'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
@@ -2043,14 +2303,14 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         c_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if c_id > 0:
-            center = CenterManager().get_stat_center_queryset(filter={'id': c_id}).values('id', 'name', 'mem_total',
+            center = CenterManager().get_stat_center_queryset(filters={'id': c_id}).values('id', 'name', 'mem_total',
                             'mem_allocated','mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').first()
         else:
             center = None
         if not center:
             return Response({'code': 200, 'code_text': '分中心不存在'}, status=status.HTTP_400_BAD_REQUEST)
 
-        groups = GroupManager().get_stat_group_wueryset(filter={'center': c_id}).values('id', 'name', 'center__name',
+        groups = GroupManager().get_stat_group_queryset(filters={'center': c_id}).values('id', 'name', 'center__name',
                              'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
 
@@ -2097,7 +2357,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         g_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if g_id > 0:
-            group = GroupManager().get_stat_group_wueryset(filter={'id': g_id}).values('id', 'name', 'center__name',
+            group = GroupManager().get_stat_group_queryset(filters={'id': g_id}).values('id', 'name', 'center__name',
                     'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total','vcpu_allocated', 'vm_created').first()
         else:
             group = None
@@ -2128,12 +2388,40 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         operation_summary='获取PCI设备列表',
         manual_parameters=[
             openapi.Parameter(
+                name='center_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，所属分中心id'
+            ),
+            openapi.Parameter(
                 name='group_id',
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
                 description='筛选条件，所属宿主机组id'
-            )
+            ),
+            openapi.Parameter(
+                name='host_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，所属宿主机id'
+            ),
+            openapi.Parameter(
+                name='type',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='筛选条件，设备类型'
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='筛选条件，关键字'
+            ),
         ],
     )
     def list(self, request, *args, **kwargs):
@@ -2141,18 +2429,115 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         获取PCI设备列表
 
             http code 200:
+            {
+                "count": 1,
+                "next": null,
+                "previous": null,
+                "results": [
                 {
-                  "count": 0,
-                  "next": null,
-                  "previous": null,
-                  "results": []
+                  "id": 1,
+                  "type": {
+                    "val": 1,
+                    "name": "GPU"
+                  },
+                  "vm": null,
+                  "host": {
+                    "id": 1,
+                    "ipv4": "10.100.50.121"
+                  },
+                  "attach_time": null,
+                  "remarks": ""
                 }
+                ]
+            }
         '''
-        group_id = int(request.query_params.get('group_id', 0))
-        if group_id > 0:
-            queryset = PCIDeviceManager().get_device_queryset_by_group(group_id).select_related('host', 'vm').all()
-        else:
-            queryset = PCIDeviceManager().get_device_queryset().select_related('host', 'vm').all()
+        center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
+        group_id = str_to_int_or_default(request.query_params.get('group_id', 0), 0)
+        host_id = str_to_int_or_default(request.query_params.get('host_id', 0), 0)
+        type_val = str_to_int_or_default(request.query_params.get('type', 0), 0)
+        search = str_to_int_or_default(request.query_params.get('search', 0), 0)
+
+        user = request.user
+        if not (user and user.is_authenticated):
+            return Response(data={'code': 401, 'code_text': '未身份认证，无权限'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            queryset = PCIDeviceManager().filter_pci_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
+                       type_id=type_val, search=search, user=user, related_fields=('host', 'vm'))
+        except DeviceError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary='查询主机可挂载的PCI设备',
+        request_body=no_body,
+        responses={
+            201: """
+                    {
+                        "code": 201,
+                        "code_text": "挂载设备成功"
+                    }
+                """
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'vm/(?P<vm_uuid>[0-9a-z-]+)', url_name='vm_can_mount')
+    def vm_can_mount(self, request, *args, **kwargs):
+        """
+        查询主机可挂载的PCI设备
+
+            http code 200:
+            {
+              "count": 1,
+              "next": null,
+              "previous": null,
+              "results": [
+                {
+                  "id": 1,
+                  "type": {
+                    "val": 1,
+                    "name": "GPU"
+                  },
+                  "vm": {                           # 已挂载于主机；未挂载时为 null
+                    "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                    "ipv4": "10.107.50.15"
+                  },
+                  "host": {
+                    "id": 1,
+                    "ipv4": "10.100.50.121"
+                  },
+                  "attach_time": "2020-03-11T11:38:05.102522+08:00",    # 挂载时间； 未挂载时为 null
+                  "remarks": ""
+                }
+              ]
+            }
+            http code 400:
+            {
+                "code": 400,
+                "code_text": "xxx"
+            }
+        """
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        try:
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', ))
+        except VmError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not vm:
+            return Response({'code': 404, 'code_text': '云主机不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            queryset = PCIDeviceManager().get_pci_queryset_by_host(host=vm.host)
+            queryset = queryset.select_related('host', 'vm').all()
+        except DeviceError as e:
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -2259,7 +2644,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'vm_can_mount']:
             return serializers.PCIDeviceSerializer
         return Serializer
 
@@ -2325,6 +2710,6 @@ class MacIPViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
 
     def get_serializer_class(self):
-        if self.action =='list':
+        if self.action == 'list':
             return serializers.MacIPSerializer
         return Serializer

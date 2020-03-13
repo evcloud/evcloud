@@ -122,7 +122,7 @@ class Vm(models.Model):
         if user.is_superuser:
             return True
 
-        if self.user == user:
+        if self.user_id == user.id:
             return True
 
         return False
@@ -159,6 +159,16 @@ class Vm(models.Model):
         '''
         qs = self.get_mounted_vdisk_queryset()
         return qs.count()
+
+    @property
+    def pci_devices(self):
+        """
+        获取挂载到虚拟机下的所有PCI设备查询集
+
+        :return:
+            QuerySet()
+        """
+        return self.device_set.select_related('host__group').all()
 
 
 class VmArchive(models.Model):

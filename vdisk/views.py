@@ -129,9 +129,7 @@ class DiskMountToVmView(View):
         if not disk:
             return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云硬盘不存在']})
 
-        context = {}
-        context['disk'] = disk
-        context['search'] = search
+        context = {'disk': disk, 'search': search}
         # 如果硬盘已被挂载
         if disk.vm:
             return render(request, 'vdisk_mount_to_vm.html', context=context)

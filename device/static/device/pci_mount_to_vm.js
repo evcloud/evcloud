@@ -5,7 +5,7 @@
     //
     // 页面刷新时执行
     window.onload = function() {
-        $("#nav_vdisk_list").addClass("active");// 激活云硬盘列表导航栏
+        $("#nav_pci_list").addClass("active");// 激活云硬盘列表导航栏
         // 虚拟机列表运行状态查询更新
         update_vms_status(get_vm_list_uuid_array());
     };
@@ -85,26 +85,25 @@
         });
     });
 
-    // 挂载硬盘
-    $(".btn-disk-mount").click(function (e) {
+    // 挂载设备
+    $(".btn-pci-mount").click(function (e) {
         e.preventDefault();
 
         if(!confirm("确定挂载到此云主机吗？"))
             return;
 
-        let disk_uuid = $("#id-mount-disk-uuid").text();
+        let pci_id = $("#id-mount-pci-id").text();
         let vm_uuid = $(this).attr("data-vm-uuid");
-        let api = build_absolute_url('api/' + API_VERSION + '/vdisk/' + disk_uuid + '/mount/?vm_uuid=' + vm_uuid);
+        let api = build_absolute_url('api/' + API_VERSION + '/pci/' + pci_id + '/mount/?vm_uuid=' + vm_uuid);
         $.ajax({
             url: api,
-            type: 'patch',
+            type: 'post',
             success: function (data, status_text) {
-                $("#tr_" + disk_uuid).remove();
-                alert('已成功挂载硬盘');
+                alert('已成功挂载设备');
             },
             error: function (xhr, msg, err) {
                 let data = xhr.responseJSON;
-                msg = '挂载硬盘失败';
+                msg = '挂载设备失败';
                 if (data && data.hasOwnProperty('code_text')){
                     msg = data.code_text;
                 }

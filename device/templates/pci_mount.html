@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load  sizeformat %}
+
+{% block title %}PCI设备挂载{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid offset-md-1 col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>PCI设备挂载</strong></span>
+                <div class="float-right">
+                    <a class="btn btn-sm btn-success" href="{% url 'device:pci-list' %}">PCI设备列表</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="">
+                    <div class="text-primary h4">PCI设备信息:</div>
+                    <div class="">
+                        <dl class="row">
+                            <dt class="col-2 text-right">ID:</dt> <dd class="col-10" id="id-mount-pci-id">{{ device.id }}</dd>
+                            <dt class="col-2 text-right">类型:</dt> <dd class="col-10">{{ device.type_display }}</dd>
+                            <dt class="col-2 text-right">宿主机:</dt> <dd class="col-10">{{ device.host.ipv4 }}</dd>
+                            <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ device.host.group }}</dd>
+                            <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ device.remarks }}</dd>
+                        </dl>
+                    </div>
+                </div>
+                <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
+                {% if device.vm %}
+                    <div>
+                        <p class="text-warning h3">此PCI设备已被挂载使用，挂载云主机uuid: {{ device.vm.hex_uuid }}，IP: {{ device.vm.ipv4 }}</p>
+                    </div>
+                {% else %}
+                    <div>
+                        <div class="text-success h4 col-sm-4">可供挂载的云主机：</div>
+                        <div class="float-right col-sm-8">
+                            <form role="form" class="form-horizontal" method="get" action="">
+                                <div class="input-group" style="">
+                                    <div class="input-group-prepend">
+                                        <label class="input-group-text" for="id-center">关键字</label>
+                                    </div>
+                                    <input type="text" class="form-control" name="search" value="{{ search }}"
+                                           placeholder="搜 IP、备注"/>
+                                    <span class="input-group-prepend"></span>
+                                    <button type="submit" class="btn btn-primary form-control">筛选</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <table class="table table-bordered table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                        <tr>
+                            <th></th>
+                            <th>IP地址</th>
+                            <th>创建者</th>
+                            <th>镜像</th>
+                            <th>CPU/MEM</th>
+                            <th>备注</th>
+                            <th>状态<button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button></th>
+                            <th>操作</th>
+                        </tr>
+                        {% for vm in vms %}
+                            <tr id="tr_{{ vm.hex_uuid }}">
+                                <td><input type="checkbox" class="item-checkbox" value="{{ vm.hex_uuid }}" name="select_vm"></td>
+                                <td title="{{ vm.hex_uuid }}"><b>{{ vm.mac_ip.ipv4 }}</b></td>
+                                <td>{{ vm.user }}</td>
+                                <td>{{ vm.image }}</td>
+                                <td>
+                                    {{ vm.vcpu }} / {{ vm.mem|sizeformat:'MB' }}
+                                </td>
+                                <td>
+                                    <span>{{ vm.remarks|default_if_none:'' }}</span>
+                                </td>
+                                <td><span id="vm_status_{{ vm.hex_uuid }}"><i class="fa fa-spinner fa-pulse"></i></span></td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-success btn-pci-mount" data-vm-uuid="{{ vm.hex_uuid }}">挂载</button>
+                                    <button type="button" class="btn btn-sm btn-warning btn-vm-shutdown" data-vm-uuid="{{ vm.hex_uuid }}">关机</button>
+                                    <button type="button" class="btn btn-sm btn-warning btn-vm-poweroff" data-vm-uuid="{{ vm.hex_uuid }}">强制断电</button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                    <div class="card-footer">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination"  style="margin:0;">
+                                {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
+                                    {% if page_list %}
+                                        {% if previous %}
+                                            <li class="page-item"><a class="page-link" href="?{{ previous }}" aria-label="Previous"><span
+                                                    aria-hidden="true">&laquo;</span></a></li>
+                                        {% else %}
+                                            <li class="page-item disable"><span class="page-link" aria-hidden="true">&laquo;</span></li>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% for disp, query, active in page_list %}
+                                        {% if active %}
+                                            <li class="page-item active"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
+                                        {% else %}
+                                            <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if page_list %}
+                                        {% if next %}
+                                            <li class="page-item"><a class="page-link" href="?{{ next }}" aria-label="Next"><span
+                                                    aria-hidden="true">&raquo;</span></a></li>
+                                        {% else %}
+                                            <li class="page-item disable"><span class="page-link" aria-hidden="true">&raquo;</span></li>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endwith %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
+    <script type="text/javascript" src="{% static 'device/pci_mount_to_vm.js' %}"></script>
+{% endblock %}

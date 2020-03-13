@@ -50,7 +50,7 @@ class Group(models.Model):
         verbose_name_plural = '02_宿主机组'
         unique_together = ('center', 'name')
 
-    def user_has_perms(self, user:User):
+    def user_has_perms(self, user: User):
         '''
         用户是否有访问此宿主机组的权限
         :param user: 用户
@@ -58,14 +58,13 @@ class Group(models.Model):
             True    # has
             False   # no
         '''
+        if not user or not user.id:
+            return False
+
         if user.is_superuser:   # 超级用户
             return True
 
-        u = self.users.filter(id=user.id).first()
-        if u:
-            return True
-
-        return False
+        return self.users.filter(id=user.id).exists()
 
 
 class Host(models.Model):

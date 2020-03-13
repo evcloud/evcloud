@@ -124,7 +124,34 @@
             error: function (xhr, msg, err) {
 			    msg = '卸载硬盘失败' + msg;
 			    try {
-                    data = xhr.responseJSON;
+                    let data = xhr.responseJSON;
+                    if (data.hasOwnProperty('code_text')) {
+                        msg = data.code_text;
+                    }
+                }catch (e) {}
+                alert(msg);
+            }
+		});
+    });
+
+    //卸载PCI设备
+    $('.btn-pci-unmount').click(function (e) {
+        e.preventDefault();
+        if(!confirm("确定要卸载此设备吗？")){
+            return
+        }
+        let pci_id = $(this).attr('data-pci-id');
+        $.ajax({
+			url: build_absolute_url('/api/v3/pci/' + pci_id + '/umount/'),
+			type: 'post',
+            success: function (data, status_text) {
+			    $("#tr_" + pci_id).remove();
+                alert('已成功卸载设备');
+            },
+            error: function (xhr, msg, err) {
+			    msg = '卸载设备失败' + msg;
+			    try {
+                    let data = xhr.responseJSON;
                     if (data.hasOwnProperty('code_text')) {
                         msg = data.code_text;
                     }
@@ -272,14 +299,17 @@
 		});
     });
 
+    //art-template渲染模板注册过滤器
+    template.defaults.imports.isoTimeToLocal = isoTimeToLocal;
+
     //
     // 创建快照渲染模板
     //
     let render_vm_snap_item = template.compile(`
         <tr id="tr_snap_{{ snap.id }}">
             <td>{{ snap.id }}</td>
-            <td>{{ snap.snap }}</td>
-            <td>{{ snap.create_time }}</td>
+            <td class="line-limit-length" style="max-width: 150px;" title="{{ snap.snap }}">{{ snap.snap }}</td>
+            <td>{{ $imports.isoTimeToLocal(snap.create_time) }}</td>
             <td class="mouse-hover">
                 <div>
                     <span>{{ snap.remarks }}</span>
