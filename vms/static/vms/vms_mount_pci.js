@@ -25,24 +25,24 @@
         $("#nav_vm_list").addClass("active");
     };
 
-    $(".btn-disk-mount").click(function (e) {
+    $(".btn-pci-mount").click(function (e) {
         e.preventDefault();
-        if(!confirm("确定挂载此硬盘吗？"))
+        if(!confirm("确定挂载此设备吗？"))
             return;
 
         let vm_uuid = $("#id-mount-vm-uuid").text();
-        let disk_uuid = $(this).attr("data-disk-uuid");
-        let api = build_absolute_url('api/' + API_VERSION + '/vdisk/' + disk_uuid + '/mount/?vm_uuid=' + vm_uuid);
+        let pci_id = $(this).attr("data-pci-id");
+        let api = build_absolute_url('api/' + API_VERSION + '/pci/' + pci_id + '/mount/?vm_uuid=' + vm_uuid);
         $.ajax({
             url: api,
-            type: 'patch',
+            type: 'post',
             success: function (data, status_text) {
-                $("#tr_" + disk_uuid).remove();
-                alert('已成功挂载硬盘');
+                $("#tr_" + pci_id).remove();
+                alert('已成功挂载设备');
             },
             error: function (xhr, msg, err) {
                 let data = xhr.responseJSON;
-                msg = '挂载硬盘失败';
+                msg = '挂载设备失败';
                 if (data && data.hasOwnProperty('code_text')){
                     msg = data.code_text;
                 }

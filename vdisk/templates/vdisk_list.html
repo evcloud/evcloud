@@ -11,6 +11,11 @@
     .mouse-hover-show {
         display: none;
     }
+    .line-limit-length {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
     </style>
 {% endblock %}
 {% block title %}云硬盘列表{% endblock %}
@@ -80,7 +85,7 @@
                     <thead class="thead-light">
                     <tr>
                         <th></th>
-                        <th>UUID</th>
+                        <th style="max-width: 150px;">UUID</th>
                         <th>机组</th>
                         <th>存储池</th>
                         <th>容量</th>
@@ -97,7 +102,7 @@
                     {% for disk in vdisks %}
                         <tr id="tr_{{ disk.uuid }}">
                             <td><input type="checkbox" class="item-checkbox" value="{{ disk.uuid }}" name="select_vm"></td>
-                            <td><b>{{ disk.uuid }}</b></td>
+                            <td class="line-limit-length" style="max-width: 150px;" title="{{ disk.uuid }}"><b>{{ disk.uuid }}</b></td>
                             <td>{{ disk.quota.group }}</td>
                             <td>{{ disk.quota }}</td>
                             <td>{{ disk.size|sizeformat:'GB' }}</td>
@@ -117,8 +122,8 @@
                                     <i class="fa fa-times"></i>
                                 {%endif%}
                             </td>
-                            <td>
-                                <div class="mouse-hover">
+                            <td class="mouse-hover">
+                                <div>
                                     <span>{{ disk.remarks|default_if_none:'' }}</span>
                                     <span class="mouse-hover-show edit_disk_remark" data-disk-uuid="{{ disk.uuid }}" title="修改备注">
                                         <i class="fa fa-edit"></i>

@@ -432,7 +432,11 @@ class VirtAPI(object):
         try:
             ret = domain.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
         except libvirt.libvirtError as e:
-            raise VirtError(msg=str(e))
+            c = e.get_error_code()
+            msg = e.get_error_message()
+            if c and c == 99 and 'device not found' in msg:
+                return True
+            raise VirtError(msg=msg)
         if ret == 0:
             return True
         return False
