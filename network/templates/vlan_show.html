@@ -8,7 +8,7 @@
 {% block title %}IP列表{% endblock %}
 
 {% block boby %}
-    <div class="offset-md-1 col-md-10">
+    <div class="col-md-12">
         <div class="card">
             <div class="card-header">
                 <span class="card-title"><strong>IP列表</strong></span>
@@ -35,10 +35,9 @@
                         <th>{{ macip.mac }}</th>
                         <th>{{ macip.host_uuid }}</th>
                         {% if macip.enable %}
-                        <th><span class="glyphicon glyphicon-ok"></span></th>
-                        {% endif %}
-                        {% if not macip.enable %}
-                        <th><span class="glyphicon glyphicon-remove"></span></th>
+                            <th><i class="fa fa-check"></i></th>
+                        {% else %}
+                            <th><i class="fa fa-times"></i></th>
                         {% endif %}
                     </tr>
                     {% endfor %}
