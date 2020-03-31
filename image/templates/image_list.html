@@ -8,7 +8,7 @@
 {% block title %}镜像列表{% endblock %}
 
 {% block boby %}
-    <div class="offset-md-1 col-md-10">
+    <div class="col-md-12">
         <div class="card">
             <div class="card-header">
                 <span class="card-title"><strong>镜像列表 ({{ count }})</strong></span>
@@ -73,7 +73,7 @@
                         <td>{{ image.sys_type_display }}</td>
                         <td>{{ image.tag_display }}</td>
                         <td>{{ image.create_time|date:'Y-m-d H:i:s' }}</td>
-                        <td class="mouse-hover">
+                        <td class="mouse-hover" style="max-width: 200px;">
                             <div>
                                 <span>{{ image.desc|default_if_none:'' }}</span>
                                 <span class="mouse-hover-show edit_vm_remark" data-image-id="{{ image.id }}" style="display:none;" title="修改备注">
