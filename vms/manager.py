@@ -1562,7 +1562,7 @@ class VmAPI:
         new_image = self._get_image(image_id)  # 镜像
         # 同一个iamge
         if new_image.pk == vm.image.pk:
-            raise VmError(msg='要更换的系统不能是虚拟机当前系统镜像')
+            return self._reset_vm_sys_disk(vm)
 
         # vm和image是否在同一个分中心
         host = vm.host
@@ -1719,5 +1719,58 @@ class VmAPI:
 
         return vm
 
+    def _reset_vm_sys_disk(self, vm: Vm):
+        """
+        重置虚拟机系统盘，恢复到创建时状态
+
+        :param vm: 虚拟机对象; type Vm
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        # 删除快照记录
+        try:
+            vm.sys_snaps.delete()
+        except Exception as e:
+            raise VmError(msg=f'删除虚拟机系统盘快照失败，{str(e)}')
+
+        disk_name = vm.disk
+        pool = vm.image.ceph_pool
+        pool_name = pool.pool_name
+        ceph = pool.ceph
+        image = vm.image
+        data_pool = pool.data_pool if pool.has_data_pool else None
+
+        ok, deleted_disk = rename_sys_disk_delete(ceph=ceph, pool_name=pool_name, disk_name=disk_name)
+        if not ok:
+            raise VmError(msg='虚拟机系统盘重命名失败')
+
+        rbd_manager = get_rbd_manager(ceph=ceph, pool_name=pool_name)
+        try:
+            rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap,
+                                    new_image_name=disk_name, data_pool=data_pool)
+        except (RadosError, ImageExistsError) as e:
+            # 原系统盘改回原名
+            rename_image(ceph=ceph, pool_name=pool_name, image_name=deleted_disk, new_name=disk_name)
+            raise VmError(msg=f'虚拟机系统盘创建失败, {str(e)}')
+
+        return vm
+
+    def reset_sys_disk(self, vm_uuid: str, user):
+        """
+        重置虚拟机系统盘，恢复到创建时状态
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=(
+            'user', 'host__group', 'image__ceph_pool__ceph'))
+
+        return self._reset_vm_sys_disk(vm)
 
 
