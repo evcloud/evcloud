@@ -68,10 +68,10 @@ class CephCluster(models.Model):
             os.makedirs(path, exist_ok=True)
 
             with open(self.config_file, 'w') as f:
-                f.write(self.config)
+                f.write(self.config + '\n')     # 最后留空行
 
             with open(self.keyring_file, 'w') as f:
-                f.write(self.keyring)
+                f.write(self.keyring + '\n')
         except Exception:
             return False
 
