@@ -20,7 +20,6 @@
                         <label for="id-center" class="offset-sm-1 col-sm-2 text-right col-form-label">分中心</label>
                         <div class="col-sm-7">
                             <select name="center_id" class="form-control" id="id-center">
-                                <option value="">--</option>
                                 {% for c in centers %}
                                     <option value="{{ c.id }}" {% if c.id == center_id %}selected{% endif %}>{{ c.name }}</option>
                                 {% endfor %}
@@ -30,10 +29,9 @@
                 </form>
                 <form class="form-horizontal" id="id-form-vm-create">
                     <div class="form-group row">
-                        <label for="id-group" class="offset-sm-1 col-sm-2 text-right col-form-label">机组</label>
+                        <label for="id-group" class="offset-sm-1 col-sm-2 text-right col-form-label">主机组</label>
                         <div class="col-sm-7">
                             <select name="group_id" class="form-control" id="id-group">
-                                <option value="">--</option>
                                 {% for g in groups %}
                                     <option value="{{ g.id }}" {% if g.id == group_id %}selected{% endif %}>{{ g.name }}</option>
                                 {% endfor %}
@@ -78,6 +76,7 @@
                         </div>
                         <div class="col-sm-5">
                             <select name="image_id" class="form-control" id="id-image" required>
+                                <option value="">--</option>
                                 {% for i in images %}
                                     <option value="{{ i.id }}">{{ i.name }}</option>
                                 {% endfor %}
