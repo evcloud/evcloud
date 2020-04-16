@@ -5,7 +5,7 @@ import os,sys,time
 import MySQLdb     #  pip3 install mysqlclient 或者 dnf install python3-mysql.x86_64
 
 #from config import db_Ip, db_User, db_Password, db_DefaultDB, db_Port, db_Table
-sys.path.append('/home/uwsgi/evcloud_dev/django_site')
+sys.path.append('/home/uwsgi/evcloud/django_site')
 import security as settings
 db_Ip        = settings.DATABASES['default']['HOST'];
 db_Port      = int( settings.DATABASES['default']['PORT'] ); 
