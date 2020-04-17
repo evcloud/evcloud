@@ -9,7 +9,7 @@ from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
-from utils.ev_libvirt.virt import VirtAPI, VirtError
+from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain
 from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog)
 from .xml import XMLEditor
 from utils.errors import Error
@@ -206,6 +206,16 @@ class VmManager(VirtAPI):
 
         return vm_queryset.select_related(*related_fields).all()
 
+    @staticmethod
+    def get_vm_domain(host_ipv4: str, vm_uuid: str):
+        """
+
+        :param host_ipv4:
+        :param vm_uuid:
+        :return:
+        """
+        return VmDomain(host_ip=host_ipv4, vm_uuid=vm_uuid)
+
     def get_vm_xml_desc(self, host_ipv4:str, vm_uuid:str):
         '''
         动态从宿主机获取虚拟机的xml内容
@@ -217,9 +227,9 @@ class VmManager(VirtAPI):
 
         :raise VmError()
         '''
+        domain = self.get_vm_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
         try:
-            xml_desc = self.get_domain_xml_desc(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
-            return  xml_desc
+            return domain.xml_desc()
         except self.VirtError as e:
             raise VmError(msg=str(e))
 
@@ -282,7 +292,7 @@ class VmManager(VirtAPI):
                         disk_list.append(disk)
                     if disk_child.nodeName == 'target':
                         dev_list.append(disk_child.getAttribute('dev'))
-        return (disk_list, dev_list)
+        return disk_list, dev_list
 
     def new_vdisk_dev(self, dev_list:list):
         '''
@@ -313,8 +323,9 @@ class VmManager(VirtAPI):
         :raises: VmError
         '''
         host = vm.host
+        domain = self.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.get_uuid())
         try:
-            if self.attach_device(host_ipv4=host.ipv4, vm_uuid=vm.get_uuid(), xml=disk_xml):
+            if domain.attach_device(xml=disk_xml):
                 return True
             return False
         except self.VirtError as e:
@@ -332,8 +343,9 @@ class VmManager(VirtAPI):
         :raises: VmError
         '''
         host = vm.host
+        domain = self.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.get_uuid())
         try:
-            if self.detach_device(host_ipv4=host.ipv4, vm_uuid=vm.get_uuid(), xml=disk_xml):
+            if domain.detach_device(xml=disk_xml):
                 return True
             return False
         except self.VirtError as e:
@@ -532,7 +544,7 @@ class VmManager(VirtAPI):
             new_data_pool = new_pool.data_pool if new_pool.has_data_pool else None
             new_ceph = new_pool.ceph
 
-            old_vm_xml_desc = self.get_domain_xml_desc(vm_uuid=vm_uuid, host_ipv4=vm.host.ipv4)
+            old_vm_xml_desc = self.get_vm_xml_desc(vm_uuid=vm_uuid, host_ipv4=vm.host.ipv4)
 
             # 虚拟机xml
             xml_tpl = new_image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
@@ -628,7 +640,8 @@ class VmManager(VirtAPI):
         host = vm.host
         host_ip = host.ipv4
         try:
-            return self.domain_status(host_ipv4=host_ip, vm_uuid=vm_uuid)
+            domain = self.get_vm_domain(host_ipv4=host_ip, vm_uuid=vm_uuid)
+            return domain.status()
         except VirtError as e:
             raise VmError(msg='获取虚拟机状态失败')
 
@@ -779,7 +792,7 @@ class VmAPI:
         # 虚拟机的状态
         host = vm.host
         try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+            run = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid).is_running()
         except VirtError as e:
             raise VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
         if run:
@@ -1033,15 +1046,16 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         host = vm.host
         # 虚拟机的状态
+        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
         try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+            run = domain.is_running()
         except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
             if not force:
                 raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
             try:
-                self._vm_manager.poweroff(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+                domain.poweroff()
             except VirtError as e:
                 raise VmError(msg='强制关闭虚拟机失败')
 
@@ -1063,7 +1077,7 @@ class VmAPI:
 
         # 删除虚拟机
         try:
-            if not self._vm_manager.undefine(host_ipv4=host.ipv4, vm_uuid=vm_uuid):
+            if not domain.undefine():
                 raise VmError(msg='删除虚拟机失败')
         except (VirtError, VmError):
             vm_ahv.delete()  # 删除归档记录
@@ -1135,19 +1149,20 @@ class VmAPI:
 
         host = vm.host
         # 虚拟机的状态
+        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
         try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+            run = domain.is_running()
         except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
             if not force:
                 raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
             try:
-                self._vm_manager.poweroff(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+                domain.poweroff()
             except VirtError as e:
                 raise VmError(msg='强制关闭虚拟机失败')
 
-        xml_desc = self._vm_manager.get_vm_xml_desc(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        xml_desc = domain.xml_desc()
         try:
             # 修改vcpu
             if vcpu > 0 and vcpu != vm.vcpu:
@@ -1208,7 +1223,7 @@ class VmAPI:
         try:
             vm.save()
         except Exception as e:
-            raise  VmError(msg='修改虚拟机元数据失败')
+            raise VmError(msg=f'修改虚拟机元数据失败, {str(e)}')
 
         return True
 
@@ -1238,14 +1253,15 @@ class VmAPI:
         host_ip = vm.host.ipv4
 
         try:
+            domain = self._vm_manager.get_vm_domain(host_ipv4=host_ip, vm_uuid=vm_uuid)
             if op == 'start':
-                return self._vm_manager.start(host_ipv4=host_ip, vm_uuid=vm_uuid)
+                return domain.start()
             elif op == 'reboot':
-                return self._vm_manager.reboot(host_ipv4=host_ip, vm_uuid=vm_uuid)
+                return domain.reboot()
             elif op == 'shutdown':
-                return self._vm_manager.shutdown(host_ipv4=host_ip, vm_uuid=vm_uuid)
+                return domain.shutdown()
             elif op == 'poweroff':
-                return self._vm_manager.poweroff(host_ipv4=host_ip, vm_uuid=vm_uuid)
+                return domain.poweroff()
             else:
                 raise VmError(msg='无效的操作')
         except VirtError as e:
@@ -1337,7 +1353,7 @@ class VmAPI:
 
         # 更新vm元数据中的xml
         try:
-            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            xml_desc = self._vm_manager.get_vm_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
             vm.xml = xml_desc
             vm.save(update_fields=['xml'])
         except Exception:
@@ -1376,8 +1392,9 @@ class VmAPI:
 
         # 虚拟机的状态
         host = vm.host
+        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
         try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+            run = domain.is_running()
         except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
@@ -1402,7 +1419,7 @@ class VmAPI:
 
         # 更新vm元数据中的xml
         try:
-            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            xml_desc = domain.xml_desc()
             vm.xml = xml_desc
             vm.save(update_fields=['xml'])
         except Exception:
@@ -1480,8 +1497,9 @@ class VmAPI:
 
         # 虚拟机的状态
         host = vm.host
+        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
         try:
-            run = self._vm_manager.is_running(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+            run = domain.is_running()
         except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
@@ -1495,7 +1513,7 @@ class VmAPI:
 
         # 更新vm元数据中的xml
         try:
-            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            xml_desc = domain.xml_desc()
             vm.xml = xml_desc
             vm.save(update_fields=['xml'])
         except Exception:
@@ -1536,7 +1554,7 @@ class VmAPI:
 
         # 更新vm元数据中的xml
         try:
-            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            xml_desc = self._vm_manager.get_vm_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
             vm.xml = xml_desc
             vm.save(update_fields=['xml'])
         except Exception:
@@ -1608,7 +1626,7 @@ class VmAPI:
 
         # 更新vm元数据中的xml
         try:
-            xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+            xml_desc = self._vm_manager.get_vm_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
             vm.xml = xml_desc
             vm.save(update_fields=['xml'])
         except Exception:
@@ -1651,7 +1669,7 @@ class VmAPI:
 
         # 目标宿主机资源申请
         try:
-            new_host = HostManager().claim_from_host(host_id=host_id, vcpu=vm.vcpu, mem=vm.mem)
+            new_host = self._host_manager.claim_from_host(host_id=host_id, vcpu=vm.vcpu, mem=vm.mem)
         except ComputeError as e:
             raise VmError(msg=str(e))
 
@@ -1683,7 +1701,7 @@ class VmAPI:
             # 如果挂载了硬盘，更新vm元数据中的xml
             if vdisks:
                 try:
-                    xml_desc = self._vm_manager.get_domain_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
+                    xml_desc = self._vm_manager.get_vm_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
                     vm.xml = xml_desc
                     vm.save(update_fields=['xml'])
                 except Exception:
