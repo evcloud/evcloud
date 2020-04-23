@@ -65,17 +65,18 @@ class VirtAPI(object):
     def __init__(self):
         self.VirtError = VirtError
 
-    def _host_alive(self, host_ipv4:str, times=3):
+    def _host_alive(self, host_ipv4:str, times=3, timeout=3):
         '''
         检测宿主机是否可访问
 
         :param host_ipv4: 宿主机IP
-        :param times:
+        :param times: ping次数
+        :param timeout:
         :return:
             True    # 可访问
             False   # 不可
         '''
-        cmd = f'fping {host_ipv4} -r {times}'
+        cmd = f'ping -c {times} -i 0.1 -W {timeout} {host_ipv4}'
         res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
@@ -94,7 +95,7 @@ class VirtAPI(object):
         '''
         if host_ip:
             if not self._host_alive(host_ip):
-                raise VirtError(msg='宿主机连接失败')
+                raise VirtError(msg='未探测到宿主机')
             name = f'qemu+ssh://{host_ip}/system'
         else:
             name = 'qemu:///system'
