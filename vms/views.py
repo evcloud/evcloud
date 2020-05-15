@@ -103,6 +103,10 @@ class VmCreateView(View):
         try:
             c_manager = CenterManager()
             centers = c_manager.get_center_queryset()
+            if center_id == 0:
+                if len(centers) > 0:
+                    center_id = centers.first().id
+
             if center_id > 0:
                 images = ImageManager().get_image_queryset_by_center(center_id).filter(tag=Image.TAG_BASE)
                 groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)

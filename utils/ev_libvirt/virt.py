@@ -65,17 +65,18 @@ class VirtAPI(object):
     def __init__(self):
         self.VirtError = VirtError
 
-    def _host_alive(self, host_ipv4:str, times=3):
+    def _host_alive(self, host_ipv4:str, times=3, timeout=3):
         '''
         检测宿主机是否可访问
 
         :param host_ipv4: 宿主机IP
-        :param times:
+        :param times: ping次数
+        :param timeout:
         :return:
             True    # 可访问
             False   # 不可
         '''
-        cmd = f'fping {host_ipv4} -r {times}'
+        cmd = f'ping -c {times} -i 0.1 -W {timeout} {host_ipv4}'
         res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
@@ -94,7 +95,7 @@ class VirtAPI(object):
         '''
         if host_ip:
             if not self._host_alive(host_ip):
-                raise VirtError(msg='宿主机连接失败')
+                raise VirtError(msg='未探测到宿主机')
             name = f'qemu+ssh://{host_ip}/system'
         else:
             name = 'qemu:///system'
@@ -390,22 +391,148 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise VirtError(msg=str(e))
 
-    def attach_device(self, host_ipv4:str, vm_uuid:str, xml:str):
-        '''
+
+class VmDomain:
+    """
+    宿主机上虚拟机实例
+    """
+    def __init__(self, host_ip: str, vm_uuid: str):
+        self._hip = host_ip
+        self._vmid = vm_uuid
+        self.virt = VirtAPI()
+
+    def exists(self):
+        """
+        检测虚拟机是否已存在
+
+        :return:
+            True: 已存在
+            False: 不存在
+
+        :raise VirtError()
+        """
+        return self.virt.domain_exists(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def status(self):
+        """
+        获取虚拟机的当前运行状态
+
+        :return:
+            success: (state_code:int, state_str:str)
+
+        :raise VirtError()
+        """
+        return self.virt.domain_status(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def undefine(self):
+        """
+        删除虚拟机
+
+        :return:
+            success: True
+            failed: False
+
+        :raise VirtError()
+        """
+        return self.virt.undefine(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def is_shutoff(self):
+        """
+        虚拟机是否关机状态
+
+        :return:
+            True: 关机
+            False: 未关机
+
+        :raise VirtError()
+        """
+        return self.virt.is_shutoff(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def is_running(self):
+        """
+        虚拟机是否开机状态，阻塞、暂停、挂起都属于开启状态
+
+        :return:
+            True: 开机
+            False: 未开机
+
+        :raise VirtError()
+        """
+        return self.virt.is_running(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def start(self):
+        """
+        开机启动虚拟机
+
+        :return:
+            success: True
+            failed: False
+
+        :raise VirtError()
+        """
+        return self.virt.start(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def reboot(self):
+        """
+        重启虚拟机
+
+        :return:
+            success: True
+            failed: False
+
+        :raise VirtError()
+        """
+        return self.virt.reboot(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def shutdown(self):
+        """
+        关机
+
+        :return:
+            success: True
+            failed: False
+
+        :raise VirtError()
+        """
+        return self.virt.shutdown(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def poweroff(self):
+        """
+        关闭电源
+
+        :return:
+            success: True
+            failed: False
+
+        :raise VirtError()
+        """
+        return self.virt.poweroff(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def xml_desc(self):
+        """
+        动态从宿主机获取虚拟机的xml内容
+
+        :return:
+            xml: str    # success
+
+        :raise VirtError()
+        """
+        return self.virt.get_domain_xml_desc(host_ipv4=self._hip, vm_uuid=self._vmid)
+
+    def attach_device(self, xml: str):
+        """
         附加设备到虚拟机
 
-        :param host_ipv4: 宿主机ip
-        :param vm_uuid: 虚拟机uuid
         :param xml: 设备xml
         :return:
             True    # success
             False   # failed
 
         :raises: VirtError
-        '''
-        domain = self.get_domain(host_ipv4, vm_uuid)
+        """
+        domain = self.virt.get_domain(self._hip, self._vmid)
         try:
-            ret = domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG) # 指定将设备分配给持久化域
+            ret = domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)  # 指定将设备分配给持久化域
         except libvirt.libvirtError as e:
             msg = str(e)
             if 'already in the domain configuration' in msg:
@@ -415,20 +542,18 @@ class VirtAPI(object):
             return True
         return False
 
-    def detach_device(self, host_ipv4:str, vm_uuid:str, xml:str):
-        '''
+    def detach_device(self, xml: str):
+        """
         从虚拟机拆卸设备
 
-        :param host_ipv4: 宿主机ip
-        :param vm_uuid: 虚拟机uuid
         :param xml: 设备xml
         :return:
             True    # success
             False   # failed
 
         :raises: VirtError
-        '''
-        domain = self.get_domain(host_ipv4, vm_uuid)
+        """
+        domain = self.virt.get_domain(self._hip, self._vmid)
         try:
             ret = domain.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
         except libvirt.libvirtError as e:

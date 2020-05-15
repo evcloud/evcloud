@@ -136,7 +136,7 @@ class Image(models.Model):
                 rbd.remove_snap(image_name=self.base_image, snap=self.snap)     # 删除旧快照
             except RadosError as e:
                 pass
-            rbd.create_snap(image_name=self.base_image, snap_name=snap_name)
+            rbd.create_snap(image_name=self.base_image, snap_name=snap_name, protected=True)
         except RadosError as e:
             raise Exception(f'create_snap error, {str(e)}')
 
