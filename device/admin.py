@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import PCIDevice
 
 # Register your models here.
@@ -10,4 +11,7 @@ class PCIDeviceAdmin(admin.ModelAdmin):
     list_display = ('id', 'type', 'host', 'address', 'vm', 'attach_time', 'enable', 'remarks')
     search_fields = ('remarks',)
     list_filter = ('type',)
+
+    raw_id_fields = ('vm', 'host')
+    list_select_related = ('host', 'vm')
 

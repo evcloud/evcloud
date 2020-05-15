@@ -276,7 +276,7 @@ class PCIDeviceManager:
 
         if center_id <= 0 and group_id <= 0 and host_id <= 0 and type_id <= 0 and not search:
             if user and user.id:
-                return self.get_user_pci_queryset(user=user)
+                return self.get_user_pci_queryset(user=user).select_related(*related_fields).all()
 
             if not all_no_filters:
                 raise DeviceError(msg='无有效的查询条件')

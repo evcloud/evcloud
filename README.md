@@ -16,7 +16,7 @@
 请自行安装python3.6和Git。
 使用Git拉取代码： 
 ```
-git clone https://github.com/evcloud/evcloud_dev.git
+git clone https://github.com/evcloud/evcloud.git
 ```
 ### 2 安装python运行环境
 #### （1） 使用python虚拟环境
@@ -62,17 +62,17 @@ yum install -y http://download.ceph.com/rpm-nautilus/el7/x86_64/python-rbd-14.2.
 ```
 
 ### 6 运行服务
-如果使用python虚拟还击，先激活python虚拟环境  
+如果使用python虚拟环境，先激活python虚拟环境  
 ```
 pipenv shell
 ```    
 数据库迁移,在项目根目录下运行如下命令完成数据库迁移。  
 ```
-python manage.py migrate
+python3 manage.py migrate
 ```
 运行web服务  
 ```
-python manage.py runserver 0:80
+python3 manage.py runserver 0:80
 ```   
 如果一切正常，打开浏览器输入url(主机IP, 如：127.0.0.1)即可查看站点;
 
@@ -83,12 +83,17 @@ pip3 install websockify
 ```
 替换websockify的token插件，使用项目中自定义的token插件，根据自己环境修改以下命令中的PROJECT_PATH和PYTHON_PATH：
 ```
-ln -s PROJECT_PATH/novnc/plugin_mysql_token/token_plugin_mysql.py PYTHON_PATH/python3.6/site-packages/websockify/token_plugins.py
+ln -s PROJECT_PATH/novnc/token_plugin_mysql/token_plugin_mysql.py PYTHON_PATH/python3.6/site-packages/websockify/token_plugins.py
 ```
+下载noVNC（https://github.com/novnc/noVNC）到 /usr/share/noVNC
+
 启动websockify服务
 ```
-websockify 0.0.0.0:84 --daemon --web=/usr/share/novnc --token-plugin=TokenMysql --token-source='mysql'
+websockify 0.0.0.0:84 --daemon --web=/usr/share/noVNC --token-plugin=TokenMysql --token-source='mysql'
 ```
 请对应设置项目配置文件settings.py中参数NOVNC_SERVER_PORT的值。
+
+### 8 nginx
+使用nginx时，可以参考django_site目录下nginx_evcloud.conf文件。
 
 
