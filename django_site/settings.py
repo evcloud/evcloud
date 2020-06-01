@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'vdisk',
     'docs',
     'reports',
+    'pcservers'
 ]
 
 MIDDLEWARE = [
