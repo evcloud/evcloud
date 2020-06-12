@@ -887,7 +887,7 @@ class VmAPI:
 
         return vlan
 
-    def _get_group_host_check_perms(self, group_id:int, host_id:int, user):
+    def _get_groups_host_check_perms(self, center_id: int, group_id: int, host_id: int, user):
         '''
         检查用户使用有宿主机组或宿主机访问权限，优先使用host_id
 
@@ -895,8 +895,8 @@ class VmAPI:
         :param host_id: 宿主机ID
         :param user: 用户
         :return:
-                (None, Host())  # host_id有效时
-                Group(), None   # host_id无效，group_id有效时
+                [], Host()          # host_id有效时
+                [Group()], None     # host_id无效，group_id有效时
 
         :raises: VmError
         '''
@@ -912,7 +912,7 @@ class VmAPI:
             if not host.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
 
-            return None, host
+            return [], host
 
         if group_id:
             try:
@@ -926,16 +926,26 @@ class VmAPI:
             if not group.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
 
-            return group, None
+            return [group], None
 
-        raise VmError(msg='group id和host id不能同时为空')
+        if center_id:
+            try:
+                groups = self._center_manager.get_user_group_queryset_by_center(center_or_id=center_id, user=user)
+                groups = list(groups)
+            except Exception as e:
+                raise VmError(msg=f'查询指定分中心下的宿主机组错误，{str(e)}')
 
-    def create_vm(self, image_id:int, vcpu:int, mem:int, vlan_id:int, user, group_id=None, host_id=None, ipv4=None, remarks=None, **kwargs):
+            return groups, None
+
+        raise VmError(msg='必须指定一个有效的center id或者group id或者host id')
+
+    def create_vm(self, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
+                  host_id=None, ipv4=None, remarks=None, **kwargs):
         '''
         创建一个虚拟机
 
         说明：
-            group_id和host_id参数必须给定一个；host_id有效时，使用host_id；host_id无效时，使用group_id；
+            center_id和group_id和host_id参数必须给定一个；host_id有效时，使用host_id；host_id无效时，使用group_id；
             ipv4有效时，使用ipv4；ipv4无效时，使用vlan_id；都无效自动分配；
 
         备注：虚拟机的名称和系统盘名称同虚拟机的uuid
@@ -944,6 +954,8 @@ class VmAPI:
         :param vcpu: cpu数
         :param mem: 内存大小
         :param vlan_id: 子网id
+        :param user: 用户对象
+        :param center_id: 分中心id
         :param group_id: 宿主机组id
         :param host_id: 宿主机id
         :param ipv4:  指定要创建的虚拟机ip
@@ -958,13 +970,15 @@ class VmAPI:
         vlan = None
         diskname = None # clone的系统镜像
 
-        if vcpu <= 0: raise VmError(msg='无法创建虚拟机,vcpu参数无效')
-        if mem <= 0: raise VmError(msg='无法创建虚拟机,men参数无效')
-        if not ((group_id and group_id > 0) or (host_id and host_id > 0)):
-            raise VmError(msg='无法创建虚拟机,必须指定一个无效group_id或host_id参数')
+        if vcpu <= 0:
+            raise VmError(msg='无法创建虚拟机,vcpu参数无效')
+        if mem <= 0:
+            raise VmError(msg='无法创建虚拟机,men参数无效')
+        if not ((center_id and center_id > 0) or (group_id and group_id > 0) or (host_id and host_id > 0)):
+            raise VmError(msg='无法创建虚拟机,必须指定一个有效center_id或group_id或host_id参数')
 
         # 权限检查
-        group, host_or_none = self._get_group_host_check_perms(group_id=group_id, host_id=host_id, user=user)
+        groups, host_or_none = self._get_groups_host_check_perms(center_id=center_id, group_id=group_id, host_id=host_id, user=user)
         image = self._get_image(image_id)    # 镜像
 
         vm_uuid_obj = self.new_uuid_obj()
@@ -991,9 +1005,9 @@ class VmAPI:
             scheduler = HostMacIPScheduler()
             try:
                 if macip:
-                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host_or_none, vlan=vlan, need_mac_ip=False)
+                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none, vlan=vlan, need_mac_ip=False)
                 else:
-                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host_or_none, vlan=vlan)
+                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none, vlan=vlan)
             except ScheduleError as e:
                 raise VmError(msg=f'申请资源错误,{str(e)}')
             if not macip:

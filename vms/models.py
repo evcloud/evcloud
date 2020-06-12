@@ -508,3 +508,9 @@ class Flavor(models.Model):
         verbose_name = _('虚拟机硬件配置样式')
         verbose_name_plural = verbose_name
 
+    def __str__(self):
+        return f'VCPUS: {self.vcpus} / RAM{self.ram}'
+
+    def __repr__(self):
+        return f'Flavor<vcpus={self.vcpus}, ram={self.ram}>'
+
