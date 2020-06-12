@@ -44,6 +44,7 @@ class VmCreateSerializer(serializers.Serializer):
     vcpu = serializers.IntegerField(label='cpu数', min_value=1, required=False, allow_null=True, default=None, help_text='cpu数')
     mem = serializers.IntegerField(label='内存大小', min_value=512, required=False, allow_null=True, default=None, help_text='单位MB')
     vlan_id = serializers.IntegerField(label='子网id', required=False, allow_null=True, min_value=1, help_text='子网id', default=None)
+    center_id = serializers.IntegerField(label='分中心id', required=False, allow_null=True, min_value=1, help_text='分中心id', default=None)
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True, min_value=1, help_text='宿主机组id', default=None)
     host_id = serializers.IntegerField(label='宿主机id', required=False, allow_null=True, min_value=1, help_text='宿主机id', default=None)
     remarks = serializers.CharField(label='备注', required=False, allow_blank=True, max_length=255, default='')
@@ -51,6 +52,7 @@ class VmCreateSerializer(serializers.Serializer):
     flavor_id = serializers.IntegerField(label='配置样式id', required=False, allow_null=True, default=None, help_text='配置样式id')
 
     def validate(self, data):
+        center_id = data.get('center_id')
         group_id = data.get('group_id')
         host_id = data.get('host_id')
 
@@ -58,8 +60,8 @@ class VmCreateSerializer(serializers.Serializer):
         mem = data.get('mem')
         flavor_id = data.get('flavor_id')
 
-        if not group_id and not host_id:
-            raise serializers.ValidationError(detail={'code_text': 'group_id和host_id参数必须提交其中一个'})
+        if not group_id and not host_id and not center_id:
+            raise serializers.ValidationError(detail={'code_text': 'center_id、group_id和host_id参数必须提交其中一个'})
 
         if (not flavor_id) and (not (vcpu and mem)):
             raise serializers.ValidationError(detail={'code_text': '必须提交flavor_id或者直接指定vcpu和mem)'})
