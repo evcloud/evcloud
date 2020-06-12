@@ -24,7 +24,31 @@ from device.manager import PCIDeviceManager, DeviceError
 from . import serializers
 
 
-# Create your views here.
+def serializer_error_msg(errors, default=''):
+    """
+    获取一个错误信息
+
+    :param errors: serializer.errors
+    :param default:
+    :return:
+        str
+    """
+    msg = default
+    try:
+        if isinstance(errors, list):
+            for err in errors:
+                msg = str(err)
+                break
+        elif isinstance(errors, dict):
+            for key in errors:
+                val = errors[key]
+                msg = f'{key}, {str(val[0])}'
+                break
+    except:
+        pass
+
+    return msg
+
 
 def str_to_int_or_default(val, default):
     '''
@@ -1028,6 +1052,46 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 201, 'code_text': '迁移虚拟机成功'}, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='修改虚拟机登录密码',
+        responses={
+            200: '''
+                {
+                  "code": 200,
+                  "code_text": "修改虚拟机登录密码成功",
+                }
+                '''
+        }
+    )
+    @action(methods=['post'], url_path='setpassword', detail=True, url_name='vm-change-password')
+    def vm_change_password(self, request, *args, **kwargs):
+        """
+        创建虚拟机vnc
+
+            >> http code 200:
+            {
+              "code": 200,
+              "code_text": "修改虚拟机登录密码成功",
+            }
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        serializer = serializers.VmChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid(raise_exception=False):
+            msg = serializer_error_msg(serializer.errors, 'username或password无效')
+            return Response(data={'code': 400, 'code_text': msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        username = data.get('username')
+        password = data.get('password')
+        
+        try:
+            vm = VmAPI().vm_change_password(vm_uuid=vm_uuid, user=request.user, username=username, password=password)
+        except VmError as e:
+            return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(data={'code': 200, 'code_text': '修改虚拟机登录密码成功'})
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -1040,6 +1104,8 @@ class VmsViewSet(viewsets.GenericViewSet):
             return serializers.VmCreateSerializer
         elif self.action == 'partial_update':
             return serializers.VmPatchSerializer
+        elif self.action == 'vm_change_password':
+            return serializers.VmChangePasswordSerializer
         return Serializer
 
 
@@ -1101,6 +1167,18 @@ class GroupViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     queryset = Group.objects.all()
 
+    @swagger_auto_schema(
+        operation_summary='获取宿主机组列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='center_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属分中心id'
+            ),
+        ]
+    )
     def list(self, request, *args, **kwargs):
         '''
         获取宿主机组列表

@@ -566,5 +566,27 @@ class VmDomain:
             return True
         return False
 
+    def set_user_password(self, username: str, password: str):
+        """
+        修改虚拟主机登录用户密码
+
+        :param username: 用户名
+        :param password: 新密码
+        :return:
+            True
+            False
+
+        :raises: VirtError
+        """
+        domain = self.virt.get_domain(self._hip, self._vmid)
+        try:
+            ret = domain.setUserPassword(user=username, password=password)
+        except libvirt.libvirtError as e:
+            raise VirtError(msg=str(e))
+        if ret == 0:
+            return True
+        return False
+
+
 
 

@@ -8,8 +8,9 @@ from network.models import MacIP
 from ceph.managers import get_rbd_manager, CephClusterManager, RadosError
 from ceph.models import CephPool
 
+from .utils import rand_string
 
-#获取用户模型
+# 获取用户模型
 User = get_user_model()
 
 
@@ -59,6 +60,7 @@ class Vm(models.Model):
     user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL, related_name='user_vms',  null=True)
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
+    init_password = models.CharField(max_length=20, default='', verbose_name='root初始密码')
 
     host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机')
     xml = models.TextField(verbose_name='虚拟机当前的XML', help_text='定义虚拟机的当前的XML内容')

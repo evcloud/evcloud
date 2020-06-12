@@ -347,3 +347,10 @@ class VmDetailSerializer(serializers.ModelSerializer):
         devs = obj.pci_devices.select_related('host__group', 'vm')
         return PCIDeviceSerializer(instance=devs, many=True, required=False).data
 
+
+class VmChangePasswordSerializer(serializers.Serializer):
+    """
+    虚拟主机修改密码
+    """
+    username = serializers.CharField(label='用户名', required=True, help_text='虚拟主机系统用户名')
+    password = serializers.CharField(min_length=6, max_length=20, label='新密码', required=True, help_text='新密码')
