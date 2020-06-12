@@ -1791,4 +1791,46 @@ class VmAPI:
 
         return self._reset_vm_sys_disk(vm)
 
+    def vm_change_password(self, vm_uuid: str, user, username: str, password: str):
+        """
+        重置虚拟机系统登录密码
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :param username: 用户名
+        :param password: 新密码
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user', 'image'))
+        image = vm.image
+        if image.sys_type not in [image.SYS_TYPE_LINUX, image.SYS_TYPE_UNIX]:
+            raise VmError(msg=f'只支持linux或unix系统虚拟主机修改密码')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid).is_running()
+        except VirtError as e:
+            raise VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
+        if not run:
+            raise VmError(msg='虚拟机没有运行')
+
+        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        try:
+            ok = domain.set_user_password(username=username, password=password)
+        except VirtError as e:
+            raise VmError(msg=f'修改密码失败，{str(e)}')
+
+        if not ok:
+            raise VmError(msg='修改密码失败')
+
+        try:
+            vm.init_password = password
+            vm.save(update_fields=['init_password'])
+        except Exception:
+            pass
+        return vm
 
