@@ -401,6 +401,17 @@ class VmDomain:
         self._vmid = vm_uuid
         self.virt = VirtAPI()
 
+    def __getattr__(self, attr):
+        """
+        If an attribute does not exist on this instance, then we also attempt
+        to proxy it to the libvirt.virDomain  object.
+        """
+        try:
+            domain = self.virt.get_domain(self._hip, self._vmid)
+            return getattr(domain, attr)
+        except AttributeError:
+            return self.__getattribute__(attr)
+
     def exists(self):
         """
         检测虚拟机是否已存在
@@ -586,7 +597,4 @@ class VmDomain:
         if ret == 0:
             return True
         return False
-
-
-
 

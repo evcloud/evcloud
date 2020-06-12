@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views.generic.base import View
 from django.contrib.auth import get_user_model
 
-from .manager import VmManager, VmError
+from .manager import VmManager, VmError, FlavorManager
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from network.managers import VlanManager
 from vdisk.manager import VdiskManager, VdiskError
@@ -11,8 +11,9 @@ from image.models import Image
 from device.manager import PCIDeviceManager, DeviceError
 from utils.paginators import NumsPaginator
 
-# Create your views here.
+
 User = get_user_model()
+
 
 def str_to_int_or_default(val, default):
     '''
@@ -28,6 +29,7 @@ def str_to_int_or_default(val, default):
         return int(val)
     except Exception:
         return default
+
 
 class VmsView(View):
     '''
@@ -120,6 +122,7 @@ class VmCreateView(View):
         context['image_tags'] = Image.CHOICES_TAG
         context['images'] = images
         context['vlans'] = VlanManager().get_vlan_queryset()
+        context['flavors'] = FlavorManager().get_user_flaver_queryset(user=request.user)
         return render(request, 'vms_create.html', context=context)
 
 
@@ -190,7 +193,11 @@ class VmEditView(View):
         if not vm:
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
-        return render(request, 'vm_edit.html', context={'vm': vm})
+        context = {
+            'flavors': FlavorManager().get_user_flaver_queryset(user=request.user),
+            'vm': vm
+        }
+        return render(request, 'vm_edit.html', context=context)
 
 
 class VmResetView(View):

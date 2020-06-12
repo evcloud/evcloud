@@ -10,7 +10,7 @@ from network.managers import VlanManager, MacIPManager, NetworkError
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain
-from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog)
+from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog, Flavor)
 from .xml import XMLEditor
 from utils.errors import Error
 from .scheduler import HostMacIPScheduler, ScheduleError
@@ -712,6 +712,52 @@ class VmLogManager:
             return None
 
         return log
+
+
+class FlavorManager:
+
+    VmError = VmError
+
+    def get_flavor_by_id(self, f_id: int):
+        """
+        通过uuid获取虚拟机元数据
+
+        :param f_id:
+        :return:
+            Flavor() or None     # success
+
+        :raise:  VmError
+        """
+        qs = self.get_flaver_queryset()
+        try:
+            return qs.filter(id=f_id).first()
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+    def get_flaver_queryset(self):
+        """
+        激活的样式
+        :return: QuerySet()
+        """
+        return Flavor.objects.filter(enable=True).all()
+
+    def get_public_flaver_queryset(self):
+        """
+        公开激活的样式
+
+        :return: QuerySet()
+        """
+        return Flavor.objects.filter(enable=True, public=True).all()
+
+    def get_user_flaver_queryset(self, user):
+        """
+        用户对应权限激活的样式
+
+        :return: QuerySet()
+        """
+        if user.is_superuser:
+            return self.get_flaver_queryset()
+        return self.get_public_flaver_queryset()
 
 
 class VmAPI:
@@ -1833,4 +1879,5 @@ class VmAPI:
         except Exception:
             pass
         return vm
+
 

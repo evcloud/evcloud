@@ -7,29 +7,10 @@
 
     // 校验虚拟机参数
     function valid_vm_edit_data(obj){
-        if(!obj.vcpu && !obj.mem){
-            alert('请至少选择一个有效的CPU或MEM参数');
+        if(!obj.flavor_id || obj.flavor_id <= 0){
+            alert('请选择新的配置样式');
             return false;
         }
-
-        if(obj.vcpu){
-            if(obj.vcpu <= 0){
-                alert('请选择或输入一个有效的CPU数');
-                return false;
-            }
-        }else{
-            delete obj.vcpu;
-        }
-
-        if(obj.mem){
-            if(obj.mem <= 0){
-                alert('请选择或输入有效的内存大小');
-                return false;
-            }
-        }else{
-            delete obj.mem;
-        }
-
         return true;
     }
 
