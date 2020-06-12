@@ -11,7 +11,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.utils import swagger_auto_schema, no_body
 from drf_yasg import openapi
 
-from vms.manager import VmManager, VmAPI, VmError
+from vms.manager import VmManager, VmAPI, VmError, FlavorManager
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
 from compute.managers import HostManager, CenterManager, GroupManager, ComputeError
@@ -107,6 +107,8 @@ class VmsViewSet(viewsets.GenericViewSet):
 
     create:
         创建虚拟机
+
+        vcpu和mem参数后续废弃，请使用flaver_id代替。
 
         >> http code 201: 创建成功
         {
@@ -476,13 +478,7 @@ class VmsViewSet(viewsets.GenericViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid(raise_exception=False):
-            code_text = '参数验证有误'
-            try:
-                for name, err_list in serializer.errors.items():
-                    code_text = f'"{name}" {err_list[0]}'
-            except:
-                pass
-
+            code_text = serializer_error_msg(errors=serializer.errors, default='参数验证有误')
             data = {
                 'code': 400,
                 'code_text': code_text,
@@ -491,6 +487,21 @@ class VmsViewSet(viewsets.GenericViewSet):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         validated_data = serializer.validated_data
+        # 配置样式
+        flavor_id = validated_data.get('flavor_id')
+        if flavor_id:
+            flavor = FlavorManager().get_flavor_by_id(flavor_id)
+            if not flavor:
+                data = {
+                    'code': 404,
+                    'code_text': '配置样式flavor不存在',
+                    'data': serializer.data,
+                }
+                return Response(data, status=status.HTTP_404_NOT_FOUND)
+            else:
+                validated_data['vcpu'] = flavor.vcpus
+                validated_data['mem'] = flavor.ram
+
         api = VmAPI()
         try:
             vm = api.create_vm(user=request.user, **validated_data)
@@ -591,13 +602,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid(raise_exception=False):
-            code_text = '参数验证有误'
-            try:
-                for _, err_list in serializer.errors.items():
-                    code_text = err_list[0]
-            except:
-                pass
-
+            code_text = serializer_error_msg(serializer.errors, '参数验证有误')
             data = {
                 'code': 400,
                 'code_text': code_text,
@@ -605,10 +610,19 @@ class VmsViewSet(viewsets.GenericViewSet):
             }
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        validated_data = serializer.validated_data
-        vcpu = validated_data.get('vcpu', 0)
-        mem = validated_data.get('mem', 0)
+        # 配置样式
+        flavor_id = serializer.validated_data.get('flavor_id')
+        flavor = FlavorManager().get_flavor_by_id(flavor_id)
+        if not flavor:
+            data = {
+                'code': 404,
+                'code_text': '配置样式flavor不存在',
+                'data': serializer.data,
+            }
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
 
+        vcpu = flavor.vcpus
+        mem = flavor.ram
         api = VmAPI()
         try:
             ok = api.edit_vm_vcpu_mem(user=request.user, vm_uuid=vm_uuid, mem=mem, vcpu=vcpu)
@@ -2791,3 +2805,48 @@ class MacIPViewSet(viewsets.GenericViewSet):
         if self.action == 'list':
             return serializers.MacIPSerializer
         return Serializer
+
+
+class FlavorViewSet(viewsets.GenericViewSet):
+    """
+    虚拟机硬件配置样式视图
+    """
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+
+    @swagger_auto_schema(
+        operation_summary='列举硬件配置样式',
+        request_body=no_body
+    )
+    def list(self, request, *args, **kwargs):
+        """
+        获取mac ip列表
+
+            http code 200:
+                {
+                  "count": 1,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "id": 1,
+                      "vcpus": 1,
+                      "ram": 1024           # MB
+                    }
+                  ]
+                }
+        """
+        queryset = FlavorManager().get_user_flaver_queryset(user=request.user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'results': serializer.data})
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.FlavorSerializer
+        return Serializer
+

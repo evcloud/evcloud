@@ -41,20 +41,28 @@ class VmCreateSerializer(serializers.Serializer):
     创建虚拟机序列化器
     '''
     image_id = serializers.IntegerField(label='镜像id', required=True, min_value=1, help_text='系统镜像id')
-    vcpu = serializers.IntegerField(label='cpu数', required=True, min_value=1, help_text='cpu数')
-    mem = serializers.IntegerField(label='内存大小', required=True, min_value=200, help_text='单位MB')
+    vcpu = serializers.IntegerField(label='cpu数', min_value=1, required=False, allow_null=True, default=None, help_text='cpu数')
+    mem = serializers.IntegerField(label='内存大小', min_value=512, required=False, allow_null=True, default=None, help_text='单位MB')
     vlan_id = serializers.IntegerField(label='子网id', required=False, allow_null=True, min_value=1, help_text='子网id', default=None)
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True, min_value=1, help_text='宿主机组id', default=None)
     host_id = serializers.IntegerField(label='宿主机id', required=False, allow_null=True, min_value=1, help_text='宿主机id', default=None)
     remarks = serializers.CharField(label='备注', required=False, allow_blank=True, max_length=255, default='')
     ipv4 = serializers.CharField(label='ipv4', required=False, allow_blank=True, max_length=255, default='')
+    flavor_id = serializers.IntegerField(label='配置样式id', required=False, allow_null=True, default=None, help_text='配置样式id')
 
     def validate(self, data):
         group_id = data.get('group_id')
         host_id = data.get('host_id')
 
+        vcpu = data.get('vcpu')
+        mem = data.get('mem')
+        flavor_id = data.get('flavor_id')
+
         if not group_id and not host_id:
             raise serializers.ValidationError(detail={'code_text': 'group_id和host_id参数必须提交其中一个'})
+
+        if (not flavor_id) and (not (vcpu and mem)):
+            raise serializers.ValidationError(detail={'code_text': '必须提交flavor_id或者直接指定vcpu和mem)'})
         return data
 
 
@@ -62,11 +70,7 @@ class VmPatchSerializer(serializers.Serializer):
     '''
     创建虚拟机序列化器
     '''
-    vcpu = serializers.IntegerField(label='cpu数', required=False, min_value=1, help_text='cpu数')
-    mem = serializers.IntegerField(label='内存大小', required=False, min_value=200)
-
-    def validate(self, data):
-        return data
+    flavor_id = serializers.IntegerField(label='配置样式id', required=True, min_value=1, help_text='配置样式id')
 
 
 class CenterSerializer(serializers.ModelSerializer):
@@ -354,3 +358,11 @@ class VmChangePasswordSerializer(serializers.Serializer):
     """
     username = serializers.CharField(label='用户名', required=True, help_text='虚拟主机系统用户名')
     password = serializers.CharField(min_length=6, max_length=20, label='新密码', required=True, help_text='新密码')
+
+
+class FlavorSerializer(serializers.Serializer):
+    id = serializers.IntegerField(label='配置样式')
+    vcpus = serializers.IntegerField(label='虚拟CPU数')
+    ram = serializers.IntegerField(label='内存MB')
+
+
