@@ -15,7 +15,7 @@ from vms.manager import VmManager, VmAPI, VmError, FlavorManager
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
 from compute.managers import HostManager, CenterManager, GroupManager, ComputeError
-from network.models import Vlan
+from network.managers import VlanManager
 from network.managers import MacIPManager
 from image.managers import ImageManager
 from vdisk.models import Vdisk
@@ -1346,13 +1346,30 @@ class VlanViewSet(viewsets.GenericViewSet):
     '''
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
-    queryset = Vlan.objects.all()
 
+    @swagger_auto_schema(
+        operation_summary='获取网段列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='center_id', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='分中心id'
+            )
+        ]
+    )
     def list(self, request, *args, **kwargs):
         '''
         获取网段列表
         '''
-        queryset = self.filter_queryset(self.get_queryset())
+        center_id = request.query_params.get('center_id', None)
+        if center_id is not None:
+            center_id = str_to_int_or_default(center_id, 0)
+            if center_id <= 0:
+                return Response(data={'code': 400, 'code_text': 'query参数center_id无效'}, status=status.HTTP_400_BAD_REQUEST)
+            queryset = VlanManager().get_center_vlan_queryset(center=center_id)
+        else:
+            queryset = VlanManager().get_vlan_queryset()
 
         page = self.paginate_queryset(queryset)
         if page is not None:

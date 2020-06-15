@@ -1,6 +1,7 @@
 from django.db import models
 
-# Create your models here.
+from compute.models import Center
+
 
 class NetworkType(models.Model):
     '''
@@ -25,6 +26,7 @@ class Vlan(models.Model):
     '''
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='VLAN名称', max_length=100)
+    center = models.ForeignKey(to=Center, verbose_name='分中心', default=1, null=True, on_delete=models.SET_NULL, related_name='vlan_set')
     br = models.CharField(verbose_name='网桥', max_length=50)
     net_type = models.ForeignKey(to=NetworkType, verbose_name='网络类型',on_delete=models.CASCADE, related_name='vlan_set')
     subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')

@@ -39,6 +39,10 @@ class VlanManager:
     def get_vlan_queryset(self):
         return Vlan.objects.filter(enable=True).all()
 
+    def get_center_vlan_queryset(self, center):
+        queryset = self.get_vlan_queryset()
+        return queryset.filter(center=center).all()
+
     def generate_subips(self, vlan_id, from_ip, to_ip, write_database=False):
         '''
         生成子网ip
