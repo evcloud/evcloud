@@ -9,3 +9,16 @@
 * API返回ISO格式时间数据;
 * 可挂载硬盘的vm查询、vm可挂载的硬盘查询API;
 
+## v3.0.2
+* vm相关一些代码整理优化
+* html模板一些修改
+* 重置vm系统（恢复系统盘至创建时状态）
+* 系统镜像快照protected
+
+## v3.0.3
+* 增加pcservers app，
+* 创建虚拟机可以只指定分中心
+* flavor硬件配置样式(代替vcpu和mem参数)，flavor api
+* 虚拟机修改密码api
+* 子网vlan属于分中心center
+
