@@ -10,7 +10,7 @@ from network.managers import VlanManager, MacIPManager, NetworkError
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain
-from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog)
+from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog, Flavor)
 from .xml import XMLEditor
 from utils.errors import Error
 from .scheduler import HostMacIPScheduler, ScheduleError
@@ -714,6 +714,52 @@ class VmLogManager:
         return log
 
 
+class FlavorManager:
+
+    VmError = VmError
+
+    def get_flavor_by_id(self, f_id: int):
+        """
+        通过uuid获取虚拟机元数据
+
+        :param f_id:
+        :return:
+            Flavor() or None     # success
+
+        :raise:  VmError
+        """
+        qs = self.get_flaver_queryset()
+        try:
+            return qs.filter(id=f_id).first()
+        except Exception as e:
+            raise VmError(msg=str(e))
+
+    def get_flaver_queryset(self):
+        """
+        激活的样式
+        :return: QuerySet()
+        """
+        return Flavor.objects.filter(enable=True).all()
+
+    def get_public_flaver_queryset(self):
+        """
+        公开激活的样式
+
+        :return: QuerySet()
+        """
+        return Flavor.objects.filter(enable=True, public=True).all()
+
+    def get_user_flaver_queryset(self, user):
+        """
+        用户对应权限激活的样式
+
+        :return: QuerySet()
+        """
+        if user.is_superuser:
+            return self.get_flaver_queryset()
+        return self.get_public_flaver_queryset()
+
+
 class VmAPI:
     '''
     虚拟机API
@@ -841,7 +887,7 @@ class VmAPI:
 
         return vlan
 
-    def _get_group_host_check_perms(self, group_id:int, host_id:int, user):
+    def _get_groups_host_check_perms(self, center_id: int, group_id: int, host_id: int, user):
         '''
         检查用户使用有宿主机组或宿主机访问权限，优先使用host_id
 
@@ -849,8 +895,8 @@ class VmAPI:
         :param host_id: 宿主机ID
         :param user: 用户
         :return:
-                (None, Host())  # host_id有效时
-                Group(), None   # host_id无效，group_id有效时
+                [], Host()          # host_id有效时
+                [Group()], None     # host_id无效，group_id有效时
 
         :raises: VmError
         '''
@@ -866,7 +912,7 @@ class VmAPI:
             if not host.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
 
-            return None, host
+            return [], host
 
         if group_id:
             try:
@@ -880,16 +926,26 @@ class VmAPI:
             if not group.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
 
-            return group, None
+            return [group], None
 
-        raise VmError(msg='group id和host id不能同时为空')
+        if center_id:
+            try:
+                groups = self._center_manager.get_user_group_queryset_by_center(center_or_id=center_id, user=user)
+                groups = list(groups)
+            except Exception as e:
+                raise VmError(msg=f'查询指定分中心下的宿主机组错误，{str(e)}')
 
-    def create_vm(self, image_id:int, vcpu:int, mem:int, vlan_id:int, user, group_id=None, host_id=None, ipv4=None, remarks=None, **kwargs):
+            return groups, None
+
+        raise VmError(msg='必须指定一个有效的center id或者group id或者host id')
+
+    def create_vm(self, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
+                  host_id=None, ipv4=None, remarks=None, **kwargs):
         '''
         创建一个虚拟机
 
         说明：
-            group_id和host_id参数必须给定一个；host_id有效时，使用host_id；host_id无效时，使用group_id；
+            center_id和group_id和host_id参数必须给定一个；host_id有效时，使用host_id；host_id无效时，使用group_id；
             ipv4有效时，使用ipv4；ipv4无效时，使用vlan_id；都无效自动分配；
 
         备注：虚拟机的名称和系统盘名称同虚拟机的uuid
@@ -898,6 +954,8 @@ class VmAPI:
         :param vcpu: cpu数
         :param mem: 内存大小
         :param vlan_id: 子网id
+        :param user: 用户对象
+        :param center_id: 分中心id
         :param group_id: 宿主机组id
         :param host_id: 宿主机id
         :param ipv4:  指定要创建的虚拟机ip
@@ -912,13 +970,15 @@ class VmAPI:
         vlan = None
         diskname = None # clone的系统镜像
 
-        if vcpu <= 0: raise VmError(msg='无法创建虚拟机,vcpu参数无效')
-        if mem <= 0: raise VmError(msg='无法创建虚拟机,men参数无效')
-        if not ((group_id and group_id > 0) or (host_id and host_id > 0)):
-            raise VmError(msg='无法创建虚拟机,必须指定一个无效group_id或host_id参数')
+        if vcpu <= 0:
+            raise VmError(msg='无法创建虚拟机,vcpu参数无效')
+        if mem <= 0:
+            raise VmError(msg='无法创建虚拟机,men参数无效')
+        if not ((center_id and center_id > 0) or (group_id and group_id > 0) or (host_id and host_id > 0)):
+            raise VmError(msg='无法创建虚拟机,必须指定一个有效center_id或group_id或host_id参数')
 
         # 权限检查
-        group, host_or_none = self._get_group_host_check_perms(group_id=group_id, host_id=host_id, user=user)
+        groups, host_or_none = self._get_groups_host_check_perms(center_id=center_id, group_id=group_id, host_id=host_id, user=user)
         image = self._get_image(image_id)    # 镜像
 
         vm_uuid_obj = self.new_uuid_obj()
@@ -945,9 +1005,9 @@ class VmAPI:
             scheduler = HostMacIPScheduler()
             try:
                 if macip:
-                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host_or_none, vlan=vlan, need_mac_ip=False)
+                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none, vlan=vlan, need_mac_ip=False)
                 else:
-                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, group=group, host=host_or_none, vlan=vlan)
+                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none, vlan=vlan)
             except ScheduleError as e:
                 raise VmError(msg=f'申请资源错误,{str(e)}')
             if not macip:
@@ -1790,5 +1850,48 @@ class VmAPI:
             'user', 'host__group', 'image__ceph_pool__ceph'))
 
         return self._reset_vm_sys_disk(vm)
+
+    def vm_change_password(self, vm_uuid: str, user, username: str, password: str):
+        """
+        重置虚拟机系统登录密码
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :param username: 用户名
+        :param password: 新密码
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user', 'image'))
+        image = vm.image
+        if image.sys_type not in [image.SYS_TYPE_LINUX, image.SYS_TYPE_UNIX]:
+            raise VmError(msg=f'只支持linux或unix系统虚拟主机修改密码')
+
+        # 虚拟机的状态
+        host = vm.host
+        try:
+            run = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid).is_running()
+        except VirtError as e:
+            raise VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
+        if not run:
+            raise VmError(msg='虚拟机没有运行')
+
+        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        try:
+            ok = domain.set_user_password(username=username, password=password)
+        except VirtError as e:
+            raise VmError(msg=f'修改密码失败，{str(e)}')
+
+        if not ok:
+            raise VmError(msg='修改密码失败')
+
+        try:
+            vm.init_password = password
+            vm.save(update_fields=['init_password'])
+        except Exception:
+            pass
+        return vm
 
 

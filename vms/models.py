@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 
 from image.models import Image
 from compute.models import Host
@@ -9,7 +11,7 @@ from ceph.managers import get_rbd_manager, CephClusterManager, RadosError
 from ceph.models import CephPool
 
 
-#获取用户模型
+# 获取用户模型
 User = get_user_model()
 
 
@@ -28,6 +30,7 @@ def remove_image(ceph, pool_name: str, image_name: str):
         return False
 
     return True
+
 
 def rename_image(ceph, pool_name: str, image_name: str, new_name: str):
     '''
@@ -59,6 +62,7 @@ class Vm(models.Model):
     user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL, related_name='user_vms',  null=True)
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
+    init_password = models.CharField(max_length=20, default='', verbose_name='root初始密码')
 
     host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机')
     xml = models.TextField(verbose_name='虚拟机当前的XML', help_text='定义虚拟机的当前的XML内容')
@@ -193,12 +197,12 @@ class VmArchive(models.Model):
     ceph_id = models.IntegerField(verbose_name='CEPH集群id')
     ceph_pool = models.CharField(verbose_name='CEPH POOL', max_length=100, blank=True, default='')
 
-    center_id   = models.IntegerField(verbose_name='分中心ID', blank=True, default=0)
+    center_id = models.IntegerField(verbose_name='分中心ID', blank=True, default=0)
     center_name = models.CharField(verbose_name='分中心', max_length=100, blank=True, default='')
-    group_id    = models.IntegerField(verbose_name='宿主机组ID', blank=True, default=0)
-    group_name  = models.CharField(verbose_name='宿主机组', max_length=100, null=True, blank=True)
-    host_id     = models.IntegerField(verbose_name='宿主机ID', blank=True, default=0)
-    host_ipv4   = models.CharField(verbose_name='宿主机IP', max_length=50, blank=True, default='')
+    group_id = models.IntegerField(verbose_name='宿主机组ID', blank=True, default=0)
+    group_name = models.CharField(verbose_name='宿主机组', max_length=100, null=True, blank=True)
+    host_id = models.IntegerField(verbose_name='宿主机ID', blank=True, default=0)
+    host_ipv4 = models.CharField(verbose_name='宿主机IP', max_length=50, blank=True, default='')
 
     user = models.CharField(verbose_name='创建者', max_length=200, blank=True, default='')
     create_time = models.DateTimeField(verbose_name='VM创建日期')
@@ -487,4 +491,26 @@ def rename_sys_disk_delete(ceph, pool_name: str, disk_name: str):
         return False, disk_name
 
     return True, new_name
+
+
+class Flavor(models.Model):
+    """
+    虚拟机硬件配置样式
+    """
+    id = models.AutoField(primary_key=True, verbose_name='ID')
+    vcpus = models.IntegerField(verbose_name=_('虚拟CPU数'), validators=[MinValueValidator(1)])
+    ram = models.IntegerField(verbose_name=_('内存'), validators=[MinValueValidator(512)], help_text=_('单位MB'))
+    public = models.BooleanField(verbose_name=_('是否公开'), default=True, help_text=_('非公开的普通用户不可见，超级用户可见'))
+    enable = models.BooleanField(verbose_name=_('是否可用'), default=True)
+
+    class Meta:
+        ordering = ['vcpus']
+        verbose_name = _('虚拟机硬件配置样式')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return f'VCPUS: {self.vcpus} / RAM{self.ram}'
+
+    def __repr__(self):
+        return f'Flavor<vcpus={self.vcpus}, ram={self.ram}>'
 

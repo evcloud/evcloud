@@ -1,1 +1,1 @@
-uwsgi --ini uwsgi.ini
+uwsgi --ini evcloud_uwsgi.ini

@@ -17,6 +17,7 @@ router.register(r'quota', views.QuotaViewSet, base_name='quota')
 router.register(r'stat', views.StatCenterViewSet, base_name='stat')
 router.register(r'pci', views.PCIDeviceViewSet, base_name='pci-device')
 router.register(r'macip', views.MacIPViewSet, base_name='macip')
+router.register(r'flavor', views.FlavorViewSet, base_name='flavor')
 
 urlpatterns = [
     path('', include(router.urls)),

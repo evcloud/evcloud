@@ -1,7 +1,6 @@
 from django.contrib import admin
 
-from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateLog
-# Register your models here.
+from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateLog, Flavor
 
 
 @admin.register(Vm)
@@ -58,3 +57,9 @@ class MigrateLogAdmin(admin.ModelAdmin):
     list_display = ('id', 'vm_uuid', 'src_host_ipv4', 'dst_host_ipv4', 'result', 'src_undefined', 'migrate_time')
     search_fields = ('vm_uuid', 'content')
     list_filter = ('result', 'src_undefined')
+
+
+@admin.register(Flavor)
+class FlavorAdmin(admin.ModelAdmin):
+    list_display_links = ('id',)
+    list_display = ('id', 'vcpus', 'ram', 'public', 'enable')

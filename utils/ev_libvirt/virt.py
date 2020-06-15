@@ -401,6 +401,17 @@ class VmDomain:
         self._vmid = vm_uuid
         self.virt = VirtAPI()
 
+    def __getattr__(self, attr):
+        """
+        If an attribute does not exist on this instance, then we also attempt
+        to proxy it to the libvirt.virDomain  object.
+        """
+        try:
+            domain = self.virt.get_domain(self._hip, self._vmid)
+            return getattr(domain, attr)
+        except AttributeError:
+            return self.__getattribute__(attr)
+
     def exists(self):
         """
         检测虚拟机是否已存在
@@ -566,5 +577,24 @@ class VmDomain:
             return True
         return False
 
+    def set_user_password(self, username: str, password: str):
+        """
+        修改虚拟主机登录用户密码
 
+        :param username: 用户名
+        :param password: 新密码
+        :return:
+            True
+            False
+
+        :raises: VirtError
+        """
+        domain = self.virt.get_domain(self._hip, self._vmid)
+        try:
+            ret = domain.setUserPassword(user=username, password=password)
+        except libvirt.libvirtError as e:
+            raise VirtError(msg=str(e))
+        if ret == 0:
+            return True
+        return False
 
