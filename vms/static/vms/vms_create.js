@@ -156,12 +156,8 @@
             alert('请选择一个系统镜像');
             return false;
         }
-        if(!obj.vcpu ||obj.vcpu <= 0){
-            alert('请选择或输入一个有效的CPU数');
-            return false;
-        }
-        if(!obj.mem || obj.mem <= 0){
-            alert('请选择或输入有效的内存大小');
+        if(!obj.flavor_id ||obj.flavor_id <= 0){
+            alert('请选择配置样式');
             return false;
         }
         return true;
@@ -169,9 +165,7 @@
 
     // 创建虚拟机表单提交按钮点击事件
     $('form#id-form-vm-create button[type="submit"]').click(function (e) {
-        let event = e || window.event;
-        event.preventDefault(); // 兼容标准浏览器
-        window.event.returnValue = false; // 兼容IE6~8
+        e.preventDefault(); // 兼容标准浏览器
 
         let form = $('form#id-form-vm-create');
         let obj_data = getForm2Obj(form);

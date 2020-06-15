@@ -84,35 +84,13 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="id-vcpu" class="offset-sm-1 col-sm-2 text-right col-form-label">CPU数</label>
+                        <label for="id-flavor" class="offset-sm-1 col-sm-2 text-right col-form-label">配置式样</label>
                         <div class="col-sm-7 form-inline">
-                            {% if user.is_superuser %}
-                                <input name="vcpu" type="text" class="form-control" id="id-vcpu" value="2" required>
-                            {% else %}
-                                <select name="vcpu" class="form-control" id="id-vcpu" required>
-                                    <option value="2">2</option>
-                                    <option value="4">4</option>
-                                    <option value="8">8</option>
-                                </select>
-                            {% endif %}
-                            <span>个</span>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="id-mem" class="offset-sm-1 col-sm-2 text-right col-form-label">内存大小</label>
-                        <div class="col-sm-7 form-inline">
-                            {% if user.is_superuser %}
-                                <input name="mem" type="text" class="form-control" id="id-mem" value="2048">
-                            {% else %}
-                                <select name="mem" class="form-control" id="id-mem">
-                                    <option value="1024">1024</option>
-                                    <option value="2048">2048</option>
-                                    <option value="4096">4096</option>
-                                    <option value="8192">8192</option>
-                                    <option value="16384">16384</option>
-                                </select>
-                            {% endif %}
-                            <span>MB</span>
+                            <select name="flavor_id" class="form-control" id="id-flavor">
+                                {% for f in flavors %}
+                                    <option value="{{f.id}}">CPU: {{ f.vcpus }}核 / RAM: {{ f.ram }}MB</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
                     <div class="form-group row">

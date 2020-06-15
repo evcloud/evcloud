@@ -11,11 +11,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.utils import swagger_auto_schema, no_body
 from drf_yasg import openapi
 
-from vms.manager import VmManager, VmAPI, VmError
+from vms.manager import VmManager, VmAPI, VmError, FlavorManager
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
 from compute.managers import HostManager, CenterManager, GroupManager, ComputeError
-from network.models import Vlan
+from network.managers import VlanManager
 from network.managers import MacIPManager
 from image.managers import ImageManager
 from vdisk.models import Vdisk
@@ -24,7 +24,31 @@ from device.manager import PCIDeviceManager, DeviceError
 from . import serializers
 
 
-# Create your views here.
+def serializer_error_msg(errors, default=''):
+    """
+    获取一个错误信息
+
+    :param errors: serializer.errors
+    :param default:
+    :return:
+        str
+    """
+    msg = default
+    try:
+        if isinstance(errors, list):
+            for err in errors:
+                msg = str(err)
+                break
+        elif isinstance(errors, dict):
+            for key in errors:
+                val = errors[key]
+                msg = f'{key}, {str(val[0])}'
+                break
+    except:
+        pass
+
+    return msg
+
 
 def str_to_int_or_default(val, default):
     '''
@@ -83,6 +107,8 @@ class VmsViewSet(viewsets.GenericViewSet):
 
     create:
         创建虚拟机
+
+        vcpu和mem参数后续废弃，请使用flaver_id代替。
 
         >> http code 201: 创建成功
         {
@@ -452,13 +478,7 @@ class VmsViewSet(viewsets.GenericViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid(raise_exception=False):
-            code_text = '参数验证有误'
-            try:
-                for name, err_list in serializer.errors.items():
-                    code_text = f'"{name}" {err_list[0]}'
-            except:
-                pass
-
+            code_text = serializer_error_msg(errors=serializer.errors, default='参数验证有误')
             data = {
                 'code': 400,
                 'code_text': code_text,
@@ -467,6 +487,21 @@ class VmsViewSet(viewsets.GenericViewSet):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         validated_data = serializer.validated_data
+        # 配置样式
+        flavor_id = validated_data.get('flavor_id')
+        if flavor_id:
+            flavor = FlavorManager().get_flavor_by_id(flavor_id)
+            if not flavor:
+                data = {
+                    'code': 404,
+                    'code_text': '配置样式flavor不存在',
+                    'data': serializer.data,
+                }
+                return Response(data, status=status.HTTP_404_NOT_FOUND)
+            else:
+                validated_data['vcpu'] = flavor.vcpus
+                validated_data['mem'] = flavor.ram
+
         api = VmAPI()
         try:
             vm = api.create_vm(user=request.user, **validated_data)
@@ -567,13 +602,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid(raise_exception=False):
-            code_text = '参数验证有误'
-            try:
-                for _, err_list in serializer.errors.items():
-                    code_text = err_list[0]
-            except:
-                pass
-
+            code_text = serializer_error_msg(serializer.errors, '参数验证有误')
             data = {
                 'code': 400,
                 'code_text': code_text,
@@ -581,10 +610,19 @@ class VmsViewSet(viewsets.GenericViewSet):
             }
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        validated_data = serializer.validated_data
-        vcpu = validated_data.get('vcpu', 0)
-        mem = validated_data.get('mem', 0)
+        # 配置样式
+        flavor_id = serializer.validated_data.get('flavor_id')
+        flavor = FlavorManager().get_flavor_by_id(flavor_id)
+        if not flavor:
+            data = {
+                'code': 404,
+                'code_text': '配置样式flavor不存在',
+                'data': serializer.data,
+            }
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
 
+        vcpu = flavor.vcpus
+        mem = flavor.ram
         api = VmAPI()
         try:
             ok = api.edit_vm_vcpu_mem(user=request.user, vm_uuid=vm_uuid, mem=mem, vcpu=vcpu)
@@ -1028,6 +1066,46 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         return Response(data={'code': 201, 'code_text': '迁移虚拟机成功'}, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='修改虚拟机登录密码',
+        responses={
+            200: '''
+                {
+                  "code": 200,
+                  "code_text": "修改虚拟机登录密码成功",
+                }
+                '''
+        }
+    )
+    @action(methods=['post'], url_path='setpassword', detail=True, url_name='vm-change-password')
+    def vm_change_password(self, request, *args, **kwargs):
+        """
+        创建虚拟机vnc
+
+            >> http code 200:
+            {
+              "code": 200,
+              "code_text": "修改虚拟机登录密码成功",
+            }
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        serializer = serializers.VmChangePasswordSerializer(data=request.data)
+        if not serializer.is_valid(raise_exception=False):
+            msg = serializer_error_msg(serializer.errors, 'username或password无效')
+            return Response(data={'code': 400, 'code_text': msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        username = data.get('username')
+        password = data.get('password')
+        
+        try:
+            vm = VmAPI().vm_change_password(vm_uuid=vm_uuid, user=request.user, username=username, password=password)
+        except VmError as e:
+            return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(data={'code': 200, 'code_text': '修改虚拟机登录密码成功'})
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -1040,6 +1118,8 @@ class VmsViewSet(viewsets.GenericViewSet):
             return serializers.VmCreateSerializer
         elif self.action == 'partial_update':
             return serializers.VmPatchSerializer
+        elif self.action == 'vm_change_password':
+            return serializers.VmChangePasswordSerializer
         return Serializer
 
 
@@ -1101,6 +1181,18 @@ class GroupViewSet(viewsets.GenericViewSet):
     pagination_class = LimitOffsetPagination
     queryset = Group.objects.all()
 
+    @swagger_auto_schema(
+        operation_summary='获取宿主机组列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='center_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属分中心id'
+            ),
+        ]
+    )
     def list(self, request, *args, **kwargs):
         '''
         获取宿主机组列表
@@ -1254,13 +1346,30 @@ class VlanViewSet(viewsets.GenericViewSet):
     '''
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
-    queryset = Vlan.objects.all()
 
+    @swagger_auto_schema(
+        operation_summary='获取网段列表',
+        manual_parameters=[
+            openapi.Parameter(
+                name='center_id', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='分中心id'
+            )
+        ]
+    )
     def list(self, request, *args, **kwargs):
         '''
         获取网段列表
         '''
-        queryset = self.filter_queryset(self.get_queryset())
+        center_id = request.query_params.get('center_id', None)
+        if center_id is not None:
+            center_id = str_to_int_or_default(center_id, 0)
+            if center_id <= 0:
+                return Response(data={'code': 400, 'code_text': 'query参数center_id无效'}, status=status.HTTP_400_BAD_REQUEST)
+            queryset = VlanManager().get_center_vlan_queryset(center=center_id)
+        else:
+            queryset = VlanManager().get_vlan_queryset()
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -2713,3 +2822,48 @@ class MacIPViewSet(viewsets.GenericViewSet):
         if self.action == 'list':
             return serializers.MacIPSerializer
         return Serializer
+
+
+class FlavorViewSet(viewsets.GenericViewSet):
+    """
+    虚拟机硬件配置样式视图
+    """
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+
+    @swagger_auto_schema(
+        operation_summary='列举硬件配置样式',
+        request_body=no_body
+    )
+    def list(self, request, *args, **kwargs):
+        """
+        获取mac ip列表
+
+            http code 200:
+                {
+                  "count": 1,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "id": 1,
+                      "vcpus": 1,
+                      "ram": 1024           # MB
+                    }
+                  ]
+                }
+        """
+        queryset = FlavorManager().get_user_flaver_queryset(user=request.user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'results': serializer.data})
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.FlavorSerializer
+        return Serializer
+
