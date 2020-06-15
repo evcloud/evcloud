@@ -2,13 +2,10 @@ from django.db import models
 from django.db.models import F, Sum, Count
 from django.contrib.auth import get_user_model
 
-from network.models import Vlan
-
 
 #获取用户模型
 User = get_user_model()
 
-# Create your models here.
 
 class Center(models.Model):
     '''
@@ -65,6 +62,9 @@ class Group(models.Model):
             return True
 
         return self.users.filter(id=user.id).exists()
+
+
+from network.models import Vlan
 
 
 class Host(models.Model):
