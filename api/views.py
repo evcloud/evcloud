@@ -587,6 +587,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         '''
         修改虚拟机vcpu和内存大小
 
+            指定flavor或者直接指定vcpu和mem, 优先使用flavor
+
             http code 200 修改成功：
             {
                 "code": 200,
@@ -611,18 +613,30 @@ class VmsViewSet(viewsets.GenericViewSet):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
         # 配置样式
-        flavor_id = serializer.validated_data.get('flavor_id')
-        flavor = FlavorManager().get_flavor_by_id(flavor_id)
-        if not flavor:
-            data = {
-                'code': 404,
-                'code_text': '配置样式flavor不存在',
-                'data': serializer.data,
-            }
-            return Response(data, status=status.HTTP_404_NOT_FOUND)
+        data = serializer.validated_data
+        flavor_id = data.get('flavor_id')
+        vcpu = data.get('vcpu', None)
+        mem = data.get('mem', None)
 
-        vcpu = flavor.vcpus
-        mem = flavor.ram
+        if not vcpu:
+            vcpu = 0
+
+        if not mem:
+            mem = 0
+
+        if flavor_id:
+            flavor = FlavorManager().get_flavor_by_id(flavor_id)
+            if not flavor:
+                data = {
+                    'code': 404,
+                    'code_text': '配置样式flavor不存在',
+                    'data': serializer.data,
+                }
+                return Response(data, status=status.HTTP_404_NOT_FOUND)
+            else:
+                vcpu = flavor.vcpus
+                mem = flavor.ram
+
         api = VmAPI()
         try:
             ok = api.edit_vm_vcpu_mem(user=request.user, vm_uuid=vm_uuid, mem=mem, vcpu=vcpu)
