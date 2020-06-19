@@ -72,7 +72,21 @@ class VmPatchSerializer(serializers.Serializer):
     '''
     创建虚拟机序列化器
     '''
-    flavor_id = serializers.IntegerField(label='配置样式id', required=True, min_value=1, help_text='配置样式id')
+    flavor_id = serializers.IntegerField(label='配置样式id', required=False, allow_null=True, default=None,
+                                         help_text='配置样式id')
+    vcpu = serializers.IntegerField(label='cpu数', min_value=1, required=False, allow_null=True, default=0,
+                                    help_text='cpu数')
+    mem = serializers.IntegerField(label='内存大小', min_value=512, required=False, allow_null=True, default=0,
+                                   help_text='单位MB')
+
+    def validate(self, data):
+        vcpu = data.get('vcpu')
+        mem = data.get('mem')
+        flavor_id = data.get('flavor_id')
+
+        if (not flavor_id) and (not vcpu and not mem):
+            raise serializers.ValidationError(detail={'code_text': '必须提交flavor_id或者直接指定vcp或mem)'})
+        return data
 
 
 class CenterSerializer(serializers.ModelSerializer):

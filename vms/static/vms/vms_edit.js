@@ -7,18 +7,39 @@
 
     // 校验虚拟机参数
     function valid_vm_edit_data(obj){
-        if(!obj.flavor_id || obj.flavor_id <= 0){
-            alert('请选择新的配置样式');
-            return false;
+        if(!obj.flavor_id ||obj.flavor_id <= 0){
+            delete obj.flavor_id;
+            if(!(obj.vcpu || obj.mem)){
+                alert('自定义CPU或RAM请至少编辑其中一个');
+                return false;
+            }
+            if(obj.vcpu){
+                if(isNaN(obj.vcpu) || obj.vcpu <= 0) {
+                    alert('配置CPU输入不是有效正整数');
+                    return false;
+                }
+            }else{
+                delete obj.vcpu;
+            }
+
+            if (obj.mem) {
+                if (isNaN(obj.mem) || obj.mem <= 0) {
+                    alert('配置RAM输入不是有效正整数');
+                    return false;
+                }
+            }else{
+                delete obj.mem
+            }
+        }else{
+            delete obj.vcpu;
+            delete obj.mem;
         }
         return true;
     }
 
     // 修改虚拟机表单提交按钮点击事件
     $('form#id-form-vm-edit button[type="submit"]').click(function (e) {
-        let event = e || window.event;
-        event.preventDefault(); // 兼容标准浏览器
-        window.event.returnValue = false; // 兼容IE6~8
+        e.preventDefault();
 
         let form = $('form#id-form-vm-edit');
         let obj_data = getForm2Obj(form);
@@ -59,5 +80,17 @@
                 btn_submit.attr('disabled', false); //激活对应按钮
             }
         })
+    });
+
+    $("select[name=flavor_id]").change(function (e) {
+        e.preventDefault();
+
+        let custom_flavor = $("#custom-flavor");
+        let flavor_id = $(this).val();
+        if (flavor_id && flavor_id > 0){
+            custom_flavor.hide();
+        }else{
+            custom_flavor.show();
+        }
     });
 })();
