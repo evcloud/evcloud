@@ -39,13 +39,13 @@
                                             <span class="input-group-text">模板样式</span>
                                         </div>
                                         <select name="flavor_id" class="form-control" id="id-flavor">
+                                            <option value="" data-vcpu="" data-ram="">自定义</option>
                                             {% for f in flavors %}
                                                 <option value="{{ f.id }}" data-vcpu="{{ f.vcpus }}" data-ram="{{ f.ram }}">CPU: {{ f.vcpus }}核 / RAM: {{ f.ram }}MB</option>
                                             {% endfor %}
-                                            <option value="" data-vcpu="" data-ram="">自定义</option>
                                         </select>
                                     </div>
-                                    <div id="custom-flavor" style="display: none">
+                                    <div id="custom-flavor">
                                         <div class="input-group mb-3">
                                             <div class="input-group-prepend">
                                                 <span class="input-group-text">CPU</span>
