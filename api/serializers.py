@@ -382,3 +382,14 @@ class FlavorSerializer(serializers.Serializer):
     ram = serializers.IntegerField(label='内存MB')
 
 
+class VPNCreateSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True, min_length=1, max_length=150)
+    password = serializers.CharField(required=False, min_length=6, max_length=64, default='', help_text='如果未指定，随机分配密码')
+
+
+class VPNSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+    active = serializers.BooleanField()
+    create_time = serializers.DateTimeField()
+    modified_time = serializers.DateTimeField()
