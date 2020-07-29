@@ -21,6 +21,7 @@ from image.managers import ImageManager
 from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager,VdiskError
 from device.manager import PCIDeviceManager, DeviceError
+from vpn.manager import VPNManager, VPNError
 from . import serializers
 
 
@@ -2879,5 +2880,171 @@ class FlavorViewSet(viewsets.GenericViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.FlavorSerializer
+        return Serializer
+
+
+class VPNViewSet(viewsets.GenericViewSet):
+    """
+    VPN视图
+    """
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+    lookup_field = 'username'
+    lookup_value_regex = '.+'
+
+    @swagger_auto_schema(
+        operation_summary='获取用户vpn信息',
+        request_body=no_body,
+        responses={
+            200: None
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """
+        获取vpn信息
+
+            http code 200:
+                {
+                  "username": "testuser",
+                  "password": "password",
+                  "active": true,
+                  "create_time": "2020-07-29T15:12:08.715731+08:00",
+                  "modified_time": "2020-07-29T15:12:08.715998+08:00"
+                }
+            http code 404:
+                {
+                  "err_code": "NoSuchVPN",
+                  "code_text": "vpn账户不存在"
+                }
+        """
+        username = kwargs.get(self.lookup_field)
+        mgr = VPNManager()
+        vpn = mgr.get_vpn(username=username)
+        if not vpn:
+            return Response(data={'err_code': 'NoSuchVPN', 'code_text': 'vpn账户不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(vpn)
+        return Response(data=serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary='创建vpn账户',
+        responses={
+            201: None
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        """
+        创建vpn
+
+            http code 201:
+                {
+                  "username": "testuser",
+                  "password": "password",
+                  "active": true,
+                  "create_time": "2020-07-29T15:12:08.715731+08:00",
+                  "modified_time": "2020-07-29T15:12:08.715998+08:00"
+                }
+            http code 400:
+                {
+                  "err_code": "AlreadyExists",
+                  "code_text": "用户vpn账户已存在"
+                }
+            http code 500:
+                {
+                  "err_code": "InternalServerError",
+                  "code_text": "创建用户vpn账户失败"
+                }
+        """
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid(raise_exception=False):
+            msg = serializer_error_msg(serializer.errors, default='请求数据无效')
+            return Response(data={'err_code': 'BadRequest', 'code_text': msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_data = serializer.validated_data
+        username = valid_data.get('username')
+        password = valid_data.get('password')
+        mgr = VPNManager()
+        vpn = mgr.get_vpn(username=username)
+        if vpn:
+            return Response(data={'err_code': 'AlreadyExists', 'code_text': '用户vpn账户已存在'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        create_user = request.user.username
+        try:
+            vpn = mgr.create_vpn(username=username, password=password, remarks=create_user, create_user=create_user)
+        except VPNError as e:
+            return Response(data={'err_code': 'InternalServerError', 'code_text': '创建用户vpn账户失败'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='修改vpn账户密码',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='password',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='新密码'
+            )
+        ],
+        responses={
+            200: None
+        }
+    )
+    def partial_update(self, request, *args, **kwargs):
+        """
+        创建vpn
+
+            http code 200:
+                {
+                  "username": "testuser",
+                  "password": "password",
+                  "active": true,
+                  "create_time": "2020-07-29T15:12:08.715731+08:00",
+                  "modified_time": "2020-07-29T15:12:08.715998+08:00"
+                }
+            http code 400:
+                {
+                  "err_code": "BadRequest",
+                  "code_text": "xxx"
+                }
+            http code 404:
+                {
+                  "err_code": "NoSuchVPN",
+                  "code_text": "vpn账户不存在"
+                }
+            http code 500:
+                {
+                  "err_code": "InternalServerError",
+                  "code_text": "修改用户vpn密码失败"
+                }
+        """
+        username = kwargs.get(self.lookup_field)
+        password = request.query_params.get('password')
+        if password is None:
+            return Response(data={'err_code': 'BadRequest', 'code_text': 'Query param "password" is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not (6 <= len(password) <= 64):
+            return Response(data={'err_code': 'BadRequest', 'code_text': 'Password must be 6-64 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        mgr = VPNManager()
+        vpn = mgr.get_vpn(username=username)
+        if not vpn:
+            return Response(data={'err_code': 'NoSuchVPN', 'code_text': 'vpn账户不存在'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not vpn.set_password(password, modified_user=request.user.username):
+            return Response(data={'err_code': 'InternalServerError', 'code_text': '修改用户vpn密码失败'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return serializers.VPNSerializer
+        elif self.action == 'create':
+            return serializers.VPNCreateSerializer
         return Serializer
 
