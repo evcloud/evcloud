@@ -31,17 +31,16 @@ except Exception as e:
 
 def get_vpn(username):
     d = DATABASES.get('default')
-    with MySQLdb.connect(host=d['HOST'],
+    conn = MySQLdb.connect(host=d['HOST'],
                          user=d['USER'],
                          password=d['PASSWORD'],
                          database=d['NAME'],
-                         port=int(d['PORT']),
-                         connect_timeout=10) as conn:
-        c = conn.cursor(MySQLdb.cursors.DictCursor)
-        c.execute("SELECT username, password, active FROM vpn_auth WHERE username=%s", (username,))
-        vpn = c.fetchone()
+                         port=int(d['PORT']))
+    c = conn.cursor(MySQLdb.cursors.DictCursor)
+    c.execute("SELECT username, password, active FROM vpn_auth WHERE username=%s", (username,))
+    vpn = c.fetchone()
 
-        return vpn
+    return vpn
 
 
 def auth(username, raw_password):
