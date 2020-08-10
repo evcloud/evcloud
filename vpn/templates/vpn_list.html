@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <style>
+        .mouse-hover:hover .mouse-hover-show{
+            display: inline-block;
+        }
+        .mouse-hover:hover .mouse-hover-no-show{
+            display: none;
+        }
+        .mouse-hover-no-show{
+            display: inline-block;
+        }
+        .mouse-hover-show{
+            display: none;
+        }
+    </style>
+{% endblock %}
+{% block title %}VPN列表{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>VPN列表 ({{ count }})</strong></span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">创建VPN</a></span>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="input-group col-md-6">
+                        <input class="form-control" name="search" type="text" value="{{ search }}" placeholder="用户名、备注">
+                        <button class="btn btn-sm btn-outline-primary" type="submit">搜索</button>
+                    </div>
+                </form>
+            </div>
+            <table class="table table-hover text-center table-vm-list" style="word-wrap:break-word;word-break:break-all;">
+                <thead class="thead-light">
+                <tr>
+{#                    <th></th>#}
+                    <th>用户名</th>
+                    <th>密码</th>
+                    <th>激活状态</th>
+                    <th>创建时间</th>
+                    <th>修改时间</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in page %}
+                    <tr>
+                        <td><a href="{% url 'vpn:vpn-change' id=obj.id %}"><b>{{ obj.username }}</b></a></td>
+                        <td class="vpn-password mouse-hover">
+                            <span class="mouse-hover-show">{{ obj.password }}</span>
+                            <span class="mouse-hover-no-show">******</span>
+                        </td>
+                        <td>
+                            {% if obj.active %}
+                                <i class="fa fa-check"></i>
+                            {% else %}
+                                <i class="fa fa-times"></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ obj.create_time|date:'Y-m-d H:i:s' }}</td>
+                        <td>{{ obj.modified_time|date:'Y-m-d H:i:s' }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <div class="card-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination"  style="margin:0;">
+                        {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
+                            {% if page_list %}
+                                {% if previous %}
+                                    <li class="page-item"><a class="page-link" href="?{{ previous }}" aria-label="Previous"><span
+                                            aria-hidden="true">&laquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link" aria-hidden="true">&laquo;</span></li>
+                                {% endif %}
+                            {% endif %}
+                            {% for disp, query, active in page_list %}
+                                {% if active %}
+                                    <li class="page-item active"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
+                                {% else %}
+                                    <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_list %}
+                                {% if next %}
+                                    <li class="page-item"><a class="page-link" href="?{{ next }}" aria-label="Next"><span
+                                            aria-hidden="true">&raquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link" aria-hidden="true">&raquo;</span></li>
+                                {% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+{#    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>#}
+{% endblock %}

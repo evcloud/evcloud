@@ -46,6 +46,7 @@
                 <li class="nav-item" id="nav_vdisk_list"><a class="nav-link" href="{% url "vdisk:vdisk-list" %}">云硬盘</a></li>
                 <li class="nav-item" id="nav_image_list"><a class="nav-link" href="{% url "image:image-list" %}">镜像</a></li>
                 <li class="nav-item" id="nav_pci_list"><a class="nav-link" href="{% url "device:pci-list" %}">PCI设备</a></li>
+                <li class="nav-item" id="nav_vpn_list"><a class="nav-link" href="{% url "vpn:vpn-list" %}">VPN</a></li>
                 {% if user.is_superuser %}
                     <li class="nav-item" id="nav_vlan_list"><a class="nav-link" href="{% url "network:vlan_list" %}">网络</a></li>
                     <li class="nav-item" id="nav_reports"><a class="nav-link" href="{% url 'reports:reports-list' %}">统计报表</a></li>

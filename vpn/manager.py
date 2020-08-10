@@ -25,6 +25,15 @@ class VPNManager:
         qs = self.get_vpn_queryset()
         return qs.filter(username=username).first()
 
+    def get_vpn_by_id(self, pk: int):
+        """
+        :return:
+            VPNAuth()       # exists
+            None            # not exists
+        """
+        qs = self.get_vpn_queryset()
+        return qs.filter(id=pk).first()
+
     @staticmethod
     def create_vpn(username: str, password: str = '', active: bool = True, remarks: str = '', create_user: str = ''):
         """
