@@ -472,11 +472,30 @@ class VmsViewSet(viewsets.GenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='创建虚拟机',
+        manual_parameters=[
+            openapi.Parameter(
+                name='ip-type',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='指定分配IP类型，可选值public（公网）、 private（私网）'
+            )
+        ],
         responses={
             201: ''
         }
     )
     def create(self, request, *args, **kwargs):
+        ip_type = request.query_params.get('ip-type', None)
+        if ip_type is None:
+            ip_public = None
+        elif ip_type == 'public':
+            ip_public = True
+        elif ip_type == 'private':
+            ip_public = False
+        else:
+            return Response(data={'code': 400, 'code_text': '参数ip-type的值无效'}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid(raise_exception=False):
             code_text = serializer_error_msg(errors=serializer.errors, default='参数验证有误')
@@ -505,7 +524,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         api = VmAPI()
         try:
-            vm = api.create_vm(user=request.user, **validated_data)
+            vm = api.create_vm(user=request.user, **validated_data, ip_public=ip_public)
         except VmError as e:
             data = {
                 'code': 200,

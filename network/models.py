@@ -24,11 +24,19 @@ class Vlan(models.Model):
     '''
     虚拟局域网子网模型
     '''
+    NET_TAG_PRIVATE = 0
+    NET_TAG_PUBLIC = 1
+    NET_TAG_CHOICES = (
+        (NET_TAG_PRIVATE, '私网'),
+        (NET_TAG_PUBLIC, '公网')
+    )
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='VLAN名称', max_length=100)
     center = models.ForeignKey(to=Center, verbose_name='分中心', default=1, null=True, on_delete=models.SET_NULL, related_name='vlan_set')
     br = models.CharField(verbose_name='网桥', max_length=50)
     net_type = models.ForeignKey(to=NetworkType, verbose_name='网络类型',on_delete=models.CASCADE, related_name='vlan_set')
+    tag = models.SmallIntegerField(verbose_name='网络标签', choices=NET_TAG_CHOICES, default=NET_TAG_PRIVATE)
     subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')
     net_mask = models.GenericIPAddressField(verbose_name='子网掩码')
     gateway = models.GenericIPAddressField(verbose_name='网关')
@@ -64,6 +72,12 @@ class Vlan(models.Model):
         free_ip_number = self.get_free_ip_number()
         ip_number = self.get_ip_number()
         return f'{free_ip_number}/{ip_number}'
+
+    def is_public(self):
+        """
+        是否是公网子网
+        """
+        return self.tag == self.NET_TAG_PUBLIC
 
 
 class MacIP(models.Model):
