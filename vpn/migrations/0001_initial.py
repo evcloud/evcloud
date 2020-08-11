@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('modified_time', models.DateTimeField(auto_now=True, verbose_name='创建时间')),
                 ('create_user', models.CharField(default='', max_length=255, verbose_name='创建者')),
                 ('modified_user', models.CharField(default='', max_length=255, verbose_name='修改者')),
-                ('remarks', models.CharField(default='', max_length=255, verbose_name='备注')),
+                ('remarks', models.CharField(blank=True, default='', max_length=255, verbose_name='备注')),
             ],
             options={
                 'verbose_name': 'VPN',

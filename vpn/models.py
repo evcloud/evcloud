@@ -18,7 +18,7 @@ class VPNAuth(models.Model):
     modified_time = models.DateTimeField(verbose_name='创建时间', auto_now=True)
     create_user = models.CharField(verbose_name='创建者', max_length=255, default='')
     modified_user = models.CharField(verbose_name='修改者', max_length=255, default='')
-    remarks = models.CharField(verbose_name='备注', max_length=255, default='')
+    remarks = models.CharField(verbose_name='备注', max_length=255, default='', blank=True)
 
     class Meta:
         db_table = 'vpn_auth'

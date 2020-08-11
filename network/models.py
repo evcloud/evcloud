@@ -79,6 +79,10 @@ class Vlan(models.Model):
         """
         return self.tag == self.NET_TAG_PUBLIC
 
+    @property
+    def tag_display(self):
+        return self.get_tag_display()
+
 
 class MacIP(models.Model):
     '''
