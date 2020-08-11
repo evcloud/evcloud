@@ -144,7 +144,6 @@ class MacIPManager:
 
         return queryset
 
-
     def get_macip_by_id(self, macip_id:int):
         '''
         通过id获取mac ip
@@ -179,7 +178,7 @@ class MacIPManager:
             raise NetworkError(msg='ipv4参数有误')
 
         try:
-            return MacIP.objects.filter(ipv4=ipv4).first()
+            return MacIP.objects.filter(ipv4=ipv4).select_related('vlan').first()
         except Exception as e:
             raise NetworkError(msg=f'查询MacIP时错误,{str(e)}')
 
@@ -212,7 +211,7 @@ class MacIPManager:
             return None
 
         with transaction.atomic():
-            qs_ips = MacIP.objects.select_for_update().filter(used=False, enable=True)
+            qs_ips = MacIP.objects.select_for_update().filter(used=False, enable=True).select_related('vlan')
             if ipv4:
                 qs_ips = qs_ips.filter(ipv4=ipv4)
 
