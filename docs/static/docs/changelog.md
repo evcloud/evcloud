@@ -22,3 +22,8 @@
 * 虚拟机修改密码api
 * 子网vlan属于分中心center
 
+## v3.0.4
+* 创建vm时指定flavor或自定义直接指定cpu和mem配置   
+* pci挂载卸载bug修复   
+* add vpn app   
+* 创建vm api通过参数指定分配公网或私网ip   

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+{% endblock %}
+{% block title %}VPN修改{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid">
+        <form method="post">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>修改 VPN</strong></span>
+            </div>
+            <div class="card-body">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group row">
+                        {% if field.is_hidden %}
+                            {{ field }}
+                        {% elif field.field.widget.input_type == "checkbox" %}
+                            <div class="col-12 {% if field.field.required %}font-weight-bold{% endif %}">{{ field }}{{ field.label_tag }}</div>
+                        {% else %}
+                            <div class="col-2 {% if field.field.required %}font-weight-bold{% endif %}">{{ field.label_tag }}</div>
+                            <div class="col-9">{{ field }}</div>
+                            {% if field.errors %}
+                                <p class="text-danger">{{ field.errors.as_text }}</p>
+                            {% endif %}
+                        {% endif %}
+                        {% if field.help_text %}
+                            <div class="col-12 font-weight-lighter font-italic">{{ field.help_text|safe }}</div>
+                        {% endif %}
+                    </div>
+                    <hr>
+                {% endfor %}
+                <p id="tip_text" class="text-danger">{{ form.non_field_errors.as_text }}</p>
+            </div>
+            <div class="card-footer">
+                {% if vpn %}
+                    <a class="btn btm-sm btn-primary btn-danger m-2" href="{% url 'vpn:vpn-delete' id=vpn.id %}">删除</a>
+                {% endif %}
+                <input type="submit" name="_continue" class="btn btm-sm btn-info float-right m-2" value="保存并继续编辑">
+                <input type="submit" name="_addanother" class="btn btm-sm btn-info float-right m-2" value="保存并添加另一个">
+                <input type="submit" name="_save" class="btn btm-sm btn-primary float-right m-2" value="保存">
+            </div>
+        </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block script %}
+{% endblock %}

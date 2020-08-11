@@ -4,13 +4,14 @@ from django.http.response import JsonResponse, HttpResponse
 from .models import Vlan, MacIP
 from .managers import VlanManager
 
-# Create your views here.
+
 def vlan_list(request):
     if not request.user.is_superuser:
         return HttpResponse('您无权访问此页面')
 
     vlans = Vlan.objects.all()
     return render(request, 'vlan_list.html', {'vlans': vlans})
+
 
 def vlan_add(request):
     if not request.user.is_superuser:
@@ -31,13 +32,13 @@ def vlan_add(request):
                 macips = VlanManager().generate_subips(vlan_id, from_ip, to_ip)
                 return JsonResponse({'ok': True, 'macips': macips})
             except Exception as error:
-                return JsonResponse({'ok': False, 'msg': error.msg})
+                return JsonResponse({'ok': False, 'msg': str(error)})
         elif write_database == 'true':
             try:
                 macips = VlanManager().generate_subips(vlan_id, from_ip, to_ip, write_database=True)
                 return JsonResponse({'ok': True, 'msg': '导入成功', 'macips': macips})
             except Exception as error:
-                return JsonResponse({'ok': False, 'msg': error.msg})
+                return JsonResponse({'ok': False, 'msg': str(error)})
         
 
 def vlan_show(request):
