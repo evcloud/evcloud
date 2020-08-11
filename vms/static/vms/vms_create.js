@@ -157,8 +157,19 @@
             return false;
         }
         if(!obj.flavor_id ||obj.flavor_id <= 0){
-            alert('请选择配置样式');
-            return false;
+            if (isNaN(obj.vcpu) || obj.vcpu <= 0){
+                alert('配置CPU输入不是有效正整数');
+                return false;
+            }
+            if (isNaN(obj.mem) || obj.mem <= 0){
+                alert('配置RAM输入不是有效正整数');
+                return false;
+            }
+
+            delete obj.flavor_id;
+        }else{
+            delete obj.vcpu;
+            delete obj.mem;
         }
         return true;
     }
@@ -247,6 +258,18 @@
                 alert(msg);
             }
         });
+    });
+
+    $("select[name=flavor_id]").change(function (e) {
+        e.preventDefault();
+
+        let custom_flavor = $("#custom-flavor");
+        let flavor_id = $(this).val();
+        if (flavor_id && flavor_id > 0){
+            custom_flavor.hide();
+        }else{
+            custom_flavor.show();
+        }
     });
 })();
 

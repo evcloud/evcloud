@@ -84,13 +84,43 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="id-flavor" class="offset-sm-1 col-sm-2 text-right col-form-label">配置式样</label>
-                        <div class="col-sm-7 form-inline">
-                            <select name="flavor_id" class="form-control" id="id-flavor">
-                                {% for f in flavors %}
-                                    <option value="{{f.id}}">CPU: {{ f.vcpus }}核 / RAM: {{ f.ram }}MB</option>
-                                {% endfor %}
-                            </select>
+                        <label for="id-flavor" class="offset-sm-1 col-sm-2 text-right col-form-label">配置</label>
+                        <div class="col-sm-7">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">模板样式</span>
+                                        </div>
+                                        <select name="flavor_id" class="form-control" id="id-flavor">
+                                            <option value="" data-vcpu="" data-ram="">自定义</option>
+                                            {% for f in flavors %}
+                                                <option value="{{ f.id }}" data-vcpu="{{ f.vcpus }}" data-ram="{{ f.ram }}">CPU: {{ f.vcpus }}核 / RAM: {{ f.ram }}MB</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div id="custom-flavor">
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">CPU</span>
+                                            </div>
+                                            <input name="vcpu" type="text" class="form-control" onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')" aria-label="CPU">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">核</span>
+                                            </div>
+                                        </div>
+                                        <div class="input-group mb-3">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">RAM</span>
+                                            </div>
+                                            <input name="mem" type="text" class="form-control" onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')" aria-label="RAM">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">MB</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group row">

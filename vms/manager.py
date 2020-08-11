@@ -887,6 +887,43 @@ class VmAPI:
 
         return vlan
 
+    def _available_macip(self, ipv4: str, ip_public=None):
+        """
+       指定mac ip是否空闲可用，是否满足网络类型
+
+       :return:
+           MacIP()          # 可用
+           raise VmError    # 不可用
+
+       :raise VmError
+       """
+        try:
+            mac_ip = self._macip_manager.get_macip_by_ipv4(ipv4=ipv4)
+        except NetworkError as e:
+            raise VmError(err=e)
+
+        if not mac_ip:
+            raise VmError(msg='mac ip不存在')
+
+        if not mac_ip.can_used():
+            raise VmError(msg='mac ip已被分配使用')
+
+        if ip_public is None:       # 不指定ip类型
+            return mac_ip
+
+        vlan = mac_ip.vlan
+        if not vlan:
+            raise VmError(msg='mac ip未关联子网vlan，无法判断ip是公网或私网')
+
+        if ip_public:  # 指定分配公网ip
+            if not vlan.is_public():
+                raise VmError(msg='指定的IP地址不是公网ip')
+        else:  # 指定分配私网ip
+            if vlan.is_public():
+                raise VmError(msg='指定的IP地址不是私网ip')
+
+        return mac_ip
+
     def _get_groups_host_check_perms(self, center_id: int, group_id: int, host_id: int, user):
         '''
         检查用户使用有宿主机组或宿主机访问权限，优先使用host_id
@@ -940,7 +977,7 @@ class VmAPI:
         raise VmError(msg='必须指定一个有效的center id或者group id或者host id')
 
     def create_vm(self, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
-                  host_id=None, ipv4=None, remarks=None, **kwargs):
+                  host_id=None, ipv4=None, remarks=None, ip_public=None, **kwargs):
         '''
         创建一个虚拟机
 
@@ -960,15 +997,16 @@ class VmAPI:
         :param host_id: 宿主机id
         :param ipv4:  指定要创建的虚拟机ip
         :param remarks: 备注
+        :param ip_public: 指定分配公网或私网ip；默认None（不指定），True(公网)，False(私网)
         :return:
             Vm()
             raise VmError
 
         :raise VmError
         '''
-        macip = None # 申请的macip
+        macip = None    # 申请的macip
         vlan = None
-        diskname = None # clone的系统镜像
+        diskname = None     # clone的系统镜像
 
         if vcpu <= 0:
             raise VmError(msg='无法创建虚拟机,vcpu参数无效')
@@ -992,10 +1030,10 @@ class VmAPI:
 
         # 如果指定了vlan或ip
         if ipv4:
-            macip = self._macip_manager.apply_for_free_ip(ipv4=ipv4)
+            self._available_macip(ipv4=ipv4, ip_public=ip_public)       # ip是否可用
+            macip = self._macip_manager.apply_for_free_ip(ipv4=ipv4)    # 分配ip
             if not macip:
                 raise VmError(msg='指定的IP地址不可用，不存在或已被占用')
-            vlan = macip.vlan
         elif vlan_id and vlan_id > 0:
             vlan = self._get_vlan(vlan_id)  # 局域子网
 
@@ -1005,9 +1043,11 @@ class VmAPI:
             scheduler = HostMacIPScheduler()
             try:
                 if macip:
-                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none, vlan=vlan, need_mac_ip=False)
+                    host, _ = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none, vlan=vlan,
+                                                 need_mac_ip=False, ip_public=ip_public)
                 else:
-                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none, vlan=vlan)
+                    host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none,
+                                                     vlan=vlan, ip_public=ip_public)
             except ScheduleError as e:
                 raise VmError(msg=f'申请资源错误,{str(e)}')
             if not macip:

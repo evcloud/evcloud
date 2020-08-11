@@ -1,7 +1,7 @@
 #coding=utf-8
 from django.db.models import Q
 
-from utils.ev_libvirt.virt import VirtAPI, VirtError
+from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain
 from compute.managers import GroupManager, ComputeError, CenterManager, HostManager
 from .models import PCIDevice
 from .device import GPUDevice, DeviceError
@@ -211,7 +211,7 @@ class PCIDeviceManager:
 
         xml_desc = dev.xml_desc
         try:
-            if VirtAPI().attach_device(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid, xml=xml_desc):
+            if VmDomain(host_ip=host.ipv4, vm_uuid=vm.hex_uuid).attach_device(xml=xml_desc):
                 return True
             raise VirtError(msg='挂载到虚拟机失败')
         except VirtError as e:
@@ -238,9 +238,9 @@ class PCIDeviceManager:
 
         host = vm.host
         xml_desc = dev.xml_desc
-        v_api = VirtAPI()
+        domain = VmDomain(host_ip=host.ipv4, vm_uuid=vm.hex_uuid)
         try:
-            if not v_api.detach_device(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid, xml=xml_desc):
+            if not domain.detach_device(xml=xml_desc):
                 raise VirtError(msg='从虚拟机卸载设备失败')
         except VirtError as e:
             raise DeviceError(msg=str(e))
@@ -248,7 +248,7 @@ class PCIDeviceManager:
         try:
             dev.umount()
         except DeviceError as e:
-            v_api.attach_device(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid, xml=xml_desc)
+            domain.attach_device(xml=xml_desc)
             raise DeviceError(msg=f'与虚拟机解除挂载关系失败, {str(e)}')
 
         return True
