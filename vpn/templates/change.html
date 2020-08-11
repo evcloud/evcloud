@@ -18,7 +18,7 @@
                     <div class="form-group row">
                         {% if field.is_hidden %}
                             {{ field }}
-                        {% elif field.field.widget.input_type == "checkbox"%}
+                        {% elif field.field.widget.input_type == "checkbox" %}
                             <div class="col-12 {% if field.field.required %}font-weight-bold{% endif %}">{{ field }}{{ field.label_tag }}</div>
                         {% else %}
                             <div class="col-2 {% if field.field.required %}font-weight-bold{% endif %}">{{ field.label_tag }}</div>
