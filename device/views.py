@@ -8,9 +8,6 @@ from .manager import PCIDeviceManager, DeviceError
 from .models import PCIDevice
 
 
-# Create your views here.
-
-
 def str_to_int_or_default(val, default):
     '''
     字符串转int，转换失败返回设置的默认值
@@ -75,7 +72,7 @@ class PCIView(View):
     def get_vms_list_context(self, request, vms_queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, vms_queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         vms_page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(vms_page)
 
@@ -123,7 +120,7 @@ class PCIMountView(View):
     def get_vms_list_context(self, request, queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(page)
 

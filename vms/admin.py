@@ -7,7 +7,7 @@ from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateLog, Flavor
 class VmAdmin(admin.ModelAdmin):
     list_display_links = ('hex_uuid',)
     list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'user', 'create_time', 'remarks')
-    search_fields = ['name', 'mac_ip__name']
+    search_fields = ['name', 'mac_ip__ipv4']
     list_filter = ['host', 'user']
     raw_id_fields = ('mac_ip', 'host', 'user', 'image')
 

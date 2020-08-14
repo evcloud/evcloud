@@ -20,7 +20,6 @@ def add_vpn_view(request, pk: int):
 
 
 class VPNView(View):
-    page_kwarg = 'page'
     NUM_PER_PAGE = 100  # Show num per page
 
     def get(self, request, *args, **kwargs):
@@ -36,7 +35,7 @@ class VPNView(View):
     def get_list_context(self, request, queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get(self.page_kwarg, 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(page)
 

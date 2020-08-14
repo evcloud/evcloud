@@ -7,8 +7,8 @@ from compute.managers import CenterManager, HostManager, GroupManager, ComputeEr
 from utils.paginators import NumsPaginator
 from vms.manager import VmManager
 
-# Create your views here.
 User = get_user_model()
+
 
 def str_to_int_or_default(val, default):
     '''
@@ -85,7 +85,7 @@ class VdiskView(View):
     def get_disks_list_context(self, request, queryset, context:dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(page)
 
@@ -157,7 +157,7 @@ class DiskMountToVmView(View):
     def get_vms_list_context(self, request, queryset, context:dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         vms_page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(vms_page)
 
