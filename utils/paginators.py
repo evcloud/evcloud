@@ -1,14 +1,17 @@
 from django.core.paginator import Paginator
 
+
 class NumsPaginator(Paginator):
     '''
     带自定义导航页码的分页器
     '''
+    page_query_name = 'page'
+
     def __init__(self, request, object_list, per_page, **kwargs):
         self.request = request
         super().__init__(object_list, per_page, **kwargs)
 
-    def get_page_nav(self, page, ):
+    def get_page_nav(self, page):
         '''
         页码导航栏相关信息
 
@@ -39,15 +42,14 @@ class NumsPaginator(Paginator):
             if page_list[-1] != self.num_pages:
                 page_list.append(self.num_pages)
 
-        page_nav = {}
-        page_nav['page_list'] = self.get_page_list(page_list, current_page)
+        page_nav = {'page_list': self.get_page_list(page_list, current_page)}
 
         # 上一页
         if page.has_previous():
             page_nav['previous'] = self.build_page_url_query_str(page.previous_page_number())
         else:
             page_nav['previous'] = None
-            # 下一页
+        # 下一页
         if page.has_next():
             page_nav['next'] = self.build_page_url_query_str(page.next_page_number())
         else:
@@ -55,7 +57,7 @@ class NumsPaginator(Paginator):
 
         return page_nav
 
-    def get_page_list(self, page_nums:list, current_page:int):
+    def get_page_list(self, page_nums: list, current_page: int):
         '''
         构建页码导航栏 页码信息
 
@@ -80,15 +82,14 @@ class NumsPaginator(Paginator):
 
         return page_list
 
-    def build_page_url_query_str(self, page_num:int):
-        '''
+    def build_page_url_query_str(self, page_num: int):
+        """
         构建页码对应的url query参数字符串
 
-        :param request:
         :param page_num: 页码
         :return:
             str
-        '''
+        """
         querys = self.request.GET.copy()
-        querys.setlist('page', [page_num])
+        querys.setlist(self.page_query_name, [page_num])
         return querys.urlencode()

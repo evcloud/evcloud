@@ -64,7 +64,7 @@ class ImageView(View):
     def get_page_context(self, request, vms_queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, vms_queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         images_page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(images_page)
 

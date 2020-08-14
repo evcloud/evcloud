@@ -85,7 +85,7 @@ class VmsView(View):
     def get_vms_list_context(self, request, vms_queryset, context:dict):
         # 分页显示
         paginator = NumsPaginator(request, vms_queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         vms_page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(vms_page)
 
@@ -159,7 +159,7 @@ class VmMountDiskView(View):
     def get_vdisks_list_context(self, request, queryset, context:dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         vms_page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(vms_page)
 
@@ -257,7 +257,7 @@ class VmMountPCIView(View):
     def get_pci_list_context(self, request, queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get('page', 1)  # 获取页码参数，没有参数默认为1
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(page)
 
