@@ -1,6 +1,13 @@
+from io import BytesIO
+
 from django.shortcuts import render, redirect, reverse
 from django.views import View
 from django.http import Http404
+from django.http import FileResponse
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from drf_yasg.utils import swagger_auto_schema, no_body
 
 from utils.paginators import NumsPaginator
 from .manager import VPNManager, VPNError
@@ -154,3 +161,44 @@ class VPNDeleteView(View):
             vpn.delete()
 
         return redirect(to=reverse('vpn:vpn-list'))
+
+
+class VPNFileViewSet(viewsets.GenericViewSet):
+    """
+    VPN文件视图
+    """
+    permission_classes = []
+    pagination_class = None
+
+    @swagger_auto_schema(
+        operation_summary='下载用户vpn配置文件'
+    )
+    @action(methods=['get'], detail=False, url_path='config', url_name='vpn-config-file')
+    def vpn_config_file(self, request, *args, **kwargs):
+        """
+        下载用户vpn配置文件
+        """
+        obj = VPNManager().vpn_config_file()
+        if not obj:
+            return Response(data={'未添加vpn配置文件'}, status=status.HTTP_404_NOT_FOUND)
+
+        filename = obj.filename if obj.filename else 'client.ovpn'
+        content = obj.content.encode(encoding='utf-8')
+        return FileResponse(BytesIO(initial_bytes=content), as_attachment=True, filename=filename)
+
+    @swagger_auto_schema(
+        operation_summary='下载用户vpn ca证书文件'
+    )
+    @action(methods=['get'], detail=False, url_path='ca', url_name='vpn-ca-file')
+    def vpn_ca_file(self, request, *args, **kwargs):
+        """
+        下载用户vpn ca证书文件
+        """
+        obj = VPNManager().vpn_ca_file()
+        if not obj:
+            return Response(data={'未添加vpn ca证书文件'}, status=status.HTTP_404_NOT_FOUND)
+
+        filename = obj.filename if obj.filename else 'ca.crt'
+        content = obj.content.encode(encoding='utf-8')
+        return FileResponse(BytesIO(initial_bytes=content), as_attachment=True, filename=filename)
+

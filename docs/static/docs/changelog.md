@@ -27,3 +27,7 @@
 * pci挂载卸载bug修复   
 * add vpn app   
 * 创建vm api通过参数指定分配公网或私网ip   
+
+## v3.0.5
+* 增加vpn配置文件和ca证书下载api   
+* 分页相关html模板修改  

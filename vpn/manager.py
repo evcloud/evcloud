@@ -1,5 +1,5 @@
 from utils.errors import Error
-from .models import VPNAuth
+from .models import VPNAuth, VPNConfig
 
 
 class VPNError(Error):
@@ -59,4 +59,22 @@ class VPNManager:
             raise VPNError(code=500, msg=str(e), err=e)
 
         return vpn
+
+    @staticmethod
+    def vpn_config_file():
+        """
+        vpn配置文件元数据
+        :return:
+            None or VPNConfig()
+        """
+        return VPNConfig.objects.filter(tag=VPNConfig.TAG_CONFIG).first()
+
+    @staticmethod
+    def vpn_ca_file():
+        """
+        vpn ca证书元数据
+        :return:
+            None or VPNConfig()
+        """
+        return VPNConfig.objects.filter(tag=VPNConfig.TAG_CA).first()
 
