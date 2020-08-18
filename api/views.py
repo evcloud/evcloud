@@ -3066,4 +3066,3 @@ class VPNViewSet(viewsets.GenericViewSet):
         elif self.action == 'create':
             return serializers.VPNCreateSerializer
         return Serializer
-

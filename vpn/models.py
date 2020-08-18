@@ -1,4 +1,5 @@
 import random
+
 from django.db import models
 
 
@@ -53,3 +54,20 @@ class VPNAuth(models.Model):
         return True
 
 
+class VPNConfig(models.Model):
+    TAG_CA = 1
+    TAG_CONFIG = 2
+    CHOICES_TAG = (
+        (TAG_CA, 'CA证书'),
+        (TAG_CONFIG, '配置文件')
+    )
+    id = models.AutoField(verbose_name='ID', primary_key=True)
+    filename = models.CharField(verbose_name='文件名', max_length=255, default='client.ovpn', help_text='client.ovpn、  ca.crt')
+    tag = models.SmallIntegerField(verbose_name='标签', choices=CHOICES_TAG, default=TAG_CONFIG)
+    content = models.TextField(verbose_name='文件内容', default='')
+    modified_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'VPN配置文件'
+        verbose_name_plural = verbose_name
