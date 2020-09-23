@@ -2,7 +2,9 @@ class Error(Exception):
     '''
     错误定义
     '''
-    def __init__(self, code: int = 0, msg: str = '', err=None, err_code: str = 'error'):
+    err_code = 'Error'
+
+    def __init__(self, code: int = 0, msg: str = '', err=None, err_code: str = ''):
         '''
         :param code: 错误码
         :param msg: 错误信息
@@ -10,8 +12,9 @@ class Error(Exception):
         '''
         self.code = code
         self.msg = msg
-        self.err_code = err_code
         self.err = err
+        if err_code:
+            self.err_code = err_code
 
     def __str__(self):
         return self.detail()

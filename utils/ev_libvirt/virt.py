@@ -30,6 +30,122 @@ VM_STATE = {
 }
 
 
+class VirErrorNumber:
+    """
+    libvirt api error code
+    """
+    VIR_ERR_OK = 0
+    VIR_ERR_INTERNAL_ERROR = 1  # internal error
+    VIR_ERR_NO_MEMORY = 2  # memory allocation failure
+    VIR_ERR_NO_SUPPORT = 3  # no support for this function
+    VIR_ERR_UNKNOWN_HOST = 4  # could not resolve hostname
+    VIR_ERR_NO_CONNECT = 5  # can't connect to hypervisor
+    VIR_ERR_INVALID_CONN = 6  # invalid connection object
+    VIR_ERR_INVALID_DOMAIN = 7  # invalid domain object
+    VIR_ERR_INVALID_ARG = 8  # invalid function argument
+    VIR_ERR_OPERATION_FAILED = 9  # a command to hypervisor failed
+    VIR_ERR_GET_FAILED = 10  # a HTTP GET command to failed
+    VIR_ERR_POST_FAILED = 11  # a HTTP POST command to failed
+    VIR_ERR_HTTP_ERROR = 12  # unexpected HTTP error code
+    VIR_ERR_SEXPR_SERIAL = 13  # failure to serialize an S-Expr
+    VIR_ERR_NO_XEN = 14  # could not open Xen hypervisor control
+    VIR_ERR_XEN_CALL = 15  # failure doing an hypervisor call
+    VIR_ERR_OS_TYPE = 16  # unknown OS type
+    VIR_ERR_NO_KERNEL = 17  # missing kernel information
+    VIR_ERR_NO_ROOT = 18  # missing root device information
+    VIR_ERR_NO_SOURCE = 19  # missing source device information
+    VIR_ERR_NO_TARGET = 20  # missing target device information
+    VIR_ERR_NO_NAME = 21  # missing domain name information
+    VIR_ERR_NO_OS = 22  # missing domain OS information
+    VIR_ERR_NO_DEVICE = 23  # missing domain devices information
+    VIR_ERR_NO_XENSTORE = 24  # could not open Xen Store control
+    VIR_ERR_DRIVER_FULL = 25  # too many drivers registered
+    VIR_ERR_CALL_FAILED = 26  # not supported by the drivers (DEPRECATED)
+    VIR_ERR_XML_ERROR = 27  # an XML description is not well formed or broken
+    VIR_ERR_DOM_EXIST = 28  # the domain already exist
+    VIR_ERR_OPERATION_DENIED = 29  # operation forbidden on read-only connections
+    VIR_ERR_OPEN_FAILED = 30  # failed to open a conf file
+    VIR_ERR_READ_FAILED = 31  # failed to read a conf file
+    VIR_ERR_PARSE_FAILED = 32  # failed to parse a conf file
+    VIR_ERR_CONF_SYNTAX = 33  # failed to parse the syntax of a conf file
+    VIR_ERR_WRITE_FAILED = 34  # failed to write a conf file
+    VIR_ERR_XML_DETAIL = 35  # detail of an XML error
+    VIR_ERR_INVALID_NETWORK = 36  # invalid network object
+    VIR_ERR_NETWORK_EXIST = 37  # the network already exist
+    VIR_ERR_SYSTEM_ERROR = 38  # general system call failure
+    VIR_ERR_RPC = 39  # some sort of RPC error
+    VIR_ERR_GNUTLS_ERROR = 40  # error from a GNUTLS call
+    VIR_WAR_NO_NETWORK = 41  # failed to start network
+    VIR_ERR_NO_DOMAIN = 42  # domain not found or unexpectedly disappeared
+    VIR_ERR_NO_NETWORK = 43  # network not found
+    VIR_ERR_INVALID_MAC = 44  # invalid MAC address
+    VIR_ERR_AUTH_FAILED = 45  # authentication failed
+    VIR_ERR_INVALID_STORAGE_POOL = 46  # invalid storage pool object
+    VIR_ERR_INVALID_STORAGE_VOL = 47  # invalid storage vol object
+    VIR_WAR_NO_STORAGE = 48  # failed to start storage
+    VIR_ERR_NO_STORAGE_POOL = 49  # storage pool not found
+    VIR_ERR_NO_STORAGE_VOL = 50  # storage volume not found
+    VIR_WAR_NO_NODE = 51  # failed to start node driver
+    VIR_ERR_INVALID_NODE_DEVICE = 52  # invalid node device object
+    VIR_ERR_NO_NODE_DEVICE = 53  # node device not found
+    VIR_ERR_NO_SECURITY_MODEL = 54  # security model not found
+    VIR_ERR_OPERATION_INVALID = 55  # operation is not applicable at this time
+    VIR_WAR_NO_INTERFACE = 56  # failed to start interface driver
+    VIR_ERR_NO_INTERFACE = 57  # interface driver not running
+    VIR_ERR_INVALID_INTERFACE = 58  # invalid interface object
+    VIR_ERR_MULTIPLE_INTERFACES = 59  # more than one matching interface found
+    VIR_WAR_NO_NWFILTER = 60  # failed to start nwfilter driver
+    VIR_ERR_INVALID_NWFILTER = 61  # invalid nwfilter object
+    VIR_ERR_NO_NWFILTER = 62  # nw filter pool not found
+    VIR_ERR_BUILD_FIREWALL = 63  # nw filter pool not found
+    VIR_WAR_NO_SECRET = 64  # failed to start secret storage
+    VIR_ERR_INVALID_SECRET = 65  # invalid secret
+    VIR_ERR_NO_SECRET = 66  # secret not found
+    VIR_ERR_CONFIG_UNSUPPORTED = 67  # unsupported configuration construct
+    VIR_ERR_OPERATION_TIMEOUT = 68  # timeout occurred during operation
+    VIR_ERR_MIGRATE_PERSIST_FAILED = 69  # a migration worked, but making the VM persist on the dest host failed
+    VIR_ERR_HOOK_SCRIPT_FAILED = 70  # a synchronous hook script failed
+    VIR_ERR_INVALID_DOMAIN_SNAPSHOT = 71  # invalid domain snapshot
+    VIR_ERR_NO_DOMAIN_SNAPSHOT = 72  # domain snapshot not found
+    VIR_ERR_INVALID_STREAM = 73  # stream pointer not valid
+    VIR_ERR_ARGUMENT_UNSUPPORTED = 74  # valid API use but unsupported by the given driver
+    VIR_ERR_STORAGE_PROBE_FAILED = 75  # storage pool probe failed
+    VIR_ERR_STORAGE_POOL_BUILT = 76  # storage pool already built
+    VIR_ERR_SNAPSHOT_REVERT_RISKY = 77  # force was not requested for a risky domain snapshot revert
+    VIR_ERR_OPERATION_ABORTED = 78  # operation on a domain was canceled/aborted by user
+    VIR_ERR_AUTH_CANCELLED = 79  # authentication cancelled
+    VIR_ERR_NO_DOMAIN_METADATA = 80  # The metadata is not present
+    VIR_ERR_MIGRATE_UNSAFE = 81  # Migration is not safe
+    VIR_ERR_OVERFLOW = 82  # integer overflow
+    VIR_ERR_BLOCK_COPY_ACTIVE = 83  # action prevented by block copy job
+    VIR_ERR_OPERATION_UNSUPPORTED = 84  # The requested operation is not supported
+    VIR_ERR_SSH = 85  # error in ssh transport driver
+    VIR_ERR_AGENT_UNRESPONSIVE = 86  # guest agent is unresponsive, not running or not usable
+    VIR_ERR_RESOURCE_BUSY = 87  # resource is already in use
+    VIR_ERR_ACCESS_DENIED = 88  # operation on the object/resource was denied
+    VIR_ERR_DBUS_SERVICE = 89  # error from a dbus service
+    VIR_ERR_STORAGE_VOL_EXIST = 90  # the storage vol already exists
+    VIR_ERR_CPU_INCOMPATIBLE = 91  # given CPU is incompatible with host CPU
+    VIR_ERR_XML_INVALID_SCHEMA = 92  # XML document doesn't validate against schema
+    VIR_ERR_MIGRATE_FINISH_OK = 93  # Finish API succeeded but it is expected to return NULL
+    VIR_ERR_AUTH_UNAVAILABLE = 94  # authentication unavailable
+    VIR_ERR_NO_SERVER = 95  # Server was not found
+    VIR_ERR_NO_CLIENT = 96  # Client was not found
+    VIR_ERR_AGENT_UNSYNCED = 97  # guest agent replies with wrong id to guest-sync command (DEPRECATED)
+    VIR_ERR_LIBSSH = 98  # error in libssh transport driver
+    VIR_ERR_DEVICE_MISSING = 99  # fail to find the desired device
+    VIR_ERR_INVALID_NWFILTER_BINDING = 100  # invalid nwfilter binding
+    VIR_ERR_NO_NWFILTER_BINDING = 101  # no nwfilter binding
+    VIR_ERR_INVALID_DOMAIN_CHECKPOINT = 102  # invalid domain checkpoint
+    VIR_ERR_NO_DOMAIN_CHECKPOINT = 103  # domain checkpoint not found
+    VIR_ERR_NO_DOMAIN_BACKUP = 104  # domain backup job id not found
+    VIR_ERR_INVALID_NETWORK_PORT = 105  # invalid network port object
+    VIR_ERR_NETWORK_PORT_EXIST = 106  # the network port already exist
+    VIR_ERR_NO_NETWORK_PORT = 107  # network port not found
+    VIR_ERR_NO_HOSTNAME = 108  # no domain's hostname found
+    VIR_ERR_NUMBER_LAST = 109
+
+
 class VirtError(Exception):
     '''
     libvirt函数封装错误类型定义
@@ -56,6 +172,25 @@ class VirtError(Exception):
             return str(self.err)
 
         return '未知的错误'
+
+
+class VirDomainNotExist(VirtError):
+    """虚拟机不存在"""
+    pass
+
+
+class VirHostDown(VirtError):
+    """无法连接宿主机"""
+    pass
+
+
+def wrap_error(err: libvirt.libvirtError, msg=''):
+    err_code = err.get_error_code()
+    msg = msg if msg else str(err)
+    if err_code == VirErrorNumber.VIR_ERR_NO_DOMAIN:
+        return VirDomainNotExist(code=err_code, msg=msg, err=err)
+
+    return VirtError(code=err_code, msg=msg, err=err)
 
 
 class VirtAPI(object):
@@ -91,11 +226,11 @@ class VirtAPI(object):
             success: libvirt.virConnect
             failed: raise VirtError()
 
-        :raise VirtError()
+        :raise VirtError(), VirHostDown()
         '''
         if host_ip:
             if not self._host_alive(host_ip):
-                raise VirtError(msg='未探测到宿主机')
+                raise VirHostDown(msg='未探测到宿主机')
             name = f'qemu+ssh://{host_ip}/system'
         else:
             name = 'qemu:///system'
@@ -103,7 +238,7 @@ class VirtAPI(object):
         try:
             return libvirt.open(name=name)
         except libvirt.libvirtError as e:
-            raise VirtError(err=e)
+            raise wrap_error(err=e)
 
     def define(self, host_ipv4:str, xml_desc:str):
         '''
@@ -122,7 +257,7 @@ class VirtAPI(object):
             dom = conn.defineXML(xml_desc)
             return dom
         except libvirt.libvirtError as e:
-            raise VirtError(err=e)
+            raise wrap_error(err=e)
 
     def get_domain(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -134,13 +269,13 @@ class VirtAPI(object):
             success: libvirt.virDomain()
             failed: raise VirtError()
 
-        :raise VirtError()
+        :raise VirtError(), VirDomainNotExist()
         '''
         conn = self._get_connection(host_ipv4)
         try:
             return conn.lookupByUUIDString(vm_uuid)
         except libvirt.libvirtError as e:
-            raise VirtError(err=e)
+            raise wrap_error(err=e)
 
     def domain_exists(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -161,7 +296,7 @@ class VirtAPI(object):
                     return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(err=e)
+            raise wrap_error(err=e)
 
     def undefine(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -175,13 +310,17 @@ class VirtAPI(object):
 
         :raise VirtError()
         '''
-        dom = self.get_domain(host_ipv4, vm_uuid)
+        try:
+            dom = self.get_domain(host_ipv4, vm_uuid)
+        except VirDomainNotExist as e:
+            return True
+
         try:
             if dom.undefine() == 0:
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg=f'删除虚拟机失败,{str(e)}', err=e)
+            raise wrap_error(err=e, msg=f'删除虚拟机失败,{str(e)}')
 
     def domain_status(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -194,10 +333,16 @@ class VirtAPI(object):
 
         :raise VirtError()
         '''
-        domain = self.get_domain(host_ipv4, vm_uuid)
+        try:
+            domain = self.get_domain(host_ipv4, vm_uuid)
+        except VirDomainNotExist as e:
+            return VIR_DOMAIN_MISS, VM_STATE.get(VIR_DOMAIN_MISS, 'miss')
+        except VirHostDown as e:
+            return VIR_DOMAIN_HOST_DOWN, VM_STATE.get(VIR_DOMAIN_HOST_DOWN, 'host connect failed')
+
         code = self._status_code(domain)
         state_str = VM_STATE.get(code, 'no state')
-        return (code, state_str)
+        return code, state_str
 
     def _status_code(self, domain:libvirt.virDomain):
         '''
@@ -213,7 +358,7 @@ class VirtAPI(object):
             info = domain.info()
             return info[0]
         except libvirt.libvirtError as e:
-            raise VirtError(err=e)
+            raise wrap_error(err=e)
 
     def is_shutoff(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -260,6 +405,7 @@ class VirtAPI(object):
         code = self._status_code(domain)
         if code in (VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED):
             return True
+
         return False
 
     def _domain_is_running(self, domain:libvirt.virDomain):
@@ -300,7 +446,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg=f'启动虚拟机失败,{str(e)}', err=e)
+            raise wrap_error(err=e, msg=f'启动虚拟机失败,{str(e)}')
 
     def reboot(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -324,7 +470,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg=f'重启虚拟机失败, {str(e)}', err=e)
+            raise wrap_error(err=e, msg=f'重启虚拟机失败, {str(e)}')
 
     def shutdown(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -348,7 +494,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg=f'关闭虚拟机失败, {str(e)}', err=e)
+            raise wrap_error(err=e, msg=f'关闭虚拟机失败, {str(e)}')
 
     def poweroff(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -372,7 +518,7 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise VirtError(msg=f'关闭虚拟机电源失败, {str(e)}', err=e)
+            raise wrap_error(err=e, msg=f'关闭虚拟机电源失败, {str(e)}')
 
     def get_domain_xml_desc(self, host_ipv4:str, vm_uuid:str):
         '''
@@ -389,7 +535,7 @@ class VirtAPI(object):
             domain = self.get_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
             return domain.XMLDesc()
         except libvirt.libvirtError as e:
-            raise VirtError(msg=str(e))
+            raise wrap_error(err=e)
 
 
 class VmDomain:
@@ -466,6 +612,7 @@ class VmDomain:
         :return:
             True: 开机
             False: 未开机
+            None: vm miss
 
         :raise VirtError()
         """
@@ -546,11 +693,14 @@ class VmDomain:
             ret = domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)  # 指定将设备分配给持久化域
         except libvirt.libvirtError as e:
             msg = str(e)
-            if 'already in the domain configuration' in msg:
+            err_code = e.get_error_code()
+            if err_code == VirErrorNumber.VIR_ERR_OPERATION_INVALID and 'exist' in msg:
                 return True
-            raise VirtError(msg=msg)
+            raise wrap_error(err=e, msg=msg)
+
         if ret == 0:
             return True
+
         return False
 
     def detach_device(self, xml: str):
@@ -570,9 +720,9 @@ class VmDomain:
         except libvirt.libvirtError as e:
             c = e.get_error_code()
             msg = e.get_error_message()
-            if c and c == 99 and 'device not found' in msg:
+            if c and c == 99:
                 return True
-            raise VirtError(msg=msg)
+            raise wrap_error(err=e, msg=msg)
         if ret == 0:
             return True
         return False
@@ -593,8 +743,121 @@ class VmDomain:
         try:
             ret = domain.setUserPassword(user=username, password=password)
         except libvirt.libvirtError as e:
-            raise VirtError(msg=str(e))
+            raise wrap_error(err=e)
         if ret == 0:
             return True
         return False
+
+
+class VmHost:
+    """
+    宿主机
+    """
+    def __init__(self, host_ipv4: str):
+        self.host_ipv4 = host_ipv4
+        self.virt = VirtAPI()
+
+    def __getattr__(self, attr):
+        """
+        If an attribute does not exist on this instance, then we also attempt
+        to proxy it to the libvirt.virDomain  object.
+        """
+        c = self.get_connection()
+        return getattr(c, attr)
+
+    def get_connection(self):
+        return self.virt._get_connection(host_ip=self.host_ipv4)
+
+    def list_storage_pools(self):
+        c = self.get_connection()
+        r = c.listAllStoragePools()
+        return r
+
+    def list_all_devices(self):
+        c = self.get_connection()
+        r = c.listAllDevices()
+        return r
+
+    def list_all_networks(self):
+        c = self.get_connection()
+        r = c.listAllNetworks()
+        return r
+
+    def get_storage_pool(self):
+        c = self.get_connection()
+        c.storagePoolLookupByName()
+
+
+class VmStoragePool:
+    """
+    存储池
+    """
+    def __init__(self, conn: libvirt.virConnect, name):
+        self._conn = conn
+        self.name = name
+        self._pool = None
+
+    def _get_pool(self):
+        if not self._pool:
+            try:
+                self._pool = self._conn.storagePoolLookupByName(self.name)
+            except libvirt.libvirtError as e:
+                raise VirtError(msg=str(e))
+
+        return self._pool
+
+    def create_volume(self, volume_name, volume_capacity, drive=None):
+        """
+        创建一个存储卷
+
+        :param volume_name: 卷名称
+        :param volume_capacity: 容量大小，单位GB
+        :param drive: 卷格式
+        :return:
+            libvirt.virStorageVol()
+
+        :raises: VirtError
+        """
+        if drive is None:
+            drive = 'qcow2'
+
+        volume_xml = """
+            <volume>
+                <name>{volume_name}</name>
+                <allocation>0</allocation>
+                <capacity unit="G">{volume_capacity}</capacity>
+                <target> 
+                    <format type="{drive}"/> 
+                </target>                             
+            </volume>
+        """
+        volume_xml = volume_xml.format(volume_name=volume_name, volume_capacity=volume_capacity, drive=drive)
+        try:
+            pool = self._get_pool()
+            return pool.createXML(volume_xml, 0)
+        except libvirt.libvirtError as e:
+            raise wrap_error(err=e, msg=f'创建存储卷失败，失败原因：{str(e)}')
+
+    def delete_volume(self, volume_name):
+        """
+        删除存储卷
+        :param volume_name: 卷名称
+        :return:
+            True
+
+        :raises: VirtError
+        """
+        try:
+            pool = self._get_pool()
+            volume = pool.storageVolLookupByName(volume_name)
+            r = volume.delete(0)  # volume.delete(0)从存储池里面删除,volume.wipe(0),从磁盘删除
+            if r == 0:
+                return True
+            raise VirtError(msg='删除失败')
+        except libvirt.libvirtError as e:
+            raise wrap_error(err=e)
+
+    def list_volumes(self):
+        pool = self._get_pool()
+        return pool.listAllVolumes()
 
