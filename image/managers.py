@@ -2,13 +2,7 @@ from django.db.models import Q
 
 from .models import Image, ImageType
 from compute.managers import CenterManager, ComputeError
-from utils.errors import Error
-
-class ImageError(Error):
-    '''
-    镜像相关错误类型定义
-    '''
-    pass
+from utils.errors import ImageError
 
 
 class ImageManager:

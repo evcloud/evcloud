@@ -1,9 +1,5 @@
-from utils.errors import Error
+from utils.errors import VPNError
 from .models import VPNAuth, VPNConfig
-
-
-class VPNError(Error):
-    pass
 
 
 class VPNManager:

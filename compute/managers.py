@@ -7,14 +7,7 @@ from django.utils.functional import cached_property
 from compute.models import Center, Group, Host
 from network.models import Vlan
 from ceph.models import CephPool
-from utils.errors import Error
-
-
-class ComputeError(Error):
-    '''
-    计算资源相关错误定义
-    '''
-    pass
+from utils.errors import ComputeError
 
 
 class DefaultSum(Sum):
