@@ -9,7 +9,7 @@ from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
-from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain
+from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain, VirDomainNotExist
 from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog, Flavor)
 from .xml import XMLEditor
 from utils.errors import Error
@@ -21,6 +21,10 @@ class VmError(Error):
     虚拟机相关错误定义
     '''
     pass
+
+
+class VmNotExistError(VmError):
+    err_code = 'VmNotExist'
 
 
 class VmManager(VirtAPI):
@@ -815,7 +819,7 @@ class VmAPI:
         """
         vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=related_fields)
         if vm is None:
-            raise VmError(msg='虚拟机不存在')
+            raise VmNotExistError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此虚拟机')
 
@@ -1149,6 +1153,8 @@ class VmAPI:
         domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
         try:
             run = domain.is_running()
+        except VirDomainNotExist as e:
+            run = False
         except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:

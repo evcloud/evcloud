@@ -687,7 +687,14 @@ class VmsViewSet(viewsets.GenericViewSet):
                 'code': 200,
                 'code_text': '操作虚拟机成功'
             }
-            '''
+            ''',
+            400: '''
+                {
+                    "code": 400,
+                    "code_text": "xxx",
+                    "err_code": "xxx"           # "VmNotExist", "Error", "InvalidParam"
+                }
+                ''',
         }
     )
     @action(methods=['patch'], url_path='operations', detail=True, url_name='vm-operations')
@@ -700,16 +707,16 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         ops = ['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']
         if not op or op not in ops:
-            return Response(data={'code': 400, 'code_text': 'op参数无效'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': 'op参数无效', 'err_code': 'InvalidParam'}, status=status.HTTP_400_BAD_REQUEST)
 
         api = VmAPI()
         try:
             ok = api.vm_operations(user=request.user, vm_uuid=vm_uuid, op=op)
         except VmError as e:
-            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败，{str(e)}', 'err_code': e.err_code}, status=status.HTTP_400_BAD_REQUEST)
 
         if not ok:
-            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败', 'err_code': 'error'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 200, 'code_text': f'{op}虚拟机成功'})
 
