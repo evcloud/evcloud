@@ -12,19 +12,8 @@ from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain, VirDomainNotExist
 from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog, Flavor)
 from .xml import XMLEditor
-from utils.errors import Error
+from utils.errors import VmError, VmNotExistError
 from .scheduler import HostMacIPScheduler, ScheduleError
-
-
-class VmError(Error):
-    '''
-    虚拟机相关错误定义
-    '''
-    pass
-
-
-class VmNotExistError(VmError):
-    err_code = 'VmNotExist'
 
 
 class VmManager(VirtAPI):
@@ -612,7 +601,7 @@ class VmManager(VirtAPI):
         """
         vm = self.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
         if vm is None:
-            raise VmError(msg='虚拟机不存在')
+            raise VmNotExistError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此虚拟机')
 
@@ -637,7 +626,7 @@ class VmManager(VirtAPI):
         """
         vm = self.get_vm_by_uuid(vm_uuid=vm_uuid)
         if vm is None:
-            raise VmError(msg='虚拟机不存在')
+            raise VmNotExistError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此虚拟机')
 

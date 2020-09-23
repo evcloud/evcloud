@@ -3,14 +3,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from .models import PCIDevice
-from utils.errors import Error
-
-
-class DeviceError(Error):
-    '''
-    PCIe设备相关错误定义
-    '''
-    pass
+from utils.errors import DeviceError
 
 
 class BaseDevice:

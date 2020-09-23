@@ -9,9 +9,11 @@ class RadosError(rados.Error):
     '''def __init__(self, message, errno=None)'''
     pass
 
+
 class ImageExistsError(RadosError):
     '''def __init__(self, message, errno=None)'''
     pass
+
 
 def get_rbd_manager(ceph:CephCluster, pool_name:str):
     '''

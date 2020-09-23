@@ -4,7 +4,8 @@ from django.db.models import Q
 from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain
 from compute.managers import GroupManager, ComputeError, CenterManager, HostManager
 from .models import PCIDevice
-from .device import GPUDevice, DeviceError
+from .device import GPUDevice
+from utils.errors import DeviceError
 
 
 class PCIDeviceManager:

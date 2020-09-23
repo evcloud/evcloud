@@ -4,14 +4,7 @@ from io import StringIO
 from django.db import transaction
 
 from .models import Vlan, MacIP
-from utils.errors import Error
-
-
-class NetworkError(Error):
-    '''
-    网络错误类型定义
-    '''
-    pass
+from utils.errors import NetworkError
 
 
 class VlanManager:

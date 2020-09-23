@@ -9,14 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from .models import Token
-from utils.errors import Error
-
-
-class NovncError(Error):
-    '''
-    网络错误类型定义
-    '''
-    pass
+from utils.errors import NovncError
 
 
 class NovncTokenManager(object):

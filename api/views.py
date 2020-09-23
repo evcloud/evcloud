@@ -19,10 +19,11 @@ from network.managers import VlanManager
 from network.managers import MacIPManager
 from image.managers import ImageManager
 from vdisk.models import Vdisk
-from vdisk.manager import VdiskManager,VdiskError
+from vdisk.manager import VdiskManager, VdiskError
 from device.manager import PCIDeviceManager, DeviceError
 from vpn.manager import VPNManager, VPNError
 from . import serializers
+from utils import errors as exceptions
 
 
 def serializer_error_msg(errors, default=''):
@@ -551,12 +552,12 @@ class VmsViewSet(viewsets.GenericViewSet):
         try:
             vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('image', 'mac_ip', 'host', 'user'))
         except VmError as e:
-            return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(data=e.data(), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not vm:
-            return Response(data={'code': 404, 'code_text': '虚拟机不存在'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(), status=status.HTTP_404_NOT_FOUND)
         if not vm.user_has_perms(user=request.user):
-            return Response(data={'code': 404, 'code_text': '当前用户没有权限访问此虚拟机'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(), status=status.HTTP_403_FORBIDDEN)
 
         return Response(data={
             'code': 200,
@@ -733,7 +734,14 @@ class VmsViewSet(viewsets.GenericViewSet):
                 "status_text": "shut off"
               }
             }
-            '''
+            ''',
+            400: '''
+            {
+                "code": 400,
+                "code_text": "xxx",
+                "err_code": "xxx"           # "VmNotExist", "Error"
+            }
+            ''',
         }
     )
     @action(methods=['get'], url_path='status', detail=True, url_name='vm-status')
@@ -743,7 +751,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         try:
             code, msg = api.get_vm_status(user=request.user, vm_uuid=vm_uuid)
         except VmError as e:
-            return Response(data={'code': 400, 'code_text': f'获取虚拟机状态失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'获取虚拟机状态失败，{str(e)}', 'err_code': e.err_code}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 200, 'code_text': '获取虚拟机状态成功',
                               'status': {'status_code': code, 'status_text': msg}})
@@ -786,9 +794,9 @@ class VmsViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not vm:
-            return Response(data={'code': 404, 'code_text': '虚拟机不存在'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(), status=status.HTTP_404_NOT_FOUND)
         if not vm.user_has_perms(user=request.user):
-            return Response(data={'code': 404, 'code_text': '当前用户没有权限访问此虚拟机'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(), status=status.HTTP_403_FORBIDDEN)
 
         vm_uuid = vm.get_uuid()
         host_ipv4 = vm.host.ipv4
@@ -1923,7 +1931,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
             return Response({'code': 400, 'code_text': f'查询云主机错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not vm:
-            return Response({'code': 404, 'code_text': '云主机不存在'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(), status=status.HTTP_404_NOT_FOUND)
 
         group = vm.host.group
         user = request.user
@@ -2681,7 +2689,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         if not vm:
-            return Response({'code': 404, 'code_text': '云主机不存在'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(exceptions.VmNotExistError(msg='云主机不存在').data(), status=status.HTTP_404_NOT_FOUND)
 
         try:
             queryset = PCIDeviceManager().get_pci_queryset_by_host(host=vm.host)
