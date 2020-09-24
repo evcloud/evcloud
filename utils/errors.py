@@ -63,6 +63,12 @@ class VmAccessDeniedError(VmError):
     msg = 'No access to the vm resource'
 
 
+class VmRunningError(VmError):
+    err_code = 'VmRunning'
+    code = 409
+    msg = 'vm is running, need shutdown it.'
+
+
 class VPNError(Error):
     pass
 

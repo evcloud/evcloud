@@ -12,7 +12,7 @@ from device.manager import DeviceError, PCIDeviceManager
 from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain, VirDomainNotExist
 from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog, Flavor)
 from .xml import XMLEditor
-from utils.errors import VmError, VmNotExistError
+from utils.errors import VmError, VmNotExistError, VmRunningError
 from .scheduler import HostMacIPScheduler, ScheduleError
 
 
@@ -674,6 +674,10 @@ class VmArchiveManager:
             raise VmError(msg=str(e))
         return va
 
+    @staticmethod
+    def get_vm_archive(vm: Vm):
+        return VmArchive.objects.filter(uuid=vm.get_uuid()).first()
+
 
 class VmLogManager:
     '''
@@ -835,7 +839,7 @@ class VmAPI:
         except VirtError as e:
             raise VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
         if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+            raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         return vm
 
@@ -1148,7 +1152,7 @@ class VmAPI:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
             if not force:
-                raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+                raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
             try:
                 domain.poweroff()
             except VirtError as e:
@@ -1166,7 +1170,9 @@ class VmAPI:
         try:
             vm_ahv = VmArchiveManager().add_vm_archive(vm)
         except VmError as e:
-            raise VmError(msg=f'归档虚拟机失败，{str(e)}')
+            vm_ahv = VmArchiveManager().get_vm_archive(vm)
+            if not vm_ahv:
+                raise VmError(msg=f'归档虚拟机失败，{str(e)}')
 
         log_manager = VmLogManager()
 
@@ -1251,7 +1257,7 @@ class VmAPI:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
             if not force:
-                raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+                raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
             try:
                 domain.poweroff()
             except VirtError as e:
@@ -1493,7 +1499,7 @@ class VmAPI:
         except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+            raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         # 从虚拟机卸载硬盘
         xml = vdisk.xml_desc()
@@ -1541,7 +1547,7 @@ class VmAPI:
         # except VirtError as e:
         #     raise VmError(msg='获取虚拟机运行状态失败')
         # if run:
-        #     raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+        #     raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         snap = self._vm_manager.create_sys_disk_snap(vm=vm, remarks=remarks)
         return snap
@@ -1598,7 +1604,7 @@ class VmAPI:
         except VirtError as e:
             raise VmError(msg='获取虚拟机运行状态失败')
         if run:
-            raise VmError(msg='虚拟机正在运行，请先关闭虚拟机')
+            raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         # 卸载设备
         try:
