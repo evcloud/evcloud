@@ -144,23 +144,6 @@ class VmsViewSet(viewsets.GenericViewSet):
                 'code_text': '请求数据有误'
             }
 
-    destroy:
-        删除虚拟机
-
-        >> Http Code: 状态码204：删除成功，NO_CONTENT；
-        >>Http Code: 状态码200：请求成功，未能成功删除虚拟机;
-            {
-                'code': 200,
-                'code_text': '删除虚拟机失败'
-            }
-        >>Http Code: 状态码400：文件路径参数有误：对应参数错误信息;
-            {
-                'code': 400,
-                'code_text': '参数有误'
-            }
-        >>Http Code: 状态码404：找不到资源;
-        >>Http Code: 状态码500：服务器内部错误;
-
     retrieve:
         获取虚拟机元数据信息
 
@@ -581,6 +564,19 @@ class VmsViewSet(viewsets.GenericViewSet):
         }
     )
     def destroy(self, request, *args, **kwargs):
+        """
+        删除虚拟机
+
+            >> Http Code: 状态码204：删除成功，NO_CONTENT；
+            >> Http Code: 状态码404：找不到vm资源;
+                         状态码409：需要先关闭vm;
+                         状态码500：删除虚拟机失败,服务器内部错误;
+                {
+                    "code": xxx,
+                    "code_text": "xxx"
+                    "err_code": "xxx"
+                }
+        """
         vm_uuid = kwargs.get(self.lookup_field, '')
         force = request.query_params.get('force', '').lower()
         force = True if force == 'true' else False
@@ -589,7 +585,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         try:
              api.delete_vm(user=request.user, vm_uuid=vm_uuid, force=force)
         except VmError as e:
-            return Response(data={'code': 200, 'code_text': f'删除失败，{str(e)}'}, status=status.HTTP_200_OK)
+            return Response(data=e.data(), status=e.code)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
