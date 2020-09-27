@@ -345,4 +345,4 @@ if DEBUG:
     DEBUG_TOOLBAR_CONFIG = {
         # 'SHOW_COLLAPSED': True,
     }
-    INTERNAL_IPS += ['159.226.91.152', '127.0.0.1'] # 通过这些IP地址访问时，页面才会出现django debug toolbar面板
+    INTERNAL_IPS += ['159.226.235.2', '159.226.91.152', '127.0.0.1']    # 通过这些IP地址访问时，页面才会出现django debug toolbar面板

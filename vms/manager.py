@@ -168,7 +168,7 @@ class VmManager(VirtAPI):
         :raise: VmError
         '''
         if not related_fields:
-            related_fields = ('user', 'image', 'mac_ip', 'host')
+            related_fields = ('user', 'image', 'mac_ip__vlan', 'host')
 
         if center_id <= 0 and group_id <= 0 and host_id <= 0 and user_id <= 0 and not search:
             if not all_no_filters:
