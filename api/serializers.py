@@ -16,10 +16,11 @@ class VmSerializer(serializers.ModelSerializer):
     host = serializers.SerializerMethodField()
     mac_ip = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    ip = serializers.SerializerMethodField()
 
     class Meta:
         model = Vm
-        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'host', 'mac_ip', 'user', 'create_time')
+        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'host', 'mac_ip', 'ip', 'user', 'create_time')
         # depth = 1
 
     def get_user(self, obj):
@@ -30,6 +31,13 @@ class VmSerializer(serializers.ModelSerializer):
 
     def get_mac_ip(self, obj):
         return obj.mac_ip.ipv4
+
+    def get_ip(self, obj):
+        if obj.mac_ip.vlan:
+            public = obj.mac_ip.vlan.tag == obj.mac_ip.vlan.NET_TAG_PUBLIC
+        else:
+            public = False
+        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public}
 
     def get_image(self, obj):
         img = obj.image
@@ -336,13 +344,14 @@ class VmDetailSerializer(serializers.ModelSerializer):
     create_time = serializers.DateTimeField()
     host = serializers.SerializerMethodField()
     mac_ip = serializers.SerializerMethodField()
+    ip = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     vdisks = serializers.SerializerMethodField()
     pci_devices = serializers.SerializerMethodField()
 
     class Meta:
         model = Vm
-        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'host', 'mac_ip', 'user', 'create_time',
+        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'host', 'mac_ip', 'ip', 'user', 'create_time',
                   'vdisks', 'pci_devices')
         # depth = 1
 
@@ -354,6 +363,13 @@ class VmDetailSerializer(serializers.ModelSerializer):
 
     def get_mac_ip(self, obj):
         return obj.mac_ip.ipv4
+
+    def get_ip(self, obj):
+        if obj.mac_ip.vlan:
+            public = obj.mac_ip.vlan.tag == obj.mac_ip.vlan.NET_TAG_PUBLIC
+        else:
+            public = False
+        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public}
 
     def get_image(self, obj):
         img = obj.image

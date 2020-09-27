@@ -161,6 +161,10 @@ class VmsViewSet(viewsets.GenericViewSet):
             "disk": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "host": "10.100.50.121",
             "mac_ip": "10.107.50.253",
+            "ip": {
+              "ipv4": "10.107.50.22",
+              "public_ipv4": false
+            },
             "user": {
               "id": 1,
               "username": "shun"
@@ -545,7 +549,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         return Response(data={
             'code': 200,
             'code_text': '获取虚拟机信息成功',
-            'vm': serializers.VmDetailSerializer(vm).data
+            'vm': self.get_serializer(vm).data
         })
 
     @swagger_auto_schema(
@@ -1157,8 +1161,10 @@ class VmsViewSet(viewsets.GenericViewSet):
         Defaults to using `self.serializer_class`.
         Custom serializer_class
         """
-        if self.action in ['list', 'retrieve', 'can_mount_pci', 'can_mount_vdisk']:
+        if self.action in ['list', 'can_mount_pci', 'can_mount_vdisk']:
             return serializers.VmSerializer
+        elif self.action == 'retrieve':
+            return serializers.VmDetailSerializer
         elif self.action == 'create':
             return serializers.VmCreateSerializer
         elif self.action == 'partial_update':
