@@ -787,6 +787,10 @@ class VmHost:
         c = self.get_connection()
         c.storagePoolLookupByName()
 
+    def get_max_vcpus(self):
+        c = self.get_connection()
+        c.getMaxVcpus(None)
+
 
 class VmStoragePool:
     """

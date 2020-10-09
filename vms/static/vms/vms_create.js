@@ -67,9 +67,9 @@
         <option value="">自动选择</option>
         {{ each results }}
             <option value="{{ $value.id }}">
-                {{ $value.ipv4 }}(cpu:{{$value.vcpu_allocated}}/{{$value.vcpu_total}}, 
-                mem:{{$value.mem_allocated + $value.mem_reserved}}Mb/{{$value.mem_total}}Mb),
-                num:{{$value.vm_created}}/{{$value.vm_limit}}
+                {{ $value.ipv4 }}(vCPU:{{$value.vcpu_allocated}}/{{$value.vcpu_total - $value.vcpu_allocated}}/{{$value.vcpu_total}}, 
+                RAM:{{$value.mem_allocated}}Mb/{{$value.mem_total - $value.mem_allocated -$value.mem_reserved}}Mb/{{$value.mem_total}}Mb),
+                Num:{{$value.vm_created}}/{{$value.vm_limit - $value.vm_created}}/{{$value.vm_limit}}
             </option>
         {{/each}}
     `);

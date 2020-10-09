@@ -68,9 +68,13 @@ class CephCluster(models.Model):
             os.makedirs(path, exist_ok=True)
 
             with open(self.config_file, 'w') as f:
+                config = self.config.replace('\r\n', '\n')      # Windows
+                self.config = config.replace('\r', '\n')        # MacOS
                 f.write(self.config + '\n')     # 最后留空行
 
             with open(self.keyring_file, 'w') as f:
+                keyring = self.keyring.replace('\r\n', '\n')
+                self.keyring = keyring.replace('\r', '\n')
                 f.write(self.keyring + '\n')
         except Exception:
             return False
