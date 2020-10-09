@@ -177,6 +177,9 @@ class RbdManager:
 
         :raise class: `RadosError`, ImageExistsError
         '''
+        if not snap_name:
+            raise RadosError(f'clone_image error:invalid param "snap_name"')
+
         cluster = self.get_cluster()
         try:
             with cluster.open_ioctx(self.pool_name) as p_ioctx:
