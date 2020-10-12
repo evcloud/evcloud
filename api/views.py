@@ -1406,21 +1406,66 @@ class VlanViewSet(viewsets.GenericViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=False,
                 description='分中心id'
+            ),
+            openapi.Parameter(
+                name='public', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description='筛选条件；true(公网)，false(私网)'
             )
         ]
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取网段列表
-        '''
+
+            200: {
+                  "count": 1,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "id": 1,
+                      "name": "private_10.107.50.x",
+                      "br": "br_107",
+                      "tag": 0,
+                      "enable": true,
+                      "subnet_ip": "10.107.50.0",
+                      "net_mask": "255.255.255.0",
+                      "gateway": "10.107.50.254",
+                      "dns_server": "159.226.91.150",
+                      "remarks": "测试"
+                    }
+                  ]
+                }
+        """
         center_id = request.query_params.get('center_id', None)
+        query_public = request.query_params.get('public', None)
+
+        public = None
+        if query_public is not None:
+            query_public = query_public.lower()
+            if query_public == 'true':
+                public = True
+            elif query_public == 'false':
+                public = False
+            else:
+                exc = exceptions.BadRequestError(msg='query参数public无效')
+                return Response(data=exc.data(), status=status.HTTP_400_BAD_REQUEST)
+
+        v_mgr = VlanManager()
         if center_id is not None:
             center_id = str_to_int_or_default(center_id, 0)
             if center_id <= 0:
                 return Response(data={'code': 400, 'code_text': 'query参数center_id无效'}, status=status.HTTP_400_BAD_REQUEST)
-            queryset = VlanManager().get_center_vlan_queryset(center=center_id)
+            queryset = v_mgr.get_center_vlan_queryset(center=center_id)
         else:
-            queryset = VlanManager().get_vlan_queryset()
+            queryset = v_mgr.get_vlan_queryset()
+
+        if public is True:
+            queryset = queryset.filter(tag=v_mgr.MODEL.NET_TAG_PUBLIC)
+        elif public is False:
+            queryset = queryset.filter(tag=v_mgr.MODEL.NET_TAG_PRIVATE)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -1434,6 +1479,32 @@ class VlanViewSet(viewsets.GenericViewSet):
         operation_summary='查询网段信息'
     )
     def retrieve(self, request, *args, **kwargs):
+        """
+        查询网段信息
+
+            200：{
+                  "id": 1,
+                  "name": "private_10.107.50.x",
+                  "br": "br_107",
+                  "tag": 0,
+                  "enable": true,
+                  "subnet_ip": "10.107.50.0",
+                  "net_mask": "255.255.255.0",
+                  "gateway": "10.107.50.254",
+                  "dns_server": "159.226.91.150",
+                  "remarks": "测试"
+                }
+            400:{
+                  "code": 400,
+                  "err_code": "BadRequest",
+                  "code_text": "Invalid param \"id\""
+                }
+            404:{
+                  "code": 404,
+                  "err_code": "NotFound",
+                  "code_text": "Target not found."
+                }
+        """
         v_id = str_to_int_or_default(kwargs.get(self.lookup_field), None)
         if not v_id:
             exc = exceptions.BadRequestError(msg='Invalid param "id"')
