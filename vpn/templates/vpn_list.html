@@ -27,12 +27,18 @@
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">创建VPN</a></span>
             </div>
             <div class="card-body">
-                <form>
-                    <div class="input-group col-md-6">
-                        <input class="form-control" name="search" type="text" value="{{ search }}" placeholder="用户名、备注">
-                        <button class="btn btn-sm btn-outline-primary" type="submit">搜索</button>
+                <div class="row">
+                    <div class="col-md-6">
+                        <form class="input-group">
+                            <input class="form-control" name="search" type="text" value="{{ search }}" placeholder="用户名、备注">
+                            <button class="btn btn-sm btn-outline-primary" type="submit">搜索</button>
+                        </form>
                     </div>
-                </form>
+                    <div class="col-md-6">
+                        <span><a class="btn btn-sm btn-outline-success float-right m-2" href="{% url 'vpn:vpn-file-config' %}">配置文件</a></span>
+                        <span><a class="btn btn-sm btn-outline-success float-right m-2" href="{% url 'vpn:vpn-file-ca' %}">CA证书</a></span>
+                    </div>
+                </div>
             </div>
             <table class="table table-hover text-center table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                 <thead class="thead-light">

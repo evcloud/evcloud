@@ -173,7 +173,7 @@ class VPNFileViewSet(viewsets.GenericViewSet):
     @swagger_auto_schema(
         operation_summary='下载用户vpn配置文件'
     )
-    @action(methods=['get'], detail=False, url_path='config', url_name='vpn-config-file')
+    @action(methods=['get'], detail=False, url_path='config', url_name='config')
     def vpn_config_file(self, request, *args, **kwargs):
         """
         下载用户vpn配置文件
@@ -189,7 +189,7 @@ class VPNFileViewSet(viewsets.GenericViewSet):
     @swagger_auto_schema(
         operation_summary='下载用户vpn ca证书文件'
     )
-    @action(methods=['get'], detail=False, url_path='ca', url_name='vpn-ca-file')
+    @action(methods=['get'], detail=False, url_path='ca', url_name='ca')
     def vpn_ca_file(self, request, *args, **kwargs):
         """
         下载用户vpn ca证书文件

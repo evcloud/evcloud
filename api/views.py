@@ -1430,6 +1430,27 @@ class VlanViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_summary='查询网段信息'
+    )
+    def retrieve(self, request, *args, **kwargs):
+        v_id = str_to_int_or_default(kwargs.get(self.lookup_field), None)
+        if not v_id:
+            exc = exceptions.BadRequestError(msg='Invalid param "id"')
+            return Response(exc.data(), status=exc.code)
+
+        try:
+            vlan = VlanManager().get_vlan_by_id(vlan_id=v_id)
+        except exceptions.NetworkError as e:
+            return Response(e.data(), status=e.code)
+
+        if vlan is None:
+            exc = exceptions.NotFoundError()
+            return Response(exc.data(), status=exc.code)
+
+        serializer = self.get_serializer(vlan)
+        return Response(serializer.data)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -1438,6 +1459,7 @@ class VlanViewSet(viewsets.GenericViewSet):
         """
         if self.action in ['list', 'retrieve']:
             return serializers.VlanSerializer
+
         return Serializer
 
 

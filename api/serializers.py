@@ -131,7 +131,7 @@ class VlanSerializer(serializers.ModelSerializer):
     '''
     class Meta:
         model = Vlan
-        fields = ('id', 'name', 'br', 'net_type', 'tag', 'enable', 'subnet_ip', 'net_mask', 'gateway', 'dns_server', 'remarks')
+        fields = ('id', 'name', 'br', 'tag', 'enable', 'subnet_ip', 'net_mask', 'gateway', 'dns_server', 'remarks')
 
 
 class ImageSerializer(serializers.ModelSerializer):

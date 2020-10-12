@@ -45,6 +45,24 @@ class AccessDeniedError(Error):
     msg = 'No access to the target resource'
 
 
+class NotFoundError(Error):
+    """
+    网络错误类型定义
+    """
+    code = 404
+    err_code = 'NotFound'
+    msg = 'Target not found.'
+
+
+class BadRequestError(Error):
+    """
+    网络错误类型定义
+    """
+    code = 400
+    err_code = 'BadRequest'
+    msg = 'bad request'
+
+
 class VmError(Error):
     """
     虚拟机相关错误定义
