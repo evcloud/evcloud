@@ -11,6 +11,8 @@ class VlanManager:
     '''
     局域子网Vlan管理器
     '''
+    MODEL = Vlan
+
     def get_vlan_by_id(self, vlan_id:int):
         '''
         通过id获取镜像元数据模型对象
