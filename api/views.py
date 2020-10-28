@@ -24,6 +24,7 @@ from device.manager import PCIDeviceManager, DeviceError
 from vpn.manager import VPNManager, VPNError
 from . import serializers
 from utils import errors as exceptions
+from .paginations import MacIpLimitOffsetPagination
 
 
 def serializer_error_msg(errors, default=''):
@@ -2904,7 +2905,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
 
 class MacIPViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated, ]
-    pagination_class = LimitOffsetPagination
+    pagination_class = MacIpLimitOffsetPagination
 
     @swagger_auto_schema(
         operation_summary='获取mac ip列表',

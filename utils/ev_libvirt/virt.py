@@ -269,7 +269,7 @@ class VirtAPI(object):
             success: libvirt.virDomain()
             failed: raise VirtError()
 
-        :raise VirtError(), VirDomainNotExist()
+        :raise VirtError(), VirDomainNotExist(), VirHostDown()
         '''
         conn = self._get_connection(host_ipv4)
         try:

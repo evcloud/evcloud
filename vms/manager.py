@@ -9,7 +9,7 @@ from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
-from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain, VirDomainNotExist
+from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain, VirDomainNotExist, VirHostDown
 from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog, Flavor)
 from .xml import XMLEditor
 from utils.errors import VmError, VmNotExistError, VmRunningError
@@ -1144,19 +1144,15 @@ class VmAPI:
         host = vm.host
         # 虚拟机的状态
         domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-        try:
-            run = domain.is_running()
-        except VirDomainNotExist as e:
-            run = False
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            if not force:
-                raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
+        if not force:   # 非强制删除
             try:
-                domain.poweroff()
+                run = domain.is_running()
+            except VirDomainNotExist as e:
+                run = False
             except VirtError as e:
-                raise VmError(msg='强制关闭虚拟机失败')
+                raise VmError(msg=f'获取虚拟机运行状态失败, {str(e)}')
+            if run:
+                raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         # 删除系统盘快照
         try:
@@ -1177,9 +1173,12 @@ class VmAPI:
         log_manager = VmLogManager()
 
         # 删除虚拟机
+        undefine_result = '已删除'
         try:
             if not domain.undefine():
                 raise VmError(msg='删除虚拟机失败')
+        except VirHostDown:
+            undefine_result = '未删除'
         except (VirtError, VmError):
             vm_ahv.delete()  # 删除归档记录
             raise VmError(msg='删除虚拟机失败')
@@ -1188,13 +1187,13 @@ class VmAPI:
         try:
             vm.delete()
         except Exception as e:
-            msg = f'虚拟机（uuid={vm.get_uuid()}）已删除，并归档，但是虚拟机元数据删除失败;请手动删除虚拟机元数据。'
+            msg = f'虚拟机（uuid={vm.get_uuid()}）{undefine_result}，并归档，但是虚拟机元数据删除失败;请手动删除虚拟机元数据。'
             log_manager.add_log(title='删除虚拟机元数据失败', about=log_manager.about.ABOUT_VM_METADATA, text=msg)
             raise VmError(msg='删除虚拟机元数据失败')
 
         # 宿主机已创建虚拟机数量-1
         if not host.vm_created_num_sub_1():
-            msg = f'虚拟机（uuid={vm.get_uuid()}）已删除，并归档，宿主机（id={host.id}; ipv4={host.ipv4}）已创建虚拟机数量-1失败, 请手动-1。'
+            msg = f'虚拟机（uuid={vm.get_uuid()}）{undefine_result}，并归档，宿主机（id={host.id}; ipv4={host.ipv4}）已创建虚拟机数量-1失败, 请手动-1。'
             log_manager.add_log(title='宿主机已创建虚拟机数量-1失败', about=log_manager.about.ABOUT_HOST_VM_CREATED, text=msg)
 
         # 释放mac ip
