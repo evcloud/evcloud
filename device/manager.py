@@ -111,7 +111,7 @@ class PCIDeviceManager:
         :raises: DeviceError
         '''
         try:
-            ids = self._group_manager.get_host_ids_by_group(group_or_id=group)
+            ids = self._group_manager.get_enable_host_ids_by_group(group_or_id=group)
         except ComputeError as e:
             raise DeviceError(msg=str(e))
 
@@ -134,7 +134,7 @@ class PCIDeviceManager:
             group = gm.enforce_group_obj(group)
             if not group.user_has_perms(user=user):
                 raise DeviceError(msg='无宿主机组的访问权限')
-            ids = gm.get_host_ids_by_group(group_or_id=group)
+            ids = gm.get_all_host_ids_by_group(group_or_id=group)
         except ComputeError as e:
             raise DeviceError(msg=str(e))
 

@@ -70,7 +70,7 @@ class VmsView(View):
                 groups = g_manager.get_group_queryset()
 
             if group_id > 0:
-                hosts = g_manager.get_host_queryset_by_group(group_id)
+                hosts = g_manager.get_all_host_queryset_by_group(group_id)
             else:
                 hosts = None
         except ComputeError as e:

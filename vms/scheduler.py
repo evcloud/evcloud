@@ -244,7 +244,7 @@ class HostMacIPScheduler:
             if vlan:
                 host_list = HostManager().get_hosts_by_group_and_vlan(group_or_id=group, vlan=vlan)
             else:
-                host_list = list(GroupManager().get_host_queryset_by_group(group_or_id=group))
+                host_list = list(GroupManager().get_enable_host_queryset_by_group(group_or_id=group))
         except (ComputeError, Exception) as e:
             raise ScheduleError(msg=f'获取宿主机list错误，{str(e)}')
 

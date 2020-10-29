@@ -56,7 +56,7 @@ class PCIView(View):
                 groups = c_manager.get_user_group_queryset(user=user)
 
             if group_id > 0:
-                hosts = g_manager.get_host_queryset_by_group(group_id)
+                hosts = g_manager.get_all_host_queryset_by_group(group_id)
             else:
                 hosts = None
         except ComputeError as e:

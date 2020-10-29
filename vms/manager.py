@@ -133,7 +133,7 @@ class VmManager(VirtAPI):
         :raise VmError
         '''
         try:
-            host_ids = GroupManager().get_host_ids_by_group(group_or_id)
+            host_ids = GroupManager().get_all_host_ids_by_group(group_or_id)
         except ComputeError as e:
             raise VmError(msg=str(e))
 

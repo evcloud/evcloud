@@ -336,7 +336,7 @@ class GroupManager:
 
     @staticmethod
     def get_group_by_id(group_id: int):
-        '''
+        """
         通过id获取宿主机组
 
         :param group_id: 宿主机组id
@@ -344,7 +344,7 @@ class GroupManager:
             Group() # success
             None    #不存在
         :raise ComputeError
-        '''
+        """
         if not isinstance(group_id, int) or group_id < 0:
             raise ComputeError(msg='宿主机组ID参数有误')
 
@@ -383,28 +383,57 @@ class GroupManager:
 
         raise ComputeError(msg='无效的group or id')
 
-    def get_host_queryset_by_group(self, group_or_id):
-        '''
-        通过宿主机组对象和id获取宿主机查询集
+    def get_enable_host_queryset_by_group(self, group_or_id):
+        """
+        通过宿主机组对象和id获取可用宿主机查询集
 
         :param group_or_id: 宿主机组对象和id
         :return:
             QuerySet   # success
         :raise ComputeError
-        '''
-        group = self.enforce_group_obj(group_or_id)
-        return group.hosts_set.filter(enable=True).all()
+        """
+        qs = self.get_all_host_queryset_by_group(group_or_id)
+        return qs.filter(enable=True)
 
-    def get_host_ids_by_group(self,  group_or_id):
-        '''
+    def get_all_host_queryset_by_group(self, group_or_id):
+        """
+        通过宿主机组对象和id获取所有宿主机查询集
+
+        :param group_or_id: 宿主机组对象和id
+        :return:
+            QuerySet   # success
+        :raise ComputeError
+        """
+        group = self.enforce_group_obj(group_or_id)
+        return group.hosts_set.all()
+
+    def get_enable_host_ids_by_group(self,  group_or_id):
+        """
         通过宿主机组对象和id获取宿主机id list
 
         :param group_or_id: 宿主机组对象和id
         :return:
             ids: list   # success
         :raise ComputeError
-        '''
-        hosts = self.get_host_queryset_by_group(group_or_id)
+        """
+        hosts = self.get_enable_host_queryset_by_group(group_or_id)
+
+        try:
+            ids = list(hosts.values_list('id', flat=True).all())
+        except Exception as e:
+            raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
+        return ids
+
+    def get_all_host_ids_by_group(self,  group_or_id):
+        """
+        通过宿主机组对象和id获取所有（包括未激活的）宿主机id list
+
+        :param group_or_id: 宿主机组对象和id
+        :return:
+            ids: list   # success
+        :raise ComputeError
+        """
+        hosts = self.get_all_host_queryset_by_group(group_or_id)
 
         try:
             ids = list(hosts.values_list('id', flat=True).all())
@@ -450,7 +479,7 @@ class GroupManager:
         if isinstance(group_or_ids, list):
             return self.get_host_ids_by_group_ids(group_or_ids)
         elif isinstance(group_or_ids, int) or isinstance(group_or_ids, Group):
-            return self.get_host_ids_by_group(group_or_ids)
+            return self.get_all_host_ids_by_group(group_or_ids)
 
         raise ComputeError(msg='无效的宿主机组参数')
 
