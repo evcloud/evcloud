@@ -231,14 +231,14 @@ class VirtAPI(object):
         if host_ip:
             if not self._host_alive(host_ip):
                 raise VirHostDown(msg='无法访问宿主机')
-            name = f'qemu+ssh://{host_ip}/system'
+            name = f'qemu+ssh://{host_ip}/system?no_tty=1'      # no_tty如果设置为非零值，如果它无法自动登录到远程计算机，它将阻止ssh询问密码
         else:
             name = 'qemu:///system'
 
         try:
             return libvirt.open(name=name)
         except libvirt.libvirtError as e:
-            raise wrap_error(err=e)
+            raise wrap_error(err=e, msg=f'连接宿主机错误, 请确认宿主机是否配置ssh密钥,{str(e)}')
 
     def define(self, host_ipv4:str, xml_desc:str):
         '''
