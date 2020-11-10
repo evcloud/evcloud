@@ -230,7 +230,7 @@ class VirtAPI(object):
         '''
         if host_ip:
             if not self._host_alive(host_ip):
-                raise VirHostDown(msg='未探测到宿主机')
+                raise VirHostDown(msg='无法访问宿主机')
             name = f'qemu+ssh://{host_ip}/system'
         else:
             name = 'qemu:///system'

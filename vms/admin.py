@@ -12,20 +12,61 @@ class VmAdmin(admin.ModelAdmin):
     raw_id_fields = ('mac_ip', 'host', 'user', 'image')
 
 
+def clear_vm_sys_disk(modeladmin, request, queryset):
+    exc = None
+    for obj in queryset:
+        try:
+            obj.rm_sys_disk_snap()
+            if not obj.rm_sys_disk():
+                raise Exception('remove rbd image of disk error')
+        except Exception as e:
+            exc = e
+            continue
+
+    if exc is not None:
+        raise exc
+
+
+def undefine_vm_from_host(modeladmin, request, queryset):
+    exc = None
+    for obj in queryset:
+        try:
+            obj.check_and_release_host()
+        except Exception as e:
+            exc = e
+            continue
+
+    if exc is not None:
+        raise exc
+
+
+clear_vm_sys_disk.short_description = "清除所选的虚拟机的系统盘和快照"
+undefine_vm_from_host.short_description = "释放所选虚拟机所在宿主机的资源"
+
+
 @admin.register(VmArchive)
 class VmArchiveAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
     list_display = ('id', 'uuid', 'ipv4', 'vcpu', 'mem', 'mac', 'disk', 'image_parent', 'center_name', 'group_name',
-                     'host_ipv4', 'user', 'archive_time', 'remarks')
+                    'host_ipv4', 'host_released', 'user', 'archive_time', 'remarks')
     search_fields = ['uuid', 'center_name', 'remarks', 'user']
-    list_filter = ['center_name', 'group_name', 'host_ipv4', 'user']
+    list_filter = ['host_released', 'center_name', 'group_name', 'host_ipv4', 'user']
+    actions = [clear_vm_sys_disk, undefine_vm_from_host]
 
     def delete_queryset(self, request, queryset):
-        '''
+        """
         后台管理批量删除重写， 通过每个对象的delete()方法删除，同时会删除ceph rbd image
-        '''
+        """
+        exc = None
         for obj in queryset:
-            obj.delete()
+            try:
+                obj.delete()
+            except Exception as e:
+                exc = e
+                continue
+
+        if exc is not None:
+            raise exc
 
 
 @admin.register(VmLog)

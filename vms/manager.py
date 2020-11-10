@@ -1178,6 +1178,7 @@ class VmAPI:
             if not domain.undefine():
                 raise VmError(msg='删除虚拟机失败')
         except VirHostDown:
+            vm_ahv.set_host_not_release()
             undefine_result = '未删除'
         except (VirtError, VmError):
             vm_ahv.delete()  # 删除归档记录

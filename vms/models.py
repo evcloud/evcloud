@@ -9,6 +9,8 @@ from compute.models import Host
 from network.models import MacIP
 from ceph.managers import get_rbd_manager, CephClusterManager, RadosError
 from ceph.models import CephPool
+from utils.ev_libvirt.virt import VmDomain
+from utils.errors import Error
 
 
 # 获取用户模型
@@ -208,6 +210,7 @@ class VmArchive(models.Model):
     create_time = models.DateTimeField(verbose_name='VM创建日期')
     archive_time = models.DateTimeField(verbose_name='VM归档日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
+    host_released = models.BooleanField(verbose_name='宿主机资源是否释放', default=True, help_text='标记宿主机上的vm是否删除清理')
 
     class Meta:
         ordering = ['id']
@@ -215,6 +218,7 @@ class VmArchive(models.Model):
         verbose_name_plural = '虚拟机归档表'
 
     def delete(self, using=None, keep_parents=False):
+        self.check_and_release_host()
         self.rm_sys_disk_snap()
         if not self.rm_sys_disk():
             raise Exception('remove rbd image of disk error')
@@ -245,6 +249,9 @@ class VmArchive(models.Model):
         :return:None
         :raises: Exception
         '''
+        if not self.disk:
+            return
+
         snaps = VmDiskSnap.objects.select_related('ceph_pool', 'ceph_pool__ceph').filter(disk=self.disk).all()
         for snap in snaps:
             snap.delete()
@@ -256,11 +263,22 @@ class VmArchive(models.Model):
             True    # success
             False   # failed
         '''
+        if not self.disk:
+            return True
+
         config = self.get_ceph_cluster()
         if not config:
             return False
 
-        return remove_image(ceph=config, pool_name=self.ceph_pool, image_name=self.disk)
+        ok = remove_image(ceph=config, pool_name=self.ceph_pool, image_name=self.disk)
+        if ok:
+            self.disk = ''
+            try:
+                self.save(update_fields=['disk'])
+            except Exception as e:
+                pass
+
+        return ok
 
     def rename_sys_disk_archive(self):
         '''
@@ -287,6 +305,40 @@ class VmArchive(models.Model):
             rename_image(ceph=config, pool_name=pool_name, image_name=new_name, new_name=old_name)
             return False
 
+        return True
+
+    def is_host_released(self):
+        return self.host_released
+
+    def set_host_released(self, released: bool = True):
+        self.host_released = released
+        try:
+            self.save(update_fields=['host_released'])
+        except Exception as e:
+            return False
+
+        return True
+
+    def set_host_not_release(self):
+        return self.set_host_released(False)
+
+    def check_and_release_host(self):
+        """
+        检查并从宿主机删除vm
+        :return:
+            True
+
+        :raises: Error
+        """
+        if not self.is_host_released():
+            domain = VmDomain(host_ip=self.host_ipv4, vm_uuid=self.uuid)
+            try:
+                if not domain.undefine():
+                    raise Exception('Failed to delete vm form host.')
+            except Exception as e:
+                raise Error(msg=str(e))
+
+        self.set_host_released()
         return True
 
 
