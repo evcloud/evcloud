@@ -52,7 +52,7 @@ DATABASES = {
 ```   
 
 ### 5 CEPH依赖库安装
-与ceph的通信默认使用官方librados的python包python36-rados，python36-rbd的rpm包安装成功后，python包会自动安装到
+根据自己ceph版本安装对应版本的包，与ceph的通信默认使用官方librados的python包python36-rados，python36-rbd的rpm包安装成功后，python包会自动安装到
 系统python3第三方扩展包路径下（/usr/lib64/python3.6/site-packages/）。    
 使用python虚拟环境的，需要手动把路径下的python包文件rados*和rbd*复制到你的虚拟python环境*/site-packages/下。
 ```
@@ -97,3 +97,130 @@ websockify 0.0.0.0:84 --daemon --web=/usr/share/noVNC --token-plugin=TokenMysql 
 使用nginx时，可以参考django_site目录下nginx_evcloud.conf文件。
 
 
+## 后台管理和配置
+### 1 系统镜像和硬盘
+虚拟机系统镜像和虚拟硬盘使用Ceph的rbd块存储；  
+前提条件：要求已经在后台添加了一个分中心，添加了ceph集群配置和存储系统镜像的ceph存储池pool；   
+要添加一个系统镜像，首先添加一个对应系统镜像内的操作系统类型的虚拟机的xml模板，以一个镜像为Linux系统（如CentOS、ubuntu等）virtio驱动xml模板为例,
+模板中的形如"{xxx}"的内容是各对应配置的占位符，在创建虚拟机时会填充用户选择的配置参数。
+```xml
+<domain type='kvm'>
+  <name>{name}</name>
+  <uuid>{uuid}</uuid>
+  <memory unit='MiB'>{mem}</memory>
+  <currentMemory unit='MiB'>{mem}</currentMemory>
+  <vcpu placement='static'>{vcpu}</vcpu>
+  <os>
+    <type arch='x86_64' machine='pc-i440fx-rhel7.0.0'>hvm</type>
+    <bootmenu enable='yes'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='custom' match='exact' check='partial'>
+    <model fallback='allow'>Haswell</model>
+  </cpu>
+  <clock offset='utc'>
+    <timer name='rtc' tickpolicy='catchup'/>
+    <timer name='pit' tickpolicy='delay'/>
+    <timer name='hpet' present='no'/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <pm>
+    <suspend-to-mem enabled='no'/>
+    <suspend-to-disk enabled='no'/>
+  </pm>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='network' device='disk'>
+      <driver name='qemu'/>
+      <auth username='admin'>
+        <secret type='ceph' uuid='{ceph_uuid}'/>
+      </auth>
+      <source protocol='rbd' name='{ceph_pool}/{diskname}'>
+        {ceph_hosts_xml}
+      </source>
+      <target dev='vda' bus='virtio'/>
+      <boot order='1'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
+    </disk>
+    <controller type='usb' index='0' model='ich9-ehci1'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x7'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci1'>
+      <master startport='0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0' multifunction='on'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci2'>
+      <master startport='2'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x1'/>
+    </controller>
+    <controller type='usb' index='0' model='ich9-uhci3'>
+      <master startport='4'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x2'/>
+    </controller>
+    <controller type='pci' index='0' model='pci-root'/>
+    <controller type='virtio-serial' index='0'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x06' function='0x0'/>
+    </controller>
+    <interface type='bridge'>
+      <mac address='{mac}'/>
+      <source bridge='{bridge}'/>
+      <model type='virtio'/>
+      <boot order='2'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
+    </interface>
+    <serial type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <channel type='unix'>
+      <target type='virtio' name='org.qemu.guest_agent.0'/>
+      <address type='virtio-serial' controller='0' bus='0' port='1'/>
+    </channel>
+    <channel type='spicevmc'>
+      <target type='virtio' name='com.redhat.spice.0'/>
+      <address type='virtio-serial' controller='0' bus='0' port='2'/>
+    </channel>
+    <input type='tablet' bus='usb'>
+      <address type='usb' bus='0' port='1'/>
+    </input>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+    <graphics type='vnc' port='-1' autoport='yes' listen='0.0.0.0'>
+      <listen type='address' address='0.0.0.0'/>
+    </graphics>   
+    <sound model='ich6'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
+    </sound>
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x02' function='0x0'/>
+    </video>
+    <redirdev bus='usb' type='spicevmc'>
+      <address type='usb' bus='0' port='2'/>
+    </redirdev>
+    <redirdev bus='usb' type='spicevmc'>
+      <address type='usb' bus='0' port='3'/>
+    </redirdev>
+    <memballoon model='virtio'>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+    </memballoon>
+  </devices>
+</domain>
+```
+系统镜像rbd（需要自己制作）需要导入ceph对应的pool中，然后就可以在后台添加系统镜像记录了。
+
+### 2 网络
+需要自己为所有宿主机搭建DHCP服务；   
+首先在后台添加子网vlan，然后在首页导航栏点击“网络”进入网络页面中批量添加对应valn网段的ip，然后可以导出vlan所有IP的DHCP服务配置文件；
+
+### 3 宿主机
+首先后台添加一个宿主机组，然后添加一个宿主机记录；
+宿主机上需要自行搭建KVM+libvirtd环境, 通过libvirt api以qemu+ssh的方式访问宿主机，需要把部署EVCloud的主机的ssk公钥添加到
+宿主机~/.ssh/authorized_keys文件中。
