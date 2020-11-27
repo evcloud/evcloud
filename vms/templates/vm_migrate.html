@@ -28,9 +28,10 @@
                             <dt class="col-2 text-right">宿主机:</dt> <dd class="col-10">{{ vm.host.ipv4 }}</dd>
                             <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                         </dl>
+                        <hr>
                         <form id="id-form-vm-migrate">
                             <div class="form-group row">
-                                <label for="id-host" class="offset-sm-1 col-sm-2 col-form-label">选择目标宿主机</label>
+                                <label for="id-host" class="col-sm-2 col-form-label">选择目标宿主机</label>
                                 <div class="col-sm-7">
                                     <select name="host_id" class="form-control" id="id-host">
                                         <option value="">--</option>
@@ -42,7 +43,13 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="offset-1">
+                            <div class="form-group form-check">
+                                <input name="force" value="force" type="checkbox" class="form-check-input" id="check-migrate-force">
+                                <label class="form-check-label" for="check-migrate-force">强制迁移</label>
+                                <p class="text-secondary font-italic">请慎重勾选，源宿主机节点上的源虚拟主机可能无法清理，导致与迁移的新虚拟主机网络冲突；
+                                    请在确认宿主机损毁、宕机移除、重装系统等情况导致虚拟主机丢失不可恢复不可用的情况下选择。</p>
+                            </div>
+                            <div class="">
                                 <button class="btn btn-primary" id="btn-vm-migrate">迁移</button>
                             </div>
                         </form>

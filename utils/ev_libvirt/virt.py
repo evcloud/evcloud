@@ -324,7 +324,11 @@ class VirtAPI(object):
                 return True
             return False
         except libvirt.libvirtError as e:
-            raise wrap_error(err=e, msg=f'删除虚拟机失败,{str(e)}')
+            err = wrap_error(err=e, msg=f'删除虚拟机失败,{str(e)}')
+            if isinstance(err, VirDomainNotExist):
+                return True
+
+            raise err
 
     def domain_status(self, host_ipv4:str, vm_uuid:str):
         '''

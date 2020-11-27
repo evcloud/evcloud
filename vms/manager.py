@@ -1,4 +1,5 @@
 import uuid
+import subprocess
 
 from django.db.models import Q
 
@@ -15,6 +16,24 @@ from .xml import XMLEditor
 from utils.errors import VmError, VmNotExistError, VmRunningError
 from utils import errors
 from .scheduler import HostMacIPScheduler, ScheduleError
+
+
+def host_alive(host_ipv4:str, times=3, timeout=3):
+    """
+    检测目标主机是否可访问
+
+    :param host_ipv4: 宿主机IP
+    :param times: ping次数
+    :param timeout:
+    :return:
+        True    # 可访问
+        False   # 不可
+    """
+    cmd = f'ping -c {times} -i 0.1 -W {timeout} {host_ipv4}'
+    res, info = subprocess.getstatusoutput(cmd)
+    if res == 0:
+        return True
+    return False
 
 
 class VmManager(VirtAPI):
@@ -1742,20 +1761,50 @@ class VmAPI:
 
         return vm
 
-    def migrate_vm(self, vm_uuid: str, host_id: int, user):
+    def migrate_vm(self, vm_uuid: str, host_id: int, user, force: bool = False):
         """
         迁移虚拟机
 
         :param vm_uuid: 虚拟机uuid
         :param host_id: 宿主机id
         :param user: 用户
+        :param force: True(强制迁移)，False(普通迁移)
         :return:
             Vm()   # success
 
         :raises: VmError
         """
-        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=(
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
+
+        # 虚拟机的状态
+        is_host_down = False
+        host = vm.host
+        try:
+            run = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid).is_running()
+        except VirHostDown as e:
+            is_host_down = True
+            if not force:
+                raise VmError(msg=f'无法连接宿主机,{str(e)}')
+        except VirDomainNotExist as e:
+            pass
+        except VirtError as e:
+            raise VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
+        else:
+            if run:
+                if not force:
+                    raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+                # 强制迁移，先尝试断电
+                try:
+                    self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid).poweroff()
+                except VirtError as e:
+                    pass
+
+        # if force and is_host_down:
+        #     alive = host_alive(vm.ipv4)
+        #     if alive:
+        #         raise VmError(msg='宿主机无法连接，但是探测到虚拟主机处于活动状态，未防止导致网络冲突，不允许强制迁移。')
 
         # 是否同宿主机组
         old_host = vm.host
@@ -1771,9 +1820,23 @@ class VmAPI:
         if new_host.group_id != old_host.group_id:
             raise VmError(msg='目标宿主机和云主机宿主机不在同一个机组')
 
+        # 检测目标宿主机是否处于活动状态
+        alive = host_alive(new_host.ipv4)
+        if not alive:
+            raise VmError(msg='目标宿主机处于未活动状态，请重新选择迁移目标宿主机')
+
         # PCI设备
-        if vm.pci_devices.exists():
-            raise VmError(msg='请先卸载主机挂载的PCI设备')
+        pci_devices = vm.pci_devices
+        if pci_devices:
+            if not force:
+                raise VmError(msg='请先卸载主机挂载的PCI设备')
+
+            # 卸载设备
+            for device in pci_devices:
+                try:
+                    device.umount()
+                except DeviceError as e:
+                    raise DeviceError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
 
         # 目标宿主机资源申请
         try:
@@ -1792,7 +1855,7 @@ class VmAPI:
         new_host.vm_created_num_add_1()  # 宿主机虚拟机数+1
 
         log_msg = ''
-        if from_begin_create:   # 从新构建vm xml创建的vm, 需要重新挂载硬盘等设备
+        if from_begin_create:   # 重新构建vm xml创建的vm, 需要重新挂载硬盘等设备
             # 向虚拟机挂载硬盘
             vdisks = vm.vdisks
             for vdisk in vdisks:
@@ -1991,3 +2054,4 @@ class VmAPI:
             raise VmError(msg=f'宿主机上创建虚拟主机错误，{str(e)}')
 
         return vm
+

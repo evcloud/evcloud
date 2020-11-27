@@ -25,11 +25,17 @@
             alert('请选择迁移的目标宿主机');
             return;
         }
-        if(!confirm('确定迁移云主机吗？'))
-            return;
-
         let vm_uuid = $("#id-vm-uuid").text();
         let api = build_absolute_url('api/v3/vms/' + vm_uuid + '/migrate/' + host_id + '/');
+        let msg = "确定迁移云主机吗？";
+        let force = obj_data.force;
+        if (force === "force"){
+            msg += "您已选择强制迁移";
+            api += '?force=true'
+        }
+        if(!confirm(msg))
+            return;
+
         let btn_submit = $(this);
         btn_submit.addClass('disabled'); //鼠标悬停时，使按钮表现为不可点击状态
         btn_submit.attr('disabled', true);//失能对应按钮

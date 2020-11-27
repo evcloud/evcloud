@@ -1082,6 +1082,15 @@ class VmsViewSet(viewsets.GenericViewSet):
     @swagger_auto_schema(
         operation_summary='迁移虚拟机到指定宿主机',
         request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='force',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description="true: 强制迁移；其他忽略"
+            )
+        ],
         responses={
             201: '''
                     {
@@ -1107,9 +1116,12 @@ class VmsViewSet(viewsets.GenericViewSet):
         if host_id <= 0:
             return Response(data={'code': 400, 'code_text': '无效的host id参数'}, status=status.HTTP_400_BAD_REQUEST)
 
+        force = request.query_params.get('force', '').lower()
+        is_force = True if force == 'true' else False
+
         api = VmAPI()
         try:
-            vm = api.migrate_vm(vm_uuid=vm_uuid, host_id=host_id, user=request.user)
+            vm = api.migrate_vm(vm_uuid=vm_uuid, host_id=host_id, user=request.user, force=is_force)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'迁移虚拟机失败，{str(e)}'},
                             status=status.HTTP_400_BAD_REQUEST)
