@@ -13,6 +13,7 @@ from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain, VirDomainNotExis
 from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, rename_image, MigrateLog, Flavor)
 from .xml import XMLEditor
 from utils.errors import VmError, VmNotExistError, VmRunningError
+from utils import errors
 from .scheduler import HostMacIPScheduler, ScheduleError
 
 
@@ -478,16 +479,8 @@ class VmManager(VirtAPI):
         if not xml_desc:  # 实时获取vm xml, 从新构建虚拟机xml
             begin_create = True     # vm xml从新构建的
             try:
-                image = vm.image
-                pool = image.ceph_pool
-                ceph = pool.ceph
-                xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
-                xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, ceph_uuid=ceph.uuid,
-                                          ceph_pool=pool.pool_name, diskname=vm.disk, ceph_username=ceph.username,
-                                          ceph_hosts_xml=ceph.hosts_xml, mac=vm.mac_ip.mac, bridge=vm.mac_ip.vlan.br)
-
-                if not ceph.has_auth:
-                    xml_desc = self._xml_remove_sys_disk_auth(xml_desc)
+                xml_desc = self.build_vm_xml_desc(vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=vm.disk,
+                                                  image=vm.image, mac_ip=vm.mac_ip)
             except Exception as e:
                 raise VmError(msg=f'构建虚拟机xml错误，{str(e)}')
 
@@ -540,13 +533,8 @@ class VmManager(VirtAPI):
             old_vm_xml_desc = self.get_vm_xml_desc(vm_uuid=vm_uuid, host_ipv4=vm.host.ipv4)
 
             # 虚拟机xml
-            xml_tpl = new_image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
-            xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, ceph_uuid=new_ceph.uuid,
-                                      ceph_pool=new_pool_name, diskname=disk_name, ceph_username=new_ceph.username,
-                                      ceph_hosts_xml=new_ceph.hosts_xml, mac=vm.mac_ip.mac, bridge=vm.mac_ip.vlan.br)
-            if not new_ceph.has_auth:
-                xml_desc = self._xml_remove_sys_disk_auth(xml_desc)
-
+            xml_desc = self.build_vm_xml_desc(vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name,
+                                              image=new_image, mac_ip=vm.mac_ip)
             rbd_manager = get_rbd_manager(ceph=new_ceph, pool_name=new_pool_name)
         except Exception as e:
             raise VmError(msg=str(e))
@@ -637,6 +625,31 @@ class VmManager(VirtAPI):
             return domain.status()
         except VirtError as e:
             raise VmError(msg='获取虚拟机状态失败')
+
+    def build_vm_xml_desc(self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str, image, mac_ip):
+        """
+        构建虚拟机的xml
+        :param vm_uuid:
+        :param mem:
+        :param vcpu:
+        :param vm_disk_name: vm的系统盘镜像rbd名称
+        :param image: 系统镜像实例
+        :param mac_ip: MacIP实例
+        :return:
+            xml: str
+        """
+        pool = image.ceph_pool
+        pool_name = pool.pool_name
+        ceph = pool.ceph
+        xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+        xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph.uuid,
+                                  ceph_pool=pool_name, diskname=vm_disk_name, ceph_username=ceph.username,
+                                  ceph_hosts_xml=ceph.hosts_xml, mac=mac_ip.mac, bridge=mac_ip.vlan.br)
+
+        if not ceph.has_auth:
+            xml_desc = self._xml_remove_sys_disk_auth(xml_desc)
+
+        return xml_desc
 
 
 class VmArchiveManager:
@@ -814,7 +827,7 @@ class VmAPI:
         if vm is None:
             raise VmNotExistError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
+            raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
         return vm
 
@@ -1097,20 +1110,14 @@ class VmAPI:
 
         :raises: VmError
         '''
-        ceph_pool = image.ceph_pool
-        pool_name = ceph_pool.pool_name
-        ceph_config = ceph_pool.ceph
-
         # 虚拟机xml
-        xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
-        xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph_config.uuid,
-                                  ceph_pool=pool_name, diskname=diskname, ceph_username=ceph_config.username,
-                                  ceph_hosts_xml=ceph_config.hosts_xml, mac=macip.mac, bridge=vlan.br)
+        try:
+            xml_desc = self._vm_manager.build_vm_xml_desc(vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, vm_disk_name=diskname,
+                                                          image=image, mac_ip=macip)
+        except Exception as e:
+            raise VmError(msg=f'构建虚拟机xml错误,{str(e)}')
 
         try:
-            if not ceph_config.has_auth:
-                xml_desc = self._vm_manager._xml_remove_sys_disk_auth(xml_desc)
-
             # 创建虚拟机元数据
             vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
                     remarks=remarks, host=host, mac_ip=macip, xml=xml_desc, image=image)
@@ -1935,4 +1942,52 @@ class VmAPI:
             pass
         return vm
 
+    def vm_miss_fix(self, vm_uuid: str, user):
+        """
+        宿主机上虚拟机丢失修复
 
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user', 'image__ceph_pool__ceph'))
+        host = vm.host
+        # 虚拟机
+        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        try:
+            ok = domain.exists()
+        except VirHostDown as e:
+            raise VmError(msg=f'无法连接宿主机', err_code='HostDown')
+        except VirtError as e:
+            raise VmError(msg=f'确认宿主机上是否丢失虚拟机时错误, {str(e)}')
+        if ok:
+            raise errors.VmAlreadyExistError(msg='虚拟主机未丢失, 无需修复')
+
+        # disk rbd是否存在
+        image = vm.image
+        disk_name = vm.disk
+        try:
+            rbd_mgr = get_rbd_manager(ceph=image.ceph_pool.ceph, pool_name=image.ceph_pool.pool_name)
+            ok = rbd_mgr.image_exists(image_name=disk_name)
+        except RadosError as e:
+            raise VmError(msg=f'查询虚拟主机系统盘镜像时错误，{str(e)}')
+
+        if not ok:
+            raise errors.VmDiskImageMissError(msg=f'虚拟主机系统盘镜像不存在，无法恢复此虚拟主机')
+
+        try:
+            xml_desc = self._vm_manager.build_vm_xml_desc(vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name,
+                                                          image=image, mac_ip=vm.mac_ip)
+        except Exception as e:
+            raise VmError(msg=f'构建虚拟主机xml错误，{str(e)}')
+
+        # 创建虚拟机
+        try:
+            self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
+        except VirtError as e:
+            raise VmError(msg=f'宿主机上创建虚拟主机错误，{str(e)}')
+
+        return vm

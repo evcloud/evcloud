@@ -17,6 +17,7 @@
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-reset' vm_uuid=vm.hex_uuid %}">重置镜像</a>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-migrate' vm_uuid=vm.hex_uuid %}">关机迁移</a>
         <button class="dropdown-item bg-info btn-vm-snap-create" type="button" data-vm-uuid="{{ vm.hex_uuid }}">创建快照</button>
+        <button class="dropdown-item bg-warning btn-vm-miss-fix" type="button" data-vm-uuid="{{ vm.hex_uuid }}">丢失恢复</button>
     </div>
 </div>
 

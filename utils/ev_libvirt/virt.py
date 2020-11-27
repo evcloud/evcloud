@@ -292,7 +292,11 @@ class VirtAPI(object):
         conn = self._get_connection(host_ipv4)
         try:
             for d in conn.listAllDomains():
-                if d.UUIDString() == vm_uuid:
+                uid: str = d.UUIDString()
+                hex_uid = uid.replace('-', '')
+                name = d.name()
+                hex_uuid = vm_uuid.replace('-', '')
+                if name == vm_uuid and hex_uid == hex_uuid:
                     return True
             return False
         except libvirt.libvirtError as e:

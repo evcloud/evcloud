@@ -38,6 +38,10 @@ class Error(Exception):
             msg_key: self.detail()
         }
 
+    @property
+    def status_code(self):
+        return self.code
+
 
 class AccessDeniedError(Error):
     err_code = 'AccessDenied'
@@ -76,7 +80,7 @@ class VmNotExistError(VmError):
 
 
 class VmAccessDeniedError(VmError):
-    err_code = 'AccessDenied'
+    err_code = 'VmAccessDenied'
     code = 403
     msg = 'No access to the vm resource'
 
@@ -85,6 +89,18 @@ class VmRunningError(VmError):
     err_code = 'VmRunning'
     code = 409
     msg = 'vm is running, need shutdown it.'
+
+
+class VmAlreadyExistError(VmError):
+    err_code = 'VmAlreadyExist'
+    code = 409
+    msg = 'This virtual host already exists.'
+
+
+class VmDiskImageMissError(VmError):
+    err_code = 'VmDiskImageMiss'
+    code = 409
+    msg = 'The hard disk image for this virtual machine does not exist.'
 
 
 class VPNError(Error):

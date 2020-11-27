@@ -410,4 +410,30 @@
         ,null);
     });
 
+    // 虚拟机丢失恢复点击事件
+    $(".btn-vm-miss-fix").click(function (e) {
+        e.preventDefault();
+
+        if(!confirm('确定尝试恢复丢失的虚拟机？请确认虚拟主机处于丢失状态'))
+		    return;
+
+        let vm_uuid = $(this).attr('data-vm-uuid');
+        miss_fix_vm(vm_uuid);
+    });
+    function miss_fix_vm(vm_uuid) {
+        let node_vm_task = $("#vm_task_" + vm_uuid);
+        vm_miss_fix_ajax(vm_uuid, function () {
+                node_vm_task.html(VM_TASK_CN['miss_fix']);
+            },
+            function () {
+                alert("已成功恢复丢失的虚拟主机");
+            },
+            function () {
+                node_vm_task.html("");
+                let api = build_vm_status_api(vm_uuid);
+                get_vm_status(api, vm_uuid);
+            }
+        );
+    }
+
 })();

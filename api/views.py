@@ -573,7 +573,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         删除虚拟机
 
             >> Http Code: 状态码204：删除成功，NO_CONTENT；
-            >> Http Code: 状态码404：找不到vm资源;
+            >> Http Code: 状态码404：找不到vm资源; "err_code" = "VmNotExist"
                          状态码409：需要先关闭vm;
                          状态码500：删除虚拟机失败,服务器内部错误;
                 {
@@ -1155,6 +1155,45 @@ class VmsViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机登录密码成功'})
+
+    @swagger_auto_schema(
+        operation_summary='尝试恢复丢失的虚拟机',
+        request_body=no_body,
+        responses={
+            200: ''''''
+        }
+    )
+    @action(methods=['post'], url_path='miss-fix', detail=True, url_name='vm-miss-fix')
+    def vm_miss_fix(self, request, *args, **kwargs):
+        """
+        虚拟机丢失修复
+
+            >> http code 200:
+            {
+              "code": 200,
+              "code_text": "成功修复丢失的虚拟机",
+            }
+            >> http code 403, 404, 409, 500
+            {
+                "code": xxx,
+                "code_text": "xxx",
+                "err_code": "xxx"
+            }
+            * err_code list:
+                403: VmAccessDenied, 无权访问此虚拟主机;
+                404: VmNotExist，无虚拟主机记录;
+                409: VmAlreadyExist，虚拟主机未丢失，已存在无需修复;
+                     VmDiskImageMiss, 系统盘镜像不存在，无法恢复此虚拟主机
+                500: HostDown，宿主机无法访问
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        try:
+            vm = VmAPI().vm_miss_fix(vm_uuid=vm_uuid, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        return Response(data={'code': 200, 'code_text': '成功恢复丢失的虚拟机'})
 
     def get_serializer_class(self):
         """

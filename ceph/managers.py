@@ -15,6 +15,11 @@ class ImageExistsError(RadosError):
     pass
 
 
+class ImageNotExistsError(RadosError):
+    """def __init__(self, message, errno=None)"""
+    pass
+
+
 def get_rbd_manager(ceph:CephCluster, pool_name:str):
     '''
     获取一个rbd管理接口对象
@@ -82,12 +87,18 @@ class RbdManager:
             success: Rados()
         :raises: class:`RadosError`
         '''
-        if self._cluster and self._cluster.state == 'connected':
-            return self._cluster
+        if self._cluster:
+            if self._cluster.state == 'connected':
+                return self._cluster
+            else:
+                self.shutdown()
 
         try:
-            self._cluster = rados.Rados(conffile=self._conf_file, conf={'keyring': self._keyring_file})
-            self._cluster.connect(timeout=5)
+            conf = {'client_mount_timeout': '10', 'rados_mon_op_timeout': '10', 'rados_osd_op_timeout': '10'}
+            if self._keyring_file:
+                conf['keyring'] = self._keyring_file
+            self._cluster = rados.Rados(conffile=self._conf_file, conf=conf)
+            self._cluster.connect()
             return self._cluster
         except rados.Error as e:
             msg = e.args[0] if e.args else 'error connecting to the cluster'
@@ -136,6 +147,8 @@ class RbdManager:
                 rbd.RBD().rename(ioctx=ioctx, src=image_name, dest=new_name)
         except rbd.ImageNotFound as e:
             raise RadosError('rename_image error: image not found')
+        except rbd.ImageExists as e:
+            raise RadosError('rename_image error: A image with the same name already exists')
         except Exception as e:
             raise RadosError(f'rename_image error:{str(e)}')
 
@@ -206,7 +219,7 @@ class RbdManager:
         cluster = self.get_cluster()
         try:
             with cluster.open_ioctx(self.pool_name) as ioctx:
-                return  rbd.RBD().list(ioctx)  # 返回 Image name list
+                return rbd.RBD().list(ioctx)  # 返回 Image name list
         except Exception as e:
             raise RadosError(f'rename_image error:{str(e)}')
 
@@ -291,20 +304,41 @@ class RbdManager:
             raise RadosError(f'rollback_to_snap error:{str(e)}')
         return True
 
-    def get_rbd_image(self, image_name:str):
-        '''
+    def image_exists(self, image_name: str):
+        """
+        rbd镜像是否存在
+
+        :param image_name:
+        :return:
+            True    # exists
+            False   # not exists
+
+        :raises: RadosError
+        """
+        try:
+            image = self.get_rbd_image(image_name=image_name)
+        except ImageNotExistsError as e:
+            return False
+
+        self.close_rbd_image(image)
+        return True
+
+    def get_rbd_image(self, image_name: str):
+        """
         获取rbd image对象, 使用close_rbd_image()关闭
 
         :param image_name: rbd image名称
         :return:
             rbd.Image()
-        :raises: RadosError
-        '''
+        :raises: RadosError, ImageNotExistsError
+        """
         cluster = self.get_cluster()
         try:
             ioctx = cluster.open_ioctx(self.pool_name)
             image = rbd.Image(ioctx=ioctx, name=image_name)
             return image
+        except rbd.ImageNotFound as e:
+            raise ImageNotExistsError('ImageNotExists')
         except Exception as e:
             raise RadosError(f'rollback_to_snap error:{str(e)}')
 

@@ -6,7 +6,8 @@ var VM_TASK_CN = {
     'poweroff': '关闭电源',
     'delete': '删除',
     'reset': '重置',
-    'delete_force': '强制删除'
+    'delete_force': '强制删除',
+    'miss_fix': '丢失恢复'
 };
 
 var VM_STATUS_CN = {
@@ -34,7 +35,7 @@ var VM_STATUS_LABEL = {
         7: 'info',
         8: 'default',
         9: 'danger',
-        10: 'default'
+        10: 'warning'
 };
 
 // 虚拟机操作api构建
@@ -220,3 +221,46 @@ function create_snap_vm_ajax(vm_uuid, remarks, before_func, success_func, compla
     });
 }
 
+
+// 虚拟机丢失恢复
+function vm_miss_fix_ajax(vm_uuid, before_func, success_func, complate_func){
+    let api = build_absolute_url("api/v3/vms/" + vm_uuid + '/miss-fix/');
+    if(typeof(before_func) === "function"){
+        before_func();
+    }
+    $.ajax({
+        url: api,
+        type: 'post',
+        success: function (data, status_text) {
+            if(typeof(success_func) === "function"){
+                success_func(data);
+            }
+        },
+        error: function (xhr, msg, err) {
+            console.log(xhr);
+            let d = xhr.responseJSON;
+            if (d.hasOwnProperty('err_code')){
+                if (d.err_code === 'VmNotExist'){
+                    msg = '此虚拟主机不存在，无法恢复，请刷新网页后重试。'
+                }else if (d.err_code === 'VmDiskImageMiss'){
+                    msg = '此虚拟主机的系统盘镜像已丢失，无法恢复。'
+                }else if (d.err_code === 'HostDown'){
+                    msg = '宿主机可能宕机或网络问题，无法访问宿主机，可以选择等待宿主机恢复；也可以尝试迁移此虚拟主机到其他宿主机。'
+                }else if(d.err_code === 'VmAlreadyExist') {
+                    msg = '此虚拟主机未丢失，无需恢复。'
+                }else{
+                    msg = get_err_msg_or_default(xhr, '尝试恢复丢失的虚拟主机失败;');
+                }
+            }else{
+                msg = get_err_msg_or_default(xhr, '尝试恢复丢失的虚拟主机失败;');
+            }
+
+            alert(msg);
+        },
+        complete:function (xhr, ts) {
+            if(typeof(complate_func) === "function"){
+                complate_func();
+            }
+        }
+    });
+}
