@@ -3,8 +3,7 @@ from django.db.models import F, Sum, Count
 from django.contrib.auth import get_user_model
 
 
-#获取用户模型
-User = get_user_model()
+User = get_user_model()     # 获取用户模型
 
 
 class Center(models.Model):
@@ -63,20 +62,23 @@ class Group(models.Model):
 
         return self.users.filter(id=user.id).exists()
 
-
-from network.models import Vlan
+    @property
+    def vlans(self):
+        """
+        子网查询集
+        :return:
+        """
+        return self.vlan_set.all()
 
 
 class Host(models.Model):
-    '''
+    """
     宿主机模型
 
     宿主机是真实的物理主机，是虚拟机的载体，虚拟机使用宿主机的资源在宿主机上运行
-    一台宿主机可能连接多个vlan子网
-    '''
+    """
     id = models.AutoField(primary_key=True)
     group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set', verbose_name='宿主机所属的组')
-    vlans = models.ManyToManyField(to=Vlan, verbose_name='VLAN子网', related_name='vlan_hosts') # 局域子网
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
     real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU总数')
     vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU总数')
@@ -129,7 +131,7 @@ class Host(models.Model):
             False: vcpu足够使用
         '''
         free_cpu = self.vcpu_total - self.vcpu_allocated
-        return  vcpu > free_cpu
+        return vcpu > free_cpu
 
     def meet_needs(self, vcpu:int, mem:int):
         '''
@@ -152,22 +154,7 @@ class Host(models.Model):
         if self.exceed_mem_limit(mem=mem):
             return False
 
-        return  True
-
-    def contains_vlan(self, vlan:Vlan):
-        '''
-        宿主机是否属于子网
-
-        :param host: 宿主机对象
-        :param vlan: 子网
-        :return:
-            True    # 属于
-            False   # 不属于
-        '''
-        if self.vlans.filter(pk=vlan.pk).exists():
-            return True
-
-        return False
+        return True
 
     def claim(self, vcpu: int, mem: int):
         '''

@@ -85,6 +85,12 @@ class VmAccessDeniedError(VmError):
     msg = 'No access to the vm resource'
 
 
+class GroupAccessDeniedError(VmError):
+    err_code = 'GroupAccessDenied'
+    code = 403
+    msg = "No access to the group's resource"
+
+
 class VmRunningError(VmError):
     err_code = 'VmRunning'
     code = 409
@@ -101,6 +107,12 @@ class VmDiskImageMissError(VmError):
     err_code = 'VmDiskImageMiss'
     code = 409
     msg = 'The hard disk image for this virtual machine does not exist.'
+
+
+class AcrossGroupConflictError(VmError):
+    err_code = 'AcrossGroupConflictError'
+    code = 409
+    msg = '资源冲突，不属于同一个宿主机组。'
 
 
 class VPNError(Error):

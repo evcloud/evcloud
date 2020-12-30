@@ -35,7 +35,6 @@ class HostAdmin(admin.ModelAdmin):
                     'mem_total', 'mem_allocated', 'mem_allocated_now', 'vm_created', 'vm_created_now', 'enable', 'desc')
     list_filter = ['group']
     search_fields = ['ipv4']
-    filter_horizontal = ['vlans']
 
     def vcpu_allocated_now(self, obj):
         s = obj.stats_vcpu_mem_vms_now()

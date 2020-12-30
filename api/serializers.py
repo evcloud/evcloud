@@ -121,7 +121,7 @@ class HostSerializer(serializers.ModelSerializer):
     '''
     class Meta:
         model = Host
-        fields = ('id', 'ipv4', 'group', 'vlans', 'vcpu_total', 'vcpu_allocated', 'mem_total', 'mem_allocated',
+        fields = ('id', 'ipv4', 'group', 'vcpu_total', 'vcpu_allocated', 'mem_total', 'mem_allocated',
                   'mem_reserved', 'vm_limit', 'vm_created', 'enable', 'desc')
 
 

@@ -1,15 +1,15 @@
 from django.contrib import admin
 
-from .models import Vlan, MacIP, NetworkType
+from .models import Vlan, MacIP
 
 
 @admin.register(Vlan)
 class VlanAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
-    list_display = ('id', 'name', 'br', 'net_type', 'tag', 'enable', 'center', 'subnet_ip', 'net_mask', 'gateway', 'dns_server')
-    list_filter = ('enable', 'net_type', 'tag')
+    list_display = ('id', 'name', 'br', 'tag', 'enable', 'group', 'subnet_ip', 'net_mask', 'gateway', 'dns_server')
+    list_filter = ('enable', 'tag')
     search_fields = ('name', 'br')
-    list_select_related = ('net_type', 'center')
+    list_select_related = ('group',)
 
 
 @admin.register(MacIP)
@@ -19,10 +19,3 @@ class MacIPAdmin(admin.ModelAdmin):
     list_filter = ('vlan', 'enable')
     search_fields = ('ipv4',)
     list_select_related = ('vlan',)
-
-
-@admin.register(NetworkType)
-class NetworkTypeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'remarks')
-    list_display_links = ('id', 'name')
-    search_fields = ('name',)

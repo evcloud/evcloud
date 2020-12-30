@@ -16,6 +16,8 @@
     // 页面刷新时执行
     window.onload = function() {
         nav_active_display();
+        update_vlan_select_items();
+        update_host_select_items();
         set_image_to_cache($("#id-image-tag").val(), $('select[name="image_id"]').html())
     };
 
@@ -53,10 +55,11 @@
     // 宿主机组下拉框选项改变事件
     $('select[name="group_id"]').change(function () {
         update_host_select_items();
+        update_vlan_select_items();
+        update_ipv4_select_items();
     });
     // 子网网段下拉框选项改变事件
     $('select[name="vlan_id"]').change(function () {
-        update_host_select_items();
         update_ipv4_select_items();
     });
 
@@ -77,11 +80,10 @@
     // 加载宿主机下拉框
     function update_host_select_items(){
         let group = $('select[name="group_id"]').val();
-        let vlan = $('select[name="vlan_id"]').val();
-        if(!(group && vlan)){
+        if(!group){
             return;
         }
-        let qs = encode_params({group_id:group, vlan_id:vlan});
+        let qs = encode_params({group_id:group});
         let api = build_absolute_url('/api/v3/host/?'+ qs);
         $.ajax({
             url: api,
@@ -99,6 +101,37 @@
         })
     }
 
+    // 加载子网vlan下拉框渲染模板
+    let render_vlan_select_items = template.compile(`
+        <option value="">自动选择</option>
+        {{ each results }}
+            <option value="{{ $value.id }}">{{ $value.name }}</option>
+        {{/each}}
+    `);
+
+    // 加载子网vlan下拉框
+    function update_vlan_select_items(){
+        let group = $('select[name="group_id"]').val();
+        if(!group){
+            return;
+        }
+        let qs = encode_params({group_id:group});
+        let api = build_absolute_url('/api/v3/vlan/?'+ qs);
+        $.ajax({
+            url: api,
+            type: 'get',
+            async: false,
+            success: function (data) {
+                let html = render_vlan_select_items(data);
+                let vlan = $('select[name="vlan_id"]');
+                vlan.empty();
+                vlan.append(html);
+            },
+            error: function (xhr) {
+                alert('加载子网vlan下拉框选项失败');
+            }
+        })
+    }
 
     // 加载MAC IP下拉框渲染模板
     let render_ipv4_select_items = template.compile(`
@@ -114,9 +147,10 @@
     function update_ipv4_select_items(){
         let vlan = $('select[name="vlan_id"]').val();
         if(!vlan){
-            html = '<option value="">自动选择</option>';
-            host.empty();
-            host.append(html);
+            let html = '<option value="">自动选择</option>';
+            let ipv4 = $('select[name="ipv4"]');
+            ipv4.empty();
+            ipv4.append(html);
             return;
         }
         let qs = encode_params({vlan_id:vlan, used: false});

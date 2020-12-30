@@ -2,9 +2,11 @@ import re
 from io import StringIO
 
 from django.db import transaction
+from django.db.models import Subquery
 
 from .models import Vlan, MacIP
 from utils.errors import NetworkError
+from compute.managers import CenterManager
 
 
 class VlanManager:
@@ -27,7 +29,7 @@ class VlanManager:
             raise NetworkError(msg='子网ID参数有误')
 
         try:
-            return Vlan.objects.filter(id=vlan_id).first()
+            return Vlan.objects.select_related('group').filter(id=vlan_id).first()
         except Exception as e:
             raise NetworkError(msg=f'查询子网时错误,{str(e)}')
 
@@ -35,8 +37,27 @@ class VlanManager:
         return Vlan.objects.filter(enable=True).all()
 
     def get_center_vlan_queryset(self, center):
+        """
+        分中心的vlan查询集
+
+        :param center: 分中心实例，或id
+        :return:
+            QuerySet()
+        """
+        groups = CenterManager().get_group_queryset_by_center(center)
         queryset = self.get_vlan_queryset()
-        return queryset.filter(center=center).all()
+        return queryset.filter(group__in=Subquery(groups.values('id'))).all()
+
+    def get_group_vlan_queryset(self, group):
+        """
+        宿主机组的vlan查询集
+
+        :param group: 宿主机组实例，或id
+        :return:
+            QuerySet()
+        """
+        queryset = self.get_vlan_queryset()
+        return queryset.filter(group=group).all()
 
     def generate_subips(self, vlan_id, from_ip, to_ip, write_database=False):
         '''

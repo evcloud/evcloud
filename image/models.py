@@ -6,7 +6,7 @@ from ceph.models import CephPool
 from ceph.managers import get_rbd_manager, RadosError
 
 User = get_user_model()
-# Create your models here.
+
 
 class VmXmlTemplate(models.Model):
     '''
@@ -107,7 +107,7 @@ class Image(models.Model):
         return self.get_sys_type_display()
 
     def save(self, *args, **kwargs):
-        if self.create_newsnap:  # 选中创建snap复选框
+        if self.create_newsnap or not self.snap:  # 选中创建snap复选框
             self._create_snap()
 
         super().save(*args, **kwargs)

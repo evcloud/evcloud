@@ -443,7 +443,6 @@ class VmManager(VirtAPI):
 
         :param vm: 虚拟机对象
         :param snap_id: 快照id
-        :param user: 用户
         :return:
             True    # success
 
@@ -916,9 +915,9 @@ class VmAPI:
 
         return vlan
 
-    def _available_macip(self, ipv4: str, ip_public=None):
+    def _available_macip(self, ipv4: str, user, ip_public=None):
         """
-       指定mac ip是否空闲可用，是否满足网络类型
+       指定mac ip是否空闲可用，是否满足网络类型, 是否有权限使用
 
        :return:
            MacIP()          # 可用
@@ -937,12 +936,15 @@ class VmAPI:
         if not mac_ip.can_used():
             raise VmError(msg='mac ip已被分配使用')
 
-        if ip_public is None:       # 不指定ip类型
-            return mac_ip
-
         vlan = mac_ip.vlan
         if not vlan:
-            raise VmError(msg='mac ip未关联子网vlan，无法判断ip是公网或私网')
+            raise VmError(msg='mac ip未关联子网vlan，无法判断ip是公网或私网，用户是否有权限使用')
+
+        if not vlan.group.user_has_perms(user=user):
+            raise errors.GroupAccessDeniedError(msg='无权限使用指定的IP地址')
+
+        if ip_public is None:       # 不指定ip类型
+            return mac_ip
 
         if ip_public:  # 指定分配公网ip
             if not vlan.is_public():
@@ -953,13 +955,14 @@ class VmAPI:
 
         return mac_ip
 
-    def _get_groups_host_check_perms(self, center_id: int, group_id: int, host_id: int, user):
+    def _get_groups_host_check_perms(self, center_id: int, group_id: int, host_id: int, user, vlan=None):
         '''
-        检查用户使用有宿主机组或宿主机访问权限，优先使用host_id
+        检查用户是否有宿主机组或宿主机访问权限，优先使用host_id
 
         :param group_id: 宿主机组ID
         :param host_id: 宿主机ID
         :param user: 用户
+        :param vlan: 指定了vlan, 需要保证宿主机资源和vlan属于同一个宿主机组
         :return:
                 [], Host()          # host_id有效时
                 [Group()], None     # host_id无效，group_id有效时
@@ -978,9 +981,15 @@ class VmAPI:
             if not host.user_has_perms(user=user):
                 raise VmError(msg='当前用户没有指定宿主机的访问权限')
 
+            if vlan and host.group_id != vlan.group_id:  # 指定vlan，是否同属于一个宿主机组
+                raise errors.AcrossGroupConflictError(msg='指定的宿主机和指定的ip或vlan不在同一个宿主机组内')
+
             return [], host
 
         if group_id:
+            if vlan and group_id != vlan.group_id:  # 指定vlan，是否同属于一个宿主机组
+                raise errors.AcrossGroupConflictError(msg='指定的宿主机组和指定的ip或vlan不在同一个宿主机组内')
+
             try:
                 group = self._group_manager.get_group_by_id(group_id=group_id)
             except ComputeError as e:
@@ -995,6 +1004,13 @@ class VmAPI:
             return [group], None
 
         if center_id:
+            if vlan:
+                group = vlan.group
+                if group.center_id != center_id:
+                    raise errors.AcrossGroupConflictError(msg='指定的ip或vlan不属于指定的分中心')
+
+                return [group], None
+
             try:
                 groups = self._center_manager.get_user_group_queryset_by_center(center_or_id=center_id, user=user)
                 groups = list(groups)
@@ -1044,8 +1060,6 @@ class VmAPI:
         if not ((center_id and center_id > 0) or (group_id and group_id > 0) or (host_id and host_id > 0)):
             raise VmError(msg='无法创建虚拟机,必须指定一个有效center_id或group_id或host_id参数')
 
-        # 权限检查
-        groups, host_or_none = self._get_groups_host_check_perms(center_id=center_id, group_id=group_id, host_id=host_id, user=user)
         image = self._get_image(image_id)    # 镜像
 
         vm_uuid_obj = self.new_uuid_obj()
@@ -1059,12 +1073,23 @@ class VmAPI:
 
         # 如果指定了vlan或ip
         if ipv4:
-            self._available_macip(ipv4=ipv4, ip_public=ip_public)       # ip是否可用
+            macip = self._available_macip(ipv4=ipv4, user=user, ip_public=ip_public)       # ip是否可用
+            groups, host_or_none = self._get_groups_host_check_perms(center_id=center_id, group_id=group_id,
+                                                                     host_id=host_id, user=user, vlan=macip.vlan)
             macip = self._macip_manager.apply_for_free_ip(ipv4=ipv4)    # 分配ip
             if not macip:
                 raise VmError(msg='指定的IP地址不可用，不存在或已被占用')
+            vlan = macip.vlan
         elif vlan_id and vlan_id > 0:
             vlan = self._get_vlan(vlan_id)  # 局域子网
+            if not vlan.group.user_has_perms(user=user):
+                raise errors.GroupAccessDeniedError(msg='无权限使用指定的vlan资源')
+
+            groups, host_or_none = self._get_groups_host_check_perms(center_id=center_id, group_id=group_id,
+                                                                     host_id=host_id, user=user, vlan=vlan)
+        else:
+            groups, host_or_none = self._get_groups_host_check_perms(center_id=center_id, group_id=group_id,
+                                                                     host_id=host_id, user=user)
 
         host = None     # 指示是否分配了宿主机和资源，指示创建失败时释放资源
         try:
@@ -1093,7 +1118,7 @@ class VmAPI:
 
             # 创建虚拟机
             vm = self._create_vm2(vm_uuid=vm_uuid, diskname=diskname, vcpu=vcpu, mem=mem, image=image,
-                             vlan=vlan, host=host, macip=macip, user=user, remarks=remarks)
+                                  vlan=vlan, host=host, macip=macip, user=user, remarks=remarks)
         except Exception as e:
             if macip:
                 self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源

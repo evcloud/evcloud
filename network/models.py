@@ -1,23 +1,6 @@
 from django.db import models
 
-from compute.models import Center
-
-
-class NetworkType(models.Model):
-    '''
-    网络类型
-    '''
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='类型名称', max_length=100)
-    remarks = models.CharField(verbose_name='备注', max_length=255, default='', blank=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ('id',)
-        verbose_name = '网络类型'
-        verbose_name_plural = '05_网络类型'
+from compute.models import Center, Group
 
 
 class Vlan(models.Model):
@@ -33,9 +16,8 @@ class Vlan(models.Model):
 
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='VLAN名称', max_length=100)
-    center = models.ForeignKey(to=Center, verbose_name='分中心', default=1, null=True, on_delete=models.SET_NULL, related_name='vlan_set')
+    group = models.ForeignKey(to=Group, verbose_name='宿主机组', default=None, null=True, on_delete=models.SET_NULL, related_name='vlan_set')
     br = models.CharField(verbose_name='网桥', max_length=50)
-    net_type = models.ForeignKey(to=NetworkType, verbose_name='网络类型',on_delete=models.CASCADE, related_name='vlan_set')
     tag = models.SmallIntegerField(verbose_name='网络标签', choices=NET_TAG_CHOICES, default=NET_TAG_PRIVATE)
     subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')
     net_mask = models.GenericIPAddressField(verbose_name='子网掩码')

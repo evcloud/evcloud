@@ -5,7 +5,6 @@ from django.db.models import Sum
 from django.utils.functional import cached_property
 
 from compute.models import Center, Group, Host
-from network.models import Vlan
 from ceph.models import CephPool
 from utils.errors import ComputeError
 
@@ -599,77 +598,49 @@ class HostManager:
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
 
-    def filter_hosts_queryset(self, group_id:int=0, vlan_id:int=0, enable:bool=True):
+    def filter_hosts_queryset(self, group_id: int = 0, enable: bool = True):
         '''
         过滤宿主机查询集
 
         :param group_id: 宿主机组id，默认为0，忽略此参数
-        :param vlan_id: 子网网段id，默认为0，忽略此参数
         :param enable: True,过滤有效的宿主机；False，不过滤
         :return:
             QuerySet    # success
 
         :raises: ComputeError
         '''
-        if group_id < 0 or vlan_id < 0:
-            raise ComputeError(msg='group_id或vlan_id无效')
+        if group_id < 0:
+            raise ComputeError(msg='group_id无效')
 
         qs = None
-        if vlan_id > 0:
-            vlan = Vlan.objects.filter(id=vlan_id).first()
-            qs = vlan.vlan_hosts.all()
-
         if group_id > 0:
-            if qs is not None:
-                qs = qs.filter(group=group_id).all()
-            else:
-                qs = Host.objects.filter(group=group_id).all()
+            qs = Host.objects.filter(group=group_id).all()
 
         if qs is None:
             qs = Host.objects.all()
 
-        if enable == True:
+        if enable:
             qs = qs.filter(enable=True).all()
 
         return qs
 
-    def get_hosts_queryset_by_group_vlan(self, group_or_id, vlan:Vlan):
-        '''
-        获取宿指定主机组，并且包含指定vlan的所有宿主机元数据模型对象查询集
-
-        :param group_or_id: 宿主机组对象Group()或id
-        :param vlan: 子网对象
-        :return:
-            QuerySet    # success
-            raise ComputeError #发生错误
-
-        :raise ComputeError
-        '''
-        if isinstance(group_or_id, Group):
-            group = group_or_id
-        elif isinstance(group_or_id, int) and group_or_id > 0:
-            group = group_or_id
-        else:
-            raise ComputeError(msg='请输入一个宿主机组对象或宿主机组ID')
-
-        if not isinstance(vlan, Vlan):
-            raise ComputeError(msg='请输入一个子网Vlan对象')
-
-        return vlan.vlan_hosts.filter(group=group, enable=True).all()
-
-    def get_hosts_by_group_and_vlan(self, group_or_id, vlan:Vlan):
+    def get_hosts_list_by_group(self, group_or_id):
         '''
         获取宿指定主机组，并且包含指定vlan的所有宿主机元数据模型对象
 
         :param group_or_id: 宿主机组对象Group()或id
-        :param vlan: 子网对象
         :return:
             [Host(),]    # success
             raise ComputeError #发生错误
 
         :raise ComputeError
         '''
-        hosts_qs = self.get_hosts_queryset_by_group_vlan(group_or_id=group_or_id, vlan=vlan)
+        if isinstance(group_or_id, int):
+            group_id = group_or_id
+        else:
+            group_id = group_or_id.id
+
+        hosts_qs = self.get_hosts_by_group_id(group_id=group_id)
         try:
             return list(hosts_qs)
         except Exception as e:

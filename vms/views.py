@@ -121,7 +121,6 @@ class VmCreateView(View):
         context['groups'] = groups
         context['image_tags'] = Image.CHOICES_TAG
         context['images'] = images
-        context['vlans'] = VlanManager().get_center_vlan_queryset(center=center_id)
         context['flavors'] = FlavorManager().get_user_flaver_queryset(user=request.user)
         return render(request, 'vms_create.html', context=context)
 

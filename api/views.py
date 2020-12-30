@@ -1377,12 +1377,6 @@ class HostViewSet(viewsets.GenericViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=False,
                 description='宿主机组id'
-            ),
-            openapi.Parameter(
-                name='vlan_id', in_=openapi.IN_QUERY,
-                type=openapi.TYPE_INTEGER,
-                description="子网网段id",
-                required=False
             )
         ]
     )
@@ -1400,9 +1394,6 @@ class HostViewSet(viewsets.GenericViewSet):
                   "id": 1,
                   "ipv4": "10.100.50.121",
                   "group": 1,
-                  "vlans": [
-                    1
-                  ],
                   "vcpu_total": 24,
                   "vcpu_allocated": 14,
                   "mem_total": 132768,
@@ -1417,12 +1408,11 @@ class HostViewSet(viewsets.GenericViewSet):
             }
         '''
         group_id = int(request.query_params.get('group_id', 0))
-        vlan_id = int(request.query_params.get('vlan_id', 0))
 
         try:
-            queryset = HostManager().filter_hosts_queryset(group_id=group_id, vlan_id=vlan_id)
+            queryset = HostManager().filter_hosts_queryset(group_id=group_id)
         except ComputeError as e:
-            return  Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -1460,6 +1450,12 @@ class VlanViewSet(viewsets.GenericViewSet):
                 description='分中心id'
             ),
             openapi.Parameter(
+                name='group_id', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='宿主机组id'
+            ),
+            openapi.Parameter(
                 name='public', in_=openapi.IN_QUERY,
                 type=openapi.TYPE_BOOLEAN,
                 required=False,
@@ -1492,6 +1488,7 @@ class VlanViewSet(viewsets.GenericViewSet):
                 }
         """
         center_id = request.query_params.get('center_id', None)
+        group_id = request.query_params.get('group_id', None)
         query_public = request.query_params.get('public', None)
 
         public = None
@@ -1506,7 +1503,12 @@ class VlanViewSet(viewsets.GenericViewSet):
                 return Response(data=exc.data(), status=status.HTTP_400_BAD_REQUEST)
 
         v_mgr = VlanManager()
-        if center_id is not None:
+        if group_id is not None:
+            group_id = str_to_int_or_default(group_id, 0)
+            if group_id <= 0:
+                return Response(data={'code': 400, 'code_text': 'query参数group_id无效'}, status=status.HTTP_400_BAD_REQUEST)
+            queryset = v_mgr.get_group_vlan_queryset(group_id)
+        elif center_id is not None:
             center_id = str_to_int_or_default(center_id, 0)
             if center_id <= 0:
                 return Response(data={'code': 400, 'code_text': 'query参数center_id无效'}, status=status.HTTP_400_BAD_REQUEST)
