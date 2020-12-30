@@ -1460,6 +1460,12 @@ class VlanViewSet(viewsets.GenericViewSet):
                 type=openapi.TYPE_BOOLEAN,
                 required=False,
                 description='筛选条件；true(公网)，false(私网)'
+            ),
+            openapi.Parameter(
+                name='available', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='筛选条件，查询有权限使用的vlan；参数不需要值，提交此参数即有效'
             )
         ]
     )
@@ -1490,6 +1496,17 @@ class VlanViewSet(viewsets.GenericViewSet):
         center_id = request.query_params.get('center_id', None)
         group_id = request.query_params.get('group_id', None)
         query_public = request.query_params.get('public', None)
+        available = request.query_params.get('available', None)
+
+        if center_id:
+            center_id = str_to_int_or_default(center_id, 0)
+            if center_id <= 0:
+                return Response(data={'code': 400, 'code_text': 'query参数center_id无效'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if group_id:
+            group_id = str_to_int_or_default(group_id, 0)
+            if group_id <= 0:
+                return Response(data={'code': 400, 'code_text': 'query参数group_id无效'}, status=status.HTTP_400_BAD_REQUEST)
 
         public = None
         if query_public is not None:
@@ -1502,25 +1519,12 @@ class VlanViewSet(viewsets.GenericViewSet):
                 exc = exceptions.BadRequestError(msg='query参数public无效')
                 return Response(data=exc.data(), status=status.HTTP_400_BAD_REQUEST)
 
-        v_mgr = VlanManager()
-        if group_id is not None:
-            group_id = str_to_int_or_default(group_id, 0)
-            if group_id <= 0:
-                return Response(data={'code': 400, 'code_text': 'query参数group_id无效'}, status=status.HTTP_400_BAD_REQUEST)
-            queryset = v_mgr.get_group_vlan_queryset(group_id)
-        elif center_id is not None:
-            center_id = str_to_int_or_default(center_id, 0)
-            if center_id <= 0:
-                return Response(data={'code': 400, 'code_text': 'query参数center_id无效'}, status=status.HTTP_400_BAD_REQUEST)
-            queryset = v_mgr.get_center_vlan_queryset(center=center_id)
+        if available is not None:
+            user = request.user
         else:
-            queryset = v_mgr.get_vlan_queryset()
+            user = None
 
-        if public is True:
-            queryset = queryset.filter(tag=v_mgr.MODEL.NET_TAG_PUBLIC)
-        elif public is False:
-            queryset = queryset.filter(tag=v_mgr.MODEL.NET_TAG_PRIVATE)
-
+        queryset = VlanManager().filter_vlan_queryset(center=center_id, group=group_id, is_public=public, user=user)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -3079,7 +3083,7 @@ class VPNViewSet(viewsets.GenericViewSet):
         operation_summary='获取用户vpn信息',
         request_body=no_body,
         responses={
-            200: None
+            200: ''
         }
     )
     def retrieve(self, request, *args, **kwargs):
@@ -3112,7 +3116,7 @@ class VPNViewSet(viewsets.GenericViewSet):
     @swagger_auto_schema(
         operation_summary='创建vpn账户',
         responses={
-            201: None
+            201: ''
         }
     )
     def create(self, request, *args, **kwargs):
@@ -3174,7 +3178,7 @@ class VPNViewSet(viewsets.GenericViewSet):
             )
         ],
         responses={
-            200: None
+            200: ''
         }
     )
     def partial_update(self, request, *args, **kwargs):

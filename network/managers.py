@@ -6,7 +6,7 @@ from django.db.models import Subquery
 
 from .models import Vlan, MacIP
 from utils.errors import NetworkError
-from compute.managers import CenterManager
+from compute.managers import CenterManager, GroupManager
 
 
 class VlanManager:
@@ -58,6 +58,43 @@ class VlanManager:
         """
         queryset = self.get_vlan_queryset()
         return queryset.filter(group=group).all()
+
+    def filter_vlan_queryset(self, center: int = None, group: int = None, is_public: bool = None, user=None):
+        """
+        筛选vlan查询集
+
+        :param center: 分中心id
+        :param group: 宿主机组id
+        :param is_public: 公网或私网
+        :param user: 用户实例，用于过滤用户有权限使用的vlan
+        :return:
+            QuerySet()
+        """
+        group_set = None
+        if user:
+            group_set = user.group_set.all()
+
+        if group:
+            if not group_set:
+                group_set = GroupManager().get_group_queryset()
+
+            group_set = group_set.filter(id=group)
+        elif center:
+            if group_set:
+                group_set = group_set.filter(center=center)
+            else:
+                group_set = CenterManager().get_group_queryset_by_center(center)
+
+        queryset = self.get_vlan_queryset()
+        if is_public is True:
+            queryset = queryset.filter(tag=Vlan.NET_TAG_PUBLIC)
+        elif is_public is False:
+            queryset = queryset.filter(tag=Vlan.NET_TAG_PRIVATE)
+
+        if group_set:
+            queryset = queryset.filter(group__in=Subquery(group_set.values('id'))).all()
+
+        return queryset
 
     def generate_subips(self, vlan_id, from_ip, to_ip, write_database=False):
         '''
