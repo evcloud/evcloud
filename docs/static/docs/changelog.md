@@ -1,3 +1,15 @@
+## v3.1.0
+* admin系统镜像image列表增加filter by center；   
+* vm强制删除修改，宿主机不可连接时强制删除，vm归档记录增加host_released字段，标记宿主机上资源是否清理释放；
+* admin vm归档记列表增加2个action操作，释放宿主机上资源和删除vm系统镜像ceph rbd；
+* list macip的分页器默认每页256；
+* host未激活时不显示在vm列表视图host过滤条件中的问题修复；
+* libvirt ssh连接宿主机认证失败时禁止询问密码;
+* vm miss fix api，宿主机上vm丢失时尝试修复;
+* vm强制迁移，源宿主机不可连接时，继续迁移到目标主机；
+* vlan与center、host直接从属关系解除，改为属于group，删除vlan type model；
+* ListVlan api增加query参数group_id和available；
+
 ## v3.0.0 
 * vm创建、删除、开机、关机等基础功能;
 * vm配置修改、重置系统镜像、迁移、快照、回滚等;

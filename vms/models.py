@@ -18,35 +18,39 @@ User = get_user_model()
 
 
 def remove_image(ceph, pool_name: str, image_name: str):
-    '''
+    """
     删除一个镜像
 
     :return:
-        True    # success
-        False   # failed
-    '''
+        True            # success
+        raise Error()   # failed
+
+    :raises: Error
+    """
     try:
         rbd = get_rbd_manager(ceph=ceph, pool_name=pool_name)
         rbd.remove_image(image_name=image_name)
     except (RadosError, Exception) as e:
-        return False
+        raise Error(msg=str(e))
 
     return True
 
 
 def rename_image(ceph, pool_name: str, image_name: str, new_name: str):
-    '''
+    """
     重命名一个镜像
 
     :return:
         True    # success
-        False   # failed
-    '''
+        raise Error()   # failed
+
+    :raises: Error
+    """
     try:
         rbd = get_rbd_manager(ceph=ceph, pool_name=pool_name)
         rbd.rename_image(image_name=image_name, new_name=new_name)
     except (RadosError, Exception) as e:
-        return False
+        raise Error(msg=str(e))
 
     return True
 
@@ -112,7 +116,12 @@ class Vm(models.Model):
         if not config:
             return False
 
-        return remove_image(ceph=config, pool_name=pool_name, image_name=self.disk)
+        try:
+            remove_image(ceph=config, pool_name=pool_name, image_name=self.disk)
+        except Error as e:
+            return False
+
+        return True
 
     def user_has_perms(self, user):
         '''
@@ -256,12 +265,16 @@ class VmArchive(models.Model):
         for snap in snaps:
             snap.delete()
 
-    def rm_sys_disk(self):
+    def rm_sys_disk(self, raise_exception=False):
         '''
         删除系统盘，需要先删除所有系统盘快照
+
+        :param raise_exception: 删除错误时是否抛出错误
         :return:
             True    # success
             False   # failed
+
+        :raises: Error    # When raise_exception == True
         '''
         if not self.disk:
             return True
@@ -270,15 +283,21 @@ class VmArchive(models.Model):
         if not config:
             return False
 
-        ok = remove_image(ceph=config, pool_name=self.ceph_pool, image_name=self.disk)
-        if ok:
-            self.disk = ''
-            try:
-                self.save(update_fields=['disk'])
-            except Exception as e:
-                pass
+        try:
+            remove_image(ceph=config, pool_name=self.ceph_pool, image_name=self.disk)
+        except Error as e:
+            if raise_exception:
+                raise Error(msg=str(e))
 
-        return ok
+            return False
+
+        self.disk = ''
+        try:
+            self.save(update_fields=['disk'])
+        except Exception as e:
+            pass
+
+        return True
 
     def rename_sys_disk_archive(self):
         '''
@@ -302,7 +321,10 @@ class VmArchive(models.Model):
         try:
             self.save(update_fields=['disk'])
         except Exception as e:
-            rename_image(ceph=config, pool_name=pool_name, image_name=new_name, new_name=old_name)
+            try:
+                rename_image(ceph=config, pool_name=pool_name, image_name=new_name, new_name=old_name)
+            except Exception as exc:
+                pass
             return False
 
         return True
@@ -538,8 +560,9 @@ def rename_sys_disk_delete(ceph, pool_name: str, disk_name: str):
 
     time_str = timezone.now().strftime('%Y%m%d%H%M%S')
     new_name = f"x_{time_str}_{disk_name}"
-    ok = rename_image(ceph=ceph, pool_name=pool_name, image_name=disk_name, new_name=new_name)
-    if not ok:
+    try:
+        rename_image(ceph=ceph, pool_name=pool_name, image_name=disk_name, new_name=new_name)
+    except Error as e:
         return False, disk_name
 
     return True, new_name

@@ -1758,7 +1758,10 @@ class VmAPI:
             vm = self._vm_manager.reset_image_create_vm(vm=vm, new_image=new_image)
         except VmError as e:
             # 原系统盘改回原名
-            rename_image(ceph=old_ceph, pool_name=old_pool_name, image_name=deleted_disk, new_name=disk_name)
+            try:
+                rename_image(ceph=old_ceph, pool_name=old_pool_name, image_name=deleted_disk, new_name=disk_name)
+            except Exception as exc:
+                pass
             raise VmError(msg=str(e))
 
         # 向虚拟机挂载硬盘
@@ -1966,7 +1969,10 @@ class VmAPI:
                                     new_image_name=disk_name, data_pool=data_pool)
         except (RadosError, ImageExistsError) as e:
             # 原系统盘改回原名
-            rename_image(ceph=ceph, pool_name=pool_name, image_name=deleted_disk, new_name=disk_name)
+            try:
+                rename_image(ceph=ceph, pool_name=pool_name, image_name=deleted_disk, new_name=disk_name)
+            except Exception as exc:
+                pass
             raise VmError(msg=f'虚拟机系统盘创建失败, {str(e)}')
 
         return vm

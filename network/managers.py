@@ -15,8 +15,9 @@ class VlanManager:
     '''
     MODEL = Vlan
 
-    def get_vlan_by_id(self, vlan_id:int):
-        '''
+    @staticmethod
+    def get_vlan_by_id(vlan_id: int):
+        """
         通过id获取镜像元数据模型对象
         :param vlan_id: 镜像id
         :return:
@@ -24,7 +25,7 @@ class VlanManager:
             None    #不存在
 
         :raise NetworkError
-        '''
+        """
         if not isinstance(vlan_id, int) or vlan_id < 0:
             raise NetworkError(msg='子网ID参数有误')
 
@@ -33,7 +34,8 @@ class VlanManager:
         except Exception as e:
             raise NetworkError(msg=f'查询子网时错误,{str(e)}')
 
-    def get_vlan_queryset(self):
+    @staticmethod
+    def get_vlan_queryset():
         return Vlan.objects.filter(enable=True).all()
 
     def get_center_vlan_queryset(self, center):
@@ -165,10 +167,11 @@ class VlanManager:
 
 
 class MacIPManager:
-    '''
+    """
     mac ip地址管理器
-    '''
-    def get_macip_queryset(self):
+    """
+    @staticmethod
+    def get_macip_queryset():
         return MacIP.objects.all()
 
     def get_enable_macip_queryset(self):
@@ -197,8 +200,9 @@ class MacIPManager:
 
         return queryset
 
-    def get_macip_by_id(self, macip_id:int):
-        '''
+    @staticmethod
+    def get_macip_by_id(macip_id: int):
+        """
         通过id获取mac ip
 
         :param macip_id: mac ip id
@@ -207,7 +211,7 @@ class MacIPManager:
             None    #不存在
 
         :raise NetworkError
-        '''
+        """
         if not isinstance(macip_id, int) or macip_id < 0:
             raise NetworkError(msg='MacIP ID参数有误')
 
@@ -216,8 +220,9 @@ class MacIPManager:
         except Exception as e:
             raise NetworkError(msg=f'查询MacIP时错误,{str(e)}')
 
-    def get_macip_by_ipv4(self, ipv4:str):
-        '''
+    @staticmethod
+    def get_macip_by_ipv4(ipv4: str):
+        """
         通过ipv4获取mac ip
 
         :param ipv4: ip地址
@@ -226,7 +231,7 @@ class MacIPManager:
             None    #不存在
 
         :raise NetworkError
-        '''
+        """
         if not ipv4 or not isinstance(ipv4, str):
             raise NetworkError(msg='ipv4参数有误')
 
@@ -235,23 +240,25 @@ class MacIPManager:
         except Exception as e:
             raise NetworkError(msg=f'查询MacIP时错误,{str(e)}')
 
-    def has_free_ip_in_vlan(self, vlan_id:int):
-        '''
+    @staticmethod
+    def has_free_ip_in_vlan(vlan_id: int):
+        """
         子网中是否有可用的IP
 
         :param vlan_id: 子网id
         :return:
             True: 有
             False: 没有
-        '''
+        """
         qs = MacIP.get_all_free_ip_in_vlan(vlan_id)
         if qs.count() > 0:
             return True
 
         return False
 
-    def apply_for_free_ip(self, vlan_id:int=0, ipv4:str=''):
-        '''
+    @staticmethod
+    def apply_for_free_ip(vlan_id: int = 0, ipv4: str = ''):
+        """
         申请一个未使用的ip，申请成功的ip不再使用时需要通过free_used_ip()释放
 
         :param vlan_id: 子网id
@@ -259,7 +266,7 @@ class MacIPManager:
         :return:
             MacIP() # 成功
             None    # 失败
-        '''
+        """
         if not vlan_id and not ipv4:
             return None
 
@@ -283,16 +290,17 @@ class MacIPManager:
 
         return ip
 
-    def free_used_ip(self, ip_id:int=0, ipv4:str=''):
-        '''
+    @staticmethod
+    def free_used_ip(ip_id: int = 0, ipv4: str = ''):
+        """
         释放一个使用中的ip,通过id或ip
 
         :param ip_id:
-        :param ipv1:
+        :param ipv4:
         :return:
             True    # success
             False   # failed
-        '''
+        """
         try:
             with transaction.atomic():
                 if ip_id > 0:

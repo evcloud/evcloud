@@ -17,8 +17,10 @@ def clear_vm_sys_disk(modeladmin, request, queryset):
     for obj in queryset:
         try:
             obj.rm_sys_disk_snap()
-            if not obj.rm_sys_disk():
-                raise Exception('remove rbd image of disk error')
+            try:
+                obj.rm_sys_disk(raise_exception=True)
+            except Exception as e:
+                raise Exception(f'remove rbd image of disk error, {str(e)}')
         except Exception as e:
             exc = e
             continue
