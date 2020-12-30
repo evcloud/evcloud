@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib import messages
 
 from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateLog, Flavor
 
@@ -14,6 +15,8 @@ class VmAdmin(admin.ModelAdmin):
 
 def clear_vm_sys_disk(modeladmin, request, queryset):
     exc = None
+    failed_count = 0
+    success_count = 0
     for obj in queryset:
         try:
             obj.rm_sys_disk_snap()
@@ -21,29 +24,43 @@ def clear_vm_sys_disk(modeladmin, request, queryset):
                 obj.rm_sys_disk(raise_exception=True)
             except Exception as e:
                 raise Exception(f'remove rbd image of disk error, {str(e)}')
+            success_count = success_count + 1
         except Exception as e:
+            failed_count = failed_count + 1
             exc = e
             continue
 
     if exc is not None:
-        raise exc
+        msg = f'归档虚拟机的系统镜像删除，{success_count}个成功，{failed_count}个失败，error: {exc}'
+        modeladmin.message_user(request=request, message=msg, level=messages.ERROR)
+    else:
+        msg = f'成功删除{success_count}个归档虚拟机的系统镜像'
+        modeladmin.message_user(request=request, message=msg, level=messages.SUCCESS)
 
 
 def undefine_vm_from_host(modeladmin, request, queryset):
     exc = None
+    failed_count = 0
+    success_count = 0
     for obj in queryset:
         try:
             obj.check_and_release_host()
+            success_count = success_count + 1
         except Exception as e:
+            failed_count = failed_count + 1
             exc = e
             continue
 
     if exc is not None:
-        raise exc
+        msg = f'宿主机资源清理释放，{success_count}个成功，{failed_count}个失败，error: {exc}'
+        modeladmin.message_user(request=request, message=msg, level=messages.ERROR)
+    else:
+        msg = f'成功清理释放{success_count}个归档虚拟机所占用的宿主机资源'
+        modeladmin.message_user(request=request, message=msg, level=messages.SUCCESS)
 
 
 clear_vm_sys_disk.short_description = "清除所选的虚拟机的系统盘和快照"
-undefine_vm_from_host.short_description = "释放所选虚拟机所在宿主机的资源"
+undefine_vm_from_host.short_description = "释放所选虚拟机所占用宿主机的资源"
 
 
 @admin.register(VmArchive)
@@ -60,15 +77,23 @@ class VmArchiveAdmin(admin.ModelAdmin):
         后台管理批量删除重写， 通过每个对象的delete()方法删除，同时会删除ceph rbd image
         """
         exc = None
+        failed_count = 0
+        success_count = 0
         for obj in queryset:
             try:
                 obj.delete()
+                success_count = success_count + 1
             except Exception as e:
+                failed_count = failed_count + 1
                 exc = e
                 continue
 
         if exc is not None:
-            raise exc
+            msg = f'删除归档虚拟机，{success_count}个成功，{failed_count}个失败，error: {exc}'
+            self.message_user(request=request, message=msg, level=messages.ERROR)
+        else:
+            msg = f'成功删除{success_count}个归档虚拟机记录'
+            self.message_user(request=request, message=msg, level=messages.SUCCESS)
 
 
 @admin.register(VmLog)
