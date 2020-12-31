@@ -84,7 +84,7 @@
                                 <td>
                                     <span>{{ vm.remarks|default_if_none:'' }}</span>
                                 </td>
-                                <td><span id="vm_status_{{ vm.hex_uuid }}"><img src="{% static 'images/loading34.gif' %}" width="43px"/></span></td>
+                                <td><span id="vm_status_{{ vm.hex_uuid }}"></span></td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-success btn-disk-mount" data-vm-uuid="{{ vm.hex_uuid }}">挂载</button>
                                     <button type="button" class="btn btn-sm btn-warning btn-vm-shutdown" data-vm-uuid="{{ vm.hex_uuid }}">关机</button>
