@@ -18,7 +18,7 @@ from utils import errors
 from .scheduler import HostMacIPScheduler, ScheduleError
 
 
-def host_alive(host_ipv4:str, times=3, timeout=3):
+def host_alive(host_ipv4: str, times=3, timeout=3):
     """
     检测目标主机是否可访问
 
@@ -37,13 +37,13 @@ def host_alive(host_ipv4:str, times=3, timeout=3):
 
 
 class VmManager(VirtAPI):
-    '''
+    """
     虚拟机元数据管理器
-    '''
+    """
     VmError = VmError
 
-    def get_vm_by_uuid(self, vm_uuid:str, related_fields:tuple=('mac_ip', 'host')):
-        '''
+    def get_vm_by_uuid(self, vm_uuid: str, related_fields: tuple = ('mac_ip', 'host')):
+        """
         通过uuid获取虚拟机元数据
 
         :param vm_uuid: 虚拟机uuid hex字符串
@@ -52,7 +52,7 @@ class VmManager(VirtAPI):
             Vm() or None     # success
 
         :raise:  VmError
-        '''
+        """
         qs = self.get_vms_queryset()
         try:
             if related_fields:
@@ -61,23 +61,25 @@ class VmManager(VirtAPI):
         except Exception as e:
             raise VmError(msg=str(e))
 
-    def get_vms_queryset(self):
-        '''
+    @staticmethod
+    def get_vms_queryset():
+        """
         获取所有虚拟机的查询集
         :return: QuerySet()
-        '''
+        """
         return Vm.objects.all()
 
     def get_user_vms_queryset(self, user):
-        '''
+        """
         获取用户的虚拟机查询集
         :param user: 用户
         :return: QuerySet()
-        '''
+        """
         return self.get_vms_queryset().filter(user=user).all()
 
-    def _xml_edit_vcpu(self, xml_desc:str, vcpu:int):
-        '''
+    @staticmethod
+    def xml_edit_vcpu(xml_desc: str, vcpu: int):
+        """
         修改 xml中vcpu节点内容
 
         :param xml_desc: 定义虚拟机的xml内容
@@ -86,7 +88,7 @@ class VmManager(VirtAPI):
             xml: str    # success
 
         :raise:  VmError
-        '''
+        """
         xml = XMLEditor()
         if not xml.set_xml(xml_desc):
             raise VmError(msg='xml文本无效')
@@ -98,8 +100,9 @@ class VmManager(VirtAPI):
             raise VmError(msg='修改xml文本vcpu节点错误')
         return root.toxml()
 
-    def _xml_edit_mem(self, xml_desc:str, mem:int):
-        '''
+    @staticmethod
+    def xml_edit_mem(xml_desc: str, mem: int):
+        """
         修改xml中mem节点内容
 
         :param xml_desc: 定义虚拟机的xml内容
@@ -108,7 +111,7 @@ class VmManager(VirtAPI):
             xml: str    # success
 
         :raise:  VmError
-        '''
+        """
         xml = XMLEditor()
         if not xml.set_xml(xml_desc):
             raise VmError(msg='xml文本无效')
@@ -126,15 +129,16 @@ class VmManager(VirtAPI):
         except Exception as e:
             raise VmError(msg='修改xml文本memory节点错误')
 
-    def get_vms_queryset_by_center(self, center_or_id):
-        '''
+    @staticmethod
+    def get_vms_queryset_by_center(center_or_id):
+        """
         获取分中心下的虚拟机查询集
 
         :param center_or_id: 分中心对象或id
         :return:
             vms: QuerySet   # success
         :raise VmError
-        '''
+        """
         try:
             group_ids = CenterManager().get_group_ids_by_center(center_or_id)
             host_ids = GroupManager().get_host_ids_by_group_ids(group_ids)
@@ -143,15 +147,16 @@ class VmManager(VirtAPI):
 
         return Vm.objects.filter(host__in=host_ids).all()
 
-    def get_vms_queryset_by_group(self, group_or_id):
-        '''
+    @staticmethod
+    def get_vms_queryset_by_group(group_or_id):
+        """
         获取宿主机组下的虚拟机查询集
 
         :param group_or_id: 宿主机组对象或id
         :return:
             vms: QuerySet   # success
         :raise VmError
-        '''
+        """
         try:
             host_ids = GroupManager().get_all_host_ids_by_group(group_or_id)
         except ComputeError as e:
@@ -159,20 +164,21 @@ class VmManager(VirtAPI):
 
         return Vm.objects.filter(host__in=host_ids).all()
 
-    def get_vms_queryset_by_host(self, host_or_id):
-        '''
+    @staticmethod
+    def get_vms_queryset_by_host(host_or_id):
+        """
         获取宿主机下的虚拟机查询集
 
         :param host_or_id: 宿主机对象或id
         :return:
             vms: QuerySet   # success
         :raise VmError
-        '''
+        """
         return Vm.objects.filter(host=host_or_id).all()
 
-    def filter_vms_queryset(self, center_id:int=0, group_id:int=0, host_id:int=0, user_id:int=0, search:str='',
-                            all_no_filters:bool=False, related_fields:tuple=()):
-        '''
+    def filter_vms_queryset(self, center_id: int = 0, group_id: int = 0, host_id: int = 0, user_id: int = 0,
+                            search: str = '', all_no_filters: bool = False, related_fields: tuple = ()):
+        """
         通过条件筛选虚拟机查询集
 
         :param center_id: 分中心id,大于0有效
@@ -186,7 +192,7 @@ class VmManager(VirtAPI):
             QuerySet    # success
 
         :raise: VmError
-        '''
+        """
         if not related_fields:
             related_fields = ('user', 'image', 'mac_ip__vlan', 'host')
 
@@ -215,7 +221,7 @@ class VmManager(VirtAPI):
                                                  Q(uuid__icontains=search)).all()
             else:
                 vm_queryset = Vm.objects.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
-                                                 Q(uuid__icontains=search)).all()
+                                                Q(uuid__icontains=search)).all()
 
         return vm_queryset.select_related(*related_fields).all()
 
@@ -229,8 +235,8 @@ class VmManager(VirtAPI):
         """
         return VmDomain(host_ip=host_ipv4, vm_uuid=vm_uuid)
 
-    def get_vm_xml_desc(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def get_vm_xml_desc(self, host_ipv4: str, vm_uuid: str):
+        """
         动态从宿主机获取虚拟机的xml内容
 
         :param host_ipv4: 虚拟机所在的宿主机ip
@@ -239,15 +245,16 @@ class VmManager(VirtAPI):
             xml: str    # success
 
         :raise VmError()
-        '''
+        """
         domain = self.get_vm_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
         try:
             return domain.xml_desc()
         except self.VirtError as e:
             raise VmError(msg=str(e))
 
-    def _xml_remove_sys_disk_auth(self, xml_desc:str):
-        '''
+    @staticmethod
+    def _xml_remove_sys_disk_auth(xml_desc: str):
+        """
         去除vm xml中系统盘节点ceph认证的auth
 
         :param xml_desc: 定义虚拟机的xml内容
@@ -255,7 +262,7 @@ class VmManager(VirtAPI):
             xml: str    # success
 
         :raise:  VmError
-        '''
+        """
         xml = XMLEditor()
         if not xml.set_xml(xml_desc):
             raise VmError(msg='虚拟机xml文本无效')
@@ -276,8 +283,8 @@ class VmManager(VirtAPI):
         disk.removeChild(auth[0])
         return root.toxml()
 
-    def get_vm_vdisk_dev_list(self, vm:Vm):
-        '''
+    def get_vm_vdisk_dev_list(self, vm):
+        """
         获取虚拟机所有硬盘的dev
 
         :param vm: 虚拟机对象
@@ -285,7 +292,7 @@ class VmManager(VirtAPI):
             (disk:list, dev:list)    # disk = [disk_uuid, disk_uuid, ]; dev = ['vda', 'vdb', ]
 
         :raises: VmError
-        '''
+        """
         xml_desc = self.get_vm_xml_desc(vm_uuid=vm.get_uuid(), host_ipv4=vm.host.ipv4)
 
         dev_list = []
@@ -307,15 +314,16 @@ class VmManager(VirtAPI):
                         dev_list.append(disk_child.getAttribute('dev'))
         return disk_list, dev_list
 
-    def new_vdisk_dev(self, dev_list:list):
-        '''
+    @staticmethod
+    def new_vdisk_dev(dev_list: list):
+        """
         顺序从vda - vdz中获取下一个不包含在dev_list中的的dev字符串
 
         :param dev_list: 已使用的dev的list
         :return:
             str     # success
             None    # 没有可用的dev了
-        '''
+        """
         # 从vdb开始，系统xml模板中系统盘驱动和硬盘一样为virtio时，硬盘使用vda会冲突错误
         for i in range(1, 26):
             dev = 'vd' + chr(ord('a') + i % 26)
@@ -324,8 +332,8 @@ class VmManager(VirtAPI):
 
         return None
 
-    def mount_disk(self, vm:Vm, disk_xml:str):
-        '''
+    def mount_disk(self, vm: Vm, disk_xml: str):
+        """
         向虚拟机挂载虚拟硬盘
 
         :param vm: 虚拟机对象
@@ -334,7 +342,7 @@ class VmManager(VirtAPI):
             True    # success
             False   # failed
         :raises: VmError
-        '''
+        """
         host = vm.host
         domain = self.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.get_uuid())
         try:
@@ -344,8 +352,8 @@ class VmManager(VirtAPI):
         except self.VirtError as e:
             raise VmError(msg=f'挂载硬盘错误，{str(e)}')
 
-    def umount_disk(self, vm:Vm, disk_xml:str):
-        '''
+    def umount_disk(self, vm: Vm, disk_xml: str):
+        """
         从虚拟机卸载虚拟硬盘
 
         :param vm: 虚拟机对象
@@ -354,7 +362,7 @@ class VmManager(VirtAPI):
             True    # success
             False   # failed
         :raises: VmError
-        '''
+        """
         host = vm.host
         domain = self.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.get_uuid())
         try:
@@ -364,8 +372,9 @@ class VmManager(VirtAPI):
         except self.VirtError as e:
             raise VmError(msg=f'卸载硬盘错误，{str(e)}')
 
-    def create_sys_disk_snap(self, vm:Vm, remarks:str):
-        '''
+    @staticmethod
+    def create_sys_disk_snap(vm: Vm, remarks: str):
+        """
         创建虚拟机系统盘快照
         :param vm: 虚拟机对象
         :param remarks: 备注信息
@@ -373,7 +382,7 @@ class VmManager(VirtAPI):
             VmDiskSnap()    # success
 
         ::raises: VmError
-        '''
+        """
         image = vm.image
         ceph_pool = image.ceph_pool
         disk_snap = VmDiskSnap(disk=vm.disk, vm=vm, ceph_pool=ceph_pool, remarks=remarks)
@@ -384,8 +393,29 @@ class VmManager(VirtAPI):
 
         return disk_snap
 
-    def delete_sys_disk_snap(self, snap_id:int, user):
-        '''
+    @staticmethod
+    def get_user_disk_snap(snap_id: int, user):
+        """
+        获取用户有权限访问的系统盘快照
+
+        :param snap_id: 快照id
+        :param user: 用户
+        :return:
+            VmDiskSnap()
+        :raises: VmError
+        """
+        snap = VmDiskSnap.objects.select_related('vm', 'vm__user').filter(pk=snap_id).first()
+        if not snap:
+            raise VmError(msg='快照不存在')
+
+        if not user.is_superuser:
+            if snap.vm and not snap.vm.user_has_perms(user):
+                raise VmError(msg='没有此快照的访问权限')
+
+        return snap
+
+    def delete_sys_disk_snap(self, snap_id: int, user):
+        """
         删除虚拟机系统盘快照
 
         :param snap_id: 快照id
@@ -394,14 +424,8 @@ class VmManager(VirtAPI):
             True    # success
 
         :raises: VmError
-        '''
-        snap = VmDiskSnap.objects.select_related('vm', 'vm__user').filter(pk=snap_id).first()
-        if not snap:
-            raise VmError(msg='快照不存在')
-
-        if not user.is_superuser:
-            if snap.vm and not snap.vm.user_has_perms(user):
-                raise VmError(msg='没有此快照的访问权限')
+        """
+        snap = self.get_user_disk_snap(snap_id=snap_id, user=user)
 
         try:
             snap.delete()
@@ -410,8 +434,8 @@ class VmManager(VirtAPI):
 
         return True
 
-    def modify_sys_snap_remarks(self, snap_id:int, remarks:str, user):
-        '''
+    def modify_sys_snap_remarks(self, snap_id: int, remarks: str, user):
+        """
         修改虚拟机系统盘快照备注信息
 
         :param snap_id: 快照id
@@ -420,14 +444,8 @@ class VmManager(VirtAPI):
         :return:
             VmDiskSnap()    # success
         :raises: VmError
-        '''
-        snap = VmDiskSnap.objects.select_related('vm', 'vm__user').filter(pk=snap_id).first()
-        if not snap:
-            raise VmError(msg='快照不存在')
-
-        if not user.is_superuser:
-            if snap.vm and not snap.vm.user_has_perms(user):
-                raise VmError(msg='没有此快照的访问权限')
+        """
+        snap = self.get_user_disk_snap(snap_id=snap_id, user=user)
 
         try:
             snap.remarks = remarks
@@ -437,8 +455,9 @@ class VmManager(VirtAPI):
 
         return snap
 
-    def disk_rollback_to_snap(self, vm:Vm, snap_id:int):
-        '''
+    @staticmethod
+    def disk_rollback_to_snap(vm: Vm, snap_id: int):
+        """
         回滚虚拟机系统盘到指定快照
 
         :param vm: 虚拟机对象
@@ -447,7 +466,7 @@ class VmManager(VirtAPI):
             True    # success
 
         :raises: VmError
-        '''
+        """
         snap = VmDiskSnap.objects.select_related('ceph_pool', 'ceph_pool__ceph').filter(pk=snap_id).first()
         if not snap:
             raise VmError(msg='快照不存在')
@@ -671,13 +690,14 @@ class VmManager(VirtAPI):
 
 
 class VmArchiveManager:
-    '''
+    """
     虚拟机归档管理类
-    '''
+    """
     VmError = VmError
 
-    def add_vm_archive(self, vm:Vm):
-        '''
+    @staticmethod
+    def add_vm_archive(vm: Vm):
+        """
         添加一个虚拟机的归档记录
 
         :param vm: 虚拟机元数据对象
@@ -685,7 +705,7 @@ class VmArchiveManager:
             VmArchive() # success
 
         :raises:  VmError
-        '''
+        """
         try:
             host = vm.host
             group = host.group
@@ -697,9 +717,10 @@ class VmArchiveManager:
 
             va = VmArchive(uuid=vm.get_uuid(), name=vm.name, vcpu=vm.vcpu, mem=vm.mem, disk=vm.disk, xml=vm.xml,
                            mac=mac_ip.mac, ipv4=mac_ip.ipv4, vlan_id=vlan.id, br=vlan.br,
-                           image_id=image.id, image_parent=image.base_image, ceph_id=ceph_pool.ceph.id, ceph_pool=ceph_pool.pool_name,
-                           center_id=center.id, center_name=center.name, group_id=group.id, group_name=group.name,
-                           host_id=host.id, host_ipv4=host.ipv4, user=vm.user, create_time=vm.create_time, remarks=vm.remarks)
+                           image_id=image.id, image_parent=image.base_image, ceph_id=ceph_pool.ceph.id,
+                           ceph_pool=ceph_pool.pool_name, center_id=center.id, center_name=center.name,
+                           group_id=group.id, group_name=group.name, host_id=host.id, host_ipv4=host.ipv4,
+                           user=vm.user, create_time=vm.create_time, remarks=vm.remarks)
             va.save()
         except Exception as e:
             raise VmError(msg=str(e))
@@ -711,9 +732,9 @@ class VmArchiveManager:
 
 
 class VmLogManager:
-    '''
+    """
     虚拟机错误日志记录管理
-    '''
+    """
     def __init__(self):
         self.vm_log = VmLog()
 
@@ -721,8 +742,9 @@ class VmLogManager:
     def about(self):
         return self.vm_log
 
-    def add_log(self, title:str, about:int, text:str):
-        '''
+    @staticmethod
+    def add_log(title: str, about: int, text: str):
+        """
         添加记录
 
         :param title: 记录标题
@@ -731,7 +753,7 @@ class VmLogManager:
         :return:
             VmLog()     # success
             None        # failed
-        '''
+        """
         about = VmLog.to_valid_about_value(about)
         try:
             log = VmLog(title=title, about=about, content=text)
@@ -762,14 +784,16 @@ class FlavorManager:
         except Exception as e:
             raise VmError(msg=str(e))
 
-    def get_flaver_queryset(self):
+    @staticmethod
+    def get_flaver_queryset():
         """
         激活的样式
         :return: QuerySet()
         """
         return Flavor.objects.filter(enable=True).all()
 
-    def get_public_flaver_queryset(self):
+    @staticmethod
+    def get_public_flaver_queryset():
         """
         公开激活的样式
 
@@ -789,9 +813,9 @@ class FlavorManager:
 
 
 class VmAPI:
-    '''
+    """
     虚拟机API
-    '''
+    """
     VmError = VmError
 
     def __init__(self):
@@ -805,15 +829,17 @@ class VmAPI:
         self._vdisk_manager = VdiskManager()
         self._pci_manager = PCIDeviceManager()
 
-    def new_uuid_obj(self):
-        '''
+    @staticmethod
+    def new_uuid_obj():
+        """
         生成一个新的uuid字符串
         :return: uuid:str
-        '''
+        """
         return uuid.uuid4()
 
-    def get_rbd_manager(self, ceph:CephCluster, pool_name:str):
-        '''
+    @staticmethod
+    def get_rbd_manager(ceph: CephCluster, pool_name: str):
+        """
         获取一个rbd管理接口对象
 
         :param ceph: ceph配置模型对象CephCluster()
@@ -823,7 +849,7 @@ class VmAPI:
             raise VmError   # failed
 
         :raise VmError
-        '''
+        """
         try:
             return get_rbd_manager(ceph=ceph, pool_name=pool_name)
         except RadosError as e:
@@ -844,10 +870,33 @@ class VmAPI:
         vm = self._vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=related_fields)
         if vm is None:
             raise VmNotExistError(msg='虚拟机不存在')
+
         if not vm.user_has_perms(user=user):
             raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
         return vm
+
+    def check_vm_shutdown(self, vm):
+        """
+        查询vm是已关机状态
+
+        :param vm: 虚拟机model实例，Vm()
+        :return:
+            VmDomain()
+
+        :raises: VmError
+        """
+        # 虚拟机的状态
+        host = vm.host
+        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
+        try:
+            run = domain.is_running()
+        except VirtError as e:
+            raise VmError(msg=f'获取虚拟机运行状态失败, {str(e)}')
+        if run:
+            raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+        return domain
 
     def _get_user_shutdown_vm(self, vm_uuid: str, user, related_fields: tuple = ()):
         """
@@ -862,20 +911,11 @@ class VmAPI:
         :raises: VmError
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=related_fields)
-
-        # 虚拟机的状态
-        host = vm.host
-        try:
-            run = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid).is_running()
-        except VirtError as e:
-            raise VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
-        if run:
-            raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
-
+        self.check_vm_shutdown(vm=vm)   # 虚拟机的状态
         return vm
 
     def _get_image(self, image_id: int):
-        '''
+        """
         获取image
 
         :return:
@@ -883,7 +923,7 @@ class VmAPI:
             raise VmError
 
         :raise VmError
-        '''
+        """
         try:
             image = self._image_manager.get_image_by_id(image_id, related_fields=('ceph_pool__ceph', 'xml_tpl'))
         except ImageError as e:
@@ -895,8 +935,8 @@ class VmAPI:
 
         return image
 
-    def _get_vlan(self, vlan_id:int):
-        '''
+    def _get_vlan(self, vlan_id: int):
+        """
            获取子网vlan
 
            :return:
@@ -904,7 +944,7 @@ class VmAPI:
                raise VmError
 
            :raise VmError
-           '''
+           """
         try:
             vlan = self._vlan_manager.get_vlan_by_id(vlan_id)
         except NetworkError as e:
@@ -956,7 +996,7 @@ class VmAPI:
         return mac_ip
 
     def _get_groups_host_check_perms(self, center_id: int, group_id: int, host_id: int, user, vlan=None):
-        '''
+        """
         检查用户是否有宿主机组或宿主机访问权限，优先使用host_id
 
         :param group_id: 宿主机组ID
@@ -968,7 +1008,7 @@ class VmAPI:
                 [Group()], None     # host_id无效，group_id有效时
 
         :raises: VmError
-        '''
+        """
         if host_id:
             try:
                 host = self._host_manager.get_host_by_id(host_id)
@@ -1023,7 +1063,7 @@ class VmAPI:
 
     def create_vm(self, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
                   host_id=None, ipv4=None, remarks=None, ip_public=None, **kwargs):
-        '''
+        """
         创建一个虚拟机
 
         说明：
@@ -1048,7 +1088,7 @@ class VmAPI:
             raise VmError
 
         :raise VmError
-        '''
+        """
         macip = None    # 申请的macip
         vlan = None
         diskname = None     # clone的系统镜像
@@ -1106,24 +1146,23 @@ class VmAPI:
                 raise VmError(msg=f'申请资源错误,{str(e)}')
             if not macip:
                 raise VmError(msg='申请mac ip失败')
-            if not vlan:
-                vlan = macip.vlan
 
             # 创建虚拟机的系统镜像disk
             try:
-                rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap, new_image_name=vm_uuid, data_pool=data_pool)
+                rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap,
+                                        new_image_name=vm_uuid, data_pool=data_pool)
                 diskname = vm_uuid
             except RadosError as e:
                 raise VmError(msg=f'clone image error, {str(e)}')
 
             # 创建虚拟机
             vm = self._create_vm2(vm_uuid=vm_uuid, diskname=diskname, vcpu=vcpu, mem=mem, image=image,
-                                  vlan=vlan, host=host, macip=macip, user=user, remarks=remarks)
+                                  host=host, macip=macip, user=user, remarks=remarks)
         except Exception as e:
             if macip:
                 self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
             if host:
-                self._host_manager.free_to_host(host_id=host.id, vcpu=vcpu, mem=mem) # 释放已申请的宿主机资源
+                self._host_manager.free_to_host(host_id=host.id, vcpu=vcpu, mem=mem)    # 释放已申请的宿主机资源
             if diskname:
                 try:
                     rbd_manager.remove_image(image_name=diskname)
@@ -1135,15 +1174,15 @@ class VmAPI:
         host.vm_created_num_add_1()  # 宿主机已创建虚拟机数量+1
         return vm
 
-    def _create_vm2(self, vm_uuid:str, diskname:str, vcpu:int, mem:int, image, vlan, host, macip, user, remarks:str=''):
-        '''
+    def _create_vm2(self, vm_uuid: str, diskname: str, vcpu: int, mem: int, image, host, macip,
+                    user, remarks: str = ''):
+        """
         仅创建虚拟机，不会清理传入的各种资源
 
         :param vm_uuid: 虚拟机uuid
         :param diskname: 系统盘uuid
         :param vcpu: cpu数
         :param mem: 内存大小
-        :param vlan: 子网对象
         :param host: 宿主机对象
         :param macip: mac ip对象
         :param user: 用户对象
@@ -1153,7 +1192,7 @@ class VmAPI:
             raise VmError
 
         :raises: VmError
-        '''
+        """
         # 虚拟机xml
         try:
             xml_desc = self._vm_manager.build_vm_xml_desc(vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, vm_disk_name=diskname,
@@ -1178,8 +1217,8 @@ class VmAPI:
 
         return vm
 
-    def delete_vm(self, vm_uuid:str, user=None, force=False):
-        '''
+    def delete_vm(self, vm_uuid: str, user=None, force=False):
+        """
         删除一个虚拟机
 
         :param vm_uuid: 虚拟机uuid
@@ -1190,7 +1229,7 @@ class VmAPI:
             raise VmError
 
         :raise VmError
-        '''
+        """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         host = vm.host
         # 虚拟机的状态
@@ -1273,8 +1312,8 @@ class VmAPI:
         vm_ahv.rename_sys_disk_archive()
         return True
 
-    def edit_vm_vcpu_mem(self, vm_uuid:str, vcpu:int=0, mem:int=0, user=None, force=False):
-        '''
+    def edit_vm_vcpu_mem(self, vm_uuid: str, vcpu: int = 0, mem: int = 0, user=None, force=False):
+        """
         修改虚拟机vcpu和内存大小
 
         :param vm_uuid: 虚拟机uuid
@@ -1287,7 +1326,7 @@ class VmAPI:
             raise VmError
 
         :raise VmError
-        '''
+        """
         if vcpu < 0 or mem < 0:
             raise VmError(msg='vcpu或mem不能小于0')
 
@@ -1333,7 +1372,7 @@ class VmAPI:
                         raise VmError(msg='释放宿主机vcpu资源失败')
 
                 try:
-                    xml_desc = self._vm_manager._xml_edit_vcpu(xml_desc=xml_desc, vcpu=vcpu)
+                    xml_desc = self._vm_manager.xml_edit_vcpu(xml_desc=xml_desc, vcpu=vcpu)
                 except VmError as e:
                     raise e
 
@@ -1355,7 +1394,7 @@ class VmAPI:
                         raise VmError(msg='释放宿主机内存资源失败')
 
                 try:
-                    xml_desc = self._vm_manager._xml_edit_mem(xml_desc=xml_desc, mem=mem)
+                    xml_desc = self._vm_manager.xml_edit_mem(xml_desc=xml_desc, mem=mem)
                 except VmError as e:
                     raise e
 
@@ -1370,7 +1409,7 @@ class VmAPI:
 
             vm.xml = xml_desc
         except VmError as e:
-                raise e
+            raise e
 
         try:
             vm.save()
@@ -1379,8 +1418,8 @@ class VmAPI:
 
         return True
 
-    def vm_operations(self, vm_uuid:str, op:str, user):
-        '''
+    def vm_operations(self, vm_uuid: str, op: str, user):
+        """
         操作虚拟机
 
         :param vm_uuid: 虚拟机uuid
@@ -1390,7 +1429,7 @@ class VmAPI:
             True    # success
             False   # failed
         :raise VmError
-        '''
+        """
         # 删除操作
         try:
             if op == 'delete':
@@ -1419,8 +1458,8 @@ class VmAPI:
         except VirtError as e:
             raise VmError(msg=str(e))
 
-    def get_vm_status(self, vm_uuid:str, user):
-        '''
+    def get_vm_status(self, vm_uuid: str, user):
+        """
         获取虚拟机的运行状态
 
         :param vm_uuid: 虚拟机uuid
@@ -1429,11 +1468,11 @@ class VmAPI:
             (state_code:int, state_str:str)     # success
 
         :raise VmError()
-        '''
+        """
         return self._vm_manager.get_vm_status(vm_uuid=vm_uuid, user=user)
 
-    def modify_vm_remark(self, vm_uuid:str, remark:str, user):
-        '''
+    def modify_vm_remark(self, vm_uuid: str, remark: str, user):
+        """
         修改虚拟机备注信息
 
         :param vm_uuid: 虚拟机uuid
@@ -1442,11 +1481,11 @@ class VmAPI:
         :return:
             True       # success
         :raise VmError()
-        '''
+        """
         return self._vm_manager.modify_vm_remark(vm_uuid=vm_uuid, remark=remark, user=user)
 
-    def mount_disk(self, vm_uuid:str, vdisk_uuid:str, user):
-        '''
+    def mount_disk(self, vm_uuid: str, vdisk_uuid: str, user):
+        """
         向虚拟机挂载硬盘
 
         :param vm_uuid: 虚拟机uuid
@@ -1456,7 +1495,7 @@ class VmAPI:
             Vdisk()    # success
 
         :raises: VmError
-        '''
+        """
         try:
             vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid, related_fields=('quota', 'quota__group'))
         except VdiskError as e:
@@ -1513,8 +1552,8 @@ class VmAPI:
 
         return vdisk
 
-    def umount_disk(self, vdisk_uuid:str, user):
-        '''
+    def umount_disk(self, vdisk_uuid: str, user):
+        """
         从虚拟机卸载硬盘
 
         :param vdisk_uuid: 虚拟硬盘uuid
@@ -1523,7 +1562,7 @@ class VmAPI:
             Vdisk()    # success
 
         :raises: VmError
-        '''
+        """
         try:
             vdisk = self._vdisk_manager.get_vdisk_by_uuid(uuid=vdisk_uuid, related_fields=('vm', 'vm__host'))
         except VdiskError as e:
@@ -1579,8 +1618,8 @@ class VmAPI:
 
         return vdisk
 
-    def create_vm_sys_snap(self, vm_uuid:str, remarks:str, user):
-        '''
+    def create_vm_sys_snap(self, vm_uuid: str, remarks: str, user):
+        """
         创建虚拟机系统盘快照
         :param vm_uuid: 虚拟机id
         :param remarks: 快照备注信息
@@ -1588,7 +1627,7 @@ class VmAPI:
         :return:
             VmDiskSnap()    # success
         :raises: VmError
-        '''
+        """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'image__ceph_pool__ceph'))
 
         # 虚拟机的状态
@@ -1603,8 +1642,8 @@ class VmAPI:
         snap = self._vm_manager.create_sys_disk_snap(vm=vm, remarks=remarks)
         return snap
 
-    def vm_rollback_to_snap(self, vm_uuid:str, snap_id:int, user):
-        '''
+    def vm_rollback_to_snap(self, vm_uuid: str, snap_id: int, user):
+        """
         回滚虚拟机系统盘到指定快照
 
         :param vm_uuid: 虚拟机id
@@ -1614,13 +1653,13 @@ class VmAPI:
            True    # success
 
         :raises: VmError
-        '''
+        """
         vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=())
         return self._vm_manager.disk_rollback_to_snap(vm=vm, snap_id=snap_id)
 
-    def umount_pci_device(self, device_id:int, user):
-        '''
-        从虚拟机卸载pci设备
+    def get_user_pci_device(self, device_id: int, user):
+        """
+        获取用户有权限访问的pci设备
 
         :param device_id: pci设备id
         :param user: 用户
@@ -1628,7 +1667,7 @@ class VmAPI:
             PCIDevice()    # success
 
         :raises: VmError
-        '''
+        """
         try:
             device = self._pci_manager.get_device_by_id(device_id=device_id, related_fields=('host',))
         except DeviceError as e:
@@ -1641,21 +1680,28 @@ class VmAPI:
         if not device.user_has_perms(user=user):
             raise VmError(msg='当前用户没有权限访问此设备')
 
+        return device
+
+    def umount_pci_device(self, device_id: int, user):
+        """
+        从虚拟机卸载pci设备
+
+        :param device_id: pci设备id
+        :param user: 用户
+        :return:
+            PCIDevice()    # success
+
+        :raises: VmError
+        """
+        device = self.get_user_pci_device(device_id=device_id, user=user)
         vm = device.vm
         if vm is None:
             return True
-        if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
 
-        # 虚拟机的状态
-        host = vm.host
-        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
-        try:
-            run = domain.is_running()
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
+        if not vm.user_has_perms(user=user):
+            raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
+
+        domain = self.check_vm_shutdown(vm=vm)
 
         # 卸载设备
         try:
@@ -1673,8 +1719,8 @@ class VmAPI:
 
         return device
 
-    def mount_pci_device(self, vm_uuid:str, device_id:int, user):
-        '''
+    def mount_pci_device(self, vm_uuid: str, device_id: int, user):
+        """
         向虚拟机挂载pci设备
 
         :param vm_uuid: 虚拟机uuid
@@ -1684,19 +1730,8 @@ class VmAPI:
             PCIDevice()   # success
 
         :raises: VmError
-        '''
-        try:
-            device = self._pci_manager.get_device_by_id(device_id=device_id, related_fields=('host',))
-        except DeviceError as e:
-            raise VmError(msg='查询设备时错误')
-
-        if device is None:
-            raise VmError(msg='设备不存在')
-        if not device.enable:
-            raise VmError(msg='设备暂不可使用')
-        if not device.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此设备')
-
+        """
+        device = self.get_user_pci_device(device_id=device_id, user=user)
         vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'host__group'))
         # 向虚拟机挂载
         try:
@@ -1806,12 +1841,12 @@ class VmAPI:
             'user', 'host__group', 'image__ceph_pool__ceph'))
 
         # 虚拟机的状态
-        is_host_down = False
+        # is_host_down = False
         host = vm.host
         try:
             run = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid).is_running()
         except VirHostDown as e:
-            is_host_down = True
+            # is_host_down = True
             if not force:
                 raise VmError(msg=f'无法连接宿主机,{str(e)}')
         except VirDomainNotExist as e:
@@ -1936,7 +1971,8 @@ class VmAPI:
 
         return vm
 
-    def _reset_vm_sys_disk(self, vm: Vm):
+    @staticmethod
+    def _reset_vm_sys_disk(vm: Vm):
         """
         重置虚拟机系统盘，恢复到创建时状态
 
@@ -2047,7 +2083,8 @@ class VmAPI:
 
         :raises: VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user', 'image__ceph_pool__ceph'))
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user,
+                                     related_fields=('host', 'user', 'image__ceph_pool__ceph'))
         host = vm.host
         # 虚拟机
         domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
@@ -2073,8 +2110,8 @@ class VmAPI:
             raise errors.VmDiskImageMissError(msg=f'虚拟主机系统盘镜像不存在，无法恢复此虚拟主机')
 
         try:
-            xml_desc = self._vm_manager.build_vm_xml_desc(vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name,
-                                                          image=image, mac_ip=vm.mac_ip)
+            xml_desc = self._vm_manager.build_vm_xml_desc(vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu,
+                                                          vm_disk_name=disk_name, image=image, mac_ip=vm.mac_ip)
         except Exception as e:
             raise VmError(msg=f'构建虚拟主机xml错误，{str(e)}')
 
@@ -2085,4 +2122,3 @@ class VmAPI:
             raise VmError(msg=f'宿主机上创建虚拟主机错误，{str(e)}')
 
         return vm
-

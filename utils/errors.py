@@ -1,17 +1,17 @@
 class Error(Exception):
-    '''
+    """
     错误定义
-    '''
+    """
     code = 500
     msg = 'error'
     err_code = 'Error'
 
     def __init__(self, code: int = 0, msg: str = '', err=None, err_code: str = ''):
-        '''
+        """
         :param code: 错误码
         :param msg: 错误信息
         :param err: 错误对象
-        '''
+        """
         self.code = code if code > 0 else self.code
         self.msg = msg if msg else self.msg
         self.err = err
@@ -22,7 +22,7 @@ class Error(Exception):
         return self.detail()
 
     def detail(self):
-        '''错误详情'''
+        """错误详情"""
         if self.msg:
             return self.msg
 

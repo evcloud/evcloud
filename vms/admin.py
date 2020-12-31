@@ -91,30 +91,27 @@ class VmArchiveAdmin(admin.ModelAdmin):
         if exc is not None:
             msg = f'删除归档虚拟机，{success_count}个成功，{failed_count}个失败，error: {exc}'
             self.message_user(request=request, message=msg, level=messages.ERROR)
-        else:
-            msg = f'成功删除{success_count}个归档虚拟机记录'
-            self.message_user(request=request, message=msg, level=messages.SUCCESS)
 
 
 @admin.register(VmLog)
 class VmLogAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'title',)
-    list_display = ( 'id', 'title', 'about', 'create_time')
+    list_display = ('id', 'title', 'about', 'create_time')
     search_fields = ['title', 'content']
-    list_filter = ['about',]
+    list_filter = ['about']
 
 
 @admin.register(VmDiskSnap)
 class VmDiskSnapAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
-    list_display = ( 'id', 'snap', 'disk', 'vm', 'create_time', 'remarks')
+    list_display = ('id', 'snap', 'disk', 'vm', 'create_time', 'remarks')
     search_fields = ['disk', 'remarks']
-    list_filter = ['vm',]
+    list_filter = ['vm']
 
     def delete_queryset(self, request, queryset):
-        '''
+        """
         后台管理批量删除重写， 通过每个对象的delete()方法删除，同时会删除ceph rbd image snap
-        '''
+        """
         for obj in queryset:
             obj.delete()
 

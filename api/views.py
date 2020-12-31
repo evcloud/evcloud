@@ -47,14 +47,14 @@ def serializer_error_msg(errors, default=''):
                 val = errors[key]
                 msg = f'{key}, {str(val[0])}'
                 break
-    except:
+    except Exception:
         pass
 
     return msg
 
 
 def str_to_int_or_default(val, default):
-    '''
+    """
     字符串转int，转换失败返回设置的默认值
 
     :param val: 待转化的字符串
@@ -62,7 +62,7 @@ def str_to_int_or_default(val, default):
     :return:
         int     # success
         default # failed
-    '''
+    """
     try:
         return int(val)
     except Exception:
