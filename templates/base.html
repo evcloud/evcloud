@@ -25,7 +25,7 @@
             padding-bottom: 20px;
         }
         .page-footer{
-            background: #ececec;
+            {#background: #f6f4f4;#}
             flex: 0 0 auto;
             {#height:60px;#}
         }
@@ -62,6 +62,8 @@
                         <a class="dropdown-item" href="{% url 'apidocs' %}" target="view_window" >API交互文档</a>
                         <a class="dropdown-item" href="{% url 'redoc' %}" target="view_window" >API文档</a>
                         <a class="dropdown-item" href="{% url 'docs:docs' %}">文档</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'about' %}">关于</a>
                     </div>
                 </li>
                 {% if user.is_authenticated %}
@@ -90,7 +92,7 @@
     <div class="page-content">
         {% block boby %}{% endblock %}
     </div>
-    <footer class="page-footer text-center">
+    <footer class="page-footer text-center bg-light p-2">
         <p><a href="http://www.cnic.cas.cn/">中国科学院计算机网络信息中心</a> 科技云部</p>
     </footer>
     <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>

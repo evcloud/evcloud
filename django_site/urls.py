@@ -16,10 +16,11 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from version import __version__
 
 admin.AdminSite.site_header = 'EVCloud后台管理（管理员登录）'
 admin.AdminSite.site_title = '管理员登录'
@@ -27,6 +28,10 @@ admin.AdminSite.site_title = '管理员登录'
 
 def home(request):
     return redirect(to='vms:vms-list')
+
+
+def about(request):
+    return render(request, 'about.html', context={'version': __version__})
 
 
 schema_view = get_schema_view(
@@ -54,6 +59,7 @@ urlpatterns = [
     path('apidocs/', schema_view.with_ui('swagger', cache_timeout=0), name='apidocs'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
     path('docs/', include('docs.urls', namespace='docs')),
+    path('about/', about, name='about'),
 ]
 
 if settings.DEBUG:
