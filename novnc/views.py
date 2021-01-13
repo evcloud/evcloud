@@ -1,11 +1,12 @@
-#coding=utf-8
-from django.http import  HttpResponse
+# coding=utf-8
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.conf import settings
 
 from novnc.manager import NovncTokenManager
 
 NOVNC_PORT = getattr(settings, 'NOVNC_SERVER_PORT', 80)
+
 
 def vnc_view(req):
     vncid = req.GET.get("vncid")
