@@ -22,7 +22,6 @@ def vlan_add(request):
         vlan = Vlan.objects.get(id=vlan_id)
         return render(request, 'vlan_add.html', {'vlan': vlan})
     elif request.method == 'POST':
-        print(request.POST)
         from_ip = request.POST.get('start_ip')
         to_ip = request.POST.get('end_ip')
         vlan_id = request.POST.get('vlan_id')

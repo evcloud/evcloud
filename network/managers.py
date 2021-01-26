@@ -1,6 +1,7 @@
-import re
 from io import StringIO
+import io
 
+from ipaddress import IPv4Address, AddressValueError
 from django.db import transaction
 from django.db.models import Subquery
 
@@ -108,27 +109,34 @@ class VlanManager:
         :param write_database: True 生成并导入到数据库 False 生成不导入数据库
         :return:
         """
-        reg = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-        if not (re.match(reg, from_ip) and re.match(reg, to_ip)):
-            raise NetworkError(msg='输入的ip地址错误')
-        ip_int = [[*map(int, ip.split('.'))] for ip in (from_ip, to_ip)]
-        ip_hex = [ip[0] << 24 | ip[1] << 16 | ip[2] << 8 | ip[3] for ip in ip_int]
-        if ip_hex[0] > ip_hex[1]:
-            raise NetworkError(msg='输入的ip地址错误')
+        try:
+            ipv4_from = IPv4Address(from_ip)
+            ipv4_to = IPv4Address(to_ip)
+        except AddressValueError as e:
+            raise NetworkError(msg=f'输入的ip地址无效, {e}')
 
-        subips = [f'{ip >> 24}.{(ip & 0x00ff0000) >> 16}.{(ip & 0x0000ff00) >> 8}.{ip & 0x000000ff}'
-                  for ip in range(ip_hex[0], ip_hex[1] + 1) if ip & 0xff]
-        submacs = ['C8:00:' + ':'.join(map(lambda x: x[2:].upper().rjust(2, '0'),
-                                           map(lambda x: hex(int(x)), ip.split('.')))) for ip in subips]
+        int_from = int(ipv4_from)
+        int_to = int(ipv4_to)
+        if int_from > int_to:
+            raise NetworkError(msg='请检查输入的ip地址的范围，起始ip不能大于结束ip地址')
+
+        l_ip_mac = []
+        for ip in range(int_from, int_to + 1):
+            if ip & 0xff:
+                ip_obj = IPv4Address(ip)
+                p = ip_obj.packed
+                mac = f'C8:00:{p[0]:02X}:{p[1]:02X}:{p[2]:02X}:{p[3]:02X}'
+                l_ip_mac.append((str(ip_obj), mac))
+
         if write_database:
             with transaction.atomic():
-                for subip, submac in zip(subips, submacs):
+                for subip, submac in l_ip_mac:
                     try:
                         MacIP.objects.create(vlan_id=vlan_id, ipv4=subip, mac=submac)
                     except Exception as error:
                         raise NetworkError(msg='ip写入数据库失败，部分ip数据库中已有')
 
-        return [*zip(subips, submacs)]
+        return l_ip_mac
 
     @staticmethod
     def get_macips_by_vlan(vlan):
@@ -149,7 +157,7 @@ class VlanManager:
         生成DHCP配置文件
         :param vlan: vlan对象
         :param macips: 对应vlan下的所有macip组
-        :return: 返回文件数据
+        :return: str, StringIO()
         """
         lines = 'subnet %s netmask %s {\n' % (vlan.subnet_ip, vlan.net_mask)
         lines += '\t' + 'option routers\t%s;\n' % vlan.gateway
@@ -164,11 +172,17 @@ class VlanManager:
         # lines = lines + '\t' + 'next-server 159.226.50.246;   #tftp server\n'
         # lines = lines + '\t' + 'filename "/pxelinux.0";    #boot file\n'
 
+        file_name = f'{vlan.subnet_ip}_dhcpd.conf'
+        file = StringIO()
+        file.write(lines)
         for macip in macips:
-            lines += '\t' + 'host %s{hardware ethernet %s;fixed-address %s;}\n' % (
-                'v_' + macip.ipv4.replace('.', '_'), macip.mac, macip.ipv4)
+            line = f"\thost v_{macip.ipv4.replace('.', '_')} " \
+                   f"{{hardware ethernet {macip.mac};fixed-address {macip.ipv4};}}\n"
+            file.write(line)
 
-        return vlan.subnet_ip + '_dhcpd.conf', StringIO(lines)
+        file.write('}')
+        file.seek(io.SEEK_SET)      # 重置偏移量
+        return file_name, file
 
 
 class MacIPManager:
