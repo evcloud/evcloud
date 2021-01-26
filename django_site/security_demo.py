@@ -20,7 +20,7 @@ DATABASES = {
 
 # 邮箱配置
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_USE_TLS = True    #是否使用TLS安全传输协议
+EMAIL_USE_TLS = True    # 是否使用TLS安全传输协议
 # EMAIL_PORT = 25
 EMAIL_HOST = 'xxx'
 EMAIL_HOST_USER = 'xxx'

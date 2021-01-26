@@ -7,10 +7,10 @@ User = get_user_model()     # 获取用户模型
 
 
 class Center(models.Model):
-    '''
+    """
     分中心模型
     一个分中心对应一个存储后端，存储虚拟机相关的数据，Ceph集群，虚拟机的虚拟硬盘和系统镜像使用ceph块存储
-    '''
+    """
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='数据中心名称', max_length=100, unique=True)
     location = models.CharField(verbose_name='位置', max_length=100)
@@ -26,11 +26,11 @@ class Center(models.Model):
 
 
 class Group(models.Model):
-    '''
+    """
     宿主机组模型
 
     组用于权限隔离，某一个用户创建的虚拟机只能创建在指定的组的宿主机上，无权使用其他组的宿主机
-    '''
+    """
     id = models.AutoField(primary_key=True)
     center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的分中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
@@ -47,13 +47,13 @@ class Group(models.Model):
         unique_together = ('center', 'name')
 
     def user_has_perms(self, user: User):
-        '''
+        """
         用户是否有访问此宿主机组的权限
         :param user: 用户
         :return:
             True    # has
             False   # no
-        '''
+        """
         if not user or not user.id:
             return False
 
@@ -103,45 +103,45 @@ class Host(models.Model):
         return self.ipv4
 
     def exceed_vm_limit(self):
-        '''
+        """
         检查是否达到或超过的可创建宿主机的数量上限
         :return:
             True: 已到上限，
             False: 未到上限
-        '''
+        """
         return self.vm_created >= self.vm_limit
 
-    def exceed_mem_limit(self, mem:int):
-        '''
+    def exceed_mem_limit(self, mem: int):
+        """
         检查宿主机是否还有足够的内存可供使用
         :param mem: 需要的内存大小
         :return:
             True: 没有足够的内存可用
             False: 内存足够使用
-        '''
+        """
         free_mem = self.mem_total - self.mem_reserved - self.mem_allocated
-        return  mem > free_mem
+        return mem > free_mem
 
-    def exceed_vcpu_limit(self, vcpu:int):
-        '''
+    def exceed_vcpu_limit(self, vcpu: int):
+        """
         检查宿主机是否还有足够的cpu可供使用
         :param vcpu: 需要的vcpu数量
         :return:
             True: 没有足够的vcpu可用
             False: vcpu足够使用
-        '''
+        """
         free_cpu = self.vcpu_total - self.vcpu_allocated
         return vcpu > free_cpu
 
-    def meet_needs(self, vcpu:int, mem:int):
-        '''
+    def meet_needs(self, vcpu: int, mem: int):
+        """
         检查宿主机是否满足资源需求
         :param vcpu: 需要的vcpu数量
         :param mem: 需要的内存大小
         :return:
             True: 满足
             False: 不满足
-        '''
+        """
         # 可创建虚拟机数量限制
         if self.exceed_vm_limit():
             return False
@@ -157,7 +157,7 @@ class Host(models.Model):
         return True
 
     def claim(self, vcpu: int, mem: int):
-        '''
+        """
         从宿主机申请的资源
 
         :param vcpu: 要申请的cpu数
@@ -165,7 +165,7 @@ class Host(models.Model):
         :return:
             True    # success
             False   # failed
-        '''
+        """
         # 申请资源
         if vcpu <= 0 and mem <= 0:
             return True
@@ -176,13 +176,13 @@ class Host(models.Model):
         try:
             self.save()
             self.refresh_from_db()
-        except Exception as e:
+        except Exception:
             return False
 
         return True
 
     def free(self, vcpu: int, mem: int):
-        '''
+        """
         释放从宿主机申请的资源
 
         :param vcpu: 要释放的cpu数
@@ -190,7 +190,7 @@ class Host(models.Model):
         :return:
             True    # success
             False   # failed
-        '''
+        """
         # 释放资源
         if vcpu <= 0 and mem <= 0:
             return True
@@ -201,32 +201,32 @@ class Host(models.Model):
         try:
             self.save()
             self.refresh_from_db()
-        except Exception as e:
+        except Exception:
             return False
 
         return True
 
     def user_has_perms(self, user):
-        '''
+        """
         用户是否有访问此宿主机的权限
         :param user: 用户
         :return:
             True    # has
             False   # no
-        '''
+        """
         if self.group.user_has_perms(user=user):
             return True
 
         return False
 
     def vm_created_num_add_1(self, commit=True):
-        '''
+        """
         已创建虚拟机数量+1
         :param commit: True,立即提交更新到数据库；False,不提交
         :return:
             True
             False
-        '''
+        """
         self.vm_created = F('vm_created') + 1
         if not commit:
             return True
@@ -234,19 +234,19 @@ class Host(models.Model):
         try:
             self.save(update_fields=['vm_created'])
             self.refresh_from_db()
-        except Exception as e:
+        except Exception:
             return False
 
         return True
 
     def vm_created_num_sub_1(self, commit=True):
-        '''
+        """
         已创建虚拟机数量-1
         :param commit: True,立即提交更新到数据库；False,不提交
         :return:
             True
             False
-        '''
+        """
         self.vm_created = F('vm_created') - 1
         if not commit:
             return True
@@ -254,19 +254,19 @@ class Host(models.Model):
         try:
             self.save(update_fields=['vm_created'])
             self.refresh_from_db()
-        except Exception as e:
+        except Exception:
             return False
 
         return True
 
     def stats_vcpu_mem_vms_now(self):
-        '''
+        """
         实时从数据库统计此宿主机下的所有虚拟机的总vcpu数量、总内存大小和总虚拟机数
 
         :return: dict
             {'vcpu': int, 'mem': int, 'vm_num': int}       # success
             {'vcpu': -1, 'mem': -1, 'vm_num': -1}          # error
-        '''
+        """
         from vms.models import Vm
 
         if hasattr(self, '_stats_now_data'):   # 缓存
@@ -277,7 +277,7 @@ class Host(models.Model):
             return err_ret
         try:
             a = Vm.objects.filter(host=self.id).aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('pk'))
-        except Exception as e:
+        except Exception:
             return err_ret
 
         vcpu_now = a.get('vcpu_now', -1)

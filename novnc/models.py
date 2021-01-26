@@ -16,5 +16,3 @@ class Token(models.Model):
     class Meta:
         verbose_name = 'novnc tokens'
         verbose_name_plural = 'novnc tokens'
-        #unique_together = ('ip', 'port')
-

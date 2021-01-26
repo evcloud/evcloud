@@ -56,6 +56,7 @@ def vlan_show(request):
         macips = VlanManager().get_macips_by_vlan(vlan)
         macips = macips.prefetch_related('ip_vm')  # 反向预查询（避免多次访问数据库）
         file_name, config_file = VlanManager().generate_config_file(vlan, macips)
-        response = HttpResponse(config_file, content_type='APPLICATION/OCTET-STREAM') #设定文件头，这种设定可以让任意文件都能正确下载，而且已知文本文件不是本地打开  
-        response['Content-Disposition'] = 'attachment; filename=' + file_name #设定传输给客户端的文件名称  
+        # 设定文件头，这种设定可以让任意文件都能正确下载，而且已知文本文件不是本地打开
+        response = HttpResponse(config_file, content_type='APPLICATION/OCTET-STREAM')
+        response['Content-Disposition'] = 'attachment; filename=' + file_name   # 设定传输给客户端的文件名称
         return response  

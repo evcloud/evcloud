@@ -1,7 +1,7 @@
-#coding=utf-8
+# coding=utf-8
 from django.db.models import Q
 
-from utils.ev_libvirt.virt import VirtAPI, VirtError, VmDomain
+from utils.ev_libvirt.virt import VirtError, VmDomain
 from compute.managers import GroupManager, ComputeError, CenterManager, HostManager
 from .models import PCIDevice
 from .device import GPUDevice
@@ -16,20 +16,21 @@ class PCIDeviceManager:
         self._group_manager = GroupManager()
         self._host_manager = HostManager()
 
-    def get_device_queryset(self):
-        '''
+    @staticmethod
+    def get_device_queryset():
+        """
         获取所有PCI设备的查询集
         :return: QuerySet()
-        '''
+        """
         return PCIDevice.objects.all()
 
     def get_device_by_id(self, device_id: int, related_fields=('host',)):
-        '''
+        """
         :return:
             PCIDevice()     # success
             None            # not exists
         :raises:  DeviceError
-        '''
+        """
         qs = self.get_device_queryset()
         try:
             if related_fields:
@@ -38,12 +39,12 @@ class PCIDeviceManager:
         except Exception as e:
             raise DeviceError(msg=str(e))
 
-    def get_device_by_address(self, address:str):
-        '''
+    def get_device_by_address(self, address: str):
+        """
         :return:
             PCIDevice()     # success
             None            # not exists
-        '''
+        """
         return self.get_device_queryset().filter(address=address).first()
 
     def get_user_pci_queryset(self, user):
@@ -101,7 +102,7 @@ class PCIDeviceManager:
         return self.get_device_queryset().filter(host__in=host_ids).all()
 
     def get_pci_queryset_by_group(self, group):
-        '''
+        """
         宿主机组下的PCI设备查询集
 
         :param group: Group对象或id
@@ -109,7 +110,7 @@ class PCIDeviceManager:
             QuerySet()
 
         :raises: DeviceError
-        '''
+        """
         try:
             ids = self._group_manager.get_enable_host_ids_by_group(group_or_id=group)
         except ComputeError as e:
@@ -118,7 +119,7 @@ class PCIDeviceManager:
         return self.get_device_queryset().filter(host__in=ids).all()
 
     def get_user_pci_queryset_by_group(self, group, user):
-        '''
+        """
         用户有访问权限的，机组下的PCI设备查询集
 
         :param group: Group对象或id
@@ -127,7 +128,7 @@ class PCIDeviceManager:
             QuerySet()
 
         :raises: DeviceError
-        '''
+        """
         gm = self._group_manager
 
         try:
@@ -173,8 +174,9 @@ class PCIDeviceManager:
 
         return self.get_device_queryset().filter(host=host).all()
 
-    def device_wrapper(self, device:PCIDevice):
-        '''
+    @staticmethod
+    def device_wrapper(device: PCIDevice):
+        """
         PCI设备对象的包装器
 
         :param device:PCI设备对象
@@ -182,14 +184,14 @@ class PCIDeviceManager:
             BasePCIDevice子类     # GPUDevice
 
         :raises:  DeviceError
-        '''
+        """
         if device.type == device.TYPE_GPU:
             return GPUDevice(db=device)
 
         return DeviceError(msg='未知设备')
 
     def mount_to_vm(self, device: PCIDevice, vm):
-        '''
+        """
         挂载设备到虚拟机
 
         :param device: pci设备对象
@@ -198,7 +200,7 @@ class PCIDeviceManager:
             True    # success
 
         :raises: DeviceError
-        '''
+        """
         host = vm.host
         dev = self.device_wrapper(device)
         if dev.need_in_same_host():
@@ -218,12 +220,12 @@ class PCIDeviceManager:
         except VirtError as e:
             try:
                 dev.umount()
-            except:
+            except Exception:
                 pass
             raise DeviceError(msg=str(e))
 
     def umount_from_vm(self, device: PCIDevice):
-        '''
+        """
         卸载设备从虚拟机
 
         :param device: pci设备对象
@@ -231,7 +233,7 @@ class PCIDeviceManager:
             True    # success
 
         :raises: DeviceError
-        '''
+        """
         dev = self.device_wrapper(device)
         vm = dev.vm
         if not vm:
@@ -302,6 +304,7 @@ class PCIDeviceManager:
             if queryset is not None:
                 queryset = queryset.filter(Q(remarks__icontains=search) | Q(host__ipv4__icontains=search)).all()
             else:
-                queryset = self.get_device_queryset().filter(Q(remarks__icontains=search) | Q(host__ipv4__icontains=search)).all()
+                queryset = self.get_device_queryset().filter(
+                    Q(remarks__icontains=search) | Q(host__ipv4__icontains=search)).all()
 
         return queryset.select_related(*related_fields).all()

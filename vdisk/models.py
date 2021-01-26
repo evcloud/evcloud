@@ -1,4 +1,4 @@
-#coding=utf-8
+# coding=utf-8
 from uuid import uuid4
 
 from django.db import models
@@ -15,13 +15,15 @@ User = get_user_model()
 
 
 class Quota(models.Model):
-    '''
+    """
     计算集群在指定存储卷上可申请的存储容量限额，total集群总容量限额，vdisk对应单块云硬盘容量限额
-    '''
+    """
     id = models.AutoField(verbose_name='ID', primary_key=True)
     name = models.CharField(max_length=100, default='', verbose_name='存储池名称')
-    group = models.ForeignKey(to=Group, verbose_name='宿主机组', null=True, on_delete=models.CASCADE, related_name='quota_set')
-    cephpool = models.ForeignKey(to=CephPool, verbose_name='CEPH存储池', null=True, on_delete=models.CASCADE, related_name='quota_set')
+    group = models.ForeignKey(to=Group, verbose_name='宿主机组', null=True,
+                              on_delete=models.CASCADE, related_name='quota_set')
+    cephpool = models.ForeignKey(to=CephPool, verbose_name='CEPH存储池', null=True,
+                                 on_delete=models.CASCADE, related_name='quota_set')
     total = models.IntegerField(verbose_name='可用总容量(GB)', default=0, help_text='单位GB')
     size_used = models.IntegerField(verbose_name='已使用容量(GB)', default=0, help_text='单位GB')
     max_vdisk = models.IntegerField(verbose_name='云硬盘最大容量(GB)', default=200, help_text='单位GB')
@@ -35,13 +37,13 @@ class Quota(models.Model):
         return self.name
 
     def get_all_disk_size(self):
-        '''
+        """
         实时从数据库统计此云硬盘CEPH存储池下的所有硬盘的总容量大小
 
         :return: int
             size: int   # success
             -1          # error
-        '''
+        """
         if not self.id:
             return -1
         try:
@@ -49,45 +51,45 @@ class Quota(models.Model):
         except Exception as e:
             return -1
         size = a.get('total', -1)
-        return size  if isinstance(size, int) else 0
+        return size if isinstance(size, int) else 0
 
-    def meet_needs(self,size:int):
-        '''
+    def meet_needs(self, size: int):
+        """
         是否还有足够的容量
 
         :param size: 需要的容量大小GB
         :return:
             True    # 满足
             False   # 没有足够的容量
-        '''
+        """
         if self.total - self.size_used >= size:
             return True
 
         return False
 
-    def check_disk_size_limit(self, size:int):
-        '''
+    def check_disk_size_limit(self, size: int):
+        """
         检查要创建的硬盘大小是否符合硬盘最大容量限制
 
         :param size: 硬盘大小
         :return:
             True    # 符合，未超过最大限制
             False   # 超过最大限制
-        '''
+        """
         if size > self.max_vdisk:
             return False
 
         return True
 
     def claim(self, size: int):
-        '''
+        """
         从云硬盘CEPH存储池申请资源
 
         :param size: 要申请的硬盘容量大小GB
         :return:
             True    # success
             False   # failed
-        '''
+        """
         if size <= 0:
             return True
 
@@ -106,14 +108,14 @@ class Quota(models.Model):
         return True
 
     def free(self, size: int):
-        '''
+        """
         释放资源
 
         :param size: 要释放的容量大小GB
         :return:
             True    # success
             False   # failed
-        '''
+        """
         if size <= 0:
             return True
 
@@ -127,12 +129,15 @@ class Quota(models.Model):
 
 
 class Vdisk(models.Model):
-    '''附加磁盘类'''
+    """附加磁盘类"""
     uuid = models.CharField(max_length=64, primary_key=True, editable=False, blank=True, verbose_name='云硬盘UUID')
     size = models.IntegerField(verbose_name='容量大小GB', help_text='单位GB')
-    vm = models.ForeignKey(to=Vm, related_name='vdisk_set', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='挂载于虚拟机')
-    user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE, related_name='vdisk_set', verbose_name='创建者')
-    quota = models.ForeignKey(to=Quota, on_delete=models.CASCADE, null=True, related_name='vdisk_set', verbose_name='云硬盘CEPH存储池')
+    vm = models.ForeignKey(to=Vm, related_name='vdisk_set', on_delete=models.SET_NULL,
+                           null=True, blank=True, verbose_name='挂载于虚拟机')
+    user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE,
+                             related_name='vdisk_set', verbose_name='创建者')
+    quota = models.ForeignKey(to=Quota, on_delete=models.CASCADE, null=True,
+                              related_name='vdisk_set', verbose_name='云硬盘CEPH存储池')
     create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     attach_time = models.DateTimeField(null=True, blank=True, verbose_name='挂载时间')
     dev = models.CharField(max_length=100, blank=True, editable=False, default='', verbose_name='虚拟机中disk的设备名称',
@@ -150,16 +155,16 @@ class Vdisk(models.Model):
     def __str__(self):
         return f'ceph_disk_{str(self.uuid)}'
 
-    @classmethod
-    def new_uuid_str(self):
-        '''
+    @staticmethod
+    def new_uuid_str():
+        """
         生成一个新的uuid字符串
         :return: uuid:str
-        '''
+        """
         return uuid4().hex
 
     def get_bytes_size(self):
-        '''GB to Bytes size'''
+        """GB to Bytes size"""
         return self.size * 1024**3
 
     def get_GB_size(self):
@@ -182,14 +187,14 @@ class Vdisk(models.Model):
             raise Exception(f'create ceph rbd image failed,{str(e)}')
 
     def _create_ceph_disk(self):
-        '''
+        """
         创建硬盘对应的ceph rbd image
 
         :return:
             True    # success
 
         :raises: Exception
-        '''
+        """
         try:
             ceph_pool = self.quota.cephpool
             if not ceph_pool:
@@ -223,13 +228,13 @@ class Vdisk(models.Model):
         super().delete(using=using, keep_parents=keep_parents)
 
     def _remove_ceph_disk(self):
-        '''
+        """
         删除硬盘对应的ceph rbd image
 
         :return:
             True    # success
             False   # failed
-        '''
+        """
         try:
             ceph_pool = self.quota.cephpool
             if not ceph_pool:
@@ -250,13 +255,13 @@ class Vdisk(models.Model):
         return True
 
     def user_has_perms(self, user):
-        '''
+        """
         用户是否有访问此硬盘的权限
         :param user: 用户
         :return:
             True    # has
             False   # no
-        '''
+        """
         if user.is_superuser:   # 超级用户
             return True
 
@@ -265,10 +270,11 @@ class Vdisk(models.Model):
 
         return False
 
-    def xml_tpl(self, has_auth:bool=True):
-        '''disk xml template'''
+    @staticmethod
+    def xml_tpl(has_auth: bool = True):
+        """disk xml template"""
         if has_auth:
-            return '''
+            return """
             <disk type='network' device='disk'>
                   <driver name='qemu'/>
                   <auth username='{auth_user}'>
@@ -279,8 +285,8 @@ class Vdisk(models.Model):
                   </source>
                     <target dev='{dev}' bus='{bus}'/>   
             </disk>
-            '''
-        return '''
+            """
+        return """
             <disk type='network' device='disk'>
                   <driver name='qemu'/>
                   <source protocol='rbd' name='{pool}/{name}'>
@@ -288,15 +294,15 @@ class Vdisk(models.Model):
                   </source>
                     <target dev='{dev}' bus='{bus}'/>   
             </disk>
-            '''
+            """
 
-    def xml_desc(self, dev:str='', bus='virtio'):
-        '''
+    def xml_desc(self, dev: str = '', bus='virtio'):
+        """
         disk xml
         :param dev: 硬盘未挂载时，需要传入此参数；硬盘挂载后，self.dev会记录挂载后的硬盘逻辑名称
         :param bus: 指定硬盘的总线驱动，默认 'virtio'
         :return: str
-        '''
+        """
         if not dev:
             dev = self.dev
 
@@ -304,32 +310,33 @@ class Vdisk(models.Model):
         ceph = cephpool.ceph
         if ceph.has_auth:
             xml = self.xml_tpl().format(auth_user=ceph.username, auth_uuid=ceph.uuid, pool=cephpool.pool_name,
-                                  name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
+                                        name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
         else:
             xml = self.xml_tpl(has_auth=False).format(pool=cephpool.pool_name,
-                                  name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
+                                                      name=self.uuid, hosts_xml=ceph.hosts_xml, dev=dev, bus=bus)
+
         return xml
 
     @property
     def is_mounted(self):
-        '''
+        """
         是否已被挂载
         :return:
             True    # 已挂载
             False   # 未挂载
-        '''
+        """
         if self.vm:
             return True
 
         return False
 
     def soft_delete(self):
-        '''
+        """
         软删除
         :return:
             True    # success
             False   # failed
-        '''
+        """
         try:
             self.deleted = True
             self.save(update_fields=['deleted'])

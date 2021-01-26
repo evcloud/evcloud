@@ -73,4 +73,3 @@ class VPNManager:
             None or VPNConfig()
         """
         return VPNConfig.objects.filter(tag=VPNConfig.TAG_CA).first()
-

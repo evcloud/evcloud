@@ -7,7 +7,7 @@ from django.http import FileResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from drf_yasg.utils import swagger_auto_schema, no_body
+from drf_yasg.utils import swagger_auto_schema
 
 from utils.paginators import NumsPaginator
 from .manager import VPNManager, VPNError
@@ -201,4 +201,3 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         filename = obj.filename if obj.filename else 'ca.crt'
         content = obj.content.encode(encoding='utf-8')
         return FileResponse(BytesIO(initial_bytes=content), as_attachment=True, filename=filename)
-

@@ -3,7 +3,7 @@ from django.views.generic.base import View
 from django.contrib.auth import get_user_model
 
 from vdisk.manager import VdiskManager, VdiskError
-from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
+from compute.managers import CenterManager, GroupManager, ComputeError
 from utils.paginators import NumsPaginator
 from vms.manager import VmManager
 
@@ -11,7 +11,7 @@ User = get_user_model()
 
 
 def str_to_int_or_default(val, default):
-    '''
+    """
     字符串转int，转换失败返回设置的默认值
 
     :param val: 待转化的字符串
@@ -19,7 +19,7 @@ def str_to_int_or_default(val, default):
     :return:
         int     # success
         default # failed
-    '''
+    """
     try:
         return int(val)
     except Exception:
@@ -27,9 +27,9 @@ def str_to_int_or_default(val, default):
 
 
 class VdiskView(View):
-    '''
+    """
     云硬盘类视图
-    '''
+    """
     NUM_PER_PAGE = 20  # Show num per page
 
     def get(self, request, *args, **kwargs):
@@ -50,9 +50,9 @@ class VdiskView(View):
         manager = VdiskManager()
         try:
             queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
-                                                    search=search, user_id=user_id, all_no_filters=auth.is_superuser)
+                                                     search=search, user_id=user_id, all_no_filters=auth.is_superuser)
         except VdiskError as e:
-            return render(request, 'error.html', {'errors': ['查询云硬盘时错误',str(e)]})
+            return render(request, 'error.html', {'errors': ['查询云硬盘时错误', str(e)]})
 
         try:
             c_manager = CenterManager()
@@ -69,20 +69,21 @@ class VdiskView(View):
         else:
             quotas = None
 
-        context = {}
-        context['center_id'] = center_id if center_id > 0 else None
-        context['centers'] = centers
-        context['groups'] = groups
-        context['group_id'] = group_id if group_id > 0 else None
-        context['quotas'] = quotas
-        context['quota_id'] = quota_id if quota_id > 0 else None
-        context['search'] = search
-        context['users'] = users
-        context['user_id'] = user_id
+        context = {
+            'centers': centers,
+            'center_id': center_id if center_id > 0 else None,
+            'groups': groups,
+            'group_id': group_id if group_id > 0 else None,
+            'quotas': quotas,
+            'quota_id': quota_id if quota_id > 0 else None,
+            'search': search,
+            'users': users,
+            'user_id': user_id
+        }
         context = self.get_disks_list_context(request, queryset, context)
         return render(request, 'vdisk_list.html', context=context)
 
-    def get_disks_list_context(self, request, queryset, context:dict):
+    def get_disks_list_context(self, request, queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
         page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
@@ -96,7 +97,7 @@ class VdiskView(View):
 
 
 class VdiskCreateView(View):
-    '''创建硬盘类视图'''
+    """创建硬盘类视图"""
     def get(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.GET.get('center_id', 0), 0)
 
@@ -113,15 +114,16 @@ class VdiskCreateView(View):
         except ComputeError as e:
             return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
 
-        context = {}
-        context['center_id'] = center_id if center_id > 0 else None
-        context['centers'] = centers
-        context['groups'] = groups
+        context = {
+            'center_id': center_id if center_id > 0 else None,
+            'centers': centers,
+            'groups': groups
+        }
         return render(request, 'vdisk_create.html', context=context)
 
 
 class DiskMountToVmView(View):
-    '''硬盘挂载到虚拟机类视图'''
+    """硬盘挂载到虚拟机类视图"""
     NUM_PER_PAGE = 20
 
     def get(self, request, *args, **kwargs):
@@ -145,16 +147,18 @@ class DiskMountToVmView(View):
         related_fields = ('user', 'image', 'mac_ip')
         try:
             if user.is_superuser:
-                queryset = vm_manager.filter_vms_queryset(group_id=group.id, search=search, related_fields=related_fields)
+                queryset = vm_manager.filter_vms_queryset(
+                    group_id=group.id, search=search, related_fields=related_fields)
             else:
-                queryset = vm_manager.filter_vms_queryset(group_id=group.id, search=search, user_id=user.id, related_fields=related_fields)
+                queryset = vm_manager.filter_vms_queryset(
+                    group_id=group.id, search=search, user_id=user.id, related_fields=related_fields)
         except vm_manager.VmError as e:
             return render(request, 'error.html', {'errors': ['查询挂载云主机列表时错误', str(e)]})
 
         context = self.get_vms_list_context(request=request, queryset=queryset, context=context)
         return render(request, 'vdisk_mount_to_vm.html', context=context)
 
-    def get_vms_list_context(self, request, queryset, context:dict):
+    def get_vms_list_context(self, request, queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
         page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1

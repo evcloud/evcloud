@@ -29,5 +29,3 @@ def vnc_view(req):
         http_host = f'{http_host}:{NOVNC_PORT}'
         url = f'http://{http_host}/vnc_lite.html?path=websockify/?token={vncid}'
         return redirect(to=url)
-
-

@@ -1,6 +1,6 @@
-#coding=utf-8
-#@author:   hai #@email:   zhhaim@qq.cn #@date:     2019-10-16
-#@desc:    novnc token管理模块。完成读写novnc的token配置文件到数据库			
+# coding=utf-8
+# @author:   hai #@email:   zhhaim@qq.cn #@date:     2019-10-16
+# @desc:    novnc token管理模块。完成读写novnc的token配置文件到数据库
 
 import uuid
 import subprocess
@@ -70,4 +70,3 @@ class NovncTokenManager(object):
             raise NovncError(msg='get vnc port error')
 
         return str(port)
-

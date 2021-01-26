@@ -146,23 +146,23 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'collect_static')
-#静态文件查找路径
+# 静态文件查找路径
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
-#session 有效期设置
-SESSION_SAVE_EVERY_REQUEST = True #
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True #True：关闭浏览器，则Cookie失效。
+# session 有效期设置
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True      # True：关闭浏览器，则Cookie失效。
 # SESSION_COOKIE_AGE=60*30   #30分钟
 
-#自定义用户模型
+# 自定义用户模型
 AUTH_USER_MODEL = 'users.UserProfile'
 
 # 避免django把未以/结尾的url重定向到以/结尾的url
 # APPEND_SLASH=False
 
-#登陆url
+# 登陆url
 LOGIN_URL = '/users/login/'
 LOGOUT_URL = '/users/logout/'
 LOGIN_REDIRECT_URL = '/'    # 默认重定向url
@@ -183,9 +183,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PARSER_CLASSES': (
-        'rest_framework.parsers.JSONParser', # 支持解析application/json方式的json数据
-        'rest_framework.parsers.FormParser', # 支持解析application/x-www-form-urlencoded方式的form表单数据，request.data将填充一个QueryDict
-        'rest_framework.parsers.MultiPartParser' # 支持解析multipart/form-data方式多部分HTML表单内容，支持文件上载，request.data将填充一个QueryDict
+        'rest_framework.parsers.JSONParser',    # 支持解析application/json方式的json数据
+        'rest_framework.parsers.FormParser',    # 支持解析application/x-www-form-urlencoded方式的form表单数据，request.data将填充一个QueryDict
+        'rest_framework.parsers.MultiPartParser'     # 支持解析multipart/form-data方式多部分HTML表单内容，支持文件上载，request.data将填充一个QueryDict
     ),
     # 'DEFAULT_THROTTLE_CLASSES': (
     #     'rest_framework.throttling.AnonRateThrottle',  # 未登陆认证的用户默认访问限制
@@ -212,12 +212,12 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=2),
-    'ROTATE_REFRESH_TOKENS': False, # True时，refresh API会返回内容中会包含一个新的refresh JWT
+    'ROTATE_REFRESH_TOKENS': False,     # True时，refresh API会返回内容中会包含一个新的refresh JWT
     'BLACKLIST_AFTER_ROTATION': True,
 
     # 'SIGNING_KEY': 'xxxxx',   # 默认SECRET_KEY
 
-    'AUTH_HEADER_TYPES': ('Bearer', 'JWT'), # Header "Authorization:{AUTH_HEADER_TYPES} xxx"
+    'AUTH_HEADER_TYPES': ('Bearer', 'JWT'),     # Header "Authorization:{AUTH_HEADER_TYPES} xxx"
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
 
@@ -269,14 +269,14 @@ LOGGING = {
         # output to console settings
         'console': {
             'level': 'INFO',
-            'filters': ['require_debug_true'],# working with debug mode
+            'filters': ['require_debug_true'],  # working with debug mode
             'class': 'logging.StreamHandler',
             'formatter': 'simple'
         },
         # debug logging file settings
         'debug': {
             'level': 'DEBUG',
-            'filters': ['require_debug_true'],# working with debug mode
+            'filters': ['require_debug_true'],  # working with debug mode
             'class': 'logging.handlers.WatchedFileHandler',
             'filename': os.path.join(LOGGING_FILES_DIR, 'debug.log'),
             'formatter': 'dubug_formatter'

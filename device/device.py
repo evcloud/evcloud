@@ -1,4 +1,3 @@
-#coding=utf-8
 from django.db import transaction
 from django.utils import timezone
 
@@ -11,25 +10,25 @@ class BaseDevice:
         self._db = db
 
     def user_has_perms(self, user):
-        '''
+        """
         用户是否有访问此设备的权限
 
         :param user: 用户
         :return:
             True    # has
             False   # no
-        '''
+        """
         return self._db.user_has_perms(user)
 
-    def set_remarks(self, content:str):
-        '''
+    def set_remarks(self, content: str):
+        """
         设置设备备注信息
 
         :param content: 备注信息
         :return:
             True    # success
             False   # failed
-        '''
+        """
         return self._db.set_remarks(content=content)
 
     @property
@@ -106,13 +105,13 @@ class BasePCIDevice(BaseDevice):
 
     @property
     def xml_tpl(self):
-        return '''
+        return """
             <hostdev mode='%(mode)s' type='%(type)s' managed='yes'>
                 <source>
                     <address domain='0x%(domain)s' bus='0x%(bus)s' slot='0x%(slot)s' function='0x%(function)s'/>
                 </source>
             </hostdev>
-            '''
+            """
 
     @property
     def xml_desc(self):
@@ -127,9 +126,9 @@ class BasePCIDevice(BaseDevice):
         }
 
     def need_in_same_host(self):
-        '''
+        """
         设备是否需要与挂载的虚拟机在用同一个宿主机上
-        '''
+        """
         return self._db.need_in_same_host()
 
     def mount(self, vm):
@@ -194,7 +193,7 @@ class BasePCIDevice(BaseDevice):
                 db.enable = True
                 db.save(update_fields=['enable'])
                 self._db = db
-        except:
+        except Exception:
             res = False
         return res 
 
@@ -206,18 +205,13 @@ class BasePCIDevice(BaseDevice):
                 db.enable = False
                 db.save(update_fields=['enable'])
                 self._db = db
-        except:
+        except Exception:
             res = False
         return res 
 
 
 class GPUDevice(BasePCIDevice):
-    '''
+    """
     GPU设备
-    '''
+    """
     pass
-
-
-
-
-

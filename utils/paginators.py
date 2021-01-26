@@ -2,9 +2,9 @@ from django.core.paginator import Paginator
 
 
 class NumsPaginator(Paginator):
-    '''
+    """
     带自定义导航页码的分页器
-    '''
+    """
     page_query_name = 'page'
 
     def __init__(self, request, object_list, per_page, **kwargs):
@@ -12,7 +12,7 @@ class NumsPaginator(Paginator):
         super().__init__(object_list, per_page, **kwargs)
 
     def get_page_nav(self, page):
-        '''
+        """
         页码导航栏相关信息
 
         :return: dict
@@ -23,7 +23,7 @@ class NumsPaginator(Paginator):
                     [page_num:int or str, query_str:str, active:bool],
                 ]
             }
-        '''
+        """
         page_list = []
         current_page = page.number
         if self.num_pages >= 2:
@@ -58,14 +58,14 @@ class NumsPaginator(Paginator):
         return page_nav
 
     def get_page_list(self, page_nums: list, current_page: int):
-        '''
+        """
         构建页码导航栏 页码信息
 
         :param page_nums:
         :param current_page:
         :return:
             [[page_num:int, query_str:str, active:bool], ]
-        '''
+        """
         page_list = []
         for p in page_nums:
             disp = p    # 页码显示内容

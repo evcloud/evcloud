@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, reverse
-from django.contrib.auth import logout, login, get_user_model
+from django.contrib.auth import logout, get_user_model
 from django.contrib.auth.decorators import login_required
 
 from rest_framework.authtoken.models import Token
@@ -8,50 +8,52 @@ from .forms import UserRegisterForm, PasswordChangeForm, ForgetPasswordForm, Pas
 from .models import Email
 from utils.jwt import JWTokenTool
 
-#获取用户模型
+# 获取用户模型
 User = get_user_model()
 
 
 def get_or_create_token(user):
-    '''
+    """
     获取用户或为用户创建一个token，会在数据库表中产生一条token记录
 
     :param user: 用户对象
     :return: Token对象
-    '''
+    """
     token, created = Token.objects.get_or_create(user=user)
     if not token:
         return None
 
     return token
 
+
 def reflesh_new_token(token):
-    '''
+    """
     更新用户的token
 
     :param token: token对象
     :return: 无
-    '''
+    """
     token.delete()
     token.key = token.generate_key()
     token.save()
 
+
 def get_active_link(request, user):
-    '''
+    """
     获取账户激活连接
 
     :param request: 请求对象
     :param user: 用户对象
     :return: 正常: url
             错误：None
-    '''
+    """
     token = get_or_create_token(user=user)
     if not token:
         return None
 
     try:
         active_link = reverse('users:active')
-    except:
+    except Exception:
         return None
 
     active_link = request.build_absolute_uri(active_link)
@@ -60,34 +62,35 @@ def get_active_link(request, user):
 
 
 def send_active_url_email(request, to_email, user):
-    '''
+    """
     发送用户激活连接邮件
 
-    :param email: 邮箱
+    :param to_email: 邮箱
     :param user: 用户对象
     :return: True(发送成功)，False(发送失败)
-    '''
+    """
     active_link = get_active_link(request, user)
     if not active_link:
         return False
 
-    message = f'''
+    message = f"""
         亲爱的用户：
             欢迎使用EVCloud,您已使用本邮箱成功注册账号，请访问下面激活连接以激活账户,如非本人操作请忽略此邮件。
             激活连接：{active_link}
-        '''
+        """
     return send_one_email(subject='EVCloud账户激活', receiver=to_email, message=message, log_message=active_link)
 
 
 def send_one_email(receiver, message, subject='EVCloud', log_message=''):
-    '''
+    """
     发送一封邮件
 
+    :param subject: 标题
     :param receiver: 接收邮箱
     :param message: 邮件内容
     :param log_message: 邮件记录中要保存的邮件内容(邮件内容太多，可以只保存主要信息)
     :return: True(发送成功)，False(发送失败)
-    '''
+    """
     email = Email()
     email.message = log_message
     ok = email.send_email(subject=subject, receiver=receiver, message=message)
@@ -96,18 +99,17 @@ def send_one_email(receiver, message, subject='EVCloud', log_message=''):
     return False
 
 
-# Create your views here.
 def register_user(request):
-    '''
+    """
     用户注册函数视图
-    '''
+    """
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
-        #表单数据验证通过
+        # 表单数据验证通过
         if form.is_valid():
             user = form.get_or_creat_unactivated_user()
             if user:
-                logout(request)#登出用户（确保当前没有用户登陆）
+                logout(request)     # 登出用户（确保当前没有用户登陆）
 
                 # 向邮箱发送激活连接
                 if send_active_url_email(request, user.email, user):
@@ -119,25 +121,21 @@ def register_user(request):
     else:
         form = UserRegisterForm()
 
-    content = {}
-    content['form_title'] = '用户注册'
-    content['submit_text'] = '注册'
-    content['action_url'] = reverse('users:register')
-    content['form'] = form
+    content = {'form_title': '用户注册', 'submit_text': '注册', 'action_url': reverse('users:register'), 'form': form}
     return render(request, 'form.html', content)
 
 
 def active_user(request):
-    '''
+    """
     激活用户
     :param request:
     :return:
-    '''
+    """
     urls = []
     try:
         urls.append({'url': reverse('users:login'), 'name': '登录'})
         urls.append({'url': reverse('users:register'), 'name': '注册'})
-    except:
+    except Exception:
         pass
 
     key = request.GET.get('token', None)
@@ -157,43 +155,40 @@ def active_user(request):
 
 @login_required
 def change_password(request):
-    '''
+    """
     修改密码函数视图
-    '''
+    """
     if request.method == 'POST':
         form = PasswordChangeForm(request.POST, user=request.user)
         if form.is_valid():
-            #修改密码
+            # 修改密码
             new_password = form.cleaned_data['new_password']
             user = request.user
             user.set_password(new_password)
             user.save()
 
-            #注销当前用户，重新登陆
+            # 注销当前用户，重新登陆
             logout(request)
             return redirect(to=reverse('users:login'))
     else:
         form = PasswordChangeForm()
 
-    content = {}
-    content['form_title'] = '修改密码'
-    content['submit_text'] = '修改'
-    content['action_url'] = reverse('users:change_password')
-    content['form'] = form
+    content = {'form_title': '修改密码', 'submit_text': '修改',
+               'action_url': reverse('users:change_password'), 'form': form}
     return render(request, 'form.html', content)
 
 
 def forget_password(request):
-    '''
+    """
     忘记密码视图
-    '''
+    """
     if request.method == 'POST':
         form = ForgetPasswordForm(request.POST)
         if form.is_valid():
             urls = []
             try:
                 urls.append({'url': reverse('users:login'), 'name': '登录'})
-            except:
+            except Exception:
                 pass
 
             user = form.cleaned_data['user']
@@ -203,34 +198,34 @@ def forget_password(request):
             # 是否是未激活的用户
             if not user.is_active:
                 if send_active_url_email(request, email, user):
-                    return render(request, 'message.html', context={'message': '用户未激活，请先登录邮箱访问收到的链接以激活用户', 'urls': urls})
+                    return render(request, 'message.html', context={
+                        'message': '用户未激活，请先登录邮箱访问收到的链接以激活用户', 'urls': urls})
+
                 form.add_error(None, '邮件发送失败，请检查用户名输入是否有误，稍后重试')
             else:
                 if send_forget_password_email(request, email, user):
-                    return render(request, 'message.html', context={'message': '重置密码确认邮件已发送，请尽快登录邮箱访问收到的链接以完成密码重置，以防链接过期无效'})
-                form.add_error(None, '邮件发送失败，请检查用户名输入是否有误，稍后重试')
+                    return render(request, 'message.html', context={
+                        'message': '重置密码确认邮件已发送，请尽快登录邮箱访问收到的链接以完成密码重置，以防链接过期无效'})
 
+                form.add_error(None, '邮件发送失败，请检查用户名输入是否有误，稍后重试')
     else:
         form = ForgetPasswordForm()
 
-    content = {}
-    content['form_title'] = '找回密码'
-    content['submit_text'] = '提交'
-    content['form'] = form
+    content = {'form_title': '找回密码', 'submit_text': '提交', 'form': form}
     return render(request, 'form.html', content)
 
 
 def forget_password_confirm(request):
-    '''
+    """
     忘记密码链接确认，完成密码修改
     :param request:
     :return:
-    '''
+    """
     urls = []
     try:
         urls.append({'url': reverse('users:login'), 'name': '登录'})
         urls.append({'url': reverse('users:register'), 'name': '注册'})
-    except:
+    except Exception:
         pass
 
     if request.method == 'POST':
@@ -245,7 +240,7 @@ def forget_password_confirm(request):
         jwtt = JWTokenTool()
         try:
             ret = jwtt.authenticate_query(request)
-        except:
+        except Exception:
             ret = None
         if not ret:
             return render(request, 'message.html', context={'message': '链接无效或已过期，请重新找回密码获取新的链接', 'urls': urls})
@@ -253,40 +248,37 @@ def forget_password_confirm(request):
         jwt_value = ret[-1]
         form = PasswordResetForm(initial={'jwt': jwt_value})
 
-    content = {}
-    content['form_title'] = '重置密码'
-    content['submit_text'] = '确定'
-    content['form'] = form
+    content = {'form_title': '重置密码', 'submit_text': '确定', 'form': form}
     return render(request, 'form.html', context=content)
 
 
 def send_forget_password_email(request, to_email, user):
-    '''
+    """
     发送忘记密码连接邮件
 
-    :param email: 邮箱
+    :param to_email: 邮箱
     :param user: 用户对象
     :return: True(发送成功)，False(发送失败)
-    '''
+    """
     link = get_find_password_link(request, user)
     if not link:
         return False
 
-    message = f'''
+    message = f"""
         亲爱的用户：
             欢迎使用EVCloud,您正在为以本邮箱注册的账号找回密码，请访问下面连接以完成账户密码修改,如非本人操作请忽略此邮件。
             连接：{link}
-        '''
+        """
     return send_one_email(subject='EVCloud账户找回密码', receiver=to_email, message=message, log_message=link)
 
 
 def get_find_password_link(request, user):
-    '''
+    """
     获取找回密码连接
     :param request:
     :param user:
     :return: 正常：url; 错误：None
-    '''
+    """
     jwt = JWTokenTool()
     token = jwt.obtain_one_jwt(user=user)
     if not token:
@@ -294,9 +286,8 @@ def get_find_password_link(request, user):
 
     try:
         url = reverse('users:forget_confirm')
-    except:
+    except Exception:
         return None
 
     url = request.build_absolute_uri(url)
     return url + '?jwt=' + token
-

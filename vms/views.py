@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 
 from .manager import VmManager, VmError, FlavorManager
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
-from network.managers import VlanManager
 from vdisk.manager import VdiskManager, VdiskError
 from image.managers import ImageManager, ImageError
 from image.models import Image
@@ -16,7 +15,7 @@ User = get_user_model()
 
 
 def str_to_int_or_default(val, default):
-    '''
+    """
     字符串转int，转换失败返回设置的默认值
 
     :param val: 待转化的字符串
@@ -24,7 +23,7 @@ def str_to_int_or_default(val, default):
     :return:
         int     # success
         default # failed
-    '''
+    """
     try:
         return int(val)
     except Exception:
@@ -32,9 +31,9 @@ def str_to_int_or_default(val, default):
 
 
 class VmsView(View):
-    '''
+    """
     虚拟机类视图
-    '''
+    """
     NUM_PER_PAGE = 20   # Show num per page
 
     def get(self, request, *args, **kwargs):
@@ -55,9 +54,9 @@ class VmsView(View):
         v_manager = VmManager()
         try:
             queryset = v_manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
-                                                    search=search, user_id=user_id, all_no_filters=auth.is_superuser)
+                                                     search=search, user_id=user_id, all_no_filters=auth.is_superuser)
         except VmError as e:
-            return render(request, 'error.html', {'errors': ['查询虚拟机时错误',str(e)]})
+            return render(request, 'error.html', {'errors': ['查询虚拟机时错误', str(e)]})
 
         queryset = queryset.prefetch_related('vdisk_set')  # 反向预查询硬盘（避免多次访问数据库）
         try:
@@ -82,7 +81,7 @@ class VmsView(View):
         context = self.get_vms_list_context(request, queryset, context)
         return render(request, 'vms_list.html', context=context)
 
-    def get_vms_list_context(self, request, vms_queryset, context:dict):
+    def get_vms_list_context(self, request, vms_queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, vms_queryset, self.NUM_PER_PAGE)
         page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
@@ -96,7 +95,7 @@ class VmsView(View):
 
 
 class VmCreateView(View):
-    '''创建虚拟机类视图'''
+    """创建虚拟机类视图"""
     def get(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.GET.get('center_id', 0), 0)
 
@@ -115,18 +114,19 @@ class VmCreateView(View):
         except (ComputeError, ImageError) as e:
             return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
 
-        context = {}
-        context['center_id'] = center_id if center_id > 0 else None
-        context['centers'] = centers
-        context['groups'] = groups
-        context['image_tags'] = Image.CHOICES_TAG
-        context['images'] = images
-        context['flavors'] = FlavorManager().get_user_flaver_queryset(user=request.user)
+        context = {
+            'center_id': center_id if center_id > 0 else None,
+            'centers': centers,
+            'groups': groups,
+            'image_tags': Image.CHOICES_TAG,
+            'images': images,
+            'flavors': FlavorManager().get_user_flaver_queryset(user=request.user)
+        }
         return render(request, 'vms_create.html', context=context)
 
 
 class VmMountDiskView(View):
-    '''虚拟机挂载硬盘类视图'''
+    """虚拟机挂载硬盘类视图"""
     NUM_PER_PAGE = 20
 
     def get(self, request, *args, **kwargs):
@@ -145,9 +145,11 @@ class VmMountDiskView(View):
         related_fields = ('user', 'quota', 'quota__group')
         try:
             if user.is_superuser:
-                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search, related_fields=related_fields)
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search,
+                                                              related_fields=related_fields)
             else:
-                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search, user_id=user.id, related_fields=related_fields)
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search,
+                                                              user_id=user.id, related_fields=related_fields)
         except VdiskError as e:
             return render(request, 'error.html', {'errors': ['查询硬盘列表时错误', str(e)]})
         queryset = queryset.filter(vm=None).all()
@@ -155,7 +157,7 @@ class VmMountDiskView(View):
         context = self.get_vdisks_list_context(request=request, queryset=queryset, context=context)
         return render(request, 'vm_mount_disk.html', context=context)
 
-    def get_vdisks_list_context(self, request, queryset, context:dict):
+    def get_vdisks_list_context(self, request, queryset, context: dict):
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
         page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
@@ -169,7 +171,7 @@ class VmMountDiskView(View):
 
 
 class VmDetailView(View):
-    '''虚拟机详情类视图'''
+    """虚拟机详情类视图"""
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
 
@@ -183,12 +185,13 @@ class VmDetailView(View):
 
 
 class VmEditView(View):
-    '''虚拟机修改类视图'''
+    """虚拟机修改类视图"""
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
 
         vm_manager = VmManager()
-        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
+            'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
@@ -205,7 +208,8 @@ class VmResetView(View):
         vm_uuid = kwargs.get('vm_uuid', '')
 
         vm_manager = VmManager()
-        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
+            'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
@@ -219,7 +223,8 @@ class VmMigrateView(View):
         vm_uuid = kwargs.get('vm_uuid', '')
 
         vm_manager = VmManager()
-        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
+            'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
@@ -228,7 +233,7 @@ class VmMigrateView(View):
 
 
 class VmMountPCIView(View):
-    '''虚拟机挂载PCI设备类视图'''
+    """虚拟机挂载PCI设备类视图"""
     NUM_PER_PAGE = 20
 
     def get(self, request, *args, **kwargs):
@@ -245,7 +250,8 @@ class VmMountPCIView(View):
 
         mgr = PCIDeviceManager()
         try:
-            queryset = mgr.filter_pci_queryset(host_id=host.id, search=search, user=user, related_fields=('host__group',))
+            queryset = mgr.filter_pci_queryset(host_id=host.id, search=search,
+                                               user=user, related_fields=('host__group',))
         except DeviceError as e:
             return render(request, 'error.html', {'errors': ['查询PCI设备列表时错误', str(e)]})
 
@@ -264,4 +270,3 @@ class VmMountPCIView(View):
         context['devices'] = page
         context['count'] = paginator.count
         return context
-

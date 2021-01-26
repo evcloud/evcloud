@@ -10,9 +10,9 @@ from compute.managers import CenterManager, GroupManager
 
 
 class VlanManager:
-    '''
+    """
     局域子网Vlan管理器
-    '''
+    """
     MODEL = Vlan
 
     @staticmethod
@@ -98,15 +98,16 @@ class VlanManager:
 
         return queryset
 
-    def generate_subips(self, vlan_id, from_ip, to_ip, write_database=False):
-        '''
+    @staticmethod
+    def generate_subips(vlan_id, from_ip, to_ip, write_database=False):
+        """
         生成子网ip
         :param vlan_id:
         :param from_ip: 开始ip
         :param to_ip: 结束ip
         :param write_database: True 生成并导入到数据库 False 生成不导入数据库
         :return:
-        '''
+        """
         reg = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
         if not (re.match(reg, from_ip) and re.match(reg, to_ip)):
             raise NetworkError(msg='输入的ip地址错误')
@@ -117,8 +118,8 @@ class VlanManager:
 
         subips = [f'{ip >> 24}.{(ip & 0x00ff0000) >> 16}.{(ip & 0x0000ff00) >> 8}.{ip & 0x000000ff}'
                   for ip in range(ip_hex[0], ip_hex[1] + 1) if ip & 0xff]
-        submacs = ['C8:00:' + ':'.join(map(lambda x: x[2:].upper().rjust(2, '0'), map(lambda x: hex(int(x)), ip.split('.'))))
-                   for ip in subips]
+        submacs = ['C8:00:' + ':'.join(map(lambda x: x[2:].upper().rjust(2, '0'),
+                                           map(lambda x: hex(int(x)), ip.split('.')))) for ip in subips]
         if write_database:
             with transaction.atomic():
                 for subip, submac in zip(subips, submacs):
@@ -129,25 +130,27 @@ class VlanManager:
 
         return [*zip(subips, submacs)]
 
-    def get_macips_by_vlan(self, vlan):
-        '''
+    @staticmethod
+    def get_macips_by_vlan(vlan):
+        """
         获得vlan对应的所有macip记录
         :param vlan:
         :return: 直接返回查询结果
-        '''
+        """
         try:
             macips = MacIP.objects.filter(vlan=vlan)
         except Exception as error:
             raise NetworkError(msg='读取macips失败。' + str(error))
         return macips
 
-    def generate_config_file(self, vlan, macips):
-        '''
+    @staticmethod
+    def generate_config_file(vlan, macips):
+        """
         生成DHCP配置文件
         :param vlan: vlan对象
         :param macips: 对应vlan下的所有macip组
         :return: 返回文件数据
-        '''
+        """
         lines = 'subnet %s netmask %s {\n' % (vlan.subnet_ip, vlan.net_mask)
         lines += '\t' + 'option routers\t%s;\n' % vlan.gateway
         lines += '\t' + 'option subnet-mask\t%s;\n' % vlan.net_mask
@@ -162,7 +165,9 @@ class VlanManager:
         # lines = lines + '\t' + 'filename "/pxelinux.0";    #boot file\n'
 
         for macip in macips:
-            lines += '\t' + 'host %s{hardware ethernet %s;fixed-address %s;}\n' % ('v_' + macip.ipv4.replace('.', '_'), macip.mac, macip.ipv4)
+            lines += '\t' + 'host %s{hardware ethernet %s;fixed-address %s;}\n' % (
+                'v_' + macip.ipv4.replace('.', '_'), macip.mac, macip.ipv4)
+
         return vlan.subnet_ip + '_dhcpd.conf', StringIO(lines)
 
 
@@ -175,22 +180,22 @@ class MacIPManager:
         return MacIP.objects.all()
 
     def get_enable_macip_queryset(self):
-        '''所有开启使用的'''
+        """所有开启使用的"""
         return self.get_macip_queryset().filter(enable=True).all()
 
     def get_enable_free_macip_queryset(self):
-        '''所有开启使用的未分配的'''
+        """所有开启使用的未分配的"""
         return self.get_enable_macip_queryset().filter(used=False).all()
 
     def filter_macip_queryset(self, vlan=None, used=None):
-        '''
+        """
         筛选macip查询集
 
         :param vlan: None不参与筛选
         :param used: None不参与筛选
         :return:
             QuerySet()
-        '''
+        """
         queryset = self.get_enable_macip_queryset()
         if vlan is not None:
             queryset = queryset.filter(vlan=vlan).all()
@@ -318,4 +323,3 @@ class MacIPManager:
             return True
         except Exception as e:
             return False
-

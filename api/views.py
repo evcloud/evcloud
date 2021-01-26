@@ -78,7 +78,7 @@ class IsSuperUser(BasePermission):
 
 
 class VmsViewSet(viewsets.GenericViewSet):
-    '''
+    """
     虚拟机类视图
 
     list:
@@ -250,8 +250,8 @@ class VmsViewSet(viewsets.GenericViewSet):
             "status_text": "shut off"
           }
         }
-    '''
-    permission_classes = [IsAuthenticated,]
+    """
+    permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     lookup_field = 'uuid'
     lookup_value_regex = '[0-9a-z-]+'
@@ -306,14 +306,14 @@ class VmsViewSet(viewsets.GenericViewSet):
         user = request.user
         manager = VmManager()
         try:
-            if user.is_superuser: # 当前是超级用户，user_id查询参数有效
+            if user.is_superuser:   # 当前是超级用户，user_id查询参数有效
                 self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
                                                             search=search, user_id=user_id, all_no_filters=True)
             else:
                 self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
-                                                    search=search, user_id=user.id)
+                                                            search=search, user_id=user.id)
         except VmError as e:
-            return Response(data={'code': 400, 'code_text': '查询虚拟机时错误'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'查询虚拟机时错误, {e}'}, status=status.HTTP_400_BAD_REQUEST)
 
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
@@ -545,7 +545,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         if not vm:
             return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(), status=status.HTTP_404_NOT_FOUND)
         if not vm.user_has_perms(user=request.user):
-            return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(), status=status.HTTP_403_FORBIDDEN)
+            return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
+                            status=status.HTTP_403_FORBIDDEN)
 
         return Response(data={
             'code': 200,
@@ -588,7 +589,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         api = VmAPI()
         try:
-             api.delete_vm(user=request.user, vm_uuid=vm_uuid, force=force)
+            api.delete_vm(user=request.user, vm_uuid=vm_uuid, force=force)
         except VmError as e:
             return Response(data=e.data(), status=e.code)
 
@@ -606,7 +607,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         }
     )
     def partial_update(self, request, *args, **kwargs):
-        '''
+        """
         修改虚拟机vcpu和内存大小
 
             指定flavor或者直接指定vcpu和mem, 优先使用flavor
@@ -621,7 +622,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                 "code": 400,
                 "code_text": "xxx"
             }
-        '''
+        """
         vm_uuid = kwargs.get(self.lookup_field, '')
 
         serializer = self.get_serializer(data=request.data)
@@ -709,16 +710,19 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         ops = ['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']
         if not op or op not in ops:
-            return Response(data={'code': 400, 'code_text': 'op参数无效', 'err_code': 'InvalidParam'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': 'op参数无效', 'err_code': 'InvalidParam'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         api = VmAPI()
         try:
             ok = api.vm_operations(user=request.user, vm_uuid=vm_uuid, op=op)
         except VmError as e:
-            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败，{str(e)}', 'err_code': e.err_code}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败，{str(e)}', 'err_code': e.err_code},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         if not ok:
-            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败', 'err_code': 'error'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'{op}虚拟机失败', 'err_code': 'error'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 200, 'code_text': f'{op}虚拟机成功'})
 
@@ -752,7 +756,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         try:
             code, msg = api.get_vm_status(user=request.user, vm_uuid=vm_uuid)
         except VmError as e:
-            return Response(data={'code': 400, 'code_text': f'获取虚拟机状态失败，{str(e)}', 'err_code': e.err_code}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'获取虚拟机状态失败，{str(e)}', 'err_code': e.err_code},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 200, 'code_text': '获取虚拟机状态成功',
                               'status': {'status_code': code, 'status_text': msg}})
@@ -775,7 +780,7 @@ class VmsViewSet(viewsets.GenericViewSet):
     )
     @action(methods=['post'], url_path='vnc', detail=True, url_name='vm-vnc')
     def vm_vnc(self, request, *args, **kwargs):
-        '''
+        """
         创建虚拟机vnc
 
             >> http code 200:
@@ -787,7 +792,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                 "url": "http://159.226.91.140:8000/novnc/?vncid=42bfe71e-6419-474a-bc99-9e519637797d"
               }
             }
-        '''
+        """
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
             vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid)
@@ -797,7 +802,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         if not vm:
             return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(), status=status.HTTP_404_NOT_FOUND)
         if not vm.user_has_perms(user=request.user):
-            return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(), status=status.HTTP_403_FORBIDDEN)
+            return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
+                            status=status.HTTP_403_FORBIDDEN)
 
         vm_uuid = vm.get_uuid()
         host_ipv4 = vm.host.ipv4
@@ -806,7 +812,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         try:
             vnc_id, url = vnc_manager.generate_token(vmid=vm_uuid, hostip=host_ipv4)
         except NovncError as e:
-            return Response(data={'code': 400, 'code_text': f'创建虚拟机vnc失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'创建虚拟机vnc失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         url = request.build_absolute_uri(url)
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
@@ -841,9 +848,9 @@ class VmsViewSet(viewsets.GenericViewSet):
     )
     @action(methods=['patch'], url_path='remark', detail=True, url_name='vm-remark')
     def vm_remark(self, request, *args, **kwargs):
-        '''
+        """
         修改虚拟机备注信息
-        '''
+        """
         remark = request.query_params.get('remark', None)
         if remark is None:
             return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
@@ -853,7 +860,8 @@ class VmsViewSet(viewsets.GenericViewSet):
         try:
             api.modify_vm_remark(user=request.user, vm_uuid=vm_uuid, remark=remark)
         except VmError as e:
-            return Response(data={'code': 400, 'code_text': f'修改虚拟机备注信息失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': f'修改虚拟机备注信息失败，{str(e)}'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
 
@@ -943,7 +951,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         api = VmManager()
         try:
-            ok = api.delete_sys_disk_snap(snap_id=snap_id, user=request.user)
+            api.delete_sys_disk_snap(snap_id=snap_id, user=request.user)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'删除虚拟机系统快照失败，{str(e)}'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -998,7 +1006,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         api = VmManager()
         try:
-            snap = api.modify_sys_snap_remarks(snap_id=snap_id, remarks=remark, user=request.user)
+            api.modify_sys_snap_remarks(snap_id=snap_id, remarks=remark, user=request.user)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'修改快照备注信息失败，{str(e)}'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -1035,7 +1043,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         api = VmAPI()
         try:
-            ok = api.vm_rollback_to_snap(vm_uuid=vm_uuid, snap_id=snap_id, user=request.user)
+            api.vm_rollback_to_snap(vm_uuid=vm_uuid, snap_id=snap_id, user=request.user)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'回滚虚拟机失败，{str(e)}'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -1072,7 +1080,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         api = VmAPI()
         try:
-            vm = api.change_sys_disk(vm_uuid=vm_uuid, image_id=image_id, user=request.user)
+            api.change_sys_disk(vm_uuid=vm_uuid, image_id=image_id, user=request.user)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'更换虚拟机系统失败，{str(e)}'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -1121,7 +1129,7 @@ class VmsViewSet(viewsets.GenericViewSet):
 
         api = VmAPI()
         try:
-            vm = api.migrate_vm(vm_uuid=vm_uuid, host_id=host_id, user=request.user, force=is_force)
+            api.migrate_vm(vm_uuid=vm_uuid, host_id=host_id, user=request.user, force=is_force)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'迁移虚拟机失败，{str(e)}'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -1162,7 +1170,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         password = data.get('password')
         
         try:
-            vm = VmAPI().vm_change_password(vm_uuid=vm_uuid, user=request.user, username=username, password=password)
+            VmAPI().vm_change_password(vm_uuid=vm_uuid, user=request.user, username=username, password=password)
         except VmError as e:
             return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -1201,7 +1209,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         vm_uuid = kwargs.get(self.lookup_field, '')
 
         try:
-            vm = VmAPI().vm_miss_fix(vm_uuid=vm_uuid, user=request.user)
+            VmAPI().vm_miss_fix(vm_uuid=vm_uuid, user=request.user)
         except VmError as e:
             return Response(data=e.data(), status=e.status_code)
 
@@ -1501,12 +1509,14 @@ class VlanViewSet(viewsets.GenericViewSet):
         if center_id:
             center_id = str_to_int_or_default(center_id, 0)
             if center_id <= 0:
-                return Response(data={'code': 400, 'code_text': 'query参数center_id无效'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'code': 400, 'code_text': 'query参数center_id无效'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
         if group_id:
             group_id = str_to_int_or_default(group_id, 0)
             if group_id <= 0:
-                return Response(data={'code': 400, 'code_text': 'query参数group_id无效'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'code': 400, 'code_text': 'query参数group_id无效'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
         public = None
         if query_public is not None:
@@ -1701,7 +1711,7 @@ class ImageViewSet(viewsets.GenericViewSet):
 
 
 class AuthTokenViewSet(ObtainAuthToken):
-    '''
+    """
     get:
     获取当前用户的token
 
@@ -1722,9 +1732,9 @@ class AuthTokenViewSet(ObtainAuthToken):
         令牌应包含在AuthorizationHTTP标头中。密钥应以字符串文字“Token”为前缀，空格分隔两个字符串。
         例如Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b；
         此外，可选Path参数,“new”，?new=true用于刷新生成一个新token；
-    '''
-
-    def get(self, request, *args, **kwargs):
+    """
+    @staticmethod
+    def get(request, *args, **kwargs):
         user = request.user
         if user.is_authenticated:
             token, created = Token.objects.get_or_create(user=user)
@@ -1735,7 +1745,7 @@ class AuthTokenViewSet(ObtainAuthToken):
     @swagger_auto_schema(
         operation_summary='刷新当前用户的token',
         responses={
-            200:'''
+            200: '''
             {
                 "token": {
                     "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
@@ -2004,12 +2014,12 @@ class VDiskViewSet(viewsets.GenericViewSet):
         user = request.user
         manager = VdiskManager()
         try:
-            if user.is_superuser: # 当前是超级用户，user_id查询参数有效
+            if user.is_superuser:    # 当前是超级用户，user_id查询参数有效
                 queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
-                                                              search=search, user_id=user_id, all_no_filters=True)
+                                                         search=search, user_id=user_id, all_no_filters=True)
             else:
                 queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
-                                                              search=search, user_id=user.id)
+                                                         search=search, user_id=user.id)
         except VdiskError as e:
             return Response(data={'code': 400, 'code_text': f'查询云硬盘时错误, {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2095,7 +2105,8 @@ class VDiskViewSet(viewsets.GenericViewSet):
             if user.is_superuser:
                 queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, related_fields=related_fields)
             else:
-                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, user_id=user.id, related_fields=related_fields)
+                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, user_id=user.id,
+                                                              related_fields=related_fields)
         except VdiskError as e:
             return Response({'code': 400, 'code_text': f'查询硬盘列表时错误，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2154,7 +2165,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                     else:
                         code_text = f'"{name}" {err_list[0]}'
                     break
-            except:
+            except Exception:
                 pass
 
             data = {
@@ -2228,7 +2239,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         try:
             disk = VdiskManager().get_vdisk_by_uuid(uuid=disk_uuid)
         except VdiskError as e:
-            return  Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(data={'code': 500, 'code_text': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not disk:
             return Response(data={'code': 404, 'code_text': '云硬盘不存在'}, status=status.HTTP_404_NOT_FOUND)
@@ -2316,7 +2327,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         vm_uuid = request.query_params.get('vm_uuid', '')
         api = VmAPI()
         try:
-            disk = api.mount_disk(user=request.user, vm_uuid=vm_uuid, vdisk_uuid=disk_uuid)
+            api.mount_disk(user=request.user, vm_uuid=vm_uuid, vdisk_uuid=disk_uuid)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'挂载硬盘失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2353,7 +2364,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         disk_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
         try:
-            disk = api.umount_disk(user=request.user, vdisk_uuid=disk_uuid)
+            api.umount_disk(user=request.user, vdisk_uuid=disk_uuid)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'卸载硬盘失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2398,7 +2409,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VdiskManager()
         try:
-            disk = api.modify_vdisk_remarks(user=request.user, uuid=vm_uuid, remarks=remark)
+            api.modify_vdisk_remarks(user=request.user, uuid=vm_uuid, remarks=remark)
         except api.VdiskError as e:
             return Response(data={'code': 400, 'code_text': f'修改硬盘备注信息失败，{str(e)}'},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -2482,7 +2493,7 @@ class QuotaViewSet(viewsets.GenericViewSet):
         try:
             page = self.paginate_queryset(queryset)
         except Exception as e:
-            return  Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -2564,12 +2575,14 @@ class StatCenterViewSet(viewsets.GenericViewSet):
               ]
             }
         '''
-        centers = CenterManager().get_stat_center_queryset().values('id', 'name', 'mem_total', 'mem_allocated',
-                                         'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
-        groups = GroupManager().get_stat_group_queryset().values('id', 'name', 'center__name', 'mem_total',
-                                        'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
-        hosts = Host.objects.select_related('group').values('id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
-                                            'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+        centers = CenterManager().get_stat_center_queryset().values(
+            'id', 'name', 'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        groups = GroupManager().get_stat_group_queryset().values(
+            'id', 'name', 'center__name', 'mem_total', 'mem_allocated',
+            'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        hosts = Host.objects.select_related('group').values(
+            'id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
+            'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
         return Response(data={'code': 200, 'code_text': 'get ok', 'centers': centers, 'groups': groups, 'hosts': hosts})
 
     @swagger_auto_schema(
@@ -2614,15 +2627,17 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         c_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if c_id > 0:
-            center = CenterManager().get_stat_center_queryset(filters={'id': c_id}).values('id', 'name', 'mem_total',
-                            'mem_allocated','mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').first()
+            center = CenterManager().get_stat_center_queryset(filters={'id': c_id}).values(
+                'id', 'name', 'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total',
+                'vcpu_allocated', 'vm_created').first()
         else:
             center = None
         if not center:
             return Response({'code': 200, 'code_text': '分中心不存在'}, status=status.HTTP_400_BAD_REQUEST)
 
-        groups = GroupManager().get_stat_group_queryset(filters={'center': c_id}).values('id', 'name', 'center__name',
-                             'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+        groups = GroupManager().get_stat_group_queryset(filters={'center': c_id}).values(
+            'id', 'name', 'center__name', 'mem_total', 'mem_allocated', 'mem_reserved',
+            'vcpu_total', 'vcpu_allocated', 'vm_created')
         return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
 
     @swagger_auto_schema(
@@ -2668,15 +2683,17 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         '''
         g_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if g_id > 0:
-            group = GroupManager().get_stat_group_queryset(filters={'id': g_id}).values('id', 'name', 'center__name',
-                    'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total','vcpu_allocated', 'vm_created').first()
+            group = GroupManager().get_stat_group_queryset(filters={'id': g_id}).values(
+                'id', 'name', 'center__name', 'mem_total', 'mem_allocated', 'mem_reserved',
+                'vcpu_total', 'vcpu_allocated', 'vm_created').first()
         else:
             group = None
         if not group:
             return Response({'code': 200, 'code_text': '机组不存在'}, status=status.HTTP_400_BAD_REQUEST)
 
-        hosts = Host.objects.select_related('group').filter(group=g_id).values('id', 'ipv4', 'group__name', 'mem_total',
-                        'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+        hosts = Host.objects.select_related('group').filter(group=g_id).values(
+            'id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated', 'mem_reserved',
+            'vcpu_total', 'vcpu_allocated', 'vm_created').all()
         return Response(data={'code': 200, 'code_text': 'get ok', 'group': group, 'hosts': hosts})
 
     def get_serializer_class(self):
@@ -2773,8 +2790,9 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 401, 'code_text': '未身份认证，无权限'}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            queryset = PCIDeviceManager().filter_pci_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
-                       type_id=type_val, search=search, user=user, related_fields=('host', 'vm'))
+            queryset = PCIDeviceManager().filter_pci_queryset(
+                center_id=center_id, group_id=group_id, host_id=host_id,
+                type_id=type_val, search=search, user=user, related_fields=('host', 'vm'))
         except DeviceError as e:
             return Response(data={'code': 400, 'code_text': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2903,7 +2921,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         if not vm_uuid:
             return Response(data={'code': 400, 'code_text': '无效的虚拟机ID'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-             dev = VmAPI().mount_pci_device(vm_uuid=vm_uuid, device_id=dev_id, user=request.user)
+            VmAPI().mount_pci_device(vm_uuid=vm_uuid, device_id=dev_id, user=request.user)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'挂载失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -2943,7 +2961,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
             return Response(data={'code': 400, 'code_text': '无效的设备ID'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-             dev = VmAPI().umount_pci_device(device_id=dev_id, user=request.user)
+            VmAPI().umount_pci_device(device_id=dev_id, user=request.user)
         except VmError as e:
             return Response(data={'code': 400, 'code_text': f'卸载失败，{str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -3160,7 +3178,7 @@ class VPNViewSet(viewsets.GenericViewSet):
         try:
             vpn = mgr.create_vpn(username=username, password=password, remarks=create_user, create_user=create_user)
         except VPNError as e:
-            return Response(data={'err_code': 'InternalServerError', 'code_text': '创建用户vpn账户失败'},
+            return Response(data={'err_code': 'InternalServerError', 'code_text': f'创建用户vpn账户失败, {e}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_201_CREATED)
@@ -3212,10 +3230,12 @@ class VPNViewSet(viewsets.GenericViewSet):
         username = kwargs.get(self.lookup_field)
         password = request.query_params.get('password')
         if password is None:
-            return Response(data={'err_code': 'BadRequest', 'code_text': 'Query param "password" is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'err_code': 'BadRequest', 'code_text': 'Query param "password" is required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         if not (6 <= len(password) <= 64):
-            return Response(data={'err_code': 'BadRequest', 'code_text': 'Password must be 6-64 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'err_code': 'BadRequest', 'code_text': 'Password must be 6-64 characters.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         mgr = VPNManager()
         vpn = mgr.get_vpn(username=username)

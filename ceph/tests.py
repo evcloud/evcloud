@@ -38,4 +38,3 @@ class RbdManagerTestCase(TestCase):
     def tearDown(self):
         self.mgr.remove_image(self.image_name)
         self.mgr.remove_image(self.image_rename)
-

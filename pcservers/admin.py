@@ -27,4 +27,3 @@ class PcServerAdmin(admin.ModelAdmin):
     list_select_related = ('room', 'department', 'server_type')
     search_fields = ('host_ipv4', 'location', 'ipmi_ip')
     raw_id_fields = ('host',)
-
