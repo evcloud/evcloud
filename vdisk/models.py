@@ -127,6 +127,19 @@ class Quota(models.Model):
         self.refresh_from_db()
         return True
 
+    def user_has_perm(self, user):
+        """
+        用户是否有使用权限
+        :param user:
+        :return:
+            True    # has
+            False   # no
+        """
+        if self.group:
+            return self.group.user_has_perms(user)
+
+        return False
+
 
 class Vdisk(models.Model):
     """附加磁盘类"""

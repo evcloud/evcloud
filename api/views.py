@@ -598,12 +598,12 @@ class VmsViewSet(viewsets.GenericViewSet):
     @swagger_auto_schema(
         operation_summary='修改虚拟机vcpu和内存大小',
         responses={
-            200: '''
+            200: """
                 {
                     "code": 200,
                     "code_text": "修改虚拟机成功"
                 }
-            '''
+            """
         }
     )
     def partial_update(self, request, *args, **kwargs):
@@ -685,19 +685,19 @@ class VmsViewSet(viewsets.GenericViewSet):
             }
         ),
         responses={
-            200: '''
+            200: """
             {
                 'code': 200,
                 'code_text': '操作虚拟机成功'
             }
-            ''',
-            400: '''
+            """,
+            400: """
                 {
                     "code": 400,
                     "code_text": "xxx",
                     "err_code": "xxx"           # "VmNotExist", "Error", "InvalidParam"
                 }
-                ''',
+                """,
         }
     )
     @action(methods=['patch'], url_path='operations', detail=True, url_name='vm-operations')
@@ -730,7 +730,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         operation_summary='获取虚拟机当前运行状态',
         request_body=no_body,
         responses={
-            200: '''
+            200: """
             {
               "code": 200,
               "code_text": "获取信息成功",
@@ -739,14 +739,14 @@ class VmsViewSet(viewsets.GenericViewSet):
                 "status_text": "shut off"
               }
             }
-            ''',
-            400: '''
+            """,
+            400: """
             {
                 "code": 400,
                 "code_text": "xxx",
                 "err_code": "xxx"           # "VmNotExist", "Error"
             }
-            ''',
+            """,
         }
     )
     @action(methods=['get'], url_path='status', detail=True, url_name='vm-status')
@@ -766,7 +766,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         operation_summary='创建虚拟机vnc',
         request_body=no_body,
         responses={
-            200: '''
+            200: """
             {
               "code": 200,
               "code_text": "创建虚拟机vnc成功",
@@ -775,7 +775,7 @@ class VmsViewSet(viewsets.GenericViewSet):
                 "url": "http://159.226.91.140:8000/novnc/?vncid=42bfe71e-6419-474a-bc99-9e519637797d"
               }
             }
-            '''
+            """
         }
     )
     @action(methods=['post'], url_path='vnc', detail=True, url_name='vm-vnc')
@@ -832,18 +832,18 @@ class VmsViewSet(viewsets.GenericViewSet):
             )
         ],
         responses={
-            200: '''
+            200: """
             {
                 'code': 200,
                 'code_text': '修改虚拟机备注信息成功'
             }
-            ''',
-            400: '''
+            """,
+            400: """
                 {
                     'code': 400,
                     'code_text': 'xxx'
                 }
-                '''
+                """
         }
     )
     @action(methods=['patch'], url_path='remark', detail=True, url_name='vm-remark')
@@ -878,7 +878,7 @@ class VmsViewSet(viewsets.GenericViewSet):
             )
         ],
         responses={
-            201: '''
+            201: """
             {
               "code": 201,
               "code_text": "创建虚拟机系统快照成功",
@@ -893,20 +893,20 @@ class VmsViewSet(viewsets.GenericViewSet):
                 "remarks": "sss"
               }
             }
-            ''',
-            400: '''
+            """,
+            400: """
             {
                 'code': 400,
                 'code_text': 'xxx'
             }
-            '''
+            """
         }
     )
     @action(methods=['post'], url_path='snap', detail=True, url_name='vm-sys-snap')
     def vm_sys_snap(self, request, *args, **kwargs):
-        '''
+        """
         创建虚拟机系统盘快照
-        '''
+        """
         remark = request.query_params.get('remark', '')
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
@@ -931,20 +931,20 @@ class VmsViewSet(viewsets.GenericViewSet):
             )
         ],
         responses={
-            204: '''SUCCESS NO CONTENT''',
-            400: '''
+            204: """SUCCESS NO CONTENT""",
+            400: """
                 {
                     'code': 400,
                     'code_text': 'xxx'
                 }
-            '''
+            """
         }
     )
     @action(methods=['delete'], url_path=r'snap/(?P<id>[0-9]+)', detail=False, url_name='delete-vm-snap')
     def delete_vm_snap(self, request, *args, **kwargs):
-        '''
+        """
         删除一个虚拟机系统快照
-        '''
+        """
         snap_id = str_to_int_or_default(kwargs.get('id', '0'), default=0)
         if snap_id <= 0:
             return Response(data={'code': 400, 'code_text': '无效的id参数'}, status=status.HTTP_400_BAD_REQUEST)
@@ -977,25 +977,25 @@ class VmsViewSet(viewsets.GenericViewSet):
             )
         ],
         responses={
-            200: '''
+            200: """
                 {
                     'code': 200,
                     'code_text': '修改快照备注信息成功'
                 }
-            ''',
-            400: '''
+            """,
+            400: """
                 {
                     'code': 400,
                     'code_text': 'xxx'
                 }
-            '''
+            """
         }
     )
     @action(methods=['patch'], url_path=r'snap/(?P<id>[0-9]+)/remark', detail=False, url_name='vm-snap-remark')
     def vm_snap_remark(self, request, *args, **kwargs):
-        '''
+        """
         修改虚拟机快照备注信息
-        '''
+        """
         remark = request.query_params.get('remark', None)
         if remark is None:
             return Response(data={'code': 400, 'code_text': '参数有误，无效的备注信息'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1017,25 +1017,25 @@ class VmsViewSet(viewsets.GenericViewSet):
         operation_summary='虚拟机系统盘回滚到指定快照',
         request_body=no_body,
         responses={
-            201: '''
+            201: """
             {
                 'code': 201,
                 'code_text': '回滚虚拟机成功'
             }
-            ''',
-            400: '''
+            """,
+            400: """
             {
                 'code': 400,
                 'code_text': 'xxx'
             }
-            '''
+            """
         }
     )
     @action(methods=['post'], url_path=r'rollback/(?P<snap_id>[0-9]+)', detail=True, url_name='vm-rollback-snap')
     def vm_rollback_snap(self, request, *args, **kwargs):
-        '''
+        """
         虚拟机系统盘回滚到指定快照
-        '''
+        """
         vm_uuid = kwargs.get(self.lookup_field, '')
         snap_id = str_to_int_or_default(kwargs.get('snap_id', '0'), default=0)
         if snap_id <= 0:
@@ -1054,18 +1054,18 @@ class VmsViewSet(viewsets.GenericViewSet):
         operation_summary='更换虚拟机系统',
         request_body=no_body,
         responses={
-            201: '''
+            201: """
                 {
                     'code': 201,
                     'code_text': '更换虚拟机系统成功'
                 }
-                ''',
-            400: '''
+                """,
+            400: """
                 {
                     'code': 400,
                     'code_text': 'xxx'
                 }
-                '''
+                """
         }
     )
     @action(methods=['post'], url_path=r'reset/(?P<image_id>[0-9]+)', detail=True, url_name='vm-reset')
@@ -1100,18 +1100,18 @@ class VmsViewSet(viewsets.GenericViewSet):
             )
         ],
         responses={
-            201: '''
+            201: """
                     {
                         'code': 201,
                         'code_text': '迁移虚拟机成功'
                     }
-                    ''',
-            400: '''
+                    """,
+            400: """
                     {
                         'code': 400,
                         'code_text': 'xxx'
                     }
-                    '''
+                    """
         }
     )
     @action(methods=['post'], url_path=r'migrate/(?P<host_id>[0-9]+)', detail=True, url_name='vm_migrate')
@@ -1139,12 +1139,12 @@ class VmsViewSet(viewsets.GenericViewSet):
     @swagger_auto_schema(
         operation_summary='修改虚拟机登录密码',
         responses={
-            200: '''
+            200: """
                 {
                   "code": 200,
                   "code_text": "修改虚拟机登录密码成功",
                 }
-                '''
+                """
         }
     )
     @action(methods=['post'], url_path='setpassword', detail=True, url_name='vm-change-password')
@@ -1180,7 +1180,7 @@ class VmsViewSet(viewsets.GenericViewSet):
         operation_summary='尝试恢复丢失的虚拟机',
         request_body=no_body,
         responses={
-            200: ''''''
+            200: """"""
         }
     )
     @action(methods=['post'], url_path='miss-fix', detail=True, url_name='vm-miss-fix')
@@ -1235,15 +1235,15 @@ class VmsViewSet(viewsets.GenericViewSet):
 
 
 class CenterViewSet(viewsets.GenericViewSet):
-    '''
+    """
     分中心类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     queryset = Center.objects.all()
 
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取分中心列表
 
             获取分中心列表信息
@@ -1262,7 +1262,7 @@ class CenterViewSet(viewsets.GenericViewSet):
                 }
               ]
             }
-        '''
+        """
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)
@@ -1285,9 +1285,9 @@ class CenterViewSet(viewsets.GenericViewSet):
 
 
 class GroupViewSet(viewsets.GenericViewSet):
-    '''
+    """
     宿主机组类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     queryset = Group.objects.all()
@@ -1305,7 +1305,7 @@ class GroupViewSet(viewsets.GenericViewSet):
         ]
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取宿主机组列表
 
             获取宿主机组列表信息
@@ -1329,7 +1329,7 @@ class GroupViewSet(viewsets.GenericViewSet):
               "code": 400,
               "code_text": "xxx"
             }
-        '''
+        """
         center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
         if center_id < 0:
             return Response(data={'code': 400, 'code_text': 'center_id参数无效'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1370,9 +1370,9 @@ class GroupViewSet(viewsets.GenericViewSet):
 
 
 class HostViewSet(viewsets.GenericViewSet):
-    '''
+    """
     宿主机类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     queryset = Host.objects.all()
@@ -1389,7 +1389,7 @@ class HostViewSet(viewsets.GenericViewSet):
         ]
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取宿主机列表
 
             http code 200:
@@ -1414,7 +1414,7 @@ class HostViewSet(viewsets.GenericViewSet):
                 }
               ]
             }
-        '''
+        """
         group_id = int(request.query_params.get('group_id', 0))
 
         try:
@@ -1442,9 +1442,9 @@ class HostViewSet(viewsets.GenericViewSet):
 
 
 class VlanViewSet(viewsets.GenericViewSet):
-    '''
+    """
     vlan类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
 
@@ -1603,9 +1603,9 @@ class VlanViewSet(viewsets.GenericViewSet):
 
 
 class ImageViewSet(viewsets.GenericViewSet):
-    '''
+    """
     镜像类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
 
@@ -1639,7 +1639,7 @@ class ImageViewSet(viewsets.GenericViewSet):
         ]
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取系统镜像列表
 
             镜像标签: [
@@ -1679,7 +1679,7 @@ class ImageViewSet(viewsets.GenericViewSet):
                 }
               ]
             }
-        '''
+        """
         center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
         tag = str_to_int_or_default(request.query_params.get('tag', 0), 0)
         sys_type = str_to_int_or_default(request.query_params.get('sys_type', 0), 0)
@@ -1745,7 +1745,7 @@ class AuthTokenViewSet(ObtainAuthToken):
     @swagger_auto_schema(
         operation_summary='刷新当前用户的token',
         responses={
-            200: '''
+            200: """
             {
                 "token": {
                     "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
@@ -1753,13 +1753,13 @@ class AuthTokenViewSet(ObtainAuthToken):
                     "created": "2020-03-06T14:46:27.149648+08:00"
                 }
             }
-            '''
+            """
         }
     )
     def put(self, request, *args, **kwargs):
-        '''
+        """
         刷新当前用户的token，旧token失效，需要通过身份认证权限
-        '''
+        """
         user = request.user
         if user.is_authenticated:
             token, created = Token.objects.get_or_create(user=user)
@@ -1784,7 +1784,7 @@ class AuthTokenViewSet(ObtainAuthToken):
             )
         ],
         responses={
-            200: '''
+            200: """
                 {
                     "token": {
                         "key": "655e0bcc7216d0ccf7d2be7466f94fa241dc32cb",
@@ -1792,7 +1792,7 @@ class AuthTokenViewSet(ObtainAuthToken):
                         "created": "2020-03-06T14:46:27.149648+08:00"
                     }
                 }
-            '''
+            """
         }
     )
     def post(self, request, *args, **kwargs):
@@ -1820,23 +1820,23 @@ class AuthTokenViewSet(ObtainAuthToken):
 
 
 class JWTObtainPairView(TokenObtainPairView):
-    '''
+    """
     JWT登录认证视图
-    '''
+    """
 
     @swagger_auto_schema(
         operation_summary='登录认证，获取JWT',
         responses={
-            200: '''
+            200: """
                 {
                   "refresh": "xxx",     # refresh JWT, 此JWT通过刷新API可以获取新的access JWT
                   "access": "xxx"       # access JWT, 用于身份认证，如 'Authorization Bearer accessJWT'
                 }
-            '''
+            """
         }
     )
     def post(self, request, *args, **kwargs):
-        '''
+        """
         登录认证，获取JWT
 
             http 200:
@@ -1848,26 +1848,26 @@ class JWTObtainPairView(TokenObtainPairView):
             {
               "detail": "No active account found with the given credentials"
             }
-        '''
+        """
         return super().post(request, args, kwargs)
 
 
 class JWTRefreshView(TokenRefreshView):
-    '''
+    """
     Refresh JWT视图
-    '''
+    """
     @swagger_auto_schema(
         operation_summary='刷新access JWT',
         responses={
-            200: '''
+            200: """
                 {
                   "access": "xxx"
                 }
-            '''
+            """
         }
     )
     def post(self, request, *args, **kwargs):
-        '''
+        """
         通过refresh JWT获取新的access JWT
 
             http 200:
@@ -1879,23 +1879,23 @@ class JWTRefreshView(TokenRefreshView):
               "detail": "Token is invalid or expired",
               "code": "token_not_valid"
             }
-        '''
+        """
         return super().post(request, args, kwargs)
 
 
 class JWTVerifyView(TokenVerifyView):
-    '''
+    """
     校验access JWT视图
-    '''
+    """
 
     @swagger_auto_schema(
         operation_summary='校验access JWT是否有效',
         responses={
-            200: '''{ }'''
+            200: """{ }"""
         }
     )
     def post(self, request, *args, **kwargs):
-        '''
+        """
         校验access JWT是否有效
 
             http 200:
@@ -1906,14 +1906,14 @@ class JWTVerifyView(TokenVerifyView):
               "detail": "Token is invalid or expired",
               "code": "token_not_valid"
             }
-        '''
+        """
         return super().post(request, args, kwargs)
 
 
 class VDiskViewSet(viewsets.GenericViewSet):
-    '''
+    """
     虚拟硬盘类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     lookup_field = 'uuid'
@@ -1968,7 +1968,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         ]
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取云硬盘列表
 
             http code 200:
@@ -2003,7 +2003,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 }
               ]
             }
-        '''
+        """
         center_id = int(request.query_params.get('center_id', 0))
         group_id = int(request.query_params.get('group_id', 0))
         quota_id = int(request.query_params.get('quota_id', 0))
@@ -2044,7 +2044,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
     @swagger_auto_schema(
         operation_summary='查询虚拟机可挂载的云硬盘',
         responses={
-            200: ''''''
+            200: """"""
         }
     )
     @action(methods=['get'], detail=False, url_path=r'vm/(?P<vm_uuid>[0-9a-z-]+)', url_name='vm_can_mount')
@@ -2120,11 +2120,11 @@ class VDiskViewSet(viewsets.GenericViewSet):
     @swagger_auto_schema(
         operation_summary='创建云硬盘',
         responses={
-            201: ''''''
+            201: """"""
         }
     )
     def create(self, request, *args, **kwargs):
-        '''
+        """
         创建云硬盘
 
             http code 201 创建成功:
@@ -2142,38 +2142,22 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "enable": true,
                 "remarks": "test2"
               }
-            http code 200 失败：
-            {
-              "code": 200,
-              "code_text": "创建失败，xxx",
-            }
 
-            http code 400 请求无效：
+            http code 400, 403, 409, 500：
             {
-              "code": 400,
+              "code": xxx,
               "code_text": "xxx",
+              "err_code": "Vdiskxxx",   # 错误码
               "data":{ }            # 请求时提交的数据
             }
-        '''
+        """
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid(raise_exception=False):
-            code_text = '参数验证有误'
-            try:
-                for name, err_list in serializer.errors.items():
-                    if name == 'code_text':
-                        code_text = err_list[0]
-                    else:
-                        code_text = f'"{name}" {err_list[0]}'
-                    break
-            except Exception:
-                pass
-
-            data = {
-                'code': 400,
-                'code_text': code_text,
-                'data': serializer.data,
-            }
-            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+            code_text = serializer_error_msg(errors=serializer.errors, default='参数验证有误')
+            exc = exceptions.VdiskInvalidParams(msg=code_text)
+            data = exc.data()
+            data['data'] = serializer.data
+            return Response(data, status=exc.status_code)
 
         data = serializer.validated_data
         size = data.get('size')
@@ -2185,7 +2169,9 @@ class VDiskViewSet(viewsets.GenericViewSet):
         try:
             disk = manager.create_vdisk(size=size, user=request.user, group=group_id, quota=quota_id, remarks=remarks)
         except VdiskError as e:
-            return Response(data={'code': 200, 'code_text': str(e)}, status=status.HTTP_200_OK)
+            r_data = e.data()
+            r_data['data'] = data
+            return Response(data=r_data, status=e.status_code)
 
         data = {
             'code': 201,
@@ -2195,7 +2181,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         return Response(data=data, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, *args, **kwargs):
-        '''
+        """
         获取硬盘详细数据
 
             获取硬盘详细数据
@@ -2234,7 +2220,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "remarks": "test"
               }
             }
-        '''
+        """
         disk_uuid = kwargs.get(self.lookup_field, '')
         try:
             disk = VdiskManager().get_vdisk_by_uuid(uuid=disk_uuid)
@@ -2253,7 +2239,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
         })
 
     def destroy(self, request, *args, **kwargs):
-        '''
+        """
         销毁硬盘
 
             销毁硬盘
@@ -2264,7 +2250,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "code": 4xx,
                 "code_text": "xxx"
             }
-        '''
+        """
         disk_uuid = kwargs.get(self.lookup_field, '')
         api = VdiskManager()
         try:
@@ -2299,17 +2285,17 @@ class VDiskViewSet(viewsets.GenericViewSet):
             )
         ],
         responses={
-            200: '''
+            200: """
                 {
                     "code": 200,
                     "code_text": "挂载硬盘成功"
                 }
-            '''
+            """
         }
     )
     @action(methods=['patch'], url_path='mount', detail=True, url_name='disk-mount')
     def disk_mount(self, request, *args, **kwargs):
-        '''
+        """
         挂载硬盘
 
             http code 200:
@@ -2322,7 +2308,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "code": 400,
                 "code_text": "挂载硬盘失败，xxx"
             }
-        '''
+        """
         disk_uuid = kwargs.get(self.lookup_field, '')
         vm_uuid = request.query_params.get('vm_uuid', '')
         api = VmAPI()
@@ -2337,17 +2323,17 @@ class VDiskViewSet(viewsets.GenericViewSet):
         operation_summary='卸载硬盘',
         request_body=no_body,
         responses={
-            200: '''
+            200: """
                 {
                     "code": 200,
                     "code_text": "卸载硬盘成功"
                 }
-            '''
+            """
         }
     )
     @action(methods=['patch'], url_path='umount', detail=True, url_name='disk-umount')
     def disk_umount(self, request, *args, **kwargs):
-        '''
+        """
         卸载硬盘
 
             http code 200:
@@ -2360,7 +2346,7 @@ class VDiskViewSet(viewsets.GenericViewSet):
                 "code": 400,
                 "code_text": "卸载硬盘失败，xxx"
             }
-        '''
+        """
         disk_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
         try:
@@ -2383,25 +2369,25 @@ class VDiskViewSet(viewsets.GenericViewSet):
             )
         ],
         responses={
-            200: '''
+            200: """
                 {
                     "code": 200,
                     "code_text": "修改硬盘备注信息成功"
                 }
-            ''',
-            400: '''
+            """,
+            400: """
                     {
                         "code": 400,
                         "code_text": "xxx"
                     }
-                '''
+                """
         }
     )
     @action(methods=['patch'], url_path='remark', detail=True, url_name='disk-remark')
     def disk_remark(self, request, *args, **kwargs):
-        '''
+        """
         修改云硬盘备注信息
-        '''
+        """
         remark = request.query_params.get('remark', None)
         if remark is None:
             return Response(data={'code': 400, 'code_text': '参数有误，未提交remark参数'}, status=status.HTTP_400_BAD_REQUEST)
@@ -2432,9 +2418,9 @@ class VDiskViewSet(viewsets.GenericViewSet):
 
 
 class QuotaViewSet(viewsets.GenericViewSet):
-    '''
+    """
     硬盘存储池配额类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
 
@@ -2451,7 +2437,7 @@ class QuotaViewSet(viewsets.GenericViewSet):
         ],
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取硬盘储存池配额列表
 
             http code 200:
@@ -2481,7 +2467,7 @@ class QuotaViewSet(viewsets.GenericViewSet):
                 "max_vdisk": 200    # 硬盘最大容量上限
               ]
             }
-        '''
+        """
         group_id = int(request.query_params.get('group_id', 0))
         manager = VdiskManager()
 
@@ -2514,9 +2500,9 @@ class QuotaViewSet(viewsets.GenericViewSet):
 
 
 class StatCenterViewSet(viewsets.GenericViewSet):
-    '''
+    """
     资源统计类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, IsSuperUser]
     pagination_class = None
     lookup_field = 'id'
@@ -2528,7 +2514,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
         }
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取所有资源统计信息列表
 
             http code 200:
@@ -2574,7 +2560,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
                 }
               ]
             }
-        '''
+        """
         centers = CenterManager().get_stat_center_queryset().values(
             'id', 'name', 'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         groups = GroupManager().get_stat_group_queryset().values(
@@ -2593,7 +2579,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
     )
     @action(methods=['get'], detail=True, url_path='center', url_name='center-stat')
     def center_stat(self, request, *args, **kwargs):
-        '''
+        """
         获取一个分中心的资源统计信息列表
 
             http code 200:
@@ -2624,7 +2610,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
                 }
               ]
             }
-        '''
+        """
         c_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if c_id > 0:
             center = CenterManager().get_stat_center_queryset(filters={'id': c_id}).values(
@@ -2648,7 +2634,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
     )
     @action(methods=['get'], detail=True, url_path='group', url_name='group-stat')
     def group_stat(self, request, *args, **kwargs):
-        '''
+        """
         获取一个机组的资源统计信息列表
 
             http code 200:
@@ -2680,7 +2666,7 @@ class StatCenterViewSet(viewsets.GenericViewSet):
                 }
               ]
             }
-        '''
+        """
         g_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if g_id > 0:
             group = GroupManager().get_stat_group_queryset(filters={'id': g_id}).values(
@@ -2706,9 +2692,9 @@ class StatCenterViewSet(viewsets.GenericViewSet):
 
 
 class PCIDeviceViewSet(viewsets.GenericViewSet):
-    '''
+    """
     PCI设备类视图
-    '''
+    """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
 
@@ -2753,7 +2739,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
         ],
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取PCI设备列表
 
             http code 200:
@@ -2778,7 +2764,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
                 }
                 ]
             }
-        '''
+        """
         center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
         group_id = str_to_int_or_default(request.query_params.get('group_id', 0), 0)
         host_id = str_to_int_or_default(request.query_params.get('host_id', 0), 0)
@@ -2899,7 +2885,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
     )
     @action(methods=['post'], detail=True, url_path='mount', url_name='mount-pci')
     def mount_pci(self, request, *args, **kwargs):
-        '''
+        """
         挂载PCI设备
 
             http code 201:
@@ -2913,7 +2899,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
                 "code_text": "挂载设备失败，xxx"
             }
 
-        '''
+        """
         dev_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         vm_uuid = request.query_params.get('vm_uuid', '')
         if dev_id <= 0:
@@ -2941,7 +2927,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
     )
     @action(methods=['post'], detail=True, url_path='umount', url_name='umount-pci')
     def umount_pci(self, request, *args, **kwargs):
-        '''
+        """
         卸载PCI设备
 
             http code 201:
@@ -2955,7 +2941,7 @@ class PCIDeviceViewSet(viewsets.GenericViewSet):
                 "code_text": "卸载设备失败，xxx"
             }
 
-        '''
+        """
         dev_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if dev_id <= 0:
             return Response(data={'code': 400, 'code_text': '无效的设备ID'}, status=status.HTTP_400_BAD_REQUEST)
@@ -3003,7 +2989,7 @@ class MacIPViewSet(viewsets.GenericViewSet):
 
     )
     def list(self, request, *args, **kwargs):
-        '''
+        """
         获取mac ip列表
 
             http code 200:
@@ -3020,7 +3006,7 @@ class MacIPViewSet(viewsets.GenericViewSet):
                     }
                   ]
                 }
-        '''
+        """
         vlan_id = request.query_params.get('vlan_id', None)
         if vlan_id is not None:
             vlan_id = str_to_int_or_default(vlan_id, None)

@@ -126,6 +126,30 @@ class VdiskError(Error):
     pass
 
 
+class VdiskInvalidParams(VdiskError):
+    code = 400
+    msg = '无效的参数'
+    err_code = 'VdiskInvalidParams'
+
+
+class VdiskAccessDenied(VdiskError):
+    code = 403
+    msg = '无资源访问权限'
+    err_code = 'VdiskAccessDenied'
+
+
+class VdiskTooLarge(VdiskError):
+    code = 409
+    msg = '超出了可创建硬盘最大容量限制'
+    err_code = 'VdiskTooLarge'
+
+
+class VdiskNotEnoughQuota(VdiskError):
+    code = 409
+    msg = '没有足够的存储容量创建硬盘'
+    err_code = 'VdiskNotEnoughQuota'
+
+
 class NovncError(Error):
     pass
 

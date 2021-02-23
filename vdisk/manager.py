@@ -6,6 +6,7 @@ from compute.managers import CenterManager, ComputeError
 from .models import Vdisk
 from .models import Quota
 from utils.errors import VdiskError
+from utils import errors
 
 
 class VdiskManager:
@@ -173,26 +174,29 @@ class VdiskManager:
         :raises: VdiskError
         """
         if size <= 0:
-            raise VdiskError(msg='创建的硬盘大小必须大于0')
+            raise errors.VdiskInvalidParams(msg='创建的硬盘大小必须大于0')
 
         if quota:
             if isinstance(quota, int):
                 quota = Quota.objects.filter(id=quota).first()
             if not isinstance(quota, Quota):
-                raise VdiskError(msg='无效的quota或quota id')
+                raise errors.VdiskInvalidParams(msg='无效的quota或quota id')
         elif group:
             qs = self.get_quota_queryset_by_group(group=group)
             quota = qs.first()
             if not isinstance(quota, Quota):
-                raise VdiskError(msg='无效的group或group id')
+                raise errors.VdiskInvalidParams(msg='无效的group或group id')
         else:
-            raise VdiskError(msg='至少需要一个有效的group或quota参数')
+            raise errors.VdiskInvalidParams(msg='至少需要一个有效的group或quota参数')
+
+        if not quota.user_has_perm(user):
+            raise errors.VdiskAccessDenied(msg='您没有此资源池的使用权限')
 
         if not quota.check_disk_size_limit(size=size):
-            raise VdiskError(msg='超出了可创建硬盘最大容量')
+            raise errors.VdiskTooLarge(msg='超出了可创建硬盘最大容量')
 
         if not quota.meet_needs(size=size):
-            raise VdiskError(msg='没有足够的存储容量创建硬盘')
+            raise errors.VdiskNotEnoughQuota(msg='没有足够的存储容量创建硬盘')
 
         # 向硬盘CEPH存储池申请容量
         if not quota.claim(size=size):
