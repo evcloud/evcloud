@@ -5,7 +5,7 @@ from utils.ev_libvirt.virt import VirtError, VmDomain
 from compute.managers import GroupManager, ComputeError, CenterManager, HostManager
 from .models import PCIDevice
 from .device import GPUDevice
-from utils.errors import DeviceError
+from utils.errors import DeviceError, AcrossGroupConflictError
 
 
 class PCIDeviceManager:
@@ -205,7 +205,7 @@ class PCIDeviceManager:
         dev = self.device_wrapper(device)
         if dev.need_in_same_host():
             if dev.host_id != host.id:
-                raise DeviceError(msg='设备和虚拟机不在同一宿主机')
+                raise DeviceError.from_error(AcrossGroupConflictError(msg='设备和虚拟机不在同一宿主机'))
 
         try:
             dev.mount(vm=vm)

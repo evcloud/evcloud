@@ -381,10 +381,10 @@ class VdiskManager:
         """
         disk = self.get_vdisk_by_uuid(uuid=uuid)
         if not disk:
-            raise VdiskError(msg='硬盘不存在')
+            raise errors.VdiskNotExist()
 
         if not disk.user_has_perms(user):
-            raise VdiskError(msg='没有权限访问此硬盘')
+            raise errors.VdiskAccessDenied(msg='没有权限访问此硬盘')
 
         disk.remarks = remarks
         try:

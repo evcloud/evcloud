@@ -50,14 +50,15 @@ class ImageView(View):
         except ComputeError as e:
             return render(request, 'error.html', {'errors': ['查询分中心时错误', str(e)]})
 
-        context = {}
-        context['center_id'] = center_id if center_id > 0 else None
-        context['centers'] = centers
-        context['tag_value'] = tag
-        context['tags'] = Image.CHOICES_TAG
-        context['sys_type_value'] = sys_type
-        context['sys_types'] = Image.CHOICES_SYS_TYPE
-        context['search'] = search
+        context = {
+            'center_id': center_id if center_id > 0 else None,
+            'centers': centers,
+            'tag_value': tag,
+            'tags': Image.CHOICES_TAG,
+            'sys_type_value': sys_type,
+            'sys_types': Image.CHOICES_SYS_TYPE,
+            'search': search
+        }
         context = self.get_page_context(request, queryset, context)
         return render(request, 'image_list.html', context=context)
 

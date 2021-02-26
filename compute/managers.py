@@ -6,6 +6,7 @@ from django.utils.functional import cached_property
 
 from compute.models import Center, Group, Host
 from ceph.models import CephPool
+from utils import errors
 from utils.errors import ComputeError
 
 
@@ -112,7 +113,7 @@ class CenterManager:
 
         if isinstance(center_or_id, int):
             if center_or_id <= 0:
-                raise ComputeError(msg='无效的center id')
+                raise errors.ComputeError.from_error(errors.BadRequestError(msg='无效的center id'))
 
             c = self._cache_center_get(center_or_id)
             if c:
@@ -123,9 +124,9 @@ class CenterManager:
                 self._cache_center_add(c)
                 return c
             else:
-                raise ComputeError(msg='分中心不存在')
+                raise errors.ComputeError.from_error(errors.NotFoundError(msg='分中心不存在'))
 
-        raise ComputeError(msg='无效的center or id')
+        raise errors.ComputeError.from_error(errors.BadRequestError(msg='无效的center or id'))
 
     def get_group_ids_by_center(self, center_or_id):
         """
@@ -201,7 +202,7 @@ class CenterManager:
             qs = self.get_user_group_queryset(user)
             return qs.filter(center=center_or_id)
 
-        raise ComputeError(msg='无效的center id')
+        raise errors.ComputeError.from_error(errors.BadRequestError(msg='无效的center id'))
 
     def get_user_group_ids_by_center(self, center, user):
         """
@@ -618,7 +619,7 @@ class HostManager:
         :raises: ComputeError
         """
         if group_id < 0:
-            raise ComputeError(msg='group_id无效')
+            raise errors.ComputeError.from_error(errors.BadRequestError(msg='group_id无效'))
 
         qs = None
         if group_id > 0:

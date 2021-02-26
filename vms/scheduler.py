@@ -2,26 +2,7 @@ import random
 
 from network.managers import MacIPManager, VlanManager
 from compute.managers import GroupManager, HostManager, ComputeError
-from utils.errors import Error
-
-
-class ScheduleError(Error):
-    pass
-
-
-class NoMacIPError(ScheduleError):
-    """没有mac ip资源可用"""
-    pass
-
-
-class NoHostError(ScheduleError):
-    """没有宿主机资源可用"""
-    pass
-
-
-class NoHostOrMacIPError(ScheduleError):
-    """没有宿主机或mac_ip资源可用"""
-    pass
+from utils import errors
 
 
 class HostMacIPScheduler:
@@ -53,7 +34,7 @@ class HostMacIPScheduler:
             h, mac_ip = self.schedule_by_host_vlan(host=host, vcpu=vcpu, mem=mem, vlan=vlan,
                                                    need_mac_ip=need_mac_ip, ip_public=ip_public)
         elif not groups:
-            raise ScheduleError(msg='无宿主机组资源可用')
+            raise errors.ScheduleError.from_error(errors.NoHostGroupError(msg='无宿主机组资源可用'))
         elif len(groups) == 1:
             h, mac_ip = self.schedule_by_group_vlan(group=groups[0], vcpu=vcpu, mem=mem, vlan=vlan,
                                                     need_mac_ip=need_mac_ip, ip_public=ip_public)
@@ -81,15 +62,17 @@ class HostMacIPScheduler:
         :raises: ScheduleError, NoHostError, NoHostOrMacIPError，NoMacIPError
         """
         if not host:
-            raise NoHostError(msg='host参数无效')
+            raise errors.NoHostError(msg='host参数无效')
 
         if vlan and host.group_id != vlan.group_id:
-            raise ScheduleError(msg=f'宿主机host<{str(host)}>和指定的子网vlan<{str(vlan)}>不在同一宿主机组内')
+            exc = errors.AcrossGroupConflictError(
+                msg=f'宿主机host<{str(host)}>和指定的子网vlan<{str(vlan)}>不在同一宿主机组内')
+            raise errors.ScheduleError.from_error(exc)
 
         if need_mac_ip:
             ok, vlan_list = self.has_free_mac_ip_in_group(group=host.group_id, ip_public=ip_public)
             if not ok:
-                raise NoMacIPError(msg='没有mac ip可用')
+                raise errors.NoMacIPError(msg='没有mac ip可用')
 
         return self.schedule_hosts_vlan(host_list=[host], vcpu=vcpu, mem=mem, vlan=vlan,
                                         need_mac_ip=need_mac_ip, ip_public=ip_public)
@@ -123,11 +106,11 @@ class HostMacIPScheduler:
 
         if not mac_ip:
             if ip_public is None:
-                raise NoMacIPError(msg='没有可用的mac ip资源')
+                raise errors.NoMacIPError(msg='没有可用的mac ip资源')
             elif ip_public:
-                raise NoMacIPError(msg='没有可用的公网mac ip资源')
+                raise errors.NoMacIPError(msg='没有可用的公网mac ip资源')
             else:
-                raise NoMacIPError(msg='没有可用的私网mac ip资源')
+                raise errors.NoMacIPError(msg='没有可用的私网mac ip资源')
 
         return mac_ip
 
@@ -147,16 +130,18 @@ class HostMacIPScheduler:
         :raises: ScheduleError, NoHostError, NoMacIPError
         """
         if vlan and group.id != vlan.group_id:
-            raise ScheduleError(msg=f'宿主机组和指定的子网vlan<{str(vlan)}>不在同一宿主机组内')
+            exc = errors.AcrossGroupConflictError(
+                msg=f'宿主机组和指定的子网vlan<{str(vlan)}>不在同一宿主机组内')
+            raise errors.ScheduleError.from_error(exc)
 
         host_list = self.get_host_list(group=group)
         if not host_list:
-            raise NoHostError(msg='没有足够资源的宿主机可用')
+            raise errors.NoHostError(msg='没有足够资源的宿主机可用')
 
         if need_mac_ip:
             ok, vlan_list = self.has_free_mac_ip_in_group(group=group, ip_public=ip_public)
             if not ok:
-                raise NoMacIPError(msg='没有mac ip可用')
+                raise errors.NoMacIPError(msg='没有mac ip可用')
 
         return self.schedule_hosts_vlan(host_list=host_list, vcpu=vcpu, mem=mem, vlan=vlan,
                                         need_mac_ip=need_mac_ip, ip_public=ip_public)
@@ -181,7 +166,7 @@ class HostMacIPScheduler:
             try:
                 return self.schedule_by_group_vlan(group=group, vcpu=vcpu, mem=mem, vlan=vlan, need_mac_ip=need_mac_ip,
                                                    ip_public=ip_public)
-            except ScheduleError as e:
+            except errors.ScheduleError as e:
                 continue
 
         if ip_public is None:
@@ -191,7 +176,7 @@ class HostMacIPScheduler:
         else:
             msg = '没有足够资源的宿主机或私网mac ip可用'
 
-        raise NoHostOrMacIPError(msg=msg)
+        raise errors.NoHostOrMacIPError(msg=msg)
 
     @staticmethod
     def get_host_list(group):
@@ -208,7 +193,7 @@ class HostMacIPScheduler:
         try:
             host_list = list(GroupManager().get_enable_host_queryset_by_group(group_or_id=group))
         except (ComputeError, Exception) as e:
-            raise ScheduleError(msg=f'获取宿主机list错误，{str(e)}')
+            raise errors.ScheduleError(msg=f'获取宿主机list错误，{str(e)}')
 
         return host_list
 
@@ -228,7 +213,7 @@ class HostMacIPScheduler:
         :raises: ScheduleError, NoHostError, NoMacIPError
         """
         if not host_list:
-            raise NoHostError(msg='没有足够资源的宿主机可用')
+            raise errors.NoHostError(msg='没有足够资源的宿主机可用')
 
         host = None
         mac_ip = None
@@ -242,7 +227,7 @@ class HostMacIPScheduler:
             break
 
         if not host:
-            raise NoHostError(msg='没有足够资源的宿主机可用')
+            raise errors.NoHostError(msg='没有足够资源的宿主机可用')
 
         if need_mac_ip:
             if vlan:
@@ -257,7 +242,7 @@ class HostMacIPScheduler:
         except ComputeError as e:
             if mac_ip:
                 MacIPManager().free_used_ip(ip_id=mac_ip.id)  # 释放已申请的mac ip资源
-            raise ScheduleError(msg=str(e))
+            raise errors.ScheduleError.from_error(e)
 
         return host, mac_ip
 
@@ -301,7 +286,7 @@ class HostMacIPScheduler:
             try:
                 ok = manager.has_free_ip_in_vlan(vlan_id=v.id)
             except Exception as e:
-                raise ScheduleError(msg=str(e))
+                raise errors.ScheduleError(msg=str(e))
 
             if ok:
                 return True
@@ -323,4 +308,4 @@ class HostMacIPScheduler:
             vlans = VlanManager().get_group_vlan_queryset(group=group)
             return list(vlans)
         except Exception as e:
-            raise ScheduleError(msg=f'查询子网vlan错误，{e}')
+            raise errors.ScheduleError(msg=f'查询子网vlan错误，{e}')

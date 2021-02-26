@@ -201,6 +201,8 @@ REST_FRAMEWORK = {
     # 'ALLOWED_VERSIONS': ('v3', ),
     # 'VERSION_PARAM': 'version',
 
+    'EXCEPTION_HANDLER': 'api.viewsets.exception_handler',
+
     # 分页
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 100,

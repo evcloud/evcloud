@@ -15,7 +15,7 @@ from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete, r
 from .xml import XMLEditor
 from utils.errors import VmError, VmNotExistError, VmRunningError
 from utils import errors
-from .scheduler import HostMacIPScheduler, ScheduleError
+from .scheduler import HostMacIPScheduler
 
 
 def host_alive(host_ipv4: str, times=3, timeout=3):
@@ -406,11 +406,11 @@ class VmManager(VirtAPI):
         """
         snap = VmDiskSnap.objects.select_related('vm', 'vm__user').filter(pk=snap_id).first()
         if not snap:
-            raise VmError(msg='快照不存在')
+            raise errors.VmError.from_error(errors.NotFoundError(msg='快照不存在'))
 
         if not user.is_superuser:
             if snap.vm and not snap.vm.user_has_perms(user):
-                raise VmError(msg='没有此快照的访问权限')
+                raise errors.VmError.from_error(errors.AccessDeniedError(msg='没有此快照的访问权限'))
 
         return snap
 
@@ -469,10 +469,10 @@ class VmManager(VirtAPI):
         """
         snap = VmDiskSnap.objects.select_related('ceph_pool', 'ceph_pool__ceph').filter(pk=snap_id).first()
         if not snap:
-            raise VmError(msg='快照不存在')
+            raise errors.SnapNotExist(msg='快照不存在')
 
         if snap.disk != vm.disk:
-            raise VmError(msg='快照不属于此主机')
+            raise errors.SnapNotBelongToVm(msg='快照不属于此主机')
 
         ceph_pool = snap.ceph_pool
         if not ceph_pool:
@@ -628,7 +628,7 @@ class VmManager(VirtAPI):
         if vm is None:
             raise VmNotExistError(msg='虚拟机不存在')
         if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
+            raise errors.VmError.from_error(errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机'))
 
         vm.remarks = remark
         try:
@@ -1094,11 +1094,12 @@ class VmAPI:
         diskname = None     # clone的系统镜像
 
         if vcpu <= 0:
-            raise VmError(msg='无法创建虚拟机,vcpu参数无效')
+            raise errors.VmError.from_error(errors.BadRequestError(msg='无法创建虚拟机,vcpu参数无效'))
         if mem <= 0:
-            raise VmError(msg='无法创建虚拟机,men参数无效')
+            raise errors.VmError.from_error(errors.BadRequestError(msg='无法创建虚拟机,men参数无效'))
         if not ((center_id and center_id > 0) or (group_id and group_id > 0) or (host_id and host_id > 0)):
-            raise VmError(msg='无法创建虚拟机,必须指定一个有效center_id或group_id或host_id参数')
+            raise errors.VmError.from_error(errors.BadRequestError(
+                msg='无法创建虚拟机,必须指定一个有效center_id或group_id或host_id参数'))
 
         image = self._get_image(image_id)    # 镜像
 
@@ -1118,7 +1119,7 @@ class VmAPI:
                                                                      host_id=host_id, user=user, vlan=macip.vlan)
             macip = self._macip_manager.apply_for_free_ip(ipv4=ipv4)    # 分配ip
             if not macip:
-                raise VmError(msg='指定的IP地址不可用，不存在或已被占用')
+                raise errors.VmError.from_error(errors.MacIpApplyFailed(msg='指定的IP地址不可用，不存在或已被占用'))
             vlan = macip.vlan
         elif vlan_id and vlan_id > 0:
             vlan = self._get_vlan(vlan_id)  # 局域子网
@@ -1142,10 +1143,11 @@ class VmAPI:
                 else:
                     host, macip = scheduler.schedule(vcpu=vcpu, mem=mem, groups=groups, host=host_or_none,
                                                      vlan=vlan, ip_public=ip_public)
-            except ScheduleError as e:
-                raise VmError(msg=f'申请资源错误,{str(e)}')
+            except errors.ScheduleError as e:
+                e.msg = f'申请资源错误,{str(e)}'
+                raise errors.VmError.from_error(e)
             if not macip:
-                raise VmError(msg='申请mac ip失败')
+                raise errors.VmError.from_error(errors.MacIpApplyFailed(msg='申请mac ip失败'))
 
             # 创建虚拟机的系统镜像disk
             try:
@@ -1328,7 +1330,7 @@ class VmAPI:
         :raise VmError
         """
         if vcpu < 0 or mem < 0:
-            raise VmError(msg='vcpu或mem不能小于0')
+            raise errors.VmError.from_error(errors.BadRequestError(msg='vcpu或mem不能小于0'))
 
         if vcpu == 0 and mem == 0:
             return True
@@ -1362,7 +1364,7 @@ class VmAPI:
                     vcpu_need = vcpu - vm.vcpu
                     # 宿主机是否满足资源需求
                     if not host.meet_needs(vcpu=vcpu_need, mem=0):
-                        raise VmError(msg='宿主机已没有足够的vcpu资源')
+                        raise errors.VmError.from_error(errors.VcpuNotEnough(msg='宿主机已没有足够的vcpu资源'))
 
                     if not host.claim(vcpu=vcpu_need, mem=0):
                         raise VmError(msg='向宿主机申请的vcpu资源失败')
@@ -1384,7 +1386,7 @@ class VmAPI:
                     mem_need = mem - vm.mem
                     # 宿主机是否满足资源需求
                     if not host.meet_needs(vcpu=0, mem=mem_need):
-                        raise VmError(msg='宿主机已没有足够的内存资源')
+                        raise errors.VmError.from_error(errors.RamNotEnough(msg='宿主机已没有足够的内存资源'))
 
                     if not host.claim(vcpu=0, mem=mem_need):
                         raise VmError(msg='向宿主机申请的内存资源失败')
@@ -1454,7 +1456,7 @@ class VmAPI:
             elif op == 'poweroff':
                 return domain.poweroff()
             else:
-                raise VmError(msg='无效的操作')
+                raise errors.VmError.from_error(errors.BadRequestError(msg='无效的操作'))
         except VirtError as e:
             raise VmError(msg=str(e))
 
@@ -1502,16 +1504,16 @@ class VmAPI:
             raise VmError(msg='查询硬盘时错误')
 
         if vdisk is None:
-            raise VmError(msg='硬盘不存在')
+            raise errors.VmError.from_error(errors.VdiskNotExist())
         if not vdisk.enable:
-            raise VmError(msg='硬盘暂不可使用')
+            raise errors.VmError.from_error(errors.VdiskNotActive())
         if not vdisk.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此硬盘')
+            raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限访问此硬盘'))
 
         vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
         host = vm.host
         if host.group != vdisk.quota.group:
-            raise VmError(msg='虚拟机和硬盘不再同一个机组')
+            raise errors.AcrossGroupConflictError(msg='虚拟机和硬盘不再同一个机组')
 
         disk_list, dev_list = self._vm_manager.get_vm_vdisk_dev_list(vm=vm)
         if vdisk_uuid in disk_list:
@@ -1519,13 +1521,13 @@ class VmAPI:
 
         dev = self._vm_manager.new_vdisk_dev(dev_list)
         if not dev:
-            raise VmError(msg='不能挂载更多的硬盘了')
+            raise errors.VmTooManyVdiskMounted()
 
         # 硬盘元数据和虚拟机建立挂载关系
         try:
             self._vdisk_manager.mount_to_vm(vdisk_uuid=vdisk_uuid, vm=vm, dev=dev)
         except VdiskError as e:
-            raise VmError(msg=str(e))
+            raise errors.VmError.from_error(e)
 
         # 向虚拟机挂载硬盘
         try:
@@ -1540,7 +1542,8 @@ class VmAPI:
                       f'请忽略此记录，如果未挂载，请手动解除与虚拟机挂载关系'
                 log_manager = VmLogManager()
                 log_manager.add_log(title='硬盘与虚拟机解除挂载关系失败', about=log_manager.about.ABOUT_VM_DISK, text=msg)
-            raise VmError(msg=str(e))
+
+            raise errors.VmError.from_error(e)
 
         # 更新vm元数据中的xml
         try:
@@ -1569,17 +1572,17 @@ class VmAPI:
             raise VmError(msg='查询硬盘时错误')
 
         if vdisk is None:
-            raise VmError(msg='硬盘不存在')
+            raise errors.VmError.from_error(errors.VdiskNotExist())
 
         if not vdisk.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此硬盘')
+            raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限访问此硬盘'))
 
         vm = vdisk.vm
         if not vm:
             return vdisk
 
         if not vm.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此虚拟机')
+            raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
         # 虚拟机的状态
         host = vm.host
@@ -1606,7 +1609,8 @@ class VmAPI:
                 self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
             except VmError:
                 pass
-            raise VmError(msg=str(e))
+
+            raise errors.VmError.from_error(e)
 
         # 更新vm元数据中的xml
         try:
@@ -1674,11 +1678,13 @@ class VmAPI:
             raise VmError(msg='查询设备时错误')
 
         if device is None:
-            raise VmError(msg='设备不存在')
+            raise errors.VmError.from_error(errors.DeviceNotFound())
+
         if not device.enable:
-            raise VmError(msg='设备暂不可使用')
+            raise errors.VmError.from_error(errors.DeviceNotActive())
+
         if not device.user_has_perms(user=user):
-            raise VmError(msg='当前用户没有权限访问此设备')
+            raise errors.VmError.from_error(errors.DeviceAccessDenied(msg='当前用户没有权限访问此设备'))
 
         return device
 
@@ -1707,7 +1713,7 @@ class VmAPI:
         try:
             self._pci_manager.umount_from_vm(device=device)
         except DeviceError as e:
-            raise VmError(msg=str(e))
+            raise errors.VmError.from_error(e)
 
         # 更新vm元数据中的xml
         try:
@@ -1737,7 +1743,7 @@ class VmAPI:
         try:
             self._pci_manager.mount_to_vm(vm=vm, device=device)
         except DeviceError as e:
-            raise VmError(msg=str(e))
+            raise errors.VmError.from_error(e)
 
         # 更新vm元数据中的xml
         try:
@@ -1772,7 +1778,7 @@ class VmAPI:
         # vm和image是否在同一个分中心
         host = vm.host
         if host.group.center_id != new_image.ceph_pool.ceph.center_id:
-            raise VmError(msg='虚拟机和系统镜像不在同一个分中心')
+            raise errors.AcrossCenterConflictError(msg='虚拟机和系统镜像不在同一个分中心')
 
         # 删除快照记录
         try:
