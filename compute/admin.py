@@ -53,5 +53,3 @@ class HostAdmin(admin.ModelAdmin):
         return s.get('vm_num')
 
     vm_created_now.short_description = '实时统计虚拟机数'
-
-

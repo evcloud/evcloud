@@ -3,12 +3,11 @@ from django.contrib.auth.models import AbstractUser
 from django.core.mail import send_mail
 from django.conf import settings
 
-# Create your models here.
 
 class UserProfile(AbstractUser):
-    '''
+    """
     自定义用户模型
-    '''
+    """
     telephone = models.CharField(verbose_name='电话', max_length=11, default='')
     company = models.CharField(verbose_name='公司/单位', max_length=255, default='')
     # api_user = models.BooleanField(verbose_name='API用户', default=False, help_text='指明是否是API用户')
@@ -21,9 +20,9 @@ class UserProfile(AbstractUser):
 
 
 class Email(models.Model):
-    '''
+    """
     邮箱
-    '''
+    """
     email_host = models.CharField(max_length=255)
     sender = models.EmailField(verbose_name='发送者')
     receiver = models.EmailField(verbose_name='接收者')
@@ -35,13 +34,14 @@ class Email(models.Model):
         verbose_name_plural = verbose_name
 
     def send_email(self, subject='EVCloud', receiver=None, message=None):
-        '''
+        """
         发送用户激活邮件
 
+        :param subject: 标题
         :param receiver: 接收者邮箱
         :param message: 邮件内容
         :return: True(发送成功)；False(发送失败)
-        '''
+        """
         if receiver:
             self.receiver = receiver
         # if message:

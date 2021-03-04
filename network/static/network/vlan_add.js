@@ -1,6 +1,6 @@
 $(function(){
     $('#form-add').ajaxForm(function(data){ 
-        if(data.ok == true){
+        if(data.ok === true){
             $('.remove').remove()
             var macips = data.macips
             var str = ''
@@ -8,7 +8,7 @@ $(function(){
                 str += '<tr class="remove"><th>v_' + macips[i][0].replace('.', '_') + '</th><th>' + macips[i][0] + '</th><th>' + macips[i][1] + '</th></tr>'
             }
             $('#table-add').append(str)
-            if($('#flag').val() == 'true'){
+            if($('#flag').val() === 'true'){
                 alert(data.msg)
             }
         }else{

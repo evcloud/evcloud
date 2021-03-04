@@ -9,9 +9,9 @@ from .models import Image
 
 User = get_user_model()
 
-# Create your views here.
+
 def str_to_int_or_default(val, default):
-    '''
+    """
     字符串转int，转换失败返回设置的默认值
 
     :param val: 待转化的字符串
@@ -19,7 +19,7 @@ def str_to_int_or_default(val, default):
     :return:
         int     # success
         default # failed
-    '''
+    """
     try:
         return int(val)
     except Exception:
@@ -27,9 +27,9 @@ def str_to_int_or_default(val, default):
 
 
 class ImageView(View):
-    '''
+    """
     镜像列表视图
-    '''
+    """
     NUM_PER_PAGE = 20  # Show num per page
 
     def get(self, request, *args, **kwargs):
@@ -41,7 +41,7 @@ class ImageView(View):
         try:
             api = ImageManager()
             queryset = api.filter_image_queryset(center_id=center_id, tag=tag, sys_type=sys_type, search=search,
-                                                            all_no_filters=True)
+                                                 all_no_filters=True)
         except ImageError as e:
             return render(request, 'error.html', {'errors': ['查询镜像时错误', str(e)]})
 
@@ -50,14 +50,15 @@ class ImageView(View):
         except ComputeError as e:
             return render(request, 'error.html', {'errors': ['查询分中心时错误', str(e)]})
 
-        context = {}
-        context['center_id'] = center_id if center_id > 0 else None
-        context['centers'] = centers
-        context['tag_value'] = tag
-        context['tags'] = Image.CHOICES_TAG
-        context['sys_type_value'] = sys_type
-        context['sys_types'] = Image.CHOICES_SYS_TYPE
-        context['search'] = search
+        context = {
+            'center_id': center_id if center_id > 0 else None,
+            'centers': centers,
+            'tag_value': tag,
+            'tags': Image.CHOICES_TAG,
+            'sys_type_value': sys_type,
+            'sys_types': Image.CHOICES_SYS_TYPE,
+            'search': search
+        }
         context = self.get_page_context(request, queryset, context)
         return render(request, 'image_list.html', context=context)
 
@@ -72,4 +73,3 @@ class ImageView(View):
         context['images'] = images_page
         context['count'] = paginator.count
         return context
-

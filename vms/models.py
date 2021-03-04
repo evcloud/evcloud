@@ -56,16 +56,19 @@ def rename_image(ceph, pool_name: str, image_name: str, new_name: str):
 
 
 class Vm(models.Model):
-    '''
+    """
     虚拟机模型
-    '''
+    """
     uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=200)
     vcpu = models.IntegerField(verbose_name='CPU数')
     mem = models.IntegerField(verbose_name='内存大小', help_text='单位MB')
-    disk = models.CharField(verbose_name='系统盘名称', max_length=100, unique=True, help_text='vm自己的系统盘，保存于ceph中的rdb文件名称')
-    image = models.ForeignKey(to=Image, on_delete=models.CASCADE, verbose_name='源镜像', help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
-    user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL, related_name='user_vms',  null=True)
+    disk = models.CharField(verbose_name='系统盘名称', max_length=100, unique=True,
+                            help_text='vm自己的系统盘，保存于ceph中的rdb文件名称')
+    image = models.ForeignKey(to=Image, on_delete=models.CASCADE, verbose_name='源镜像',
+                              help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
+    user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL,
+                             related_name='user_vms',  null=True)
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
     init_password = models.CharField(max_length=20, default='', verbose_name='root初始密码')
@@ -102,12 +105,12 @@ class Vm(models.Model):
         return self.host.ipv4
 
     def rm_sys_disk(self):
-        '''
+        """
         删除系统盘
         :return:
             True    # success
             False   # failed
-        '''
+        """
         ceph_pool = self.image.ceph_pool
         if not ceph_pool:
             return False
@@ -124,14 +127,14 @@ class Vm(models.Model):
         return True
 
     def user_has_perms(self, user):
-        '''
+        """
         用户是否有访问此宿主机的权限
         :param user: 用户
         :return:
             True    # has
             False   # no
-        '''
-        if not isinstance(user.id, int): # 未认证用户
+        """
+        if not isinstance(user.id, int):    # 未认证用户
             return False
 
         if user.is_superuser:
@@ -144,12 +147,12 @@ class Vm(models.Model):
 
     @property
     def vdisks(self):
-        '''
+        """
         获取挂载到虚拟机下的所有虚拟硬盘查询集
 
         :return:
             QuerySet()
-        '''
+        """
         return self.vdisk_set.all()
 
     @property
@@ -157,21 +160,21 @@ class Vm(models.Model):
         return self.sys_disk_snaps.all()
 
     def get_mounted_vdisk_queryset(self):
-        '''
+        """
         获取挂载到虚拟机下的所有虚拟硬盘查询集
 
         :return:
             QuerySet()
-        '''
+        """
         return self.vdisks
 
     def get_vm_mounted_vdisk_count(self):
-        '''
+        """
         获取虚拟机下已挂载虚拟硬盘的数量
 
         :return:
             int
-        '''
+        """
         qs = self.get_mounted_vdisk_queryset()
         return qs.count()
 
@@ -187,9 +190,9 @@ class Vm(models.Model):
 
 
 class VmArchive(models.Model):
-    '''
+    """
     删除虚拟机归档记录
-    '''
+    """
     id = models.AutoField(verbose_name='ID', primary_key=True)
     uuid = models.CharField(verbose_name='虚拟机UUID', max_length=50, unique=True, blank=True, default='')
     name = models.CharField(verbose_name='名称', max_length=200)
@@ -234,13 +237,13 @@ class VmArchive(models.Model):
         super().delete(using=using, keep_parents=keep_parents)
 
     def get_ceph_cluster(self):
-        '''
+        """
         获取ceph集群配置对象
 
         :return:
             CephCluster()   # success
             None            # error or not exists
-        '''
+        """
         try:
             ceph = CephClusterManager().get_ceph_by_id(self.ceph_id)
         except RadosError as e:
@@ -252,12 +255,12 @@ class VmArchive(models.Model):
         return ceph
 
     def rm_sys_disk_snap(self):
-        '''
+        """
         删除系统盘快照
 
         :return:None
         :raises: Exception
-        '''
+        """
         if not self.disk:
             return
 
@@ -266,7 +269,7 @@ class VmArchive(models.Model):
             snap.delete()
 
     def rm_sys_disk(self, raise_exception=False):
-        '''
+        """
         删除系统盘，需要先删除所有系统盘快照
 
         :param raise_exception: 删除错误时是否抛出错误
@@ -275,7 +278,7 @@ class VmArchive(models.Model):
             False   # failed
 
         :raises: Error    # When raise_exception == True
-        '''
+        """
         if not self.disk:
             return True
 
@@ -300,12 +303,12 @@ class VmArchive(models.Model):
         return True
 
     def rename_sys_disk_archive(self):
-        '''
+        """
         虚拟机归档后，系统盘RBD镜像修改了已删除归档的名称，格式：x_{time}_{disk_name}
         :return:
             True    # success
             False   # failed
-        '''
+        """
         old_name = self.disk
         pool_name = self.ceph_pool
 
@@ -365,9 +368,9 @@ class VmArchive(models.Model):
 
 
 class VmLog(models.Model):
-    '''
+    """
     虚拟机相关的记录
-    '''
+    """
     ABOUT_NORMAL = 0
     ABOUT_MAC_IP = 1
     ABOUT_MEM_CPU = 2
@@ -410,25 +413,26 @@ class VmLog(models.Model):
         return self.get_about_display()
 
     @classmethod
-    def to_valid_about_value(self, value:int):
-        '''
+    def to_valid_about_value(cls, value: int):
+        """
         转换为有效的about可选值
 
         :param value: input value
         :return: int
-        '''
-        if value in self.ABOUT_VALUE_TUPLE:
+        """
+        if value in cls.ABOUT_VALUE_TUPLE:
             return value
 
-        return self.ABOUT_NORMAL
+        return cls.ABOUT_NORMAL
 
 
 class VmDiskSnap(models.Model):
-    '''
+    """
     虚拟机系统盘快照
-    '''
+    """
     id = models.AutoField(verbose_name='ID', primary_key=True)
-    vm = models.ForeignKey(to=Vm, on_delete=models.SET_NULL, related_name='sys_disk_snaps', null=True, verbose_name='虚拟机')
+    vm = models.ForeignKey(to=Vm, on_delete=models.SET_NULL, related_name='sys_disk_snaps',
+                           null=True, verbose_name='虚拟机')
     ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.SET_NULL, null=True, verbose_name='CEPH POOL')
     disk = models.CharField(max_length=100, verbose_name='虚拟机系统盘')  # 同虚拟机uuid
     snap = models.CharField(max_length=100, verbose_name='系统盘CEPH快照')  # 默认名称为 disk-snap创建日期
@@ -454,12 +458,12 @@ class VmDiskSnap(models.Model):
         raise Exception('can not get vm disk')
 
     def get_ceph_pool(self):
-        '''
+        """
         获取系统盘所在的ceph pool对象
         :return:
             CephPool()  # success
             None        # failed
-        '''
+        """
         if self.ceph_pool:
             return self.ceph_pool
         if self.vm and self.vm.image:
@@ -467,13 +471,13 @@ class VmDiskSnap(models.Model):
         return self.ceph_pool
 
     def _create_sys_snap(self):
-        '''
+        """
         创建系统盘快照
         :return:
             True    # success
 
         :raises: Exception
-        '''
+        """
         ceph_pool = self.get_ceph_pool()
         if not ceph_pool:
             raise Exception('can not get ceph pool')
@@ -496,13 +500,13 @@ class VmDiskSnap(models.Model):
         return True
 
     def _remove_sys_snap(self):
-        '''
+        """
         删除系统盘快照
         :return:
             True    # success
 
         :raises: Exception
-        '''
+        """
         ceph_pool = self.get_ceph_pool()
         if not ceph_pool:
             raise Exception('can not get ceph pool')
@@ -548,6 +552,7 @@ class MigrateLog(models.Model):
         verbose_name = '虚拟机迁移记录'
         verbose_name_plural = '虚拟机迁移记录表'
 
+
 def rename_sys_disk_delete(ceph, pool_name: str, disk_name: str):
     """
     虚拟机系统盘RBD镜像修改已删除归档的名称，格式：x_{time}_{disk_name}
@@ -588,4 +593,3 @@ class Flavor(models.Model):
 
     def __repr__(self):
         return f'Flavor<vcpus={self.vcpus}, ram={self.ram}>'
-

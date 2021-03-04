@@ -1,13 +1,13 @@
-#coding=utf-8
+# coding=utf-8
 from django.db import models
 from compute.models import Host
 from vms.models import Vm
 
 
 class PCIDevice(models.Model):
-    '''
+    """
     PCIe设备
-    '''
+    """
     TYPE_UNKNOW = 0
     TYPE_GPU = 1
     CHOICES_TYPE = (
@@ -38,14 +38,14 @@ class PCIDevice(models.Model):
         return self.get_type_display()
 
     def set_remarks(self, content: str):
-        '''
+        """
         设置设备备注信息
 
         :param content: 备注信息
         :return:
             True    # success
             False   # failed
-        '''
+        """
         try:
             self.remarks = content
             self.save()
@@ -54,14 +54,14 @@ class PCIDevice(models.Model):
         return True
 
     def user_has_perms(self, user):
-        '''
+        """
         用户是否有访问此设备的权限
 
         :param user: 用户
         :return:
             True    # has
             False   # no
-        '''
+        """
         return self.host.user_has_perms(user=user)
 
     def need_in_same_host(self):

@@ -1,8 +1,8 @@
-from django.conf.urls import include, url
-from .views import *
+from django.urls import path
+from .views import vnc_view
 
 app_name = 'novnc'
 
 urlpatterns = [
-    url(r'^.*', vnc_view),
+    path(r'', vnc_view, name='vnc'),
 ]

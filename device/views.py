@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views import View
 
-from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
+from compute.managers import CenterManager, GroupManager, ComputeError
 from vms.manager import VmManager
 from utils.paginators import NumsPaginator
 from .manager import PCIDeviceManager, DeviceError
@@ -9,7 +9,7 @@ from .models import PCIDevice
 
 
 def str_to_int_or_default(val, default):
-    '''
+    """
     字符串转int，转换失败返回设置的默认值
 
     :param val: 待转化的字符串
@@ -17,7 +17,7 @@ def str_to_int_or_default(val, default):
     :return:
         int     # success
         default # failed
-    '''
+    """
     try:
         return int(val)
     except Exception:
@@ -128,4 +128,3 @@ class PCIMountView(View):
         context['vms'] = page
         context['count'] = paginator.count
         return context
-

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block boby %}
+    <div class="d-flex justify-content-center align-items-center h-100 bg-light">
+        <div class="card border-0 col-md-8 col-lg-6">
+            <div class="card-body">
+                <div class="p-2">
+                    <h5 class="card-title">{% trans '关于EVCloud' %}</h5>
+                    <p>{% trans 'EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。' %}</p>
+                </div>
+                <div class="p-2">
+                    <h5>{% trans '版本' %}</h5>
+                    <p>{{ version }}</p>
+                </div>
+                <div class="p-2">
+                    <h5>{% trans '关于我们' %}</h5>
+                    <p>{% trans '中国科学院计算机网络信息中心，科技云部。' %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

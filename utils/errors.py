@@ -31,7 +31,10 @@ class Error(Exception):
 
         return '未知的错误'
 
-    def data(self, msg_key: str = 'code_text'):
+    def data(self, msg_key: str = None):
+        if not msg_key:
+            msg_key = 'code_text'
+
         return {
             'code': self.code,
             'err_code': self.err_code,
@@ -41,6 +44,26 @@ class Error(Exception):
     @property
     def status_code(self):
         return self.code
+
+    @classmethod
+    def from_error(cls, err):
+        """
+        从其他错误生成当前错误对象
+
+        :param err: 一个错误对象
+        :return:
+            object of Error or subclass
+        """
+        if not isinstance(err, Error):
+            return cls(msg=str(err))
+
+        return cls(msg=err.msg, code=err.code, err_code=err.err_code)
+
+
+class AuthenticationFailedError(Error):
+    err_code = 'AuthenticationFailed'
+    code = 401
+    msg = 'Incorrect authentication credentials.'
 
 
 class AccessDeniedError(Error):
@@ -60,11 +83,19 @@ class NotFoundError(Error):
 
 class BadRequestError(Error):
     """
-    网络错误类型定义
+    请求错误类型定义
     """
     code = 400
     err_code = 'BadRequest'
     msg = 'bad request'
+
+
+class InvalidParamError(BadRequestError):
+    """
+    参数无效错误类型定义
+    """
+    err_code = 'InvalidParam'
+    msg = 'invalid param'
 
 
 class VmError(Error):
@@ -115,8 +146,44 @@ class AcrossGroupConflictError(VmError):
     msg = '资源冲突，不属于同一个宿主机组。'
 
 
+class AcrossCenterConflictError(VmError):
+    err_code = 'AcrossCenterConflict'
+    code = 409
+    msg = '资源冲突，不属于同一个分中心。'
+
+
+class VmTooManyVdiskMounted(VmError):
+    err_code = 'TooManyVdiskMounted'
+    code = 409
+    msg = '不能挂载更多的硬盘了'
+
+
+class SnapNotExist(VmError):
+    err_code = 'SnapNotExist'
+    code = 404
+    msg = '快照不存在'
+
+
+class SnapNotBelongToVm(VmError):
+    err_code = 'SnapNotBelongToVm'
+    code = 409
+    msg = '快照不属于指定虚拟主机'
+
+
 class VPNError(Error):
-    pass
+    err_code = 'InternalServerError'
+
+
+class NoSuchVPN(VPNError):
+    code = 404
+    msg = 'vpn账户不存在'
+    err_code = 'NoSuchVPN'
+
+
+class VPNAlreadyExists(VPNError):
+    code = 400
+    msg = 'vpn账户已存在'
+    err_code = 'AlreadyExists'
 
 
 class VdiskError(Error):
@@ -124,6 +191,48 @@ class VdiskError(Error):
     PCIe设备相关错误定义
     """
     pass
+
+
+class VdiskInvalidParams(VdiskError):
+    code = 400
+    msg = '无效的参数'
+    err_code = 'VdiskInvalidParams'
+
+
+class VdiskAccessDenied(VdiskError):
+    code = 403
+    msg = '无资源访问权限'
+    err_code = 'VdiskAccessDenied'
+
+
+class VdiskNotExist(VdiskError):
+    err_code = 'VdiskNotExist'
+    code = 404
+    msg = '云硬盘不存在'
+
+
+class VdiskTooLarge(VdiskError):
+    code = 409
+    msg = '超出了可创建硬盘最大容量限制'
+    err_code = 'VdiskTooLarge'
+
+
+class VdiskNotEnoughQuota(VdiskError):
+    code = 409
+    msg = '没有足够的存储容量创建硬盘'
+    err_code = 'VdiskNotEnoughQuota'
+
+
+class VdiskAlreadyMounted(VdiskError):
+    code = 409
+    msg = '硬盘已被挂载'
+    err_code = 'VdiskAlreadyMounted'
+
+
+class VdiskNotActive(VdiskError):
+    code = 409
+    msg = '硬盘未激活使用'
+    err_code = 'VdiskNotActive'
 
 
 class NovncError(Error):
@@ -135,6 +244,12 @@ class NetworkError(Error):
     网络错误类型定义
     """
     pass
+
+
+class MacIpApplyFailed(NetworkError):
+    code = 409
+    msg = '申请mac ip资源失败'
+    err_code = 'MacIpApplyFailed'
 
 
 class ImageError(Error):
@@ -151,8 +266,70 @@ class DeviceError(Error):
     pass
 
 
+class DeviceAccessDenied(DeviceError):
+    code = 403
+    msg = '无资源访问权限'
+    err_code = 'DeviceAccessDenied'
+
+
+class DeviceNotFound(DeviceError):
+    code = 404
+    msg = '设备不存在'
+    err_code = 'DeviceNotFound'
+
+
+class DeviceNotActive(DeviceError):
+    code = 409
+    msg = '设备不可用'
+    err_code = 'DeviceNotActive'
+
+
 class ComputeError(Error):
     """
     计算资源相关错误定义
     """
     pass
+
+
+class VcpuNotEnough(ComputeError):
+    err_code = 'VcpuNotEnough'
+    code = 409
+    msg = 'vcpu资源不足'
+
+
+class RamNotEnough(ComputeError):
+    err_code = 'RamNotEnough'
+    code = 409
+    msg = '内存资源不足'
+
+
+class ScheduleError(Error):
+    pass
+
+
+class NoMacIPError(ScheduleError):
+    """没有mac ip资源可用"""
+    code = 409
+    msg = '没有可用的mac ip资源'
+    err_code = 'NoMacIPAvailable'
+
+
+class NoHostError(ScheduleError):
+    """没有宿主机资源可用"""
+    code = 409
+    msg = '没有可用的宿主机资源'
+    err_code = 'NoHostAvailable'
+
+
+class NoHostOrMacIPError(ScheduleError):
+    """没有宿主机或mac_ip资源可用"""
+    code = 409
+    msg = '没有可用的宿主机或者mac ip资源'
+    err_code = 'NoHostOrMacIPAvailable'
+
+
+class NoHostGroupError(Error):
+    """没有宿主机组资源可用"""
+    code = 409
+    msg = '没有可用的宿主机资源'
+    err_code = 'NoHostGroupAvailable'

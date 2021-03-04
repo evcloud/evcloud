@@ -1,3 +1,10 @@
+## v3.1.1
+* 新增about view；
+* API异常响应内容增加错误码，自定义异常处理；
+* drf-simplejwt不兼容PyJWT2.0的bug；
+* network mac ip生成函数和配置文件导出函数优化修改；
+* CreateVdisk api增加权限检查；
+
 ## v3.1.0
 * admin系统镜像image列表增加filter by center；   
 * vm强制删除修改，宿主机不可连接时强制删除，vm归档记录增加host_released字段，标记宿主机上资源是否清理释放；

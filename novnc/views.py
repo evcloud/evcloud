@@ -1,11 +1,12 @@
-#coding=utf-8
-from django.http import  HttpResponse
+# coding=utf-8
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.conf import settings
 
 from novnc.manager import NovncTokenManager
 
 NOVNC_PORT = getattr(settings, 'NOVNC_SERVER_PORT', 80)
+
 
 def vnc_view(req):
     vncid = req.GET.get("vncid")
@@ -28,5 +29,3 @@ def vnc_view(req):
         http_host = f'{http_host}:{NOVNC_PORT}'
         url = f'http://{http_host}/vnc_lite.html?path=websockify/?token={vncid}'
         return redirect(to=url)
-
-

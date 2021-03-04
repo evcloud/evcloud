@@ -3,8 +3,6 @@ from django.contrib import admin
 from .models import CephPool, CephCluster
 
 
-# Register your models here.
-
 @admin.register(CephCluster)
 class CephClusterAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
@@ -19,4 +17,3 @@ class CephPoolAdmin(admin.ModelAdmin):
     list_display = ('id', 'pool_name', 'has_data_pool', 'data_pool', 'ceph', 'remarks')
     # list_filter = ['ceph']
     # search_fields = ['pool_name']
-

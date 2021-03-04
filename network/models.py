@@ -4,9 +4,9 @@ from compute.models import Center, Group
 
 
 class Vlan(models.Model):
-    '''
+    """
     虚拟局域网子网模型
-    '''
+    """
     NET_TAG_PRIVATE = 0
     NET_TAG_PUBLIC = 1
     NET_TAG_CHOICES = (
@@ -16,7 +16,8 @@ class Vlan(models.Model):
 
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='VLAN名称', max_length=100)
-    group = models.ForeignKey(to=Group, verbose_name='宿主机组', default=None, null=True, on_delete=models.SET_NULL, related_name='vlan_set')
+    group = models.ForeignKey(to=Group, verbose_name='宿主机组', default=None, null=True,
+                              on_delete=models.SET_NULL, related_name='vlan_set')
     br = models.CharField(verbose_name='网桥', max_length=50)
     tag = models.SmallIntegerField(verbose_name='网络标签', choices=NET_TAG_CHOICES, default=NET_TAG_PRIVATE)
     subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')
@@ -36,17 +37,17 @@ class Vlan(models.Model):
         verbose_name_plural = '05_VLAN子网'
 
     def get_free_ip_number(self):
-        '''
+        """
         获得该子网已经生成，但尚未使用的ip数量
         :return: int
-        '''
+        """
         return self.macips.filter(used=False, enable=True).count()
 
     def get_ip_number(self):
-        '''
+        """
         获得该子网已经生成的所有ip数量
         :return: int
-        '''
+        """
         return self.macips.filter(enable=True).count()
 
     @property
@@ -67,13 +68,14 @@ class Vlan(models.Model):
 
 
 class MacIP(models.Model):
-    '''
+    """
     IP地址模型
 
     分配给虚拟机的IP地址
-    '''
+    """
     id = models.AutoField(primary_key=True)
-    vlan = models.ForeignKey(to=Vlan, on_delete=models.SET_NULL, related_name='macips', null=True, verbose_name='VLAN子网') # IP所属的vlan局域子网
+    vlan = models.ForeignKey(to=Vlan, on_delete=models.SET_NULL, related_name='macips',
+                             null=True, verbose_name='VLAN子网')   # IP所属的vlan局域子网
     mac = models.CharField(verbose_name='MAC地址', max_length=17, unique=True)
     ipv4 = models.GenericIPAddressField(verbose_name='IP地址', unique=True)
     used = models.BooleanField(verbose_name='被使用', default=False, help_text='是否已分配给虚拟机使用')
@@ -95,35 +97,35 @@ class MacIP(models.Model):
         return self.ip_vm.uuid
 
     def can_used(self):
-        '''
+        """
         是否是自由的，可被使用的
         :return:
             True: 可使用
             False: 已被使用，或未开启使用
-        '''
+        """
         if not self.used and self.enable:
             return True
         return False
 
     @classmethod
-    def get_all_free_ip_in_vlan(self, vlan_id:int):
-        '''
+    def get_all_free_ip_in_vlan(cls, vlan_id: int):
+        """
         获取一个vlan子网中 未被使用的 可分配的 所有ip
         :param vlan_id: 子网ID
         :return:
             QuerySet()
-        '''
-        return self.objects.filter(vlan=vlan_id, used=False, enable=True).all()
+        """
+        return cls.objects.filter(vlan=vlan_id, used=False, enable=True).all()
 
     def set_in_used(self, auto_commit=True):
-        '''
+        """
         设置ip被使用中
 
         :param auto_commit: True:立即更新到数据库；False: 不更新到数据库
         :return:
             True    # 成功
             False   # 失败
-        '''
+        """
         if not auto_commit:
             self.used = True
             return True
@@ -139,15 +141,15 @@ class MacIP(models.Model):
         return False
 
     def set_free(self, auto_commit=True):
-        '''
+        """
         释放ip
 
         :param auto_commit: True:立即更新到数据库；False: 不更新到数据库
         :return:
             True    # 成功
             False   # 失败
-        '''
-        if self.used == False:
+        """
+        if self.used is False:
             return True
 
         self.used = False
@@ -160,4 +162,3 @@ class MacIP(models.Model):
             return False
 
         return True
-

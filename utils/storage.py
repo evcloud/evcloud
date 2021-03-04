@@ -16,5 +16,3 @@ class OverwriteStorage(FileSystemStorage):
             os.remove(full_path)
 
         return name
-
-

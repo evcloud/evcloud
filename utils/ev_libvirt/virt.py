@@ -11,7 +11,9 @@ VIR_DOMAIN_SHUTDOWN = 4  # the domain is being shut down
 VIR_DOMAIN_SHUTOFF = 5  # the domain is shut off
 VIR_DOMAIN_CRASHED = 6  # the domain is crashed
 VIR_DOMAIN_PMSUSPENDED = 7  # the domain is suspended by guest power management
-VIR_DOMAIN_LAST = 8  # NB: this enum value will increase over time as new events are added to the libvirt API. It reflects the last state supported by this version of the libvirt API.
+# NB: this enum value will increase over time as new events are added to the
+# libvirt API. It reflects the last state supported by this version of the libvirt API.
+VIR_DOMAIN_LAST = 8
 VIR_DOMAIN_HOST_DOWN = 9  # host connect failed
 VIR_DOMAIN_MISS = 10  # vm miss
 
@@ -147,15 +149,15 @@ class VirErrorNumber:
 
 
 class VirtError(Exception):
-    '''
+    """
     libvirt函数封装错误类型定义
-    '''
-    def __init__(self, code:int=0, msg:str='', err=None):
-        '''
+    """
+    def __init__(self, code: int = 0, msg: str = '', err=None):
+        """
         :param code: 错误码
         :param msg: 错误信息
         :param err: 错误对象
-        '''
+        """
         self.code = code
         self.msg = msg
         self.err = err
@@ -164,7 +166,7 @@ class VirtError(Exception):
         return self.detail()
 
     def detail(self):
-        '''错误详情'''
+        """错误详情"""
         if self.msg:
             return self.msg
 
@@ -194,14 +196,15 @@ def wrap_error(err: libvirt.libvirtError, msg=''):
 
 
 class VirtAPI(object):
-    '''
+    """
     libvirt api包装
-    '''
+    """
     def __init__(self):
         self.VirtError = VirtError
 
-    def _host_alive(self, host_ipv4:str, times=3, timeout=3):
-        '''
+    @staticmethod
+    def _host_alive(host_ipv4: str, times=3, timeout=3):
+        """
         检测宿主机是否可访问
 
         :param host_ipv4: 宿主机IP
@@ -210,15 +213,15 @@ class VirtAPI(object):
         :return:
             True    # 可访问
             False   # 不可
-        '''
+        """
         cmd = f'ping -c {times} -i 0.1 -W {timeout} {host_ipv4}'
         res, info = subprocess.getstatusoutput(cmd)
         if res == 0:
             return True
         return False
 
-    def _get_connection(self, host_ip:str):
-        '''
+    def get_connection(self, host_ip: str):
+        """
         建立与宿主机的连接
 
         :param host_ip: 宿主机IP
@@ -227,7 +230,7 @@ class VirtAPI(object):
             failed: raise VirtError()
 
         :raise VirtError(), VirHostDown()
-        '''
+        """
         if host_ip:
             if not self._host_alive(host_ip):
                 raise VirHostDown(msg='无法访问宿主机')
@@ -240,8 +243,8 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise wrap_error(err=e, msg=f'连接宿主机错误, 请确认宿主机是否配置ssh密钥,{str(e)}')
 
-    def define(self, host_ipv4:str, xml_desc:str):
-        '''
+    def define(self, host_ipv4: str, xml_desc: str):
+        """
         在宿主机上创建一个虚拟机
 
         :param host_ipv4: 宿主机ip
@@ -251,16 +254,16 @@ class VirtAPI(object):
             failed: raise VirtError()
 
         :raise VirtError()
-        '''
-        conn = self._get_connection(host_ipv4)
+        """
+        conn = self.get_connection(host_ipv4)
         try:
             dom = conn.defineXML(xml_desc)
             return dom
         except libvirt.libvirtError as e:
             raise wrap_error(err=e)
 
-    def get_domain(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def get_domain(self, host_ipv4: str, vm_uuid: str):
+        """
         获取虚拟机
 
         :param host_ipv4: 宿主机IP
@@ -270,15 +273,15 @@ class VirtAPI(object):
             failed: raise VirtError()
 
         :raise VirtError(), VirDomainNotExist(), VirHostDown()
-        '''
-        conn = self._get_connection(host_ipv4)
+        """
+        conn = self.get_connection(host_ipv4)
         try:
             return conn.lookupByUUIDString(vm_uuid)
         except libvirt.libvirtError as e:
             raise wrap_error(err=e)
 
-    def domain_exists(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def domain_exists(self, host_ipv4: str, vm_uuid: str):
+        """
         检测虚拟机是否已存在
 
         :param host_ipv4: 宿主机IP
@@ -288,8 +291,8 @@ class VirtAPI(object):
             False: 不存在
 
         :raise VirtError()
-        '''
-        conn = self._get_connection(host_ipv4)
+        """
+        conn = self.get_connection(host_ipv4)
         try:
             for d in conn.listAllDomains():
                 uid: str = d.UUIDString()
@@ -302,8 +305,8 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise wrap_error(err=e)
 
-    def undefine(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def undefine(self, host_ipv4: str, vm_uuid: str):
+        """
         删除一个虚拟机
 
         :param host_ipv4: 宿主机IP
@@ -313,7 +316,7 @@ class VirtAPI(object):
             failed: False
 
         :raise VirtError()
-        '''
+        """
         try:
             dom = self.get_domain(host_ipv4, vm_uuid)
         except VirDomainNotExist as e:
@@ -330,8 +333,8 @@ class VirtAPI(object):
 
             raise err
 
-    def domain_status(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def domain_status(self, host_ipv4: str, vm_uuid: str):
+        """
         获取虚拟机的当前状态
 
         :param host_ipv4: 宿主机IP
@@ -340,7 +343,7 @@ class VirtAPI(object):
             success: (state_code:int, state_str:str)
 
         :raise VirtError()
-        '''
+        """
         try:
             domain = self.get_domain(host_ipv4, vm_uuid)
         except VirDomainNotExist as e:
@@ -352,8 +355,9 @@ class VirtAPI(object):
         state_str = VM_STATE.get(code, 'no state')
         return code, state_str
 
-    def _status_code(self, domain:libvirt.virDomain):
-        '''
+    @staticmethod
+    def _status_code(domain: libvirt.virDomain):
+        """
         获取虚拟机的当前状态码
 
         :param domain: 虚拟机实例
@@ -361,15 +365,15 @@ class VirtAPI(object):
             success: state_code:int
 
         :raise VirtError()
-        '''
+        """
         try:
             info = domain.info()
             return info[0]
         except libvirt.libvirtError as e:
             raise wrap_error(err=e)
 
-    def is_shutoff(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def is_shutoff(self, host_ipv4: str, vm_uuid: str):
+        """
         虚拟机是否关机状态
 
         :param host_ipv4: 宿主机IP
@@ -379,12 +383,12 @@ class VirtAPI(object):
             False: 未关机
 
         :raise VirtError()
-        '''
+        """
         domain = self.get_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
         return self._domain_is_shutoff(domain)
 
-    def _domain_is_shutoff(self, domain:libvirt.virDomain):
-        '''
+    def _domain_is_shutoff(self, domain: libvirt.virDomain):
+        """
         虚拟机是否关机状态
 
         :param domain: 虚拟机实例
@@ -393,12 +397,12 @@ class VirtAPI(object):
             False: 未关机
 
         :raise VirtError()
-        '''
+        """
         code = self._status_code(domain)
         return code == VIR_DOMAIN_SHUTOFF
 
-    def is_running(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def is_running(self, host_ipv4: str, vm_uuid: str):
+        """
         虚拟机是否开机状态，阻塞、暂停、挂起都属于开启状态
 
         :param host_ipv4: 宿主机IP
@@ -408,7 +412,7 @@ class VirtAPI(object):
             False: 未开机
 
         :raise VirtError()
-        '''
+        """
         domain = self.get_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
         code = self._status_code(domain)
         if code in (VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED):
@@ -416,8 +420,8 @@ class VirtAPI(object):
 
         return False
 
-    def _domain_is_running(self, domain:libvirt.virDomain):
-        '''
+    def _domain_is_running(self, domain: libvirt.virDomain):
+        """
         虚拟机是否开机状态，阻塞、暂停、挂起都属于开启状态
 
         :param domain: 虚拟机实例
@@ -426,14 +430,14 @@ class VirtAPI(object):
             False: 未开机
 
         :raise VirtError()
-        '''
+        """
         code = self._status_code(domain)
         if code in (VIR_DOMAIN_RUNNING, VIR_DOMAIN_BLOCKED, VIR_DOMAIN_PAUSED, VIR_DOMAIN_PMSUSPENDED):
             return True
         return False
 
-    def start(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def start(self, host_ipv4: str, vm_uuid: str):
+        """
         开机启动一个虚拟机
 
         :param host_ipv4: 虚拟机所在的宿主机ip
@@ -443,7 +447,7 @@ class VirtAPI(object):
             failed: False
 
         :raise VirtError()
-        '''
+        """
         domain = self.get_domain(host_ipv4, vm_uuid)
         if self._domain_is_running(domain):
             return True
@@ -456,8 +460,8 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise wrap_error(err=e, msg=f'启动虚拟机失败,{str(e)}')
 
-    def reboot(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def reboot(self, host_ipv4: str, vm_uuid: str):
+        """
         重启虚拟机
 
         :param host_ipv4: 虚拟机所在的宿主机ip
@@ -467,7 +471,7 @@ class VirtAPI(object):
             failed: False
 
         :raise VirtError()
-        '''
+        """
         domain = self.get_domain(host_ipv4, vm_uuid)
         if not self._domain_is_running(domain):
             return False
@@ -480,8 +484,8 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise wrap_error(err=e, msg=f'重启虚拟机失败, {str(e)}')
 
-    def shutdown(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def shutdown(self, host_ipv4: str, vm_uuid: str):
+        """
         关机
 
         :param host_ipv4: 虚拟机所在的宿主机ip
@@ -491,7 +495,7 @@ class VirtAPI(object):
             failed: False
 
         :raise VirtError()
-        '''
+        """
         domain = self.get_domain(host_ipv4, vm_uuid)
         if not self._domain_is_running(domain):
             return True
@@ -504,8 +508,8 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise wrap_error(err=e, msg=f'关闭虚拟机失败, {str(e)}')
 
-    def poweroff(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def poweroff(self, host_ipv4: str, vm_uuid: str):
+        """
         关闭电源
 
         :param host_ipv4: 虚拟机所在的宿主机ip
@@ -515,7 +519,7 @@ class VirtAPI(object):
             failed: False
 
         :raise VirtError()
-        '''
+        """
         domain = self.get_domain(host_ipv4, vm_uuid)
         if not self._domain_is_running(domain):
             return True
@@ -528,8 +532,8 @@ class VirtAPI(object):
         except libvirt.libvirtError as e:
             raise wrap_error(err=e, msg=f'关闭虚拟机电源失败, {str(e)}')
 
-    def get_domain_xml_desc(self, host_ipv4:str, vm_uuid:str):
-        '''
+    def get_domain_xml_desc(self, host_ipv4: str, vm_uuid: str):
+        """
         动态从宿主机获取虚拟机的xml内容
 
         :param host_ipv4: 虚拟机所在的宿主机ip
@@ -538,7 +542,7 @@ class VirtAPI(object):
             xml: str    # success
 
         :raise VirtError()
-        '''
+        """
         try:
             domain = self.get_domain(host_ipv4=host_ipv4, vm_uuid=vm_uuid)
             return domain.XMLDesc()
@@ -774,7 +778,7 @@ class VmHost:
         return getattr(c, attr)
 
     def get_connection(self):
-        return self.virt._get_connection(host_ip=self.host_ipv4)
+        return self.virt.get_connection(host_ip=self.host_ipv4)
 
     def list_storage_pools(self):
         c = self.get_connection()
@@ -872,4 +876,3 @@ class VmStoragePool:
     def list_volumes(self):
         pool = self._get_pool()
         return pool.listAllVolumes()
-
