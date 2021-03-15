@@ -323,7 +323,13 @@ class VirtAPI(object):
             return True
 
         try:
-            if dom.undefine() == 0:
+            dom.destroy()  # 确保vm关闭才能删除掉
+        except libvirt.libvirtError as e:
+            pass
+
+        try:
+            ok = dom.undefine()
+            if ok == 0:
                 return True
             return False
         except libvirt.libvirtError as e:

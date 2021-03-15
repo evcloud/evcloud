@@ -70,6 +70,7 @@ class VmArchiveAdmin(admin.ModelAdmin):
                     'host_ipv4', 'host_released', 'user', 'archive_time', 'remarks')
     search_fields = ['uuid', 'center_name', 'remarks', 'user']
     list_filter = ['host_released', 'center_name', 'group_name', 'host_ipv4', 'user']
+    list_editable = ['host_released', ]
     actions = [clear_vm_sys_disk, undefine_vm_from_host]
 
     def delete_queryset(self, request, queryset):

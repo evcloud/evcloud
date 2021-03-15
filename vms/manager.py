@@ -1236,15 +1236,23 @@ class VmAPI:
         host = vm.host
         # 虚拟机的状态
         domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-        if not force:   # 非强制删除
+
+        try:
+            run = domain.is_running()
+        except VirDomainNotExist as e:
+            run = False
+        except VirHostDown as e:
+            if not force:  # 非强制删除
+                raise VmError(msg='无法连接宿主机')
+            run = False
+        except VirtError as e:
+            raise VmError(msg=f'获取虚拟机运行状态失败, {str(e)}')
+
+        if run:
             try:
-                run = domain.is_running()
-            except VirDomainNotExist as e:
-                run = False
+                domain.poweroff()
             except VirtError as e:
-                raise VmError(msg=f'获取虚拟机运行状态失败, {str(e)}')
-            if run:
-                raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
+                raise VmRunningError(msg=f'关闭虚拟机失败，{str(e)}')
 
         # 删除系统盘快照
         try:
