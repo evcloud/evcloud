@@ -2179,13 +2179,15 @@ class VDiskViewSet(CustomGenericViewSet):
 
         data = serializer.validated_data
         size = data.get('size')
+        center_id = data.get('center_id', None)
         group_id = data.get('group_id', None)
         quota_id = data.get('quota_id', None)
         remarks = data.get('remarks', '')
 
         manager = VdiskManager()
         try:
-            disk = manager.create_vdisk(size=size, user=request.user, group=group_id, quota=quota_id, remarks=remarks)
+            disk = manager.create_vdisk(size=size, user=request.user, center=center_id,
+                                        group=group_id, quota=quota_id, remarks=remarks)
         except VdiskError as e:
             r_data = e.data()
             r_data['data'] = data
