@@ -8,7 +8,7 @@ verify_ssl = true
 [packages]
 django = "==2.2.17"
 mysqlclient = "*"
-djangorestframework = "==3.10.3"
+djangorestframework = "==3.11.2"
 libvirt-python = "==5.7.0"
 websockify = "==0.9.*"
 djangorestframework-simplejwt = "==4.3.*"
