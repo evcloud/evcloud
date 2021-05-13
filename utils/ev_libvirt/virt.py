@@ -809,6 +809,22 @@ class VmHost:
         c = self.get_connection()
         c.getMaxVcpus(None)
 
+    def get_defined_domain_num(self, host_ipv4: str):
+        """
+        宿主机已创建vm的数量
+
+        :param host_ipv4:
+        :return: int
+        :raises: VirtError
+        """
+        conn = self.get_connection()
+        try:
+            num = conn.numOfDefinedDomains()
+        except libvirt.libvirtError as e:
+            raise wrap_error(err=e)
+
+        return num
+
 
 class VmStoragePool:
     """

@@ -2135,4 +2135,16 @@ class VmAPI:
         except VirtError as e:
             raise VmError(msg=f'宿主机上创建虚拟主机错误，{str(e)}')
 
+        # 向虚拟机挂载硬盘
+        for vdisk in vm.vdisks:
+            try:
+                xml = vdisk.xml_desc(dev=vdisk.dev)
+                self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
+            except (VmError, Exception) as e:
+                # vdisk和vm元数据挂载关系解除失败
+                try:
+                    self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk.uuid)
+                except VdiskError as e2:
+                    pass
+
         return vm
