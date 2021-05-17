@@ -1,1 +1,1 @@
-uwsgi --reload uwsgi-master.pid
+uwsgi --reload /home/uwsgi/evcloud/uwsgi-master.pid
