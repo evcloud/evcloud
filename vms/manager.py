@@ -1498,6 +1498,7 @@ class VmAPI:
         """
         向虚拟机挂载硬盘
 
+        *虚拟机和硬盘需要在同一个分中心
         :param vm_uuid: 虚拟机uuid
         :param vdisk_uuid: 虚拟硬盘uuid
         :param user: 用户
@@ -1520,8 +1521,8 @@ class VmAPI:
 
         vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
         host = vm.host
-        if host.group != vdisk.quota.group:
-            raise errors.AcrossGroupConflictError(msg='虚拟机和硬盘不再同一个机组')
+        if host.group.center_id != vdisk.quota.group.center_id:
+            raise errors.AcrossCenterConflictError(msg='虚拟机和硬盘不在同一个分中心')
 
         disk_list, dev_list = self._vm_manager.get_vm_vdisk_dev_list(vm=vm)
         if vdisk_uuid in disk_list:
