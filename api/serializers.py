@@ -295,14 +295,17 @@ class VdiskCreateSerializer(serializers.Serializer):
                                         min_value=1, help_text='宿主机组id', default=None)
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True,
                                         min_value=1, help_text='宿主机组id', default=None)
+    center_id = serializers.IntegerField(label='分中心id', required=False, allow_null=True,
+                                         min_value=1, help_text='分中心id', default=None)
     remarks = serializers.CharField(label='备注', required=False, allow_blank=True, default='')
 
     def validate(self, data):
+        center_id = data.get('center_id')
         group_id = data.get('group_id')
         quota_id = data.get('quota_id')
 
-        if not group_id and not quota_id:
-            raise serializers.ValidationError(detail={'code_text': 'group_id和quota_id参数必须提交其中一个'})
+        if not group_id and not quota_id and not center_id:
+            raise serializers.ValidationError(detail={'code_text': 'center_id、group_id和quota_id参数必须提交其中一个'})
         return data
 
 

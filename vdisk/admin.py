@@ -25,7 +25,7 @@ class VdiskAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'size', 'quota', 'vm', 'dev', 'enable', 'user', 'create_time',
                     'attach_time', 'get_deleted', 'remarks')
     search_fields = ['uuid', 'vm', 'remarks']
-    list_filter = ['quota', 'user']
+    list_filter = ['quota', 'user', 'deleted']
 
     raw_id_fields = ('vm', 'user')
 

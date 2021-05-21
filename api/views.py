@@ -433,14 +433,16 @@ class VmsViewSet(CustomGenericViewSet):
         if not vdisk:
             return self.exception_response(exceptions.VdiskNotExist())
 
-        group = vdisk.quota.group
+        center_id = vdisk.quota.group.center_id
         user = request.user
         mgr = VmManager()
         try:
-            queryset = mgr.get_vms_queryset_by_group(group)
-            queryset = queryset.select_related('user', 'image', 'mac_ip', 'host').all()
-            if not user.is_superuser:
-                queryset = queryset.filter(user=user).all()
+            if user.is_superuser:
+                queryset = mgr.filter_vms_queryset(center_id=center_id,
+                                                   related_fields=('user', 'image', 'mac_ip', 'host'))
+            else:
+                queryset = mgr.filter_vms_queryset(center_id=center_id, user_id=user.id,
+                                                   related_fields=('user', 'image', 'mac_ip', 'host'))
         except VmError as e:
             e.msg = f'查询主机错误，{str(e)}'
             return self.exception_response(e)
@@ -2112,16 +2114,16 @@ class VDiskViewSet(CustomGenericViewSet):
             exc = exceptions.VmNotExistError(msg='虚拟机不存在')
             return self.exception_response(exc)
 
-        group = vm.host.group
+        center_id = vm.host.group.center_id
         user = request.user
 
         disk_manager = VdiskManager()
         related_fields = ('user', 'quota', 'quota__group')
         try:
             if user.is_superuser:
-                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, related_fields=related_fields)
+                queryset = disk_manager.filter_vdisk_queryset(center_id=center_id, related_fields=related_fields)
             else:
-                queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, user_id=user.id,
+                queryset = disk_manager.filter_vdisk_queryset(center_id=center_id, user_id=user.id,
                                                               related_fields=related_fields)
         except VdiskError as e:
             e.msg = f'查询硬盘列表时错误，{str(e)}'
@@ -2179,13 +2181,15 @@ class VDiskViewSet(CustomGenericViewSet):
 
         data = serializer.validated_data
         size = data.get('size')
+        center_id = data.get('center_id', None)
         group_id = data.get('group_id', None)
         quota_id = data.get('quota_id', None)
         remarks = data.get('remarks', '')
 
         manager = VdiskManager()
         try:
-            disk = manager.create_vdisk(size=size, user=request.user, group=group_id, quota=quota_id, remarks=remarks)
+            disk = manager.create_vdisk(size=size, user=request.user, center=center_id,
+                                        group=group_id, quota=quota_id, remarks=remarks)
         except VdiskError as e:
             r_data = e.data()
             r_data['data'] = data

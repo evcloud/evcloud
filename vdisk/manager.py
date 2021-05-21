@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from compute.managers import CenterManager, ComputeError
+from compute.managers import CenterManager, GroupManager, ComputeError
 from .models import Vdisk
 from .models import Quota
 from utils.errors import VdiskError
@@ -156,13 +156,14 @@ class VdiskManager:
         except Exception as e:
             raise VdiskError(msg=str(e))
 
-    def create_vdisk(self, size: int, user, group=None, quota=None, remarks=''):
+    def create_vdisk(self, size: int, user, center, group=None, quota=None, remarks=''):
         """
         创建一个虚拟云硬盘
 
         备注：group和quota参数至少需要一个，优先使用quota参数；
                 当只有group参数时，通过group获取quota
 
+        :param center: 分中心对象或id
         :param group: 宿主机组对象或id
         :param quota: 硬盘所属的云硬盘CEPH存储池对象或id
         :param size: 硬盘的容量大小
@@ -177,17 +178,41 @@ class VdiskManager:
             raise errors.VdiskInvalidParams(msg='创建的硬盘大小必须大于0')
 
         if quota:
-            if isinstance(quota, int):
-                quota = Quota.objects.filter(id=quota).first()
-            if not isinstance(quota, Quota):
-                raise errors.VdiskInvalidParams(msg='无效的quota或quota id')
-        elif group:
-            qs = self.get_quota_queryset_by_group(group=group)
-            quota = qs.first()
-            if not isinstance(quota, Quota):
-                raise errors.VdiskInvalidParams(msg='无效的group或group id')
+            quota = self.schedule_by_quota(size=size, user=user, quota=quota)
+        elif group or center:
+            quota = self.schedule_quota(size=size, user=user, center=center, group=group)
+            if not quota:
+                raise errors.VdiskNotEnoughQuota(msg='没有足够的存储容量创建硬盘，或者硬盘容量超过大小限制')
         else:
             raise errors.VdiskInvalidParams(msg='至少需要一个有效的group或quota参数')
+
+        vd = Vdisk(size=size, quota=quota, user=user, remarks=remarks)
+        try:
+            vd.save()  # save内会创建元数据和ceph rbd image
+        except Exception as e:
+            quota.free(size=size)  # 释放申请的存储资源
+            raise VdiskError(msg=str(e))
+
+        return vd
+
+    @staticmethod
+    def schedule_by_quota(size: int, user, quota):
+        """
+        向硬盘CEPH存储池申请分配disk资源
+
+        :param size:
+        :param user:
+        :param quota: 硬盘所属的云硬盘CEPH存储池对象或id
+        :return:
+            Quota()
+
+        :raises: VdiskError
+        """
+        if isinstance(quota, int):
+            quota = Quota.objects.filter(id=quota).first()
+
+        if not isinstance(quota, Quota):
+            raise errors.VdiskInvalidParams(msg='无效的quota或quota id')
 
         if not quota.user_has_perm(user):
             raise errors.VdiskAccessDenied(msg='您没有此资源池的使用权限')
@@ -202,14 +227,58 @@ class VdiskManager:
         if not quota.claim(size=size):
             raise VdiskError(msg='申请硬盘存储容量失败')
 
-        vd = Vdisk(size=size, quota=quota, user=user, remarks=remarks)
-        try:
-            vd.save()  # save内会创建元数据和ceph rbd image
-        except Exception as e:
-            quota.free(size=size)  # 释放申请的存储资源
-            raise VdiskError(msg=str(e))
+        return quota
 
-        return vd
+    def schedule_quota(self, size: int, user, center=None, group=None):
+        """
+        分配合适的硬盘CEPH存储池
+
+        :param size:
+        :param user:
+        :param center:
+        :param group:
+        :return:
+            Quota()     #
+            None        # 没有合适的硬盘CEPH存储池可用
+
+        :raises: VdiskError
+        """
+        if group:
+            if isinstance(group, int):
+                group = GroupManager().get_group_by_id(group)
+                if group is None:
+                    raise errors.VdiskError.from_error(errors.NotFoundError(msg='指定的宿主机组不存在'))
+
+            if not group.user_has_perms(user):
+                raise errors.VdiskError.from_error(
+                    errors.GroupAccessDeniedError())
+
+            queryset = self.get_quota_queryset_by_group(group=group)
+        elif center:
+            ids = user.group_set.filter(center=center).values_list('id', flat=True)
+            queryset = self.get_quota_queryset_by_group_ids(ids)
+        else:
+            raise errors.VdiskInvalidParams(msg='必须指定一个"group"或者"center"')
+
+        schedule_quota = None
+        for quota in queryset:
+            if not quota.check_disk_size_limit(size=size):
+                continue
+
+            if not quota.meet_needs(size=size):
+                continue
+
+            # 向硬盘CEPH存储池申请容量
+            if not quota.claim(size=size):
+                continue
+
+            schedule_quota = quota
+            break
+
+        if schedule_quota:
+            return schedule_quota
+
+        return None
 
     @staticmethod
     def mount_to_vm(vdisk_uuid: str, vm, dev):

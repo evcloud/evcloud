@@ -11,10 +11,11 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from pathlib import Path
 from datetime import timedelta
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -158,6 +159,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True      # True：关闭浏览器，则Cookie
 
 # 自定义用户模型
 AUTH_USER_MODEL = 'users.UserProfile'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # 避免django把未以/结尾的url重定向到以/结尾的url
 # APPEND_SLASH=False

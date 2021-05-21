@@ -235,8 +235,11 @@ class Vdisk(models.Model):
         return True
 
     def delete(self, using=None, keep_parents=False):
-        if not self._remove_ceph_disk():
-            raise Exception('remove ceph rbd image failed')
+        try:
+            self._remove_ceph_disk()
+        except Exception as e:
+            raise Exception(f'remove ceph rbd image failed, {str(e)}')
+
         self.quota.free(size=self.size)  # 释放硬盘存储池资源
         super().delete(using=using, keep_parents=keep_parents)
 
@@ -245,27 +248,23 @@ class Vdisk(models.Model):
         删除硬盘对应的ceph rbd image
 
         :return:
-            True    # success
-            False   # failed
+            None
+
+        :raises: Exception
         """
-        try:
-            ceph_pool = self.quota.cephpool
-            if not ceph_pool:
-                return False
-            pool_name = ceph_pool.pool_name
-            config = ceph_pool.ceph
-            if not config:
-                return False
-        except Exception:
-            return False
+        ceph_pool = self.quota.cephpool
+        if not ceph_pool:
+            return
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            return
 
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             rbd.remove_image(image_name=self.uuid)
         except (RadosError, Exception) as e:
-            return False
-
-        return True
+            raise e
 
     def user_has_perms(self, user):
         """

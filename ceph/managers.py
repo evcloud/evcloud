@@ -102,7 +102,7 @@ class RbdManager:
             self._cluster.connect()
             return self._cluster
         except rados.Error as e:
-            msg = e.args[0] if e.args else 'error connecting to the cluster'
+            msg = e.args[0] if e.args else f'error connecting to the cluster, {str(e)}'
             raise RadosError(msg)
 
     def create_snap(self, image_name: str, snap_name: str, protected: bool = False):

@@ -1,1 +1,1 @@
-uwsgi --stop uwsgi-master.pid
+uwsgi --stop /home/uwsgi/evcloud/uwsgi-master.pid

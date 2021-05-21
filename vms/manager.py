@@ -1498,6 +1498,7 @@ class VmAPI:
         """
         向虚拟机挂载硬盘
 
+        *虚拟机和硬盘需要在同一个分中心
         :param vm_uuid: 虚拟机uuid
         :param vdisk_uuid: 虚拟硬盘uuid
         :param user: 用户
@@ -1520,8 +1521,8 @@ class VmAPI:
 
         vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
         host = vm.host
-        if host.group != vdisk.quota.group:
-            raise errors.AcrossGroupConflictError(msg='虚拟机和硬盘不再同一个机组')
+        if host.group.center_id != vdisk.quota.group.center_id:
+            raise errors.AcrossCenterConflictError(msg='虚拟机和硬盘不在同一个分中心')
 
         disk_list, dev_list = self._vm_manager.get_vm_vdisk_dev_list(vm=vm)
         if vdisk_uuid in disk_list:
@@ -2134,5 +2135,17 @@ class VmAPI:
             self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
         except VirtError as e:
             raise VmError(msg=f'宿主机上创建虚拟主机错误，{str(e)}')
+
+        # 向虚拟机挂载硬盘
+        for vdisk in vm.vdisks:
+            try:
+                xml = vdisk.xml_desc(dev=vdisk.dev)
+                self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
+            except (VmError, Exception) as e:
+                # vdisk和vm元数据挂载关系解除失败
+                try:
+                    self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk.uuid)
+                except VdiskError as e2:
+                    pass
 
         return vm
