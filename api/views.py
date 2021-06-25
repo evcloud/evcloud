@@ -1091,7 +1091,7 @@ class VmsViewSet(CustomGenericViewSet):
         return Response(data={'code': 201, 'code_text': '更换虚拟机系统成功'}, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
-        operation_summary='迁移虚拟机到指定宿主机',
+        operation_summary='静态迁移虚拟机到指定宿主机',
         request_body=no_body,
         manual_parameters=[
             openapi.Parameter(
@@ -1120,7 +1120,7 @@ class VmsViewSet(CustomGenericViewSet):
     @action(methods=['post'], url_path=r'migrate/(?P<host_id>[0-9]+)', detail=True, url_name='vm_migrate')
     def vm_migrate(self, request, *args, **kwargs):
         """
-        迁移虚拟机到指定宿主机
+        静态迁移虚拟机到指定宿主机
         """
         vm_uuid = kwargs.get(self.lookup_field, '')
         host_id = str_to_int_or_default(kwargs.get('host_id', '0'), default=0)
@@ -1139,6 +1139,37 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(e)
 
         return Response(data={'code': 201, 'code_text': '迁移虚拟机成功'}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='动态迁移虚拟机到指定宿主机',
+        request_body=no_body,
+        responses={
+            202: """
+                {
+                    'migrate_task': 'xxx'       # 异步迁移任务id,通过此id查询迁移任务的状态
+                }
+                """,
+        }
+    )
+    @action(methods=['post'], url_path=r'live-migrate/(?P<host_id>[0-9]+)', detail=True, url_name='vm_migrate_live')
+    def vm_migrate_live(self, request, *args, **kwargs):
+        """
+        动态迁移虚拟机到指定宿主机
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        host_id = str_to_int_or_default(kwargs.get('host_id', '0'), default=0)
+        if host_id <= 0:
+            exc = exceptions.BadRequestError(msg='无效的host id参数')
+            return self.exception_response(exc)
+
+        api = VmAPI()
+        try:
+            m_task = api.live_migrate_vm(vm_uuid=vm_uuid, dest_host_id=host_id, user=request.user)
+        except VmError as e:
+            e.msg = f'迁移虚拟机失败，{str(e)}'
+            return self.exception_response(e)
+
+        return Response(data={'migrate_task': m_task.id}, status=status.HTTP_202_ACCEPTED)
 
     @swagger_auto_schema(
         operation_summary='修改虚拟机登录密码',

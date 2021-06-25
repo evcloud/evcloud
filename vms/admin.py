@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib import messages
 
-from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateLog, Flavor
+from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor
 
 
 @admin.register(Vm)
@@ -117,12 +117,12 @@ class VmDiskSnapAdmin(admin.ModelAdmin):
             obj.delete()
 
 
-@admin.register(MigrateLog)
-class MigrateLogAdmin(admin.ModelAdmin):
+@admin.register(MigrateTask)
+class MigrateTaskAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
-    list_display = ('id', 'vm_uuid', 'src_host_ipv4', 'dst_host_ipv4', 'result', 'src_undefined', 'migrate_time')
+    list_display = ('id', 'vm_uuid', 'src_host_ipv4', 'src_is_free', 'dst_host_ipv4', 'dst_is_claim', 'status', 'tag', 'src_undefined', 'migrate_time')
     search_fields = ('vm_uuid', 'content')
-    list_filter = ('result', 'src_undefined')
+    list_filter = ('status', 'src_undefined', 'tag')
 
 
 @admin.register(Flavor)

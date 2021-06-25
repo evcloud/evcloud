@@ -535,22 +535,71 @@ class VmDiskSnap(models.Model):
         super().delete(using=using, keep_parents=keep_parents)
 
 
-class MigrateLog(models.Model):
-    id = models.AutoField(primary_key=True)
+class MigrateTask(models.Model):
+    class Tag(models.TextChoices):
+        MIGRATE_LIVE = 'live', _('动态迁移')
+        MIGRATE_STATIC = 'static', _('静态迁移')
+
+    class Status(models.TextChoices):
+        FAILED = 'failed', _('迁移失败')
+        IN_PROCESS = 'in-process', _('正在迁移')
+        SOME_TODO = 'some-todo', _('迁移完成，有些需要善后的工作')
+        COMPLETE = 'complete', _('迁移完成')
+
+    id = models.BigAutoField(primary_key=True)
+    vm = models.ForeignKey(to=Vm, on_delete=models.SET_NULL, null=True, blank=True, default=None,
+                           related_name='migrate_log_set')
     vm_uuid = models.CharField(max_length=36, verbose_name='虚拟机UUID')
-    src_host_id = models.IntegerField(verbose_name='源宿主机ID')
+
+    src_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, null=True, blank=True,
+                                 default=None, related_name='src_migrate_log_set')
     src_host_ipv4 = models.GenericIPAddressField(verbose_name='源宿主机IP')
-    dst_host_id = models.IntegerField(verbose_name='目标宿主机ID')
+    src_undefined = models.BooleanField(default=False, verbose_name="是否已清理源云主机")
+    src_is_free = models.BooleanField(default=False, verbose_name="是否释放源宿主机资源")
+
+    dst_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, null=True, blank=True,
+                                 default=None, related_name='dst_migrate_log_set')
     dst_host_ipv4 = models.GenericIPAddressField(verbose_name='目标宿主机IP')
+    dst_is_claim = models.BooleanField(default=False, verbose_name="是否扣除目标宿主机资源")
+
     migrate_time = models.DateTimeField(auto_now_add=True, verbose_name='迁移时间')
-    result = models.BooleanField(verbose_name='迁移结果(无错误)')
-    content = models.TextField(null=True, blank=True, verbose_name='文字记录')
-    src_undefined = models.BooleanField(default=False, verbose_name="已清理源云主机")
+    migrate_complete_time = models.DateTimeField(null=True, blank=True, default=None, verbose_name='迁移完成时间')
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.COMPLETE,
+                              verbose_name='迁移状态')
+    content = models.TextField(null=True, blank=True, default='', verbose_name='文字记录')
+    tag = models.CharField(max_length=16, choices=Tag.choices, default=Tag.MIGRATE_STATIC,
+                           verbose_name='迁移类型')
 
     class Meta:
         ordering = ['-id']
         verbose_name = '虚拟机迁移记录'
         verbose_name_plural = '虚拟机迁移记录表'
+
+    def do_save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        """
+        :return:
+            None        # success
+            Exception   # failed
+        """
+        try:
+            self.save(force_insert=force_insert, force_update=force_update,
+                      using=using, update_fields=update_fields)
+        except Exception as e:
+            return e
+
+        return None
+
+    def set_dest_claim(self, to: bool = True):
+        if self.dst_is_claim is to:
+            return True
+
+        self.dst_is_claim = to
+        r = self.do_save(update_fields=['dst_is_claim'])
+        if r is None:
+            return False
+
+        return True
 
 
 def rename_sys_disk_delete(ceph, pool_name: str, disk_name: str):

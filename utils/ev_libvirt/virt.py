@@ -564,6 +564,7 @@ class VmDomain:
         self._hip = host_ip
         self._vmid = vm_uuid
         self.virt = VirtAPI()
+        self._domain = None
 
     def __getattr__(self, attr):
         """
@@ -575,6 +576,13 @@ class VmDomain:
             return getattr(domain, attr)
         except AttributeError:
             return self.__getattribute__(attr)
+
+    @property
+    def domain(self):
+        if self._domain is None:
+            self._domain = self.virt.get_domain(self._hip, self._vmid)
+
+        return self._domain
 
     def exists(self):
         """
@@ -738,7 +746,7 @@ class VmDomain:
         except libvirt.libvirtError as e:
             c = e.get_error_code()
             msg = e.get_error_message()
-            if c and c == 99:
+            if c and c == VirErrorNumber.VIR_ERR_DEVICE_MISSING:
                 return True
             raise wrap_error(err=e, msg=msg)
         if ret == 0:
@@ -765,6 +773,20 @@ class VmDomain:
         if ret == 0:
             return True
         return False
+
+    def live_migrate(self, dest_host_conn):
+        """
+        :raise VirtError(), VirHostDown()
+        """
+        src_domain = self.virt.get_domain(self._hip, self._vmid)
+        try:
+            d_xml = src_domain.XMLDesc()
+            domain = src_domain.migrate2(dconn=dest_host_conn, dxml=d_xml,
+                                         flags=libvirt.VIR_MIGRATE_LIVE)
+        except libvirt.libvirtError as e:
+            raise wrap_error(err=e)
+
+        return domain
 
 
 class VmHost:
