@@ -4,11 +4,13 @@ from uuid import uuid4
 from django.db import models
 from django.db.models import F, Sum
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from ceph.models import CephPool
 from ceph.managers import get_rbd_manager, RadosError
 from compute.models import Group
 from vms.models import Vm
+from utils import errors
 
 
 User = get_user_model()
@@ -158,6 +160,7 @@ class Vdisk(models.Model):
     enable = models.BooleanField(default=True, verbose_name='是否可用')
     deleted = models.BooleanField(default=False, verbose_name='已删除')
     remarks = models.TextField(blank=True, default='', verbose_name='备注')
+    rbd_name = models.CharField(verbose_name='Ceph rbd name', max_length=64, blank=True, default='')
     
     class Meta:
         ordering = ['-create_time']
@@ -166,7 +169,22 @@ class Vdisk(models.Model):
         unique_together = ['uuid', 'quota']
 
     def __str__(self):
-        return f'ceph_disk_{str(self.uuid)}'
+        return f'ceph_disk_{str(self.rbd_image_name)}'
+
+    @property
+    def rbd_image_name(self):
+        if not self.rbd_name:
+            self.rbd_name = self.uuid
+            try:
+                self.save(update_fields=['rbd_name'])
+            except Exception as e:
+                pass
+
+        return self.rbd_name
+
+    @rbd_image_name.setter
+    def rbd_image_name(self, val):
+        self.rbd_name = val
 
     @staticmethod
     def new_uuid_str():
@@ -191,6 +209,7 @@ class Vdisk(models.Model):
 
         # 新的记录，要创建新的ceph rbd image,
         self.uuid = self.new_uuid_str()
+        self.rbd_image_name = self.uuid
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
         try:
@@ -228,7 +247,7 @@ class Vdisk(models.Model):
         size = self.get_bytes_size()
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
-            rbd.create_image(name=self.uuid, size=size, data_pool=data_pool)
+            rbd.create_image(name=self.rbd_image_name, size=size, data_pool=data_pool)
         except (RadosError, Exception) as e:
             raise e
 
@@ -262,7 +281,7 @@ class Vdisk(models.Model):
 
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
-            rbd.remove_image(image_name=self.uuid)
+            rbd.remove_image(image_name=self.rbd_image_name)
         except (RadosError, Exception) as e:
             raise e
 
@@ -356,3 +375,42 @@ class Vdisk(models.Model):
             return False
 
         return True
+
+    def rename_disk_rbd_name(self):
+        """
+        云硬盘删除后，硬盘RBD镜像修改为已删除归档的名称，格式：x_{time}_{disk_name}
+        :return:
+            None
+
+        :raises: Error
+        """
+        ceph_pool = self.quota.cephpool
+        if not ceph_pool:
+            return
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            return
+
+        rbd_image_name = self.rbd_image_name
+        if rbd_image_name.startswith('x_vd_'):
+            return
+
+        time_str = timezone.now().strftime('%Y%m%d%H%M%S')
+        new_name = f"x_vd_{time_str}_{rbd_image_name}"
+        try:
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
+            rbd.rename_image(image_name=self.rbd_image_name, new_name=new_name)
+        except (RadosError, Exception) as e:
+            raise errors.VdiskError.from_error(e)
+
+        self.rbd_name = new_name
+        try:
+            self.save(update_fields=['rbd_name'])
+        except Exception as e:
+            try:
+                rbd.rename_image(image_name=new_name, new_name=rbd_image_name)
+            except Exception as exc:
+                pass
+
+            raise errors.VdiskError.from_error(e)

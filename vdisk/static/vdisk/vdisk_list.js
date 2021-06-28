@@ -82,10 +82,10 @@
 		});
     });
 
-    // 销毁此硬盘
+    // 删除此硬盘
     $('.btn-disk-delete').click(function (e) {
         e.preventDefault();
-        if(!confirm("确定要销毁此硬盘吗？")){
+        if(!confirm("确定要删除此硬盘吗？")){
             return
         }
         let disk_uuid = $(this).attr('data-disk-uuid');
@@ -94,11 +94,11 @@
 			type: 'delete',
             success: function (data, status_text) {
 			    $("#tr_" + disk_uuid).remove();
-                alert('已成功销毁硬盘');
+                alert('已成功删除硬盘');
             },
             error: function (xhr, msg, err) {
                 data = xhr.responseJSON;
-                msg = '销毁硬盘' + msg;
+                msg = '删除硬盘' + msg;
                 if (data.hasOwnProperty('code_text')){
                     msg = data.code_text;
                 }

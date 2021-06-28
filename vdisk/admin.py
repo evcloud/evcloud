@@ -23,7 +23,7 @@ class QuotaAdmin(admin.ModelAdmin):
 class VdiskAdmin(admin.ModelAdmin):
     list_display_links = ('uuid',)
     list_display = ('uuid', 'size', 'quota', 'vm', 'dev', 'enable', 'user', 'create_time',
-                    'attach_time', 'get_deleted', 'remarks')
+                    'attach_time', 'get_deleted', 'remarks', 'rbd_image_name')
     search_fields = ['uuid', 'vm', 'remarks']
     list_filter = ['quota', 'user', 'deleted']
 

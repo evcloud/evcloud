@@ -142,7 +142,7 @@
                                 {% else %}
                                     <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-mount-to-vm' disk_uuid=disk.uuid %}">挂载</a>
                                 {% endif %}
-                                <button type="button" class="btn btn-sm btn-danger btn-disk-delete" data-disk-uuid="{{ disk.uuid }}">销毁</button>
+                                <button type="button" class="btn btn-sm btn-danger btn-disk-delete" data-disk-uuid="{{ disk.uuid }}">删除</button>
                             </td>
                         </tr>
                     {% endfor %}

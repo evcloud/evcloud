@@ -2323,12 +2323,17 @@ class VDiskViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         if vdisk.is_mounted:
-            exc = exceptions.VdiskAlreadyMounted(msg='硬盘已被挂载使用，请先卸载后再销毁')
+            exc = exceptions.VdiskAlreadyMounted(msg='硬盘已被挂载使用，请先卸载后再删除')
             return self.exception_response(exc)
 
         if not vdisk.soft_delete():
-            exc = exceptions.VdiskError(msg='销毁硬盘失败，数据库错误')
+            exc = exceptions.VdiskError(msg='删除硬盘失败，数据库错误')
             return self.exception_response(exc)
+
+        try:
+            vdisk.rename_disk_rbd_name()        # 修改ceph rbd名称为删除格式的名称
+        except exceptions.VdiskError as e:
+            pass
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
