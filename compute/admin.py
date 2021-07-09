@@ -2,8 +2,6 @@ from django.contrib import admin
 
 from .models import Center, Group, Host
 
-# Register your models here.
-
 
 @admin.register(Center)
 class CenterAdmin(admin.ModelAdmin):
@@ -32,7 +30,7 @@ class GroupAdmin(admin.ModelAdmin):
 class HostAdmin(admin.ModelAdmin):
     list_display_links = ('ipv4',)
     list_display = ('id', 'ipv4', 'group', 'real_cpu', 'vcpu_total', 'vcpu_allocated', 'vcpu_allocated_now',
-                    'mem_total', 'mem_allocated', 'mem_allocated_now', 'vm_created', 'vm_created_now', 'enable', 'desc')
+                    'mem_total', 'mem_reserved', 'mem_allocated', 'mem_allocated_now', 'vm_created', 'vm_created_now', 'enable', 'desc')
     list_filter = ['group']
     search_fields = ['ipv4']
 

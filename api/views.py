@@ -1250,6 +1250,52 @@ class VmsViewSet(CustomGenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '成功恢复丢失的虚拟机'})
 
+    @swagger_auto_schema(
+        operation_summary='查询虚拟机内存、网络io、硬盘io等性能信息',
+        request_body=no_body,
+        responses={
+            200: """"""
+        }
+    )
+    @action(methods=['get'], url_path='stats', detail=True, url_name='vm-stats')
+    def vm_stats(self, request, *args, **kwargs):
+        """
+        查询虚拟机内存、网络io、硬盘io等性能信息
+
+            >> http code 200:
+            {
+              "timestamp": 1625814253.1141162,
+              "cpu_time_abs": 77520000000,
+              "host_cpus": 128,
+              "guest_cpus": 2,
+              "total_mem_kb": 4194304,
+              "cur_mem_kb": 590748,
+              "disk_rd_kb": 227393,
+              "disk_wr_kb": 105786,
+              "net_tx_kb": 423,
+              "net_rx_kb": 23985,
+              "curr_mem_percent": 14.084529876708984
+            }
+            >> http code 403, 404, 409, 500
+            {
+                "code": xxx,
+                "code_text": "xxx",
+                "err_code": "xxx"
+            }
+            * err_code list:
+                403: VmAccessDenied, 无权访问此虚拟主机;
+                404: VmNotExist，无虚拟主机记录;
+                500: HostDown，宿主机无法访问
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        try:
+            stats = VmAPI().get_vm_stats(vm_uuid=vm_uuid, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        return Response(data=stats)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.

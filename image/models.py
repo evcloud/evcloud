@@ -85,6 +85,8 @@ class Image(models.Model):
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
     desc = models.TextField(verbose_name='描述', default='', blank=True)
+    default_user = models.CharField(verbose_name='系统默认登录用户名', max_length=32, default='root')
+    default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
 
     def __str__(self):
         return self.name

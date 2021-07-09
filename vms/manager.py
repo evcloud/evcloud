@@ -13,8 +13,8 @@ from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
-from utils.ev_libvirt.virt import (VirtAPI, VirtError, VmDomain, VirDomainNotExist, VirHostDown,
-                                   VmHost)
+from utils.ev_libvirt.virt import (VirtError, VmDomain, VirDomainNotExist, VirHostDown,
+                                   VirtHost)
 from .models import (Vm, VmArchive, VmLog, VmDiskSnap, rename_sys_disk_delete,
                      rename_image, MigrateTask, Flavor)
 from .xml import XMLEditor
@@ -42,11 +42,12 @@ def host_alive(host_ipv4: str, times=3, timeout=3):
     return False
 
 
-class VmManager(VirtAPI):
+class VmManager:
     """
     虚拟机元数据管理器
     """
     VmError = VmError
+    VirtError = VirtError
 
     def get_vm_by_uuid(self, vm_uuid: str, related_fields: tuple = ('mac_ip', 'host')):
         """
@@ -232,7 +233,7 @@ class VmManager(VirtAPI):
         return vm_queryset.select_related(*related_fields).all()
 
     @staticmethod
-    def get_vm_domain(host_ipv4: str, vm_uuid: str):
+    def get_vm_domain(host_ipv4: str, vm_uuid: str) -> VmDomain:
         """
 
         :param host_ipv4:
@@ -513,9 +514,11 @@ class VmManager(VirtAPI):
         xml_desc = None
         begin_create = False    # vm xml不是从新构建的
 
+        vm_domain = self.get_vm_domain(host_ipv4=vm.host.ipv4, vm_uuid=vm_uuid)
+        new_vm_host = VirtHost(host_ipv4=new_host.ipv4)
         # 实时获取vm xml desc
         try:
-            xml_desc = self.get_vm_xml_desc(host_ipv4=vm.host.ipv4, vm_uuid=vm_uuid)
+            xml_desc = vm_domain.xml_desc()
         except Exception as e:
             pass
 
@@ -527,14 +530,13 @@ class VmManager(VirtAPI):
             except Exception as e:
                 raise VmError(msg=f'构建虚拟机xml错误，{str(e)}')
 
-        new_vm_define_ok = False
+        new_domain = None
         try:
             # 创建虚拟机
             try:
-                self.define(host_ipv4=new_host.ipv4, xml_desc=xml_desc)
+                new_domain = new_vm_host.define(xml_desc=xml_desc)
             except VirtError as e:
                 raise VmError(msg=str(e))
-            new_vm_define_ok = True
 
             vm.host = new_host
             vm.xml = xml_desc
@@ -546,9 +548,9 @@ class VmManager(VirtAPI):
             return vm, begin_create
         except Exception as e:
             # 目标宿主机删除虚拟机
-            if new_vm_define_ok:
+            if new_domain is not None:
                 try:
-                    self.undefine(host_ipv4=new_host.ipv4, vm_uuid=vm_uuid)
+                    new_domain.undefine()
                 except VirtError:
                     pass
             raise VmError(msg=str(e))
@@ -584,6 +586,7 @@ class VmManager(VirtAPI):
 
         new_vm_define_ok = False
         new_disk_ok = False
+        vm_host = VirtHost(host_ipv4=host.ipv4)
         try:
             try:
                 rbd_manager.clone_image(snap_image_name=new_image.base_image, snap_name=new_image.snap,
@@ -591,9 +594,8 @@ class VmManager(VirtAPI):
             except ImageExistsError as e:
                 pass
             new_disk_ok = True
-
             try:
-                self.define(host_ipv4=host.ipv4, xml_desc=xml_desc)  # 新xml覆盖定义虚拟机
+                vm_host.define(xml_desc=xml_desc)  # 新xml覆盖定义虚拟机
             except VirtError as e:
                 raise VmError(msg=str(e))
             new_vm_define_ok = True
@@ -613,7 +615,7 @@ class VmManager(VirtAPI):
                     pass
             if new_vm_define_ok:
                 try:
-                    self.define(host_ipv4=host.ipv4, xml_desc=old_vm_xml_desc)  # 覆盖定义回原虚拟机
+                    vm_host.define(xml_desc=old_vm_xml_desc)  # 覆盖定义回原虚拟机
                 except VirtError:
                     pass
 
@@ -1218,7 +1220,7 @@ class VmAPI:
 
         # 创建虚拟机
         try:
-            self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
+            VirtHost(host_ipv4=host.ipv4).define(xml_desc=xml_desc)
         except VirtError as e:
             vm.delete()     # 删除虚拟机元数据
             raise VmError(msg=str(e))
@@ -1356,80 +1358,75 @@ class VmAPI:
 
         host = vm.host
         # 虚拟机的状态
-        domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
+        vm_domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
         try:
-            run = domain.is_running()
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
+            run = vm_domain.is_running()
+        except VirtError as exc:
+            raise VmError(msg='获取虚拟机运行状态失败' + str(exc))
         if run:
             if not force:
                 raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
             try:
-                domain.poweroff()
-            except VirtError as e:
+                vm_domain.poweroff()
+            except VirtError as exc:
                 raise VmError(msg='强制关闭虚拟机失败')
 
-        xml_desc = domain.xml_desc()
-        try:
-            # 修改vcpu
-            if vcpu > 0 and vcpu != vm.vcpu:
-                # vcpu增大
-                if vcpu > vm.vcpu:
-                    vcpu_need = vcpu - vm.vcpu
-                    # 宿主机是否满足资源需求
-                    if not host.meet_needs(vcpu=vcpu_need, mem=0):
-                        raise errors.VmError.from_error(errors.VcpuNotEnough(msg='宿主机已没有足够的vcpu资源'))
+        old_xml_desc = vm_domain.xml_desc()
+        new_xml_desc = old_xml_desc
 
-                    if not host.claim(vcpu=vcpu_need, mem=0):
-                        raise VmError(msg='向宿主机申请的vcpu资源失败')
-                else:
-                    vcpu_free = vm.vcpu - vcpu
-                    if not host.free(vcpu=vcpu_free, mem=0):
-                        raise VmError(msg='释放宿主机vcpu资源失败')
+        cpu_delta = 0
+        mem_delta = 0
+        if vcpu > 0 and vcpu != vm.vcpu:
+            cpu_delta = vcpu - vm.vcpu
 
-                try:
-                    xml_desc = self._vm_manager.xml_edit_vcpu(xml_desc=xml_desc, vcpu=vcpu)
-                except VmError as e:
-                    raise e
+        if mem > 0 and mem != vm.mem:
+            mem_delta = mem - vm.mem
 
-                vm.vcpu = vcpu
-
-            if mem > 0 and mem != vm.mem:
-                # vcpu增大
-                if mem > vm.mem:
-                    mem_need = mem - vm.mem
-                    # 宿主机是否满足资源需求
-                    if not host.meet_needs(vcpu=0, mem=mem_need):
-                        raise errors.VmError.from_error(errors.RamNotEnough(msg='宿主机已没有足够的内存资源'))
-
-                    if not host.claim(vcpu=0, mem=mem_need):
-                        raise VmError(msg='向宿主机申请的内存资源失败')
-                else:
-                    mem_free = vm.mem - mem
-                    if not host.free(vcpu=0, mem=mem_free):
-                        raise VmError(msg='释放宿主机内存资源失败')
-
-                try:
-                    xml_desc = self._vm_manager.xml_edit_mem(xml_desc=xml_desc, mem=mem)
-                except VmError as e:
-                    raise e
-
-                vm.mem = mem
-
-            # 创建虚拟机
+        if cpu_delta != 0:
+            vm.vcpu = vcpu
             try:
-                if not self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc):
-                    raise VmError(msg='修改虚拟机失败')
-            except VirtError as e:
-                raise VmError(msg='修改虚拟机失败')
+                new_xml_desc = self._vm_manager.xml_edit_vcpu(xml_desc=new_xml_desc, vcpu=vcpu)
+            except VmError as e:
+                raise e
 
-            vm.xml = xml_desc
-        except VmError as e:
-            raise e
+        if mem_delta != 0:
+            vm.mem = mem
+            try:
+                new_xml_desc = self._vm_manager.xml_edit_mem(xml_desc=new_xml_desc, mem=mem)
+            except VmError as e:
+                raise e
+
+        # 宿主机是否满足资源需求
+        if cpu_delta > 0:
+            if not host.meet_needs(vcpu=cpu_delta, mem=0, check_vm_limit=False):
+                raise errors.VmError.from_error(errors.VcpuNotEnough(msg='宿主机已没有足够的vcpu资源'))
+
+        if mem_delta > 0:
+            if not host.meet_needs(vcpu=0, mem=mem_delta, check_vm_limit=False):
+                raise errors.VmError.from_error(errors.RamNotEnough(msg='宿主机已没有足够的内存资源'))
+
+        # 宿主机资源扣除或释放
+        if not host.deduct_delta(cpu_delta=cpu_delta, mem_delta=mem_delta):
+            raise VmError(msg='扣除或释放宿主机vcpu或mem资源失败')
+
+        # 创建虚拟机
+        virt_host = VirtHost(host_ipv4=host.ipv4)
+        try:
+            domain = virt_host.define(xml_desc=new_xml_desc)
+        except VirtError as e:
+            host.deduct_delta(cpu_delta=-cpu_delta, mem_delta=-mem_delta)   # 宿主机资源扣除或释放还原
+            raise VmError(msg='修改虚拟机失败')
 
         try:
+            vm.xml = domain.XMLDesc()
             vm.save()
         except Exception as e:
+            host.deduct_delta(cpu_delta=-cpu_delta, mem_delta=-mem_delta)  # 宿主机资源扣除或释放还原
+            try:
+                virt_host.define(xml_desc=old_xml_desc)
+            except VirtError:
+                pass
+
             raise VmError(msg=f'修改虚拟机元数据失败, {str(e)}')
 
         return True
@@ -1923,8 +1920,8 @@ class VmAPI:
                     raise DeviceError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
 
         m_log = MigrateTask(vm=vm, vm_uuid=vm_uuid, src_host=old_host, src_host_ipv4=old_host.ipv4,
-                           dst_host=new_host, dst_host_ipv4=new_host.ipv4, migrate_time=timezone.now(),
-                           tag=MigrateTask.Tag.MIGRATE_STATIC)
+                            dst_host=new_host, dst_host_ipv4=new_host.ipv4, migrate_time=timezone.now(),
+                            tag=MigrateTask.Tag.MIGRATE_STATIC)
 
         # 目标宿主机资源申请
         try:
@@ -1971,7 +1968,7 @@ class VmAPI:
 
         # 删除原宿主机上的虚拟机
         try:
-            ok = self._vm_manager.undefine(host_ipv4=old_host.ipv4, vm_uuid=vm_uuid)
+            ok = VirtHost(host_ipv4=old_host.ipv4).undefine(vm_uuid=vm_uuid)
             if ok:
                 m_log.src_undefined = True
                 old_host.vm_created_num_sub_1()  # 宿主机虚拟机数-1
@@ -2143,7 +2140,7 @@ class VmAPI:
 
         # 创建虚拟机
         try:
-            self._vm_manager.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
+            VirtHost(host_ipv4=host.ipv4).define(xml_desc=xml_desc)
         except VirtError as e:
             raise VmError(msg=f'宿主机上创建虚拟主机错误，{str(e)}')
 
@@ -2185,7 +2182,7 @@ class VmAPI:
         host = vm.host
         try:
             src_domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
-            run = src_domain.is_running()
+            src_domain.is_running()
         except VirHostDown as e:
             raise VmError(msg=f'无法连接宿主机,{str(e)}')
         except VirDomainNotExist as e:
@@ -2208,7 +2205,7 @@ class VmAPI:
             raise VmError(msg='目标宿主机和云主机宿主机不在同一个机组')
 
         # 检测目标宿主机是否处于活动状态
-        dest_vm_host = VmHost(host_ipv4=dest_host.ipv4)
+        dest_vm_host = VirtHost(host_ipv4=dest_host.ipv4)
         try:
             dest_conn = dest_vm_host.get_connection()
         except VirHostDown as e:
@@ -2222,8 +2219,8 @@ class VmAPI:
             raise VmError(msg='请先卸载主机挂载的PCI设备')
 
         m_task = MigrateTask(vm=vm, vm_uuid=vm_uuid, src_host=src_host, src_host_ipv4=src_host.ipv4,
-                           dst_host=dest_host, dst_host_ipv4=dest_host.ipv4, migrate_time=timezone.now(),
-                           tag=MigrateTask.Tag.MIGRATE_LIVE)
+                             dst_host=dest_host, dst_host_ipv4=dest_host.ipv4, migrate_time=timezone.now(),
+                             tag=MigrateTask.Tag.MIGRATE_LIVE)
 
         # 目标宿主机资源申请
         try:
@@ -2295,3 +2292,18 @@ class VmAPI:
         m_task.content = log_msg
         m_task.migrate_complete_time = timezone.now()
         m_task.do_save()
+
+    def get_vm_stats(self, vm_uuid: str, user):
+        """
+        查询vm内存，硬盘io，网络io等信息
+
+        :raises: VmError
+        """
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host',))
+        vm_domain = VmDomain(host_ip=vm.host.ipv4, vm_uuid=vm.hex_uuid)
+        try:
+            stats = vm_domain.get_stats()
+        except VirtError as exc:
+            raise VmError.from_error(exc)
+
+        return stats.to_dict()

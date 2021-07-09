@@ -133,17 +133,18 @@ class Host(models.Model):
         free_cpu = self.vcpu_total - self.vcpu_allocated
         return vcpu > free_cpu
 
-    def meet_needs(self, vcpu: int, mem: int):
+    def meet_needs(self, vcpu: int, mem: int, check_vm_limit: bool = True):
         """
         检查宿主机是否满足资源需求
         :param vcpu: 需要的vcpu数量
         :param mem: 需要的内存大小
+        :param check_vm_limit: True(检查是否达到vm数量限制，是否还能创建vm)；False(不检查)
         :return:
             True: 满足
             False: 不满足
         """
         # 可创建虚拟机数量限制
-        if self.exceed_vm_limit():
+        if check_vm_limit and self.exceed_vm_limit():
             return False
 
         # cpu是否满足
@@ -169,17 +170,16 @@ class Host(models.Model):
         # 申请资源
         if vcpu <= 0 and mem <= 0:
             return True
-        if vcpu > 0:
-            self.vcpu_allocated = F('vcpu_allocated') + vcpu
-        if mem > 0:
-            self.mem_allocated = F('mem_allocated') + mem
-        try:
-            self.save()
-            self.refresh_from_db()
-        except Exception:
-            return False
 
-        return True
+        cpu_delta = 0
+        mem_delta = 0
+        if vcpu > 0:
+            cpu_delta = vcpu
+
+        if mem > 0:
+            mem_delta = mem
+
+        return self.deduct_delta(cpu_delta=cpu_delta, mem_delta=mem_delta)
 
     def free(self, vcpu: int, mem: int):
         """
@@ -194,15 +194,47 @@ class Host(models.Model):
         # 释放资源
         if vcpu <= 0 and mem <= 0:
             return True
+
+        cpu_delta = 0
+        mem_delta = 0
         if vcpu > 0:
-            self.vcpu_allocated = F('vcpu_allocated') - vcpu
+            cpu_delta = -vcpu
+
         if mem > 0:
-            self.mem_allocated = F('mem_allocated') - mem
+            mem_delta = -mem
+
+        return self.deduct_delta(cpu_delta=cpu_delta, mem_delta=mem_delta)
+
+    def deduct_delta(self, cpu_delta: int = 0, mem_delta: int = 0):
+        """
+        扣除资源
+        :param cpu_delta: >0(扣除)； <0(释放)
+        :param mem_delta: >0(扣除)； <0(释放)
+        """
+        if cpu_delta == mem_delta == 0:
+            return True
+
+        filters = {}
+        updates = {}
+        if cpu_delta != 0:
+            filters['vcpu_total__gte'] = F('vcpu_allocated') + cpu_delta
+            updates['vcpu_allocated'] = F('vcpu_allocated') + cpu_delta
+        if mem_delta != 0:
+            filters['mem_total__gte'] = F('mem_allocated') + mem_delta
+            updates['mem_allocated'] = F('mem_allocated') + mem_delta
+
         try:
-            self.save()
-            self.refresh_from_db()
-        except Exception:
+            r = Host.objects.filter(id=self.id, **filters).update(**updates)
+        except Exception as e:
             return False
+
+        if r <= 0:
+            return False
+
+        try:
+            self.refresh_from_db()
+        except:
+            pass
 
         return True
 
