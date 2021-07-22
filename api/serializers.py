@@ -156,7 +156,8 @@ class ImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Image
-        fields = ('id', 'name', 'version', 'sys_type', 'tag', 'enable', 'create_time', 'desc')
+        fields = ('id', 'name', 'version', 'sys_type', 'tag', 'enable', 'create_time', 'desc',
+                  'default_user', 'default_password')
 
     @staticmethod
     def get_tag(obj):

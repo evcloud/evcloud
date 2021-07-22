@@ -1758,7 +1758,9 @@ class ImageViewSet(CustomGenericViewSet):
                   },
                   "enable": true,
                   "create_time": "2020-03-06T14:46:27.149648+08:00",
-                  "desc": "centos8"
+                  "desc": "centos8",
+                  "default_user": "root",
+                  "default_password": "cnic.cn"
                 }
               ]
             }
