@@ -271,6 +271,23 @@
                                 未创建快照
                             {% endif %}
                         </li>
+                        <li class="list-group-item" id="id-vm-snap-content">
+                            <p><strong>云主机状态</strong></p>
+                            <div class="row">
+                                <div class="col-6">
+                                    <canvas id="chart-vm-cpu"></canvas>
+                                </div>
+                                <div class="col-6">
+                                    <canvas id="chart-vm-mem"></canvas>
+                                </div>
+                                <div class="col-6">
+                                    <canvas id="chart-vm-disk"></canvas>
+                                </div>
+                                <div class="col-6">
+                                    <canvas id="chart-vm-network"></canvas>
+                                </div>
+                            </div>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -279,6 +296,7 @@
 {% endblock %}
 
 {% block script %}
+    <script type="text/javascript" src="{% static 'chartjs/chart-3.4.1.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
     <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>

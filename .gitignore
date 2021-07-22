@@ -10,3 +10,4 @@
 /django_site/security.py
 /data/
 /ignore*
+*.pid

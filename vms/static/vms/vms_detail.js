@@ -5,6 +5,7 @@
     window.onload = function() {
         $("#nav_vm_list").addClass("active");
         get_vm_status();// 虚拟机运行状态查询更新
+        vm_stats_charts();
     };
 
     // 虚拟机运行状态api构建
@@ -48,6 +49,11 @@
         return build_absolute_url(url);
     }
 
+    function build_vm_stats_api(vm_uuid){
+        let url = 'api/v3/vms/' + vm_uuid + '/stats/';
+        return build_absolute_url(url);
+    }
+
     function get_vm_uuid() {
         return $("#id-vm-uuid").text();
     }
@@ -84,7 +90,7 @@
             error: function (xhr, msg, err) {
                 msg = '打开vnc失败';
                 try{
-                    data = xhr.responseJSON;
+                    let data = xhr.responseJSON;
                     if (data.hasOwnProperty('code_text')){
                         msg = '打开vnc失败,' + data.code_text;
                     }
@@ -388,7 +394,7 @@
                 }
             },
             error: function (xhr, msg, err) {
-                data = xhr.responseJSON;
+                let data = xhr.responseJSON;
                 msg = '删除快照失败';
                 if (data.hasOwnProperty('code_text')){
                     msg = '删除快照失败,' + data.code_text;
@@ -466,7 +472,7 @@
                 }
             },
             error: function(xhr, msg, err){
-			    data = xhr.responseJSON;
+			    let data = xhr.responseJSON;
                 msg = '回滚主机失败';
                 if (data.hasOwnProperty('code_text')){
                     msg = '回滚主机失败,' + data.code_text;
@@ -475,4 +481,277 @@
             }
 		});
     });
+
+
+    function calculate_cpu_percent(statsArray, stats){
+        let timestamp = stats["timestamp"]
+        let cpuTimeAbs = stats["cpu_time_abs"]
+        let hostCpus = stats["host_cpus"]
+        let guestCpus = stats["guest_cpus"]
+        let prevCpuTime = 0
+        let prevTimestamp = 0
+        let l = statsArray.length
+        if (l > 0){
+            let preStats = statsArray[l-1]
+            prevCpuTime = preStats["cpu_time_abs"]
+            prevTimestamp = preStats["timestamp"]
+        }
+        let cpuTime = cpuTimeAbs - prevCpuTime
+        let deltaTime = timestamp - prevTimestamp
+        let percentBase = 0
+        if (deltaTime !== 0){
+            percentBase = ((cpuTime * 100.0) / (deltaTime * 1000.0 * 1000.0 * 1000.0))
+        }
+        let cpuHostPercent = percentBase / hostCpus
+        let cpuGuestPercent = 0
+        if (guestCpus > 0){
+            cpuGuestPercent = percentBase / guestCpus
+        }
+        if (cpuGuestPercent < 0){
+            cpuGuestPercent = 0
+        }else if(cpuGuestPercent > 100){
+            cpuGuestPercent = 100
+        }
+
+        return cpuGuestPercent
+    }
+
+    function calculate_rate(statsArray, stats, key){
+        let ret = 0.0
+        let l = statsArray.length
+        if (l > 0) {
+            let preStats = statsArray[l-1]
+            let rateDiff = stats[key] - preStats[key]
+            let timeDiff = stats["timestamp"] - preStats["timestamp"]
+            ret = rateDiff / timeDiff
+            if (ret < 0){
+                ret = 0.0
+            }
+        }
+        return ret
+    }
+
+    function handle_vm_stats_callback(stats){
+        // cpu
+        let cpuRate = calculate_cpu_percent(window.vm_stats_array, stats)
+        window.vm_stats_chart_cpu_data.push(cpuRate);
+        // mem
+        let mem = stats["curr_mem_percent"]
+            window.vm_stats_chart_mem_data.push(mem);
+
+        // disk
+        let diskRdRate = calculate_rate(window.vm_stats_array, stats, "disk_rd_kb")
+        let diskWrRate = calculate_rate(window.vm_stats_array, stats, "disk_wr_kb")
+        window.vm_stats_chart_disk_data.rd_kb.push(diskRdRate);
+        window.vm_stats_chart_disk_data.wr_kb.push(diskWrRate);
+
+        // window.vm_stats_chart_disk_data.rd_kb.push(stats["disk_rd_kb"]);
+        // window.vm_stats_chart_disk_data.wr_kb.push(stats["disk_wr_kb"]);
+        // net io
+        let netTxRate = calculate_rate(window.vm_stats_array, stats, "net_tx_kb")
+        let netRxRate = calculate_rate(window.vm_stats_array, stats, "net_rx_kb")
+        window.vm_stats_chart_net_data.tx_kb.push(netTxRate);
+        window.vm_stats_chart_net_data.rx_kb.push(netRxRate);
+
+        // window.vm_stats_chart_net_data.tx_kb.push(stats["net_tx_kb"]);
+        // window.vm_stats_chart_net_data.rx_kb.push(stats["net_rx_kb"]);
+
+        window.vm_stats_array.push(stats)
+        if (window.vm_stats_array.length > window.vm_stats_chart_labels.length){
+            window.vm_stats_array.shift();
+            window.vm_stats_chart_cpu_data.shift();
+            window.vm_stats_chart_mem_data.shift();
+            window.vm_stats_chart_disk_data.rd_kb.shift();
+            window.vm_stats_chart_disk_data.wr_kb.shift();
+            window.vm_stats_chart_net_data.tx_kb.shift();
+            window.vm_stats_chart_net_data.rx_kb.shift();
+        }
+        window.chart_vm_cpu.update();
+        window.chart_vm_mem.update();
+        window.chart_vm_disk.update();
+        window.chart_vm_network.update();
+    }
+
+    function get_vm_stats(callback){
+        let vm_uuid = get_vm_uuid();
+        let api = build_vm_stats_api(vm_uuid);
+        $.ajax({
+			url: api,
+			type: 'get',
+			success: function (data, status_text, xhr) {
+                if (xhr.status === 200){
+                    callback(data);
+                }
+            },
+            error: function(xhr, msg, err){
+			    let data = xhr.responseJSON;
+                console.log(data);
+            }
+		});
+    }
+
+    function vm_stats_charts(){
+        window.vm_stats_array = []
+        window.vm_stats_chart_labels = new Array(100).fill("");
+
+        window.vm_stats_chart_cpu_data = []
+        window.vm_stats_chart_mem_data = []
+        window.vm_stats_chart_disk_data = {rd_kb: [], wr_kb: []}
+        window.vm_stats_chart_net_data = {tx_kb: [], rx_kb: []}
+        window.setInterval(function (){
+            get_vm_stats(handle_vm_stats_callback);
+        },2000);
+
+        let ctx_chart_vm_cpu = document.getElementById('chart-vm-cpu').getContext('2d');
+        let ctx_chart_vm_mem = document.getElementById('chart-vm-mem').getContext('2d');
+        let ctx_chart_vm_disk = document.getElementById('chart-vm-disk').getContext('2d');
+        let ctx_chart_vm_network = document.getElementById('chart-vm-network').getContext('2d');
+        window.chart_vm_cpu = new Chart(ctx_chart_vm_cpu, {
+            type: 'line',
+            fill: true,
+            data: {
+                labels: window.vm_stats_chart_labels,
+                datasets: [
+                    {
+                        label: 'CPU',
+                        fill: true,
+                        borderWidth: 1,
+                        borderColor: 'blue',
+                        radius: 0,
+                        data: window.vm_stats_chart_cpu_data,
+                    }
+                ]
+            },
+            options: {
+                animation: false,
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'CPU使用率(%)'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        });
+        window.chart_vm_mem = new Chart(ctx_chart_vm_mem, {
+            type: 'line',
+            data: {
+                labels: window.vm_stats_chart_labels,
+                datasets: [
+                    {
+                        label: 'Memory',
+                        fill: true,
+                        borderWidth: 1,
+                        borderColor: 'blue',
+                        radius: 0,
+                        data: window.vm_stats_chart_mem_data,
+                    }
+                ]
+            },
+            options: {
+                animation: false,
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Memory使用率(%)'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        });
+        window.chart_vm_disk = new Chart(ctx_chart_vm_disk, {
+            type: 'line',
+            data: {
+                labels: window.vm_stats_chart_labels,
+                datasets: [
+                    {
+                        label: 'Read IO',
+                        fill: false,
+                        borderWidth: 1,
+                        borderColor: 'green',
+                        radius: 0,
+                        data: window.vm_stats_chart_disk_data.rd_kb,
+                    },
+                    {
+                        label: 'Write IO',
+                        fill: false,
+                        borderWidth: 1,
+                        borderColor: 'blue',
+                        radius: 0,
+                        data: window.vm_stats_chart_disk_data.wr_kb,
+                    }
+                ]
+            },
+            options: {
+                animation: false,
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '硬盘读写IO(Kb/s)'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        min: 0,
+                    }
+                }
+            }
+        });
+        window.chart_vm_network = new Chart(ctx_chart_vm_network, {
+            type: 'line',
+            data: {
+                labels: window.vm_stats_chart_labels,
+                datasets: [
+                    {
+                        label: 'Rx IO',
+                        fill: false,
+                        borderWidth: 1,
+                        borderColor: 'green',
+                        radius: 0,
+                        data: window.vm_stats_chart_net_data.rx_kb,
+                    },
+                    {
+                        label: 'Tx IO',
+                        fill: false,
+                        borderWidth: 1,
+                        borderColor: 'blue',
+                        radius: 0,
+                        data: window.vm_stats_chart_net_data.tx_kb,
+                    }
+                ]
+            },
+            options: {
+                animation: false,
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: '网络读写IO(Kb/s)'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        min: 0,
+                    }
+                }
+            }
+        });
+    }
 })();

@@ -103,7 +103,7 @@ class Quota(models.Model):
 
         self.size_used = F('size_used') + size
         try:
-            self.save()
+            self.save(update_fields=['size_used'])
         except Exception as e:
             return False
         self.refresh_from_db()
@@ -123,7 +123,7 @@ class Quota(models.Model):
 
         self.size_used = F('size_used') - size
         try:
-            self.save()
+            self.save(update_fields=['size_used'])
         except Exception as e:
             return False
         self.refresh_from_db()
