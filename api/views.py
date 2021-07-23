@@ -160,6 +160,14 @@ class VmsViewSet(CustomGenericViewSet):
             "name": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "vcpu": 2,
             "mem": 2048,        # MB
+            "image": "CentOS_8",
+            "image_info": {
+              "id": 4,
+              "name": "CentOS_8",
+              "desc": "",
+              "default_user": "root",
+              "default_password": "cnic.cn"
+            },
             "disk": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
             "host": "10.100.50.121",
             "mac_ip": "10.107.50.253",

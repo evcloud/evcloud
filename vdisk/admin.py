@@ -35,7 +35,7 @@ class VdiskAdmin(admin.ModelAdmin):
         """
         for obj in queryset:
             if not obj.is_mounted:    # 硬盘已挂载，不删除
-                obj.delete()
+                obj.do_delete()
 
     def get_deleted(self, obj):
         if obj.deleted:

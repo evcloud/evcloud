@@ -173,7 +173,7 @@ class Vdisk(models.Model):
 
     @property
     def rbd_image_name(self):
-        if not self.rbd_name:
+        if not self.rbd_name and self.uuid:
             self.rbd_name = self.uuid
             try:
                 self.save(update_fields=['rbd_name'])
@@ -203,22 +203,13 @@ class Vdisk(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         # uuid有效认为已存在，只是更新信息
-        if self.uuid:
-            super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
-            return
-
-        # 新的记录，要创建新的ceph rbd image,
-        self.uuid = self.new_uuid_str()
-        self.rbd_image_name = self.uuid
+        if not self.uuid:
+            # 新的记录，要创建新的ceph rbd image,
+            self.uuid = self.new_uuid_str()
+            self.rbd_image_name = self.uuid
         super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
-        try:
-            self._create_ceph_disk()
-        except Exception as e:
-            self.delete()
-            raise Exception(f'create ceph rbd image failed,{str(e)}')
-
-    def _create_ceph_disk(self):
+    def create_ceph_disk(self):
         """
         创建硬盘对应的ceph rbd image
 
@@ -253,16 +244,16 @@ class Vdisk(models.Model):
 
         return True
 
-    def delete(self, using=None, keep_parents=False):
+    def do_delete(self, using=None, keep_parents=False):
         try:
-            self._remove_ceph_disk()
+            self.remove_ceph_disk()
         except Exception as e:
             raise Exception(f'remove ceph rbd image failed, {str(e)}')
 
         self.quota.free(size=self.size)  # 释放硬盘存储池资源
         super().delete(using=using, keep_parents=keep_parents)
 
-    def _remove_ceph_disk(self):
+    def remove_ceph_disk(self):
         """
         删除硬盘对应的ceph rbd image
 

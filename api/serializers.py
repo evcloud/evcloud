@@ -378,12 +378,13 @@ class VmDetailSerializer(serializers.ModelSerializer):
     mac_ip = serializers.SerializerMethodField()
     ip = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    image_info = serializers.SerializerMethodField()
     vdisks = serializers.SerializerMethodField()
     pci_devices = serializers.SerializerMethodField()
 
     class Meta:
         model = Vm
-        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'host', 'mac_ip', 'ip', 'user', 'create_time',
+        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'image_info', 'disk', 'host', 'mac_ip', 'ip', 'user', 'create_time',
                   'vdisks', 'pci_devices')
         # depth = 1
 
@@ -411,6 +412,17 @@ class VmDetailSerializer(serializers.ModelSerializer):
     def get_image(obj):
         img = obj.image
         return img.name if img else ""
+
+    @staticmethod
+    def get_image_info(obj):
+        img = obj.image
+        if img:
+            return {
+                'id': img.id, 'name': img.name, 'desc': img.desc,
+                'default_user': img.default_user, 'default_password': img.default_password
+            }
+
+        return None
 
     @staticmethod
     def get_vdisks(obj):

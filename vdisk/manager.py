@@ -188,7 +188,12 @@ class VdiskManager:
 
         vd = Vdisk(size=size, quota=quota, user=user, remarks=remarks)
         try:
-            vd.save()  # save内会创建元数据和ceph rbd image
+            vd.save()  # 创建元数据
+            try:
+                vd.create_ceph_disk()
+            except Exception as e:
+                vd.delete()
+                raise Exception(f'create ceph rbd image failed,{str(e)}')
         except Exception as e:
             quota.free(size=size)  # 释放申请的存储资源
             raise VdiskError(msg=str(e))

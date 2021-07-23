@@ -66,6 +66,12 @@ class AuthenticationFailedError(Error):
     msg = 'Incorrect authentication credentials.'
 
 
+class NotAuthenticated(Error):
+    err_code = 'NotAuthenticated'
+    code = 401
+    msg = 'Authentication credentials were not provided.'
+
+
 class AccessDeniedError(Error):
     err_code = 'AccessDenied'
     code = 403
