@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='vm',
             name='init_password',
-            field=models.CharField(default='', max_length=20, verbose_name='root初始密码'),
+            field=models.CharField(blank=True, default='', max_length=20, verbose_name='root初始密码'),
         ),
     ]

@@ -55,7 +55,19 @@ def rename_image(ceph, pool_name: str, image_name: str, new_name: str):
     return True
 
 
-class Vm(models.Model):
+class VmBase(models.Model):
+    class DiskType(models.TextChoices):
+        CEPH_RBD = 'ceph-rbd', 'Ceph rbd'
+        LOCAL = 'local', '本地硬盘'
+
+    disk_type = models.CharField(verbose_name='系统盘类型', max_length=16,
+                                 choices=DiskType.choices, default=DiskType.CEPH_RBD)
+
+    class Meta:
+        abstract = True
+
+
+class Vm(VmBase):
     """
     虚拟机模型
     """
@@ -71,7 +83,7 @@ class Vm(models.Model):
                              related_name='user_vms',  null=True)
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
-    init_password = models.CharField(max_length=20, default='', verbose_name='root初始密码')
+    init_password = models.CharField(max_length=20, default='', blank=True, verbose_name='root初始密码')
 
     host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机')
     xml = models.TextField(verbose_name='虚拟机当前的XML', help_text='定义虚拟机的当前的XML内容')
@@ -189,7 +201,7 @@ class Vm(models.Model):
         return self.device_set.select_related('host__group').all()
 
 
-class VmArchive(models.Model):
+class VmArchive(VmBase):
     """
     删除虚拟机归档记录
     """

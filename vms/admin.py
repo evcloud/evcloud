@@ -7,7 +7,7 @@ from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor
 @admin.register(Vm)
 class VmAdmin(admin.ModelAdmin):
     list_display_links = ('hex_uuid',)
-    list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'user', 'create_time', 'remarks')
+    list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'disk_type', 'user', 'create_time', 'remarks')
     search_fields = ['name', 'mac_ip__ipv4']
     list_filter = ['host', 'user']
     raw_id_fields = ('mac_ip', 'host', 'user', 'image')
@@ -66,7 +66,7 @@ undefine_vm_from_host.short_description = "释放所选虚拟机所占用宿主�
 @admin.register(VmArchive)
 class VmArchiveAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
-    list_display = ('id', 'uuid', 'ipv4', 'vcpu', 'mem', 'mac', 'disk', 'image_parent', 'center_name', 'group_name',
+    list_display = ('id', 'uuid', 'ipv4', 'vcpu', 'mem', 'mac', 'disk_type', 'disk', 'image_parent', 'center_name', 'group_name',
                     'host_ipv4', 'host_released', 'user', 'archive_time', 'remarks')
     search_fields = ['uuid', 'center_name', 'remarks', 'user']
     list_filter = ['host_released', 'center_name', 'group_name', 'host_ipv4', 'user']

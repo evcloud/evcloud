@@ -728,7 +728,7 @@ class VmArchiveManager:
                            image_id=image.id, image_parent=image.base_image, ceph_id=ceph_pool.ceph.id,
                            ceph_pool=ceph_pool.pool_name, center_id=center.id, center_name=center.name,
                            group_id=group.id, group_name=group.name, host_id=host.id, host_ipv4=host.ipv4,
-                           user=vm.user, create_time=vm.create_time, remarks=vm.remarks)
+                           user=vm.user, create_time=vm.create_time, remarks=vm.remarks, disk_type=vm.disk_type)
             va.save()
         except Exception as e:
             raise VmError(msg=str(e))
@@ -1645,6 +1645,9 @@ class VmAPI:
         :raises: VmError
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'image__ceph_pool__ceph'))
+        if vm.disk_type == vm.DiskType.LOCAL:
+            raise errors.VmError.from_error(
+                errors.Unsupported(msg='虚拟主机为本地硬盘，不支持创建快照'))
 
         # 虚拟机的状态
         # host = vm.host
@@ -1671,6 +1674,10 @@ class VmAPI:
         :raises: VmError
         """
         vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=())
+        if vm.disk_type == vm.DiskType.LOCAL:
+            raise errors.VmError.from_error(
+                errors.Unsupported(msg='虚拟主机为本地硬盘，不支持快照回滚'))
+
         return self._vm_manager.disk_rollback_to_snap(vm=vm, snap_id=snap_id)
 
     def get_user_pci_device(self, device_id: int, user):
@@ -1857,6 +1864,10 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
+
+        if vm.disk_type == vm.DiskType.LOCAL:
+            raise errors.VmError.from_error(
+                errors.Unsupported(msg='虚拟主机为本地硬盘，不支持迁移'))
 
         # 虚拟机的状态
         # is_host_down = False
@@ -2108,6 +2119,11 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user,
                                      related_fields=('host', 'user', 'image__ceph_pool__ceph'))
+
+        if vm.disk_type == vm.DiskType.LOCAL:
+            raise errors.VmError.from_error(
+                errors.Unsupported(msg='虚拟主机为本地硬盘，暂不支持丢失修复'))
+
         host = vm.host
         # 虚拟机
         domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm_uuid)
@@ -2172,6 +2188,10 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
+
+        if vm.disk_type == vm.DiskType.LOCAL:
+            raise errors.VmError.from_error(
+                errors.Unsupported(msg='虚拟主机为本地硬盘，不支持迁移'))
 
         # 2m内有未完成的迁移任务
         if vm.migrate_log_set.filter(status=MigrateTask.Status.IN_PROCESS,

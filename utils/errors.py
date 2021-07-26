@@ -164,6 +164,12 @@ class VmTooManyVdiskMounted(VmError):
     msg = '不能挂载更多的硬盘了'
 
 
+class Unsupported(Error):
+    err_code = 'Unsupported'
+    code = 409
+    msg = '请求的操作不被支持'
+
+
 class SnapNotExist(VmError):
     err_code = 'SnapNotExist'
     code = 404
