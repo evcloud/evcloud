@@ -921,12 +921,14 @@ class VmDomain:
             return True
         return False
 
-    def live_migrate(self, dest_host_conn):
+    def live_migrate(self, dest_host_conn, undefine_source: bool = True):
         """
         :raise VirtError(), VirHostDown()
         """
         flags = libvirt.VIR_MIGRATE_LIVE | libvirt.VIR_MIGRATE_PERSIST_DEST
-        flags |= libvirt.VIR_MIGRATE_UNDEFINE_SOURCE
+        if undefine_source:
+            flags |= libvirt.VIR_MIGRATE_UNDEFINE_SOURCE
+
         src_domain = self.domain
         try:
             params = {}

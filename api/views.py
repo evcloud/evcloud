@@ -12,6 +12,7 @@ from drf_yasg.utils import swagger_auto_schema, no_body
 from drf_yasg import openapi
 
 from vms.manager import VmManager, VmAPI, VmError, FlavorManager
+from vms.migrate import VmMigrateManager
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
 from compute.managers import HostManager, CenterManager, GroupManager, ComputeError
@@ -3381,4 +3382,62 @@ class VPNViewSet(CustomGenericViewSet):
             return serializers.VPNSerializer
         elif self.action == 'create':
             return serializers.VPNCreateSerializer
+        return Serializer
+
+
+class MigrateTaskViewSet(CustomGenericViewSet):
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+    lookup_field = 'id'
+    lookup_value_regex = '.+'
+
+    @swagger_auto_schema(
+        operation_summary='查询虚拟机迁移任务状态',
+        request_body=no_body
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """
+        查询虚拟机迁移任务状态
+
+            >> http code 200:
+            {
+              "id": 2,
+              "vm_uuid": "ede9a97e049949d0a1ef90fe58d7cc39",
+              "src_host_id": 4,
+              "src_host_ipv4": "10.0.200.83",
+              "src_undefined": false,
+              "src_is_free": false,
+              "dst_host_id": 5,
+              "dst_host_ipv4": "10.0.200.80",
+              "dst_is_claim": false,
+              "migrate_time": "2021-06-15T16:59:38.291440+08:00",
+              "migrate_complete_time": null,
+              "status": "failed",
+              "content": "unsupported configuration: Target CPU check full does not match source partial",
+              "tag": "live"
+            }
+            >> http code 403, 404, 500
+            {
+                "code": xxx,
+                "code_text": "xxx",
+                "err_code": "xxx"
+            }
+        """
+        task_id = kwargs.get(self.lookup_field, '')
+
+        try:
+            task = VmMigrateManager.get_migrate_task(_id=task_id, user=request.user)
+        except VmError as exc:
+            return self.exception_response(exc)
+
+        if task is None:
+            return self.exception_response(exc=exceptions.NotFoundError(msg='迁移任务不存在'))
+
+        serializer = self.get_serializer(task)
+        return Response(data=serializer.data)
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return serializers.MigrateTaskSerializer
+
         return Serializer

@@ -232,6 +232,21 @@ class VmMigrateView(View):
         return render(request, 'vm_migrate.html', context={'vm': vm, 'hosts': hosts})
 
 
+class VmLiveMigrateView(View):
+    """虚拟机动态迁移类视图"""
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
+            'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['云主机不存在']})
+
+        hosts = HostManager().get_hosts_by_group_id(group_id=vm.host.group_id)
+        return render(request, 'vm_live_migrate.html', context={'vm': vm, 'hosts': hosts})
+
+
 class VmMountPCIView(View):
     """虚拟机挂载PCI设备类视图"""
     NUM_PER_PAGE = 20

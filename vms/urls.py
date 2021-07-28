@@ -13,6 +13,7 @@ urlpatterns = [
     re_path(r'^edit/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmEditView.as_view()), name='vm-edit'),
     re_path(r'^reset/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmResetView.as_view()), name='vm-reset'),
     re_path(r'^migrate/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmMigrateView.as_view()), name='vm-migrate'),
+    re_path(r'^live-migrate/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmLiveMigrateView.as_view()), name='vm-live-migrate'),
     re_path(r'^mount-pci/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmMountPCIView.as_view()), name='vm-mount-pci')
 ]
 

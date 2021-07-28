@@ -19,6 +19,7 @@ router.register(r'pci', views.PCIDeviceViewSet, basename='pci-device')
 router.register(r'macip', views.MacIPViewSet, basename='macip')
 router.register(r'flavor', views.FlavorViewSet, basename='flavor')
 router.register(r'vpn', views.VPNViewSet, basename='vpn')
+router.register(r'task/vm-migrate', views.MigrateTaskViewSet, basename='vm-migrate-task')
 
 urlpatterns = [
     path('', include(router.urls)),

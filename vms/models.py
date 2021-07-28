@@ -587,8 +587,7 @@ class MigrateTask(models.Model):
         verbose_name = '虚拟机迁移记录'
         verbose_name_plural = '虚拟机迁移记录表'
 
-    def do_save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
+    def do_save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         """
         :return:
             None        # success

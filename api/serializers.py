@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from vms.models import Vm
+from vms.models import Vm, MigrateTask
 from compute.models import Center, Group, Host
 from network.models import Vlan
 from image.models import Image
@@ -460,3 +460,23 @@ class VPNSerializer(serializers.Serializer):
     active = serializers.BooleanField()
     create_time = serializers.DateTimeField()
     modified_time = serializers.DateTimeField()
+
+
+class MigrateTaskSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    vm_uuid = serializers.CharField()
+
+    src_host_id = serializers.IntegerField()
+    src_host_ipv4 = serializers.CharField()
+    src_undefined = serializers.BooleanField()
+    src_is_free = serializers.BooleanField()
+
+    dst_host_id = serializers.IntegerField()
+    dst_host_ipv4 = serializers.CharField()
+    dst_is_claim = serializers.BooleanField()
+
+    migrate_time = serializers.DateTimeField()
+    migrate_complete_time = serializers.DateTimeField()
+    status = serializers.CharField(help_text=f'{MigrateTask.Status.choices}')
+    content = serializers.CharField()
+    tag = serializers.CharField(help_text=f'{MigrateTask.Tag.choices}')

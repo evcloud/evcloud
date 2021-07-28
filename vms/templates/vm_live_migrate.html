@@ -2,13 +2,13 @@
 {% load static %}
 {% load  sizeformat %}
 
-{% block title %}关机静态迁移云主机{% endblock %}
+{% block title %}动态迁移云主机{% endblock %}
 
 {% block boby %}
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>关机静态迁移云主机</strong></span>
+                <span class="card-title"><strong>动态迁移云主机</strong></span>
                 <div class="float-right">
                     <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建云主机</a>
                     <a class="btn btn-sm btn-info" href="{% url 'vms:vms-list' %}">云主机列表</a>
@@ -29,7 +29,7 @@
                             <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                         </dl>
                         <hr>
-                        <form id="id-form-vm-migrate">
+                        <form id="id-form-vm-live-migrate">
                             <div class="form-group row">
                                 <label for="id-host" class="col-sm-2 col-form-label">选择目标宿主机</label>
                                 <div class="col-sm-7">
@@ -43,16 +43,15 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group form-check">
-                                <input name="force" value="force" type="checkbox" class="form-check-input" id="check-migrate-force">
-                                <label class="form-check-label" for="check-migrate-force">强制迁移</label>
-                                <p class="text-secondary font-italic">请慎重勾选，源宿主机节点上的源虚拟主机可能无法清理，导致与迁移的新虚拟主机网络冲突；
-                                    请在确认宿主机损毁、宕机移除、重装系统等情况导致虚拟主机丢失不可恢复不可用的情况下选择。</p>
-                            </div>
                             <div class="">
-                                <button class="btn btn-primary" id="btn-vm-migrate">迁移</button>
+                                <button class="btn btn-primary" id="btn-vm-live-migrate">迁移</button>
                             </div>
                         </form>
+                    <hr/>
+                    <div id="id-div-migrate-status" style="display:none">
+                        <p>迁移状态：<span id="id-migrate-display-icon"></span></p>
+                        <p class="text-info" id="id-migrate-result"></p>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -62,5 +61,5 @@
 
 {% block script %}
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
-    <script type="text/javascript" src="{% static 'vms/vms_migrate.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_live_migrate.js' %}"></script>
 {% endblock %}
