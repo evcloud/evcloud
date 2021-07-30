@@ -52,9 +52,16 @@ class VmMigrateManager:
             raise errors.VmError(msg=f'此虚拟机正在迁移, 未防止迁移冲突,请等待一段时间后重试')
 
         # 是否有迁移任务需要善后工作
-        m_log = vm.migrate_log_set.filter(status=MigrateTask.Status.SOME_TODO).order_by('-id').first()
+        task_qs = vm.migrate_log_set.filter(status=MigrateTask.Status.SOME_TODO).order_by('-id').all()
+        if len(task_qs) > 1:
+            raise errors.VmError(msg=f'此虚拟机有多个未完成的迁移任务，迁移善后工作请先联系管理员手动处理。')
+        m_log = task_qs.first()
         if m_log is not None:
-            raise errors.VmError(msg=f'此虚拟机有未完成的迁移任务，迁移善后工作请先联系管理员手动处理。')
+            try:
+                if not self.handle_some_todo_migrate_log(task_log=m_log):
+                    raise errors.VmError()
+            except errors.VmError as e:
+                raise errors.VmError(msg=f'此虚拟机有未完成的迁移任务，迁移善后工作请先联系管理员手动处理。')
 
         # 虚拟机的状态
         host = vm.host
@@ -181,6 +188,9 @@ class VmMigrateManager:
         """
         处理需要进行善后工作的vm迁移记录
 
+        :return:
+            True            #
+            False           #
         :raises: VmError
         """
         vm = task_log.vm
@@ -196,13 +206,26 @@ class VmMigrateManager:
                     if VmDomain(host_ip=task_log.dst_host_ipv4, vm_uuid=vm.get_uuid()).exists():
                         vm.host_id = dst_host_id
                         vm.save(update_fields=['host_id'])
+                    else:
+                        raise errors.VmError(msg='源宿主机和目标宿主机上都未查询到虚拟机，无法处理此迁移任务善后工作')
             except Exception as e:
                 raise errors.VmError(msg=f'{str(e)}')
 
+        ok = True
         # 是否已清理源云主机
         if not task_log.src_undefined:
-            pass
+            ok = False
 
         # 是否释放源宿主机资源配额
         if not task_log.src_is_free:
-            pass
+            if task_log.src_host.free(vcpu=vm.vcpu, mem=vm.mem):
+                task_log.src_is_free = True
+                task_log.do_save()
+            else:
+                ok = False
+
+        if ok:
+            task_log.status = task_log.Status.COMPLETE
+            task_log.do_save()
+
+        return ok
