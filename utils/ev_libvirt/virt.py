@@ -835,23 +835,65 @@ class VmDomain:
         """
         return self.host.power_off_domain(self.domain)
 
-    def xml_desc(self):
+    def xml_desc(self, inactive: bool = False):
         """
         动态从宿主机获取虚拟机的xml内容
 
+        :param inactive: True(获取非活动的持久域的xml)，False(获取当前运行域的xml)
         :return:
             xml: str    # success
 
         :raise VirtError()
         """
         try:
+            if inactive:
+                return self.domain.XMLDesc(libvirt.VIR_DOMAIN_XML_INACTIVE)
+
             return self.domain.XMLDesc()
         except libvirt.libvirtError as e:
             raise wrap_error(err=e)
 
     def attach_device(self, xml: str):
         """
-        附加设备到虚拟机
+        插设备到虚拟机，支持热插拔
+
+        :param xml: 设备xml
+        :return:
+            True    # success
+            False   # failed
+
+        :raises: VirtError
+        """
+        active = self.is_running()
+        if not active:
+            return self.attach_device_persisted(xml)    # 持久化域
+
+        ok = self.attach_device_hotplug(xml)
+        if not ok:
+            return False
+
+        err = None
+        try:
+            ok = self.attach_device_persisted(xml)       # 持久化域
+            if ok:
+                return True
+        except VirtError as e:
+            err = e
+
+        # 恢复活动域
+        try:
+            self.detach_device_hotplug(xml)
+        except VirtError:
+            pass
+
+        if err is not None:
+            raise err
+
+        return False
+
+    def attach_device_persisted(self, xml: str):
+        """
+        冷插设备到虚拟机持久化域
 
         :param xml: 设备xml
         :return:
@@ -864,10 +906,30 @@ class VmDomain:
         try:
             ret = domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)  # 指定将设备分配给持久化域
         except libvirt.libvirtError as e:
-            msg = str(e)
-            err_code = e.get_error_code()
-            if err_code == VirErrorNumber.VIR_ERR_OPERATION_INVALID and 'exist' in msg:
-                return True
+            msg = e.get_error_message()
+            raise wrap_error(err=e, msg=msg)
+
+        if ret == 0:
+            return True
+
+        return False
+
+    def attach_device_hotplug(self, xml: str):
+        """
+        热插拔设备到虚拟机活动域
+
+        :param xml: 设备xml
+        :return:
+            True    # success
+            False   # failed
+
+        :raises: VirtError
+        """
+        domain = self.domain
+        try:
+            ret = domain.attachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)  # 指定将设备分配给活动域
+        except libvirt.libvirtError as e:
+            msg = e.get_error_message()
             raise wrap_error(err=e, msg=msg)
 
         if ret == 0:
@@ -886,15 +948,82 @@ class VmDomain:
 
         :raises: VirtError
         """
+        active = self.is_running()
+        ok = self.detach_device_persisted(xml)      # 从持久化域移除
+        if not ok:
+            return False
+
+        if not active:
+            return True
+
+        # 如果虚拟机是活动的，从活动域移除
+        err = None
+        try:
+            ok = self.detach_device_hotplug(xml)
+            if ok:
+                return True
+        except VirtError as e:
+            err = e
+
+        # 恢复持久化域
+        try:
+            self.attach_device_persisted(xml)
+        except VirtError:
+            pass
+
+        if err is not None:
+            raise err
+
+        return False
+
+    def detach_device_hotplug(self, xml: str):
+        """
+        从虚拟机热插拔拆卸设备，只影响当前活动虚拟机域
+
+        :param xml: 设备xml
+        :return:
+            True    # success
+            False   # failed
+
+        :raises: VirtError
+        """
         domain = self.domain
         try:
-            ret = domain.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)
+            ret = domain.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_LIVE)     # 活动的虚拟机域
+        except libvirt.libvirtError as e:
+            msg = e.get_error_message()
+            # c = e.get_error_code()
+            # if c == VirErrorNumber.VIR_ERR_OPERATION_FAILED and 'not found' in msg.lower():
+            #     return True
+
+            raise wrap_error(err=e, msg=msg)
+        if ret == 0:
+            return True
+
+        return False
+
+    def detach_device_persisted(self, xml: str):
+        """
+        从虚拟机持久化域拆卸设备
+
+        :param xml: 设备xml
+        :return:
+            True    # success
+            False   # failed
+
+        :raises: VirtError
+        """
+        domain = self.domain
+        try:
+            ret = domain.detachDeviceFlags(xml, libvirt.VIR_DOMAIN_AFFECT_CONFIG)   # 虚拟机持久化域
         except libvirt.libvirtError as e:
             c = e.get_error_code()
             msg = e.get_error_message()
             if c and c == VirErrorNumber.VIR_ERR_DEVICE_MISSING:
                 return True
+
             raise wrap_error(err=e, msg=msg)
+
         if ret == 0:
             return True
 

@@ -1,8 +1,6 @@
 import uuid
 import subprocess
-from datetime import timedelta
 
-import libvirt
 from django.db.models import Q
 from django.utils import timezone
 
@@ -1522,7 +1520,8 @@ class VmAPI:
         if not vdisk.user_has_perms(user=user):
             raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限访问此硬盘'))
 
-        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
+        # vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
         host = vm.host
         if host.group.center_id != vdisk.quota.group.center_id:
             raise errors.AcrossCenterConflictError(msg='虚拟机和硬盘不在同一个分中心')
@@ -1544,7 +1543,9 @@ class VmAPI:
         # 向虚拟机挂载硬盘
         try:
             xml = vdisk.xml_desc(dev=dev)
-            self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
+            ok = self._vm_manager.mount_disk(vm=vm, disk_xml=xml)
+            if not ok:
+                raise errors.VmError(msg='向虚拟机挂载硬盘失败')
         except (VmError, Exception) as e:
             try:
                 self._vdisk_manager.umount_from_vm(vdisk_uuid=vdisk_uuid)
@@ -1599,17 +1600,19 @@ class VmAPI:
         # 虚拟机的状态
         host = vm.host
         domain = self._vm_manager.get_vm_domain(host_ipv4=host.ipv4, vm_uuid=vm.hex_uuid)
-        try:
-            run = domain.is_running()
-        except VirtError as e:
-            raise VmError(msg='获取虚拟机运行状态失败')
-        if run:
-            raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
+        # try:
+        #     run = domain.is_running()
+        # except VirtError as e:
+        #     raise VmError(msg='获取虚拟机运行状态失败')
+        # if run:
+        #     raise VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
 
         # 从虚拟机卸载硬盘
         xml = vdisk.xml_desc()
         try:
-            self._vm_manager.umount_disk(vm=vm, disk_xml=xml)
+            ok = self._vm_manager.umount_disk(vm=vm, disk_xml=xml)
+            if not ok:
+                raise errors.VmError(msg='从虚拟机卸载硬盘失败')
         except VmError as e:
             raise e
 
