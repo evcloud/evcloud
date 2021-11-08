@@ -23,10 +23,10 @@ from vdisk.models import Vdisk
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import PCIDeviceManager, DeviceError
 from vpn.manager import VPNManager, VPNError
-from . import serializers
+from api import serializers
 from utils import errors as exceptions
-from .paginations import MacIpLimitOffsetPagination
-from .viewsets import CustomGenericViewSet
+from api.paginations import MacIpLimitOffsetPagination
+from api.viewsets import CustomGenericViewSet
 
 
 def serializer_error_msg(errors, default=''):

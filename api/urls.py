@@ -1,7 +1,7 @@
 from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
-from . import views
+from .views import views, compute_view
 
 app_name = "api"
 
@@ -21,8 +21,12 @@ router.register(r'flavor', views.FlavorViewSet, basename='flavor')
 router.register(r'vpn', views.VPNViewSet, basename='vpn')
 router.register(r'task/vm-migrate', views.MigrateTaskViewSet, basename='vm-migrate-task')
 
+no_router = DefaultRouter(trailing_slash=False)
+no_router.register(r'compute/quota', compute_view.ComputeQuotaViewSet, basename='compute-quota')
+
 urlpatterns = [
     path('', include(router.urls)),
+    path('', include(no_router.urls)),
     re_path(r'token/', views.AuthTokenViewSet.as_view(), name='token'),
     re_path(r'jwt/', views.JWTObtainPairView.as_view(), name='jwt-token'),
     re_path(r'jwt-refresh/', views.JWTRefreshView.as_view(), name='jwt-refresh'),

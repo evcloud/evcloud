@@ -1,10 +1,11 @@
 import random
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Subquery, Count, Q
 from django.utils.functional import cached_property
 
 from compute.models import Center, Group, Host
+from network.models import Vlan, MacIP
 from ceph.models import CephPool
 from utils import errors
 from utils.errors import ComputeError
@@ -536,6 +537,28 @@ class GroupManager:
             vcpu_total=DefaultSum('hosts_set__vcpu_total'), vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
             real_cpu=DefaultSum('hosts_set__real_cpu'),
             mem_reserved=DefaultSum('hosts_set__mem_reserved'), vm_created=DefaultSum('hosts_set__vm_created')).all()
+
+    def compute_quota(self, user):
+        """
+        用户可用总资源配额，已用配额，和其他用户共用配额
+        """
+        quota = user.group_set.all().aggregate(
+            mem_total=DefaultSum('hosts_set__mem_total'),
+            mem_allocated=DefaultSum('hosts_set__mem_allocated'),
+            mem_reserved=DefaultSum('hosts_set__mem_reserved'),
+            vcpu_total=DefaultSum('hosts_set__vcpu_total'),
+            vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
+            real_cpu=DefaultSum('hosts_set__real_cpu'),
+            vm_created=DefaultSum('hosts_set__vm_created'),
+            vm_limit=DefaultSum('hosts_set__vm_limit')
+        )
+        g_ids = user.group_set.all().values_list('id', flat=True)
+        ip_data = Vlan.objects.filter(group__in=g_ids, enable=True).aggregate(
+            ips_total=Count('macips', filter=Q(macips__enable=True)),
+            ips_used=Count('macips', filter=Q(macips__enable=True)&Q(macips__used=True))
+        )
+        quota.update(ip_data)
+        return quota
 
 
 class HostManager:
