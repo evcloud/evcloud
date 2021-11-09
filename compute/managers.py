@@ -542,8 +542,26 @@ class GroupManager:
         """
         用户可用总资源配额，已用配额，和其他用户共用配额
         """
+        if user.is_superuser:
+            quota = Host.objects.filter(enable=True).aggregate(
+                mem_total=DefaultSum('mem_total'),
+                mem_allocated=DefaultSum('mem_allocated'),
+                mem_reserved=DefaultSum('mem_reserved'),
+                vcpu_total=DefaultSum('vcpu_total'),
+                vcpu_allocated=DefaultSum('vcpu_allocated'),
+                real_cpu=DefaultSum('real_cpu'),
+                vm_created=DefaultSum('vm_created'),
+                vm_limit=DefaultSum('vm_limit')
+            )
+            ip_data = MacIP.objects.filter(enable=True, vlan__enable=True).aggregate(
+                ips_total=Count('id'),
+                ips_used=Count('id', filter=Q(used=True))
+            )
+            quota.update(ip_data)
+            return quota
+
         quota = user.group_set.all().aggregate(
-            mem_total=DefaultSum('hosts_set__mem_total'),
+            mem_total=DefaultSum('hosts_set__mem_total', filter=Q(hosts_set__enable=True)),
             mem_allocated=DefaultSum('hosts_set__mem_allocated'),
             mem_reserved=DefaultSum('hosts_set__mem_reserved'),
             vcpu_total=DefaultSum('hosts_set__vcpu_total'),

@@ -9,4 +9,5 @@ urlpatterns = [
     path('', login_required(views.ReportsListView.as_view()), name='reports-list'),
     re_path(r'^center/(?P<id>[0-9]+)/$', login_required(views.ReportsCenterView.as_view()), name='reports-center'),
     re_path(r'^group/(?P<id>[0-9]+)/$', login_required(views.ReportsGroupView.as_view()), name='reports-group'),
+    path('quota', login_required(views.QuotaView.as_view()), name='reports-quota'),
 ]

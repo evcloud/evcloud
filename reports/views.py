@@ -38,3 +38,9 @@ class ReportsGroupView(View):
             return HttpResponse('您无权访问此页面')
         g_id = kwargs.get('id', 0)
         return render(request, 'reports_group.html', context={'group_id': g_id})
+
+
+class QuotaView(View):
+    def get(self, request, *args, **kwargs):
+        quota = GroupManager().compute_quota(request.user)
+        return render(request, 'quota.html', context={'quota': quota})
