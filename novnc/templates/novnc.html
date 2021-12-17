@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title></title>
-    <style type="text/css">
+    <title>console</title>
+    <style>
         .safe-close {
             position: absolute;
-            top: 10px;
-            left: 10px;
         }
 
         .safe-close button {
@@ -14,28 +12,25 @@
         }
     </style>
 </head>
-<body onclick="setFocus()" onload="setFocus()">
+<body onload="setFocus()" style="margin: 0;">
     <div class="safe-close">
         <button onclick="javascript:window.open('?vncid={{ vncid }}&close=1', '_self')">关闭</button>
     </div>
     <div>
-        <iframe id="novnc" src="{{ url }} " width="100%" onload="setHeight()" align="center"></iframe>
+        <iframe id="novnc" src="{{ url }}" width="100%" onload="layout()"></iframe>
     </div>
     <script type="text/javascript">
         function setFocus() {
             document.getElementById("novnc").focus();
         }
 
-        function setHeight() {
+        function layout() {
             var ifm = document.getElementById("novnc");
-            var old = ifm.height;
-            var now = document.documentElement.clientHeight;
-            if (now > old){
-                ifm.height = now;
-            }
+            ifm.width = document.body.clientWidth;
+            ifm.height = window.innerHeight;
         }
         window.onresize = function () {
-            setHeight();
+            layout();
         }
     </script>
 </body>

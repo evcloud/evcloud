@@ -76,7 +76,7 @@ python3 manage.py runserver 0:80
 ```   
 如果一切正常，打开浏览器输入url(主机IP, 如：127.0.0.1)即可查看站点;
 
-### 7 NoVNC服务
+### 7 远程console服务（NoVNC和Spice）
 安装websockify
 ```
 pip3 install websockify
@@ -85,7 +85,8 @@ pip3 install websockify
 ```
 ln -s PROJECT_PATH/novnc/token_plugin_mysql/token_plugin_mysql.py PYTHON_PATH/python3.6/site-packages/websockify/token_plugins.py
 ```
-下载noVNC（https://github.com/novnc/noVNC）到 /usr/share/noVNC
+下载noVNC（https://github.com/novnc/noVNC）为 /var/www/console/novnc。
+下载spice-html5（https://gitlab.freedesktop.org/spice/spice-html5）为 /var/www/console/spice。
 
 启动websockify服务
 ```

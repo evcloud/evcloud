@@ -10,6 +10,7 @@ NOVNC_PORT = getattr(settings, 'NOVNC_SERVER_PORT', 80)
 
 def vnc_view(req):
     vncid = req.GET.get("vncid")
+    protocol_type = req.GET.get("type", 'vnc')
     close = req.GET.get('close')
     if not vncid:
         return HttpResponse('error.')
@@ -23,9 +24,17 @@ def vnc_view(req):
         http_host = http_host.split(':')[0]
 
         if NOVNC_PORT == 80:
-            dic['url'] = f'http://{http_host}/novnc_nginx/vnc_lite.html?path=websockify/?token={vncid}'
+            if protocol_type == 'spice':
+                dic['url'] = f'http://{http_host}/novnc_nginx/spice/spice_auto.html?path=websockify/?token={vncid}'
+            else:
+                dic['url'] = f'http://{http_host}/novnc_nginx/novnc/vnc_lite.html?path=websockify/?token={vncid}'
+
             return render(req, 'novnc.html', dic)
 
         http_host = f'{http_host}:{NOVNC_PORT}'
-        url = f'http://{http_host}/vnc_lite.html?path=websockify/?token={vncid}'
+        if protocol_type == 'spice':
+            url = f'http://{http_host}/spice/spice_auto.html?path=websockify/?token={vncid}'
+        else:
+            url = f'http://{http_host}/novnc/vnc_lite.html?path=websockify/?token={vncid}'
+
         return redirect(to=url)
