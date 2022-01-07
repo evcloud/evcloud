@@ -36,9 +36,11 @@ function chart_init() {
             }]
         },
         options: {
-            title: {
-                display: true,
-                text: '内存 (MB)'
+            plugins: {
+                title: {
+                    display: true,
+                    text: '内存 (MB)'
+                }
             },
             tooltips: {
                 mode: 'index',
@@ -46,12 +48,12 @@ function chart_init() {
             },
             responsive: true,
             scales: {
-                xAxes: [{
+                x: {
                     stacked: true,
-                }],
-                yAxes: [{
+                },
+                y: {
                     stacked: true
-                }]
+                }
             }
         }
     });
@@ -72,9 +74,11 @@ function chart_init() {
             }]
         },
         options: {
-            title: {
-                display: true,
-                text: '虚拟CPU (核)'
+            plugins: {
+                title: {
+                    display: true,
+                    text: '虚拟CPU (核)'
+                }
             },
             tooltips: {
                 mode: 'index',
@@ -82,12 +86,12 @@ function chart_init() {
             },
             responsive: true,
             scales: {
-                xAxes: [{
+                x: {
                     stacked: true,
-                }],
-                yAxes: [{
+                },
+                y: {
                     stacked: true
-                }]
+                }
             }
         }
     });
@@ -104,9 +108,11 @@ function chart_init() {
             }]
         },
         options: {
-            title: {
-                display: true,
-                text: '云主机 (个)'
+            plugins: {
+                title: {
+                    display: true,
+                    text: '云主机 (个)'
+                }
             },
             tooltips: {
                 mode: 'index',
@@ -114,12 +120,12 @@ function chart_init() {
             },
             responsive: true,
             scales: {
-                xAxes: [{
+                x: {
                     stacked: true,
-                }],
-                yAxes: [{
+                },
+                y: {
                     stacked: true
-                }]
+                }
             }
         }
     });
