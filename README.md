@@ -4,13 +4,11 @@
 主要技术栈：CEPH、MariaDB、Django、libvirt。
 
 ### 展示
-![image](https://gitee.com/gosc-cnic/evcloud/blob/develop/docs/static/docs/images/vm-list.png "Vm List")
-
-![image](https://gitee.com/gosc-cnic/evcloud/blob/develop/docs/static/docs/images/vdisk.png "VDick")
-
-![image](https://gitee.com/gosc-cnic/evcloud/blob/develop/docs/static/docs/images/vm-vnc.png "Vm VNC")
-![image](https://gitee.com/gosc-cnic/evcloud/blob/develop/docs/static/docs/images/spice-console.png "Vm VNC")
-![image](https://gitee.com/gosc-cnic/evcloud/blob/develop/docs/static/docs/images/reports.png "reports")
+![image](docs/static/docs/images/vm-list.png "Vm List")
+![image](docs/static/docs/images/vdisk.png "VDick")
+![image](docs/static/docs/images/vm-vnc.png "Vm VNC")
+![image](docs/static/docs/images/spice-console.png "Vm VNC")
+![image](docs/static/docs/images/reports.png "reports")
 
 ## 环境搭建(CentOS7)
 ### 1 安装python和Git
