@@ -87,6 +87,8 @@ class Image(models.Model):
     desc = models.TextField(verbose_name='描述', default='', blank=True)
     default_user = models.CharField(verbose_name='系统默认登录用户名', max_length=32, default='root')
     default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
+    size = models.IntegerField(verbose_name='镜像大小（Gb）', default=0,
+                               help_text='image size不是整Gb大小，要向上取整，如1.1GB向上取整为2Gb')
 
     def __str__(self):
         return self.name

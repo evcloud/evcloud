@@ -20,11 +20,30 @@ class RbdManagerTestCase(TestCase):
         self.mgr = RbdManager(conf_file=CONF_FILE, keyring_file=KEYRING_FILE, pool_name=self.pool_name)
 
     def test_image_exists(self):
-        ok = self.mgr.create_image(self.image_name, size=10*1024**2, data_pool=self.data_pool_name)
+        image_size = 10 * 1024 ** 2
+        ok = self.mgr.create_image(self.image_name, size=image_size, data_pool=self.data_pool_name)
         self.assertIn(ok, [True, None], msg='[Failed] create_image')
 
         ok = self.mgr.image_exists(self.image_name)
         self.assertTrue(ok, msg='[Failed] image_exists')
+
+        si = self.mgr.get_rbd_image_size(self.image_name)
+        print(f'rbd size: {si} bytes')
+        self.assertEqual(si, image_size, msg='[Failed] get_rbd_image_size')
+
+        ok = self.mgr.resize_rbd_image(self.image_name, size=image_size + 1)
+        self.assertTrue(ok, msg='[Failed] resize_rbd_image')
+
+        si = self.mgr.get_rbd_image_size(self.image_name)
+        print(f'rbd size: {si} bytes')
+        self.assertEqual(si, image_size + 1, msg='[Failed] get_rbd_image_size')
+
+        ok = self.mgr.resize_rbd_image(self.image_name, size=image_size)
+        self.assertIsNone(ok, msg='[Failed] resize_rbd_image')
+
+        si = self.mgr.get_rbd_image_size(self.image_name)
+        print(f'rbd size: {si} bytes')
+        self.assertEqual(si, image_size + 1, msg='[Failed] get_rbd_image_size')
 
         ok = self.mgr.rename_image(self.image_name, new_name=self.image_rename)
         self.assertTrue(ok, msg='[Failed] rename_image')

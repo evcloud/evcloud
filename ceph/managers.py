@@ -341,7 +341,7 @@ class RbdManager:
         except rbd.ImageNotFound:
             raise ImageNotExistsError('ImageNotExists')
         except Exception as e:
-            raise RadosError(f'rollback_to_snap error:{str(e)}')
+            raise RadosError(f'get rbd image error:{str(e)}')
 
     @staticmethod
     def close_rbd_image(image):
@@ -351,6 +351,45 @@ class RbdManager:
                 image.ioctx.close()
         except Exception:
             pass
+
+    def resize_rbd_image(self, image_name: str, size: int, only_to_big: bool = True):
+        """
+        :param size: the new size of the image in bytes
+        :return:
+            True    # success
+            False   # failed
+            None    # do nothing
+
+        """
+        image = self.get_rbd_image(image_name=image_name)
+        try:
+            si = image.size()
+            if size == si:
+                return True
+            if size < si and only_to_big:
+                return None
+
+            image.resize(size)
+            return True
+        except Exception as e:
+            return False
+        finally:
+            self.close_rbd_image(image)
+
+    def get_rbd_image_size(self, image_name: str):
+        """
+        :return:
+            int         # bytes
+        """
+        image = self.get_rbd_image(image_name=image_name)
+        try:
+            size = image.size()
+        except Exception as e:
+            raise RadosError(f'get rbd image size error:{str(e)}')
+        finally:
+            self.close_rbd_image(image)
+
+        return size
 
 
 class CephClusterManager:
