@@ -352,7 +352,7 @@ class RbdManager:
         except Exception:
             pass
 
-    def resize_rbd_image(self, image_name: str, size: int, only_to_big: bool = True):
+    def resize_rbd_image(self, image_name: str, size: int, allow_shrink: bool = False):
         """
         :param size: the new size of the image in bytes
         :return:
@@ -366,10 +366,11 @@ class RbdManager:
             si = image.size()
             if size == si:
                 return True
-            if size < si and only_to_big:
+
+            if size < si and not allow_shrink:
                 return None
 
-            image.resize(size)
+            image.resize(size=size, allow_shrink=allow_shrink)
             return True
         except Exception as e:
             return False

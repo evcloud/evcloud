@@ -726,7 +726,8 @@ class VmArchiveManager:
                            image_id=image.id, image_parent=image.base_image, ceph_id=ceph_pool.ceph.id,
                            ceph_pool=ceph_pool.pool_name, center_id=center.id, center_name=center.name,
                            group_id=group.id, group_name=group.name, host_id=host.id, host_ipv4=host.ipv4,
-                           user=vm.user, create_time=vm.create_time, remarks=vm.remarks, disk_type=vm.disk_type)
+                           user=vm.user, create_time=vm.create_time, remarks=vm.remarks, disk_type=vm.disk_type,
+                           sys_disk_size=vm.sys_disk_size)
             va.save()
         except Exception as e:
             raise VmError(msg=str(e))

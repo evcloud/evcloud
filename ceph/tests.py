@@ -28,22 +28,25 @@ class RbdManagerTestCase(TestCase):
         self.assertTrue(ok, msg='[Failed] image_exists')
 
         si = self.mgr.get_rbd_image_size(self.image_name)
-        print(f'rbd size: {si} bytes')
         self.assertEqual(si, image_size, msg='[Failed] get_rbd_image_size')
 
+        # expand ok
         ok = self.mgr.resize_rbd_image(self.image_name, size=image_size + 1)
         self.assertTrue(ok, msg='[Failed] resize_rbd_image')
-
         si = self.mgr.get_rbd_image_size(self.image_name)
-        print(f'rbd size: {si} bytes')
         self.assertEqual(si, image_size + 1, msg='[Failed] get_rbd_image_size')
 
+        # not allow shrink
         ok = self.mgr.resize_rbd_image(self.image_name, size=image_size)
         self.assertIsNone(ok, msg='[Failed] resize_rbd_image')
-
         si = self.mgr.get_rbd_image_size(self.image_name)
-        print(f'rbd size: {si} bytes')
         self.assertEqual(si, image_size + 1, msg='[Failed] get_rbd_image_size')
+
+        # allow shrink
+        ok = self.mgr.resize_rbd_image(self.image_name, size=image_size, allow_shrink=True)
+        self.assertTrue(ok, msg='[Failed] resize_rbd_image')
+        si = self.mgr.get_rbd_image_size(self.image_name)
+        self.assertEqual(si, image_size, msg='[Failed] get_rbd_image_size')
 
         ok = self.mgr.rename_image(self.image_name, new_name=self.image_rename)
         self.assertTrue(ok, msg='[Failed] rename_image')

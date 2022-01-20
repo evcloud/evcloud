@@ -7,10 +7,30 @@ from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor
 @admin.register(Vm)
 class VmAdmin(admin.ModelAdmin):
     list_display_links = ('hex_uuid',)
-    list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'disk_type', 'user', 'create_time', 'remarks')
+    list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'sys_disk_size',
+                    'disk_type', 'user', 'create_time', 'remarks')
     search_fields = ['name', 'mac_ip__ipv4']
     list_filter = ['host', 'user']
     raw_id_fields = ('mac_ip', 'host', 'user', 'image')
+
+    actions = ['update_sys_disk_size', ]
+
+    @admin.action(description="更新系统盘的大小")
+    def update_sys_disk_size(self, request, queryset):
+        ok_count = 0
+        failed_count = 0
+        for obj in queryset:
+            try:
+                obj.update_sys_disk_size()
+                ok_count += 1
+            except Exception as e:
+                failed_count += 1
+
+        if failed_count:
+            self.message_user(request=request, message=f'更新系统盘的大小 {ok_count}成功 {failed_count}失败',
+                              level=messages.ERROR)
+        else:
+            self.message_user(request=request, message=f'更新系统盘的大小成功{ok_count}', level=messages.SUCCESS)
 
 
 def clear_vm_sys_disk(modeladmin, request, queryset):
@@ -66,8 +86,8 @@ undefine_vm_from_host.short_description = "释放所选虚拟机所占用宿主�
 @admin.register(VmArchive)
 class VmArchiveAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
-    list_display = ('id', 'uuid', 'ipv4', 'vcpu', 'mem', 'mac', 'disk_type', 'disk', 'image_parent', 'center_name', 'group_name',
-                    'host_ipv4', 'host_released', 'user', 'archive_time', 'remarks')
+    list_display = ('id', 'uuid', 'ipv4', 'vcpu', 'mem', 'mac', 'disk_type', 'disk', 'sys_disk_size', 'image_parent',
+                    'center_name', 'group_name', 'host_ipv4', 'host_released', 'user', 'archive_time', 'remarks')
     search_fields = ['uuid', 'center_name', 'remarks', 'user']
     list_filter = ['host_released', 'center_name', 'group_name', 'host_ipv4', 'user']
     list_editable = ['host_released', ]

@@ -1,3 +1,5 @@
+import math
+
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -62,6 +64,7 @@ class VmBase(models.Model):
 
     disk_type = models.CharField(verbose_name='系统盘类型', max_length=16,
                                  choices=DiskType.choices, default=DiskType.CEPH_RBD)
+    sys_disk_size = models.IntegerField(verbose_name='系统盘大小(Gb)', default=0, help_text='系统盘大小不能小于image大小')
 
     class Meta:
         abstract = True
@@ -199,6 +202,23 @@ class Vm(VmBase):
             QuerySet()
         """
         return self.device_set.select_related('host__group').all()
+
+    def get_sys_disk_size(self):
+        if self.sys_disk_size == 0:
+            try:
+                self.update_sys_disk_size()
+            except Exception as e:
+                pass
+
+        return self.sys_disk_size
+
+    def update_sys_disk_size(self):
+        if self.disk_type == self.DiskType.CEPH_RBD:
+            image = self.image
+            size = image.get_size_from_ceph(image_name=self.disk)
+            size_gb = math.ceil(size / 1024 ** 3)
+            self.sys_disk_size = size_gb
+            self.save(update_fields=['sys_disk_size'])
 
 
 class VmArchive(VmBase):

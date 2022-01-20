@@ -1,3 +1,5 @@
+import math
+
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -179,3 +181,40 @@ class Image(models.Model):
             raise Exception(f'remove snap or image error, {str(e)}')
 
         return True
+
+    def get_size(self):
+        if self.size == 0:
+            self.update_size_from_ceph()
+
+        return self.size
+
+    def get_rbd_manager(self):
+        """
+        :raises: raise Exception
+        """
+        ceph_pool = self.ceph_pool
+        if not ceph_pool:
+            raise Exception('can not get ceph_pool')
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            raise Exception('can not get ceph config')
+
+        return get_rbd_manager(ceph=config, pool_name=pool_name)
+
+    def get_size_from_ceph(self, image_name: str):
+        """
+        :return:
+            int     # in bytes
+        """
+        try:
+            rbd = self.get_rbd_manager()
+            return rbd.get_rbd_image_size(image_name)
+        except (RadosError, Exception) as e:
+            raise Exception(str(e))
+
+    def update_size_from_ceph(self):
+        size = self.get_size_from_ceph(image_name=self.base_image)
+        size_gb = math.ceil(size / 1024 ** 3)
+        self.size = size_gb
+        self.save(update_fields=['size'])
