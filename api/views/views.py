@@ -99,6 +99,7 @@ class VmsViewSet(CustomGenericViewSet):
               "mem": 2048,
               "image": "centos8",
               "disk": "4c0cdba7fe97405bac174baa03f3d036",
+              "sys_disk_size": 100,
               "host": "10.100.50.121",
               "mac_ip": "10.107.50.252",
               "user": {
@@ -126,6 +127,7 @@ class VmsViewSet(CustomGenericViewSet):
             "vcpu": 2,
             "mem": 2048,
             "disk": "4c0cdba7fe97405bac174baa03f3d036",
+            "sys_disk_size": 100,
             "host": "10.100.50.121",
             "mac_ip": "10.107.50.252",
             "user": {
@@ -170,6 +172,7 @@ class VmsViewSet(CustomGenericViewSet):
               "default_password": "cnic.cn"
             },
             "disk": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
+            "sys_disk_size": 100,
             "host": "10.100.50.121",
             "mac_ip": "10.107.50.253",
             "ip": {
@@ -346,6 +349,7 @@ class VmsViewSet(CustomGenericViewSet):
                   "mem": 1024,
                   "image": "centos8",
                   "disk": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "sys_disk_size": 100,
                   "host": "10.100.50.121",
                   "mac_ip": "10.107.50.15",
                   "user": {
@@ -417,6 +421,7 @@ class VmsViewSet(CustomGenericViewSet):
                   "mem": 1024,
                   "image": "centos8",
                   "disk": "c6c8f333bc9c426dad04a040ddd44b47",
+                  "sys_disk_size": 100,
                   "host": "10.100.50.121",
                   "mac_ip": "10.107.50.15",
                   "user": {
@@ -1304,6 +1309,62 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=e.data(), status=e.status_code)
 
         return Response(data=stats)
+
+    @swagger_auto_schema(
+        operation_summary='虚拟机系统盘扩容',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='expand-size',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=True,
+                description="扩容大小，单位Gb"
+            )
+        ],
+        responses={
+            200: """"""
+        }
+    )
+    @action(methods=['post'], url_path='sys-disk/expand', detail=True, url_name='vm-sys-disk-expand')
+    def vm_sys_disk_expand(self, request, *args, **kwargs):
+        """
+        虚拟机系统盘扩容
+
+            >> http code 200:
+            {
+                "sys_disk_size": 100        # 扩容后系统盘大小Gb
+            }
+            >> http code 403, 404, 409, 500
+            {
+                "code": xxx,
+                "code_text": "xxx",
+                "err_code": "xxx"
+            }
+            * err_code list:
+                400: BadRequest, InvalidParam
+                403: VmAccessDenied, 无权访问此虚拟主机;
+                404: VmNotExist，无虚拟主机记录;
+                500: HostDown，宿主机无法访问
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        expand_size = request.query_params.get('expand-size', None)
+        if expand_size is None:
+            return self.exception_response(
+                exceptions.BadRequestError(msg='The query param "expand-size" is required'))
+
+        try:
+            expand_size = int(expand_size)
+        except ValueError:
+            return self.exception_response(
+                exceptions.InvalidParamError(msg='The value of query param "expand-size" is invalid'))
+
+        try:
+            vm = VmAPI().vm_sys_disk_expand(vm_uuid=vm_uuid, expand_size=expand_size, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        return Response(data={'sys_disk_size': vm.get_sys_disk_size()})
 
     def get_serializer_class(self):
         """

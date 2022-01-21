@@ -20,7 +20,7 @@ class VmSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vm
-        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'host', 'mac_ip', 'ip', 'user', 'create_time')
+        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'ip', 'user', 'create_time')
         # depth = 1
 
     @staticmethod
@@ -384,8 +384,8 @@ class VmDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vm
-        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'image_info', 'disk', 'host', 'mac_ip', 'ip', 'user', 'create_time',
-                  'vdisks', 'pci_devices')
+        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'image_info', 'disk', 'sys_disk_size', 'host', 'mac_ip',
+                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices')
         # depth = 1
 
     @staticmethod

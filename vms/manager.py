@@ -493,6 +493,11 @@ class VmManager:
         except (RadosError, Exception) as e:
             raise VmError(msg=str(e))
 
+        try:
+            vm.update_sys_disk_size()   # 系统盘有变化，更新系统盘大小
+        except Exception as e:
+            pass
+
         return True
 
     def migrate_create_vm(self, vm, new_host):
@@ -1181,6 +1186,11 @@ class VmAPI:
             raise VmError(msg=str(e))
 
         host.vm_created_num_add_1()  # 宿主机已创建虚拟机数量+1
+        try:
+            vm.update_sys_disk_size()   # 系统盘有变化，更新系统盘大小
+        except Exception as e:
+            pass
+
         return vm
 
     def _create_vm2(self, vm_uuid: str, diskname: str, vcpu: int, mem: int, image, host, macip,
@@ -1851,6 +1861,11 @@ class VmAPI:
         except Exception:
             pass
 
+        try:
+            vm.update_sys_disk_size()   # 系统盘有变化，更新系统盘大小
+        except Exception as e:
+            pass
+
         return vm
 
     def migrate_vm(self, vm_uuid: str, host_id: int, user, force: bool = False):
@@ -2049,6 +2064,11 @@ class VmAPI:
                 pass
             raise VmError(msg=f'虚拟机系统盘创建失败, {str(e)}')
 
+        try:
+            vm.update_sys_disk_size()   # 系统盘有变化，更新系统盘大小
+        except Exception as e:
+            pass
+
         return vm
 
     def reset_sys_disk(self, vm_uuid: str, user):
@@ -2209,3 +2229,36 @@ class VmAPI:
             raise VmError.from_error(exc)
 
         return stats.to_dict()
+
+    def vm_sys_disk_expand(self, vm_uuid: str, expand_size: int, user):
+        """
+        vm系统盘扩容，系统盘最大5Tb
+
+        :param expand_size: 在原有大小基础上扩容大小， GB
+        :return:    vm
+        :raises: VmError
+        """
+        vm = self._get_user_shutdown_vm(vm_uuid=vm_uuid, user=user, related_fields=('image__ceph_pool__ceph',))
+        if vm.disk_type != vm.DiskType.CEPH_RBD:
+            raise errors.Unsupported(msg='只支持CEPH RBD硬盘扩容，不支持宿主机本地硬盘')
+
+        gb = 1024 ** 3
+        old_size_bytes = vm.get_sys_disk_size() * gb
+        if old_size_bytes == 0:
+            raise errors.VmError(msg='查询系统盘大小失败')
+
+        new_size_bytes = old_size_bytes + expand_size * gb
+        if new_size_bytes > 5 * 1024 * gb:      # 5Tb
+            raise errors.Unsupported(msg='系统盘大小不允许超过5Tb')
+
+        try:
+            rbd = vm.image.get_rbd_manager()
+            ok = rbd.resize_rbd_image(image_name=vm.disk, size=new_size_bytes)
+        except Exception as e:
+            raise errors.VmError(msg=f'修改系统盘大小错误，{str(e)}')
+
+        if ok:
+            vm.update_sys_disk_size()
+            return vm
+
+        raise errors.VmError(msg='修改系统盘大小失败')
