@@ -285,3 +285,21 @@ class VmMountPCIView(View):
         context['devices'] = page
         context['count'] = paginator.count
         return context
+
+
+class VmSysDiskExpandView(View):
+    """虚拟机系统盘扩容类视图"""
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+
+        vm_manager = VmManager()
+        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
+            'host', 'image__ceph_pool__ceph'))
+        if not vm:
+            return render(request, 'error.html', {'errors': ['云主机不存在']})
+
+        if not vm.user_has_perms(request.user):
+            return render(request, 'error.html', {'errors': ['没有此云主机的访问权限']})
+
+        return render(request, 'vm_disk_expand.html', context={'vm': vm})
+
