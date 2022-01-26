@@ -11,7 +11,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.utils import swagger_auto_schema, no_body
 from drf_yasg import openapi
 
-from vms.manager import VmManager, VmAPI, VmError, FlavorManager
+from vms.manager import VmManager, VmError, FlavorManager
+from vms.api import VmAPI
 from vms.migrate import VmMigrateManager
 from novnc.manager import NovncTokenManager, NovncError
 from compute.models import Center, Group, Host
@@ -507,7 +508,7 @@ class VmsViewSet(CustomGenericViewSet):
 
         validated_data = serializer.validated_data
         # 配置样式
-        flavor_id = validated_data.get('flavor_id')
+        flavor_id = validated_data.pop('flavor_id', None)
         if flavor_id:
             flavor = FlavorManager().get_flavor_by_id(flavor_id)
             if not flavor:
@@ -959,9 +960,8 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的id参数')
             return self.exception_response(exc)
 
-        api = VmManager()
         try:
-            api.delete_sys_disk_snap(snap_id=snap_id, user=request.user)
+            VmAPI().delete_sys_disk_snap(snap_id=snap_id, user=request.user)
         except VmError as e:
             e.msg = f'删除虚拟机系统快照失败，{str(e)}'
             return self.exception_response(e)
@@ -1017,9 +1017,8 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的id参数')
             return self.exception_response(exc)
 
-        api = VmManager()
         try:
-            api.modify_sys_snap_remarks(snap_id=snap_id, remarks=remark, user=request.user)
+            VmAPI().modify_sys_snap_remarks(snap_id=snap_id, remarks=remark, user=request.user)
         except VmError as e:
             e.msg = f'修改快照备注信息失败，{str(e)}'
             return self.exception_response(e)

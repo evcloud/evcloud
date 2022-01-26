@@ -700,6 +700,18 @@ class VmDomain:
         except AttributeError:
             return self.__getattribute__(attr)
 
+    def is_same_host(self, host_ipv4: str):
+        """
+        是否同一个宿主机
+        """
+        return self._hip == host_ipv4
+
+    def is_same_domain(self, host_ipv4: str, vm_uuid: str):
+        """
+        是否同一个宿主机
+        """
+        return (self._hip == host_ipv4) and (self._vm_uuid == vm_uuid)
+
     @property
     def domain(self):
         """

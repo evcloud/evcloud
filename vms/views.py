@@ -213,7 +213,8 @@ class VmResetView(View):
         if not vm:
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
-        images = ImageManager().get_image_queryset_by_tag(tag=Image.TAG_BASE)
+        images = ImageManager().filter_image_queryset(
+            center_id=vm.host.group.center_id, sys_type=0, tag=Image.TAG_BASE, search='')
         return render(request, 'vm_reset.html', context={'vm': vm, 'images': images})
 
 

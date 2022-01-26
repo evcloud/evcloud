@@ -502,12 +502,8 @@ class VmDiskSnap(models.Model):
             self.ceph_pool = self.vm.image.ceph_pool
         return self.ceph_pool
 
-    def _create_sys_snap(self):
+    def get_rbd_manager(self):
         """
-        创建系统盘快照
-        :return:
-            True    # success
-
         :raises: Exception
         """
         ceph_pool = self.get_ceph_pool()
@@ -519,11 +515,21 @@ class VmDiskSnap(models.Model):
         if not config:
             raise Exception('can not get ceph')
 
+        return get_rbd_manager(ceph=config, pool_name=pool_name)
+
+    def _create_sys_snap(self):
+        """
+        创建系统盘快照
+        :return:
+            True    # success
+
+        :raises: Exception
+        """
         now_timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
         try:
             disk = self.sys_disk
             snap_name = f'{disk}-{now_timestamp}'
-            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
+            rbd = self.get_rbd_manager()
             rbd.create_snap(image_name=disk, snap_name=snap_name)
         except (RadosError, Exception) as e:
             raise Exception(str(e))
@@ -539,17 +545,8 @@ class VmDiskSnap(models.Model):
 
         :raises: Exception
         """
-        ceph_pool = self.get_ceph_pool()
-        if not ceph_pool:
-            raise Exception('can not get ceph pool')
-
-        pool_name = ceph_pool.pool_name
-        config = ceph_pool.ceph
-        if not config:
-            raise Exception('can not get ceph')
-
         try:
-            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
+            rbd = self.get_rbd_manager()
             rbd.remove_snap(image_name=self.sys_disk, snap=self.snap)
         except (RadosError, Exception) as e:
             raise Exception(str(e))
