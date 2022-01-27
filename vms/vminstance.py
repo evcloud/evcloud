@@ -2,7 +2,7 @@ from django.utils import timezone
 
 from ceph.managers import RadosError, ImageExistsError
 from utils.ev_libvirt.virt import (
-    VirtError, VmDomain, VirtHost, VirDomainNotExist, VirHostDown
+    VirtError, VmDomain, VirDomainNotExist, VirHostDown
 )
 from compute.managers import HostManager
 from vdisk.manager import VdiskManager
@@ -152,7 +152,6 @@ class VmInstance:
         begin_create = False  # vm xml不是从新构建的
 
         vm_domain = self.vm_domain
-        new_vm_host = VirtHost(host_ipv4=new_host.ipv4)
         # 实时获取vm xml desc
         try:
             xml_desc = vm_domain.xml_desc()
@@ -167,11 +166,11 @@ class VmInstance:
             except Exception as e:
                 raise errors.VmError(msg=f'构建虚拟机xml错误，{str(e)}')
 
-        new_domain = None
+        new_vm_domain = None
         try:
             # 创建虚拟机
             try:
-                new_domain = new_vm_host.define(xml_desc=xml_desc)
+                new_vm_domain = VmDomain.define(host_ipv4=new_host.ipv4, xml_desc=xml_desc)
             except VirtError as e:
                 raise errors.VmError(msg=str(e))
 
@@ -185,9 +184,9 @@ class VmInstance:
             return vm, begin_create
         except Exception as e:
             # 目标宿主机删除虚拟机
-            if new_domain is not None:
+            if new_vm_domain is not None:
                 try:
-                    new_domain.undefine()
+                    new_vm_domain.undefine()
                 except VirtError:
                     pass
             raise errors.VmError(msg=str(e))
@@ -218,9 +217,8 @@ class VmInstance:
         except Exception as e:
             raise errors.VmError(msg=str(e))
 
-        new_vm_define_ok = False
         new_disk_ok = False
-        vm_host = VirtHost(host_ipv4=host.ipv4)
+        vm_domain = None
         try:
             try:
                 rbd_manager.clone_image(snap_image_name=new_image.base_image, snap_name=new_image.snap,
@@ -229,10 +227,9 @@ class VmInstance:
                 pass
             new_disk_ok = True
             try:
-                vm_host.define(xml_desc=xml_desc)  # 新xml覆盖定义虚拟机
+                vm_domain = VmDomain.define(host_ipv4=host.ipv4, xml_desc=xml_desc)     # 新xml覆盖定义虚拟机
             except VirtError as e:
                 raise errors.VmError(msg=str(e))
-            new_vm_define_ok = True
 
             vm.image = new_image
             vm.xml = xml_desc
@@ -247,9 +244,9 @@ class VmInstance:
                     rbd_manager.remove_image(image_name=disk_name)  # 删除新的系统盘image
                 except RadosError:
                     pass
-            if new_vm_define_ok:
+            if vm_domain is not None:
                 try:
-                    vm_host.define(xml_desc=old_vm_xml_desc)  # 覆盖定义回原虚拟机
+                    VmDomain.define(host_ipv4=host.ipv4, xml_desc=old_vm_xml_desc)  # 覆盖定义回原虚拟机
                 except VirtError:
                     pass
 
@@ -480,20 +477,19 @@ class VmInstance:
             raise errors.VmError(msg='扣除或释放宿主机vcpu或mem资源失败')
 
         # 创建虚拟机
-        virt_host = VirtHost(host_ipv4=host.ipv4)
         try:
-            domain = virt_host.define(xml_desc=new_xml_desc)
+            vm_domain = VmDomain.define(host_ipv4=host.ipv4, xml_desc=new_xml_desc)
         except VirtError as e:
             host.deduct_delta(cpu_delta=-cpu_delta, mem_delta=-mem_delta)   # 宿主机资源扣除或释放还原
             raise errors.VmError(msg='修改虚拟机失败')
 
         try:
-            vm.xml = domain.XMLDesc()
+            vm.xml = vm_domain.xml_desc()
             vm.save()
         except Exception as e:
             host.deduct_delta(cpu_delta=-cpu_delta, mem_delta=-mem_delta)  # 宿主机资源扣除或释放还原
             try:
-                virt_host.define(xml_desc=old_xml_desc)
+                vm_domain.host.define(xml_desc=old_xml_desc)
             except VirtError:
                 pass
 
@@ -953,19 +949,18 @@ class VmInstance:
             pass
         return vm
 
-    def migrate(self, host_id: int, force: bool = False):
+    def _pre_migrite(self, host_id: int, force: bool):
         """
-        迁移虚拟机
+        静态迁移虚拟机前处理
 
         :param host_id: 宿主机id
         :param force: True(强制迁移)，False(普通迁移)
         :return:
-            Vm()   # success
+            Host()   # success
 
         :raises: VmError
         """
         vm = self.vm
-        vm_uuid = vm.get_uuid()
         if vm.disk_type == vm.DiskType.LOCAL:
             raise errors.VmError.from_error(
                 errors.Unsupported(msg='虚拟主机为本地硬盘，不支持迁移'))
@@ -978,7 +973,7 @@ class VmInstance:
                 raise exc
 
             try:
-                self.vm_domain.poweroff()   # 强制迁移，先尝试断电
+                self.vm_domain.poweroff()  # 强制迁移，先尝试断电
             except VirtError:
                 pass
         except errors.VmError as exc:
@@ -988,26 +983,6 @@ class VmInstance:
             if isinstance(exc.err, VirHostDown):
                 if not force:
                     raise errors.VmError(msg=f'无法连接宿主机,{str(exc)}')
-
-        # try:
-        #     run = self.vm_domain.is_running()
-        # except VirHostDown as e:
-        #     if not force:
-        #         raise errors.VmError(msg=f'无法连接宿主机,{str(e)}')
-        # except VirDomainNotExist as e:
-        #     pass
-        # except VirtError as e:
-        #     raise errors.VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
-        # else:
-        #     if run:
-        #         if not force:
-        #             raise errors.VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
-        #
-        #         # 强制迁移，先尝试断电
-        #         try:
-        #             self.vm_domain.poweroff()
-        #         except VirtError as e:
-        #             pass
 
         # 是否同宿主机组
         old_host = vm.host
@@ -1039,8 +1014,26 @@ class VmInstance:
                 try:
                     device.umount()
                 except errors.DeviceError as e:
-                    raise errors.DeviceError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
+                    raise errors.VmError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
 
+        return new_host
+
+    def migrate(self, host_id: int, force: bool = False):
+        """
+        迁移虚拟机
+
+        :param host_id: 宿主机id
+        :param force: True(强制迁移)，False(普通迁移)
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm = self.vm
+        vm_uuid = vm.get_uuid()
+        old_host = vm.host
+
+        new_host = self._pre_migrite(host_id=host_id, force=force)
         m_log = MigrateTask(vm=vm, vm_uuid=vm_uuid, src_host=old_host, src_host_ipv4=old_host.ipv4,
                             dst_host=new_host, dst_host_ipv4=new_host.ipv4, migrate_time=timezone.now(),
                             tag=MigrateTask.Tag.MIGRATE_STATIC)
@@ -1085,7 +1078,7 @@ class VmInstance:
 
         # 删除原宿主机上的虚拟机
         try:
-            ok = VirtHost(host_ipv4=old_host.ipv4).undefine(vm_uuid=vm_uuid)
+            ok = VmDomain(host_ip=old_host.ipv4, vm_uuid=vm_uuid).undefine()
             if ok:
                 m_log.src_undefined = True
                 old_host.vm_created_num_sub_1()  # 宿主机虚拟机数-1
@@ -1157,7 +1150,7 @@ class VmInstance:
 
         # 创建虚拟机
         try:
-            VirtHost(host_ipv4=host.ipv4).define(xml_desc=xml_desc)
+            VmDomain.define(host_ipv4=host.ipv4, xml_desc=xml_desc)
         except VirtError as e:
             raise errors.VmError(msg=f'宿主机上创建虚拟主机错误，{str(e)}')
 

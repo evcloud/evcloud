@@ -687,7 +687,7 @@ class VmDomain:
     def __init__(self, host_ip: str, vm_uuid: str):
         self._hip = host_ip
         self._vm_uuid = vm_uuid
-        self.host = VirtHost(host_ipv4=host_ip)
+        self._host = None
         self._domain = None
 
     def __getattr__(self, attr):
@@ -713,6 +713,13 @@ class VmDomain:
         return (self._hip == host_ipv4) and (self._vm_uuid == vm_uuid)
 
     @property
+    def host(self):
+        if self._host is None:
+            self._host = VirtHost(host_ipv4=self._hip)
+
+        return self._host
+
+    @property
     def domain(self):
         """
         :raise VirtError(), VirDomainNotExist(), VirHostDown()
@@ -723,7 +730,7 @@ class VmDomain:
         return self._domain
 
     @domain.setter
-    def domain(self, domain):
+    def domain(self, domain: libvirt.virDomain):
         self._domain = domain
 
     def exists(self):
@@ -757,6 +764,25 @@ class VmDomain:
         code = self.host.status_code(domain)
         state_str = VM_STATE.get(code, 'no state')
         return code, state_str
+
+    @staticmethod
+    def get_hex_uuid_from_domain(domain: libvirt.virDomain):
+        vm_uuid = domain.UUIDString()
+        vm_uuid = vm_uuid.replace('-', '')
+        return vm_uuid
+
+    @classmethod
+    def define(cls, host_ipv4: str, xml_desc: str):
+        """
+        :raise VirtError()
+        """
+        host = VirtHost(host_ipv4)
+        domain = host.define(xml_desc)
+        vm_uuid = cls.get_hex_uuid_from_domain(domain)
+        vm_domain = cls(host_ip=host_ipv4, vm_uuid=vm_uuid)
+        vm_domain._host = host
+        vm_domain.domain = domain
+        return vm_domain
 
     def undefine(self):
         """
