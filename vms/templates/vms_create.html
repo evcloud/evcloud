@@ -78,7 +78,7 @@
                             <select name="image_id" class="form-control" id="id-image" required>
                                 <option value="">--</option>
                                 {% for i in images %}
-                                    <option value="{{ i.id }}">{{ i.name }}</option>
+                                    <option value="{{ i.id }}" data-size="{{ i.size }}">{{ i.name }} ({{ i.size }}G)</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -116,6 +116,27 @@
                                             <input name="mem" type="text" class="form-control" onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')" aria-label="RAM">
                                             <div class="input-group-append">
                                                 <span class="input-group-text">MB</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="form-group form-check">
+                                            <input type="checkbox" class="form-check-input" id="check-sys-disk-size">
+                                            <label class="form-check-label" for="check-sys-disk-size">配置系统盘容量</label>
+                                        </div>
+                                        <div id="div-sys-disk-size" style="display: none">
+                                            <div class="input-group mb-3">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">系统盘容量</span>
+                                                </div>
+                                                <input name="sys_disk_size" type="text" class="form-control" value="50" disabled="disabled"
+                                                       onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')" aria-label="系统盘容量">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text">GB</span>
+                                                </div>
+                                            </div>
+                                            <div id="id-sys-disk-size-tips" class="text-secondary font-italic">
+                                                当前您选择的操作系统镜像，要求系统盘最小50GB
                                             </div>
                                         </div>
                                     </div>

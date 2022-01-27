@@ -40,7 +40,7 @@ class VmAPI:
         return vm
 
     def create_vm(self, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
-                  host_id=None, ipv4=None, remarks=None, ip_public=None):
+                  host_id=None, ipv4=None, remarks=None, ip_public=None, sys_disk_size: int = None):
         """
         创建一个虚拟机
 
@@ -61,6 +61,7 @@ class VmAPI:
         :param ipv4:  指定要创建的虚拟机ip
         :param remarks: 备注
         :param ip_public: 指定分配公网或私网ip；默认None（不指定），True(公网)，False(私网)
+        :param sys_disk_size: 系统盘大小GB
         :return:
             Vm()
             raise VmError
@@ -70,7 +71,7 @@ class VmAPI:
         instance = VmInstance.create_instance(
             image_id=image_id, vcpu=vcpu, mem=mem, vlan_id=vlan_id, user=user,
             center_id=center_id, group_id=group_id, host_id=host_id, ipv4=ipv4,
-            remarks=remarks, ip_public=ip_public
+            remarks=remarks, ip_public=ip_public, sys_disk_size=sys_disk_size
         )
         return instance.vm
 

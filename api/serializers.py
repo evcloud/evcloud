@@ -70,6 +70,8 @@ class VmCreateSerializer(serializers.Serializer):
     ipv4 = serializers.CharField(label='ipv4', required=False, allow_blank=True, max_length=255, default='')
     flavor_id = serializers.IntegerField(label='配置样式id', required=False, allow_null=True,
                                          default=None, help_text='配置样式id')
+    sys_disk_size = serializers.IntegerField(label='系统盘大小', min_value=50, max_value=5*1024, required=False,
+                                             allow_null=True, default=None, help_text='单位GB')
 
     def validate(self, data):
         center_id = data.get('center_id')

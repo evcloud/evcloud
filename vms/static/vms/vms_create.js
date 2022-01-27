@@ -305,5 +305,46 @@
             custom_flavor.show();
         }
     });
+
+    $("#check-sys-disk-size").on("change", function (e){
+        e.preventDefault();
+
+        let node = $("#div-sys-disk-size");
+        let node_check = $(this).parent();
+        if ($(this).is(":checked") === true){
+            node.show();
+            $("input[name=sys_disk_size]").attr("disabled", false);
+            node_check.addClass('font-weight-bold');
+        }else{
+            node.hide();
+            $("input[name=sys_disk_size]").attr("disabled", true);
+            node_check.removeClass('font-weight-bold');
+        }
+    })
+
+    $("select[name=image_id]").change(function (e) {
+        e.preventDefault();
+
+        let size = $(this).find("option:selected").attr('data-size');
+        if (isNaN(size) || size < 50){
+            size = 50;
+        }
+        $("input[name=sys_disk_size]").val(size);
+        $("#id-sys-disk-size-tips").text("当前您选择的操作系统镜像，要求系统盘最小" + size + 'GB');
+    });
+
+    $("input[name=sys_disk_size]").blur(function (e) {
+        e.preventDefault();
+
+        let node_input = $(this);
+        let size = node_input.val();
+        let min_size = $("select[name=image_id]").find("option:selected").attr('data-size');
+        if (isNaN(min_size) || min_size < 50){
+            min_size = 50;
+        }
+        if (size < min_size){
+            node_input.val(min_size);
+        }
+    });
 })();
 

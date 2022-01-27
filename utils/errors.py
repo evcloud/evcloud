@@ -146,6 +146,12 @@ class VmDiskImageMissError(VmError):
     msg = 'The hard disk image for this virtual machine does not exist.'
 
 
+class VmSysDiskSizeSmallError(VmError):
+    err_code = 'VmSysDiskSizeSmall'
+    code = 409
+    msg = '系统盘容量太小.'
+
+
 class AcrossGroupConflictError(VmError):
     err_code = 'AcrossGroupConflictError'
     code = 409

@@ -6,7 +6,6 @@ from image.managers import ImageManager, ImageError
 from network.managers import VlanManager, MacIPManager, NetworkError
 from utils.ev_libvirt.virt import VirtError, VirtHost
 from .models import Vm
-from utils.errors import VmError
 from utils import errors
 from .scheduler import HostMacIPScheduler
 from .manager import VmManager
@@ -17,8 +16,6 @@ class VmBuilder:
     """
     虚拟机创建
     """
-    VmError = VmError
-
     def __init__(self):
         self._center_manager = CenterManager()
         self._group_manager = GroupManager()
@@ -49,11 +46,11 @@ class VmBuilder:
         try:
             image = self._image_manager.get_image_by_id(image_id, related_fields=('ceph_pool__ceph', 'xml_tpl'))
         except ImageError as e:
-            raise VmError(err=e)
+            raise errors.VmError(err=e)
         if not image:
-            raise VmError(msg='镜像ID参数有误，未找到指定系统镜像')
+            raise errors.VmError(msg='镜像ID参数有误，未找到指定系统镜像')
         if not image.enable:
-            raise VmError(msg='镜像ID参数有误，镜像未启用')
+            raise errors.VmError(msg='镜像ID参数有误，镜像未启用')
 
         return image
 
@@ -70,10 +67,10 @@ class VmBuilder:
         try:
             vlan = self._vlan_manager.get_vlan_by_id(vlan_id)
         except NetworkError as e:
-            raise VmError(err=e)
+            raise errors.VmError(err=e)
 
         if not vlan:
-            raise VmError(msg='子网ID有误，子网不存在')
+            raise errors.VmError(msg='子网ID有误，子网不存在')
 
         return vlan
 
@@ -90,17 +87,17 @@ class VmBuilder:
         try:
             mac_ip = self._macip_manager.get_macip_by_ipv4(ipv4=ipv4)
         except NetworkError as e:
-            raise VmError(err=e)
+            raise errors.VmError(err=e)
 
         if not mac_ip:
-            raise VmError(msg='mac ip不存在')
+            raise errors.VmError(msg='mac ip不存在')
 
         if not mac_ip.can_used():
-            raise VmError(msg='mac ip已被分配使用')
+            raise errors.VmError(msg='mac ip已被分配使用')
 
         vlan = mac_ip.vlan
         if not vlan:
-            raise VmError(msg='mac ip未关联子网vlan，无法判断ip是公网或私网，用户是否有权限使用')
+            raise errors.VmError(msg='mac ip未关联子网vlan，无法判断ip是公网或私网，用户是否有权限使用')
 
         if not vlan.group.user_has_perms(user=user):
             raise errors.GroupAccessDeniedError(msg='无权限使用指定的IP地址')
@@ -110,10 +107,10 @@ class VmBuilder:
 
         if ip_public:  # 指定分配公网ip
             if not vlan.is_public():
-                raise VmError(msg='指定的IP地址不是公网ip')
+                raise errors.VmError(msg='指定的IP地址不是公网ip')
         else:  # 指定分配私网ip
             if vlan.is_public():
-                raise VmError(msg='指定的IP地址不是私网ip')
+                raise errors.VmError(msg='指定的IP地址不是私网ip')
 
         return mac_ip
 
@@ -136,13 +133,13 @@ class VmBuilder:
             try:
                 host = self._host_manager.get_host_by_id(host_id)
             except ComputeError as e:
-                raise VmError(msg=str(e))
+                raise errors.VmError(msg=str(e))
 
             if not host:
-                raise VmError(msg='指定宿主机不存在')
+                raise errors.VmError(msg='指定宿主机不存在')
             # 用户访问宿主机权限检查
             if not host.user_has_perms(user=user):
-                raise VmError(msg='当前用户没有指定宿主机的访问权限')
+                raise errors.VmError(msg='当前用户没有指定宿主机的访问权限')
 
             if vlan and host.group_id != vlan.group_id:  # 指定vlan，是否同属于一个宿主机组
                 raise errors.AcrossGroupConflictError(msg='指定的宿主机和指定的ip或vlan不在同一个宿主机组内')
@@ -156,13 +153,13 @@ class VmBuilder:
             try:
                 group = self._group_manager.get_group_by_id(group_id=group_id)
             except ComputeError as e:
-                raise VmError(msg=f'查询宿主机组，{str(e)}')
+                raise errors.VmError(msg=f'查询宿主机组，{str(e)}')
             if not group:
-                raise VmError(msg='指定宿主机组不存在')
+                raise errors.VmError(msg='指定宿主机组不存在')
 
             # 用户访问宿主机组权限检查
             if not group.user_has_perms(user=user):
-                raise VmError(msg='当前用户没有指定宿主机的访问权限')
+                raise errors.VmError(msg='当前用户没有指定宿主机的访问权限')
 
             return [group], None
 
@@ -178,14 +175,14 @@ class VmBuilder:
                 groups = self._center_manager.get_user_group_queryset_by_center(center_or_id=center_id, user=user)
                 groups = list(groups)
             except Exception as e:
-                raise VmError(msg=f'查询指定分中心下的宿主机组错误，{str(e)}')
+                raise errors.VmError(msg=f'查询指定分中心下的宿主机组错误，{str(e)}')
 
             return groups, None
 
-        raise VmError(msg='必须指定一个有效的center id或者group id或者host id')
+        raise errors.VmError(msg='必须指定一个有效的center id或者group id或者host id')
 
     def create_vm(self, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
-                  host_id=None, ipv4=None, remarks=None, ip_public=None):
+                  host_id=None, ipv4=None, remarks=None, ip_public=None, sys_disk_size: int = None):
         """
         创建一个虚拟机
 
@@ -206,6 +203,7 @@ class VmBuilder:
         :param ipv4:  指定要创建的虚拟机ip
         :param remarks: 备注
         :param ip_public: 指定分配公网或私网ip；默认None（不指定），True(公网)，False(私网)
+        :param sys_disk_size: 系统盘大小GB, 系统盘最大5Tb
         :return:
             Vm()
             raise VmError
@@ -224,7 +222,17 @@ class VmBuilder:
             raise errors.VmError.from_error(errors.BadRequestError(
                 msg='无法创建虚拟机,必须指定一个有效center_id或group_id或host_id参数'))
 
+        if sys_disk_size and sys_disk_size > 5 * 1024:
+            raise errors.VmError(msg='系统盘容量不得大于5TB')
+
         image = self.get_image(image_id)    # 镜像
+        try:
+            image_size = image.get_size()
+        except Exception as e:
+            raise errors.VmError(msg=f'获取系统镜像大小错误，{str(e)}')
+
+        if sys_disk_size and sys_disk_size < image_size:
+            raise errors.VmSysDiskSizeSmallError(msg='系统盘大小不得小于系统镜像大小')
 
         vm_uuid_obj = self.new_uuid_obj()
         vm_uuid = vm_uuid_obj.hex
@@ -234,7 +242,7 @@ class VmBuilder:
         try:
             rbd_manager = image.get_rbd_manager()
         except Exception as e:
-            raise VmError(msg=str(e))
+            raise errors.VmError(msg=str(e))
 
         # 如果指定了vlan或ip
         if ipv4:
@@ -279,11 +287,17 @@ class VmBuilder:
                                         new_image_name=vm_uuid, data_pool=data_pool)
                 diskname = vm_uuid
             except RadosError as e:
-                raise VmError(msg=f'clone image error, {str(e)}')
+                raise errors.VmError(msg=f'clone image error, {str(e)}')
+
+            if sys_disk_size and sys_disk_size > image_size:
+                if rbd_manager.resize_rbd_image(image_name=diskname, size=sys_disk_size * 1024**3) is not True:
+                    raise errors.VmError(msg=f'resize system disk size error')
+            else:
+                sys_disk_size = image_size
 
             # 创建虚拟机
             vm = self._create_vm2(vm_uuid=vm_uuid, diskname=diskname, vcpu=vcpu, mem=mem, image=image,
-                                  host=host, macip=macip, user=user, remarks=remarks)
+                                  host=host, macip=macip, user=user, remarks=remarks, sys_disk_size=sys_disk_size)
         except Exception as e:
             if macip:
                 self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
@@ -295,7 +309,7 @@ class VmBuilder:
                 except RadosError:
                     pass
 
-            raise VmError(msg=str(e))
+            raise errors.VmError(msg=str(e))
 
         host.vm_created_num_add_1()  # 宿主机已创建虚拟机数量+1
         try:
@@ -306,7 +320,7 @@ class VmBuilder:
         return vm
 
     @staticmethod
-    def _create_vm2(vm_uuid: str, diskname: str, vcpu: int, mem: int, image, host, macip,
+    def _create_vm2(vm_uuid: str, diskname: str, vcpu: int, mem: int, image, host, macip, sys_disk_size: int,
                     user, remarks: str = ''):
         """
         仅创建虚拟机，不会清理传入的各种资源
@@ -317,6 +331,7 @@ class VmBuilder:
         :param mem: 内存大小
         :param host: 宿主机对象
         :param macip: mac ip对象
+        :param sys_disk_size: 系统盘大小GB
         :param user: 用户对象
         :param remarks: 虚拟机备注信息
         :return:
@@ -330,21 +345,21 @@ class VmBuilder:
             xml_desc = VmXMLBuilder().build_vm_xml_desc(vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, vm_disk_name=diskname,
                                                         image=image, mac_ip=macip)
         except Exception as e:
-            raise VmError(msg=f'构建虚拟机xml错误,{str(e)}')
+            raise errors.VmError(msg=f'构建虚拟机xml错误,{str(e)}')
 
         try:
             # 创建虚拟机元数据
             vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
-                    remarks=remarks, host=host, mac_ip=macip, xml=xml_desc, image=image)
+                    remarks=remarks, host=host, mac_ip=macip, xml=xml_desc, image=image, sys_disk_size=sys_disk_size)
             vm.save()
         except Exception as e:
-            raise VmError(msg=f'创建虚拟机元数据错误,{str(e)}')
+            raise errors.VmError(msg=f'创建虚拟机元数据错误,{str(e)}')
 
         # 创建虚拟机
         try:
             VirtHost(host_ipv4=host.ipv4).define(xml_desc=xml_desc)
         except VirtError as e:
             vm.delete()     # 删除虚拟机元数据
-            raise VmError(msg=str(e))
+            raise errors.VmError(msg=str(e))
 
         return vm
