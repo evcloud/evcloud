@@ -69,6 +69,9 @@ class VmBase(models.Model):
     class Meta:
         abstract = True
 
+    def is_sys_disk_local(self):
+        return self.disk_type == self.DiskType.LOCAL
+
 
 class Vm(VmBase):
     """

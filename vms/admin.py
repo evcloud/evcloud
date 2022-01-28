@@ -19,15 +19,17 @@ class VmAdmin(admin.ModelAdmin):
     def update_sys_disk_size(self, request, queryset):
         ok_count = 0
         failed_count = 0
+        err = None
         for obj in queryset:
             try:
                 obj.update_sys_disk_size()
                 ok_count += 1
             except Exception as e:
+                err = e
                 failed_count += 1
 
         if failed_count:
-            self.message_user(request=request, message=f'更新系统盘的大小 {ok_count}成功 {failed_count}失败',
+            self.message_user(request=request, message=f'更新系统盘的大小 {ok_count}成功 {failed_count}失败, {str(err)}',
                               level=messages.ERROR)
         else:
             self.message_user(request=request, message=f'更新系统盘的大小成功{ok_count}', level=messages.SUCCESS)
