@@ -233,8 +233,9 @@ class VmInstance:
 
             vm.image = new_image
             vm.xml = xml_desc
+            vm.disk_type = vm.DiskType.CEPH_RBD
             try:
-                vm.save(update_fields=['image', 'xml'])
+                vm.save(update_fields=['image', 'xml', 'disk_type'])
             except Exception as e:
                 raise errors.VmError(msg=f'更新虚拟机元数据失败, {str(e)}')
             return vm

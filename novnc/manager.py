@@ -58,7 +58,12 @@ class NovncTokenManager(object):
         :raise: NovncError
         """
         # spice[vnc]://localhost:5910 ; spice://127.0.0.1?tls-port=5910
-        cmd = f'ssh {hostip} virsh domdisplay {vmid}'
+        try:
+            vm_uuid = str(uuid.UUID(vmid))
+        except ValueError:
+            vm_uuid = vmid
+
+        cmd = f'ssh {hostip} virsh domdisplay {vm_uuid}'
         # cmd = f'ssh {hostip} virsh vncdisplay {vmid}'
         res, info = subprocess.getstatusoutput(cmd)
         if res != 0:
