@@ -40,7 +40,7 @@
                     $("#id-div-migrate-status").show();
                     display_icon(true);
                     display_icon();
-                    $("#id-migrate-result").text('开始迁移');
+                    $("#id-migrate-result").text('等待迁移');
                     let task_id = data['migrate_task'];
                     window.migrate_status_timer_number = window.setInterval(function () {
                         get_vm_migrate_status(task_id, handle_vm_status_callback);
@@ -100,6 +100,8 @@
             text_class = 'text-success';
             status_display = '迁移完成';
             migrate_complete_do();
+        }else if (status === 'wait'){
+            status_display = '等待迁移';
         }
 
         dom_result.removeClass();

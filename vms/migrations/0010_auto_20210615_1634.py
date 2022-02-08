@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('dst_is_claim', models.BooleanField(default=False, verbose_name='是否扣除目标宿主机资源')),
                 ('migrate_time', models.DateTimeField(auto_now_add=True, verbose_name='迁移时间')),
                 ('migrate_complete_time', models.DateTimeField(blank=True, default=None, null=True, verbose_name='迁移完成时间')),
-                ('status', models.CharField(choices=[('failed', '迁移失败'), ('in-process', '正在迁移'), ('some-todo', '迁移完成，有些需要善后的工作'), ('complete', '迁移完成')], default='complete', max_length=16, verbose_name='迁移状态')),
+                ('status', models.CharField(choices=[('wait', '等待迁移'), ('failed', '迁移失败'), ('in-process', '正在迁移'), ('some-todo', '迁移完成，有些需要善后的工作'), ('complete', '迁移完成')], default='complete', max_length=16, verbose_name='迁移状态')),
                 ('content', models.TextField(blank=True, default='', null=True, verbose_name='文字记录')),
                 ('tag', models.CharField(choices=[('live', '动态迁移'), ('static', '静态迁移')], default='static', max_length=16, verbose_name='迁移类型')),
                 ('dst_host', models.ForeignKey(blank=True, default=None, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='dst_migrate_log_set', to='compute.host')),

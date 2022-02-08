@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.utils import timezone
+from django.db import transaction
 
 from compute.managers import HostManager
 from vdisk.manager import VdiskManager
@@ -31,14 +32,48 @@ class VmMigrateManager:
 
         raise errors.AccessDeniedError(msg='你没有权限查询此迁移任务状态')
 
-    def live_migrate_vm(self, vm: Vm, dest_host_id: int):
+    def _vm_old_task_check(self, vm):
         """
-        迁移虚拟机
+        vm是否有旧迁移任务，旧任务是否需要善后工作
 
-        :param vm: 虚拟机元数据对象
-        :param dest_host_id: 目标宿主机id
+        :raises: VmError
+        """
+        # 5m内有等待和正在迁移的迁移任务
+        task = vm.migrate_log_set.filter(
+            status__in=[MigrateTask.Status.IN_PROCESS, MigrateTask.Status.WAITING],
+            migrate_time__lt=(timezone.now() - timedelta(minutes=5))).first()
+        if task:
+            if task.status == MigrateTask.Status.WAITING:
+                raise errors.VmError(msg=f'此虚拟机正在等待迁移, 未防止迁移冲突,请等待一段时间后重试')
+
+            raise errors.VmError(msg=f'此虚拟机正在迁移, 未防止迁移冲突,请等待一段时间后重试')
+
+        # 是否有迁移任务需要善后工作
+        task_qs = vm.migrate_log_set.select_related('vm', 'dst_host').filter(
+            status__in=[MigrateTask.Status.SOME_TODO, MigrateTask.Status.WAITING]
+        ).order_by('-id').all()
+        some_todo_tasks = []
+        for task in task_qs:
+            if task.status == MigrateTask.Status.WAITING:
+                self._do_task_failed(m_task=task, message='task waiting, not migrate')
+            else:
+                some_todo_tasks.append(task)
+
+        if len(some_todo_tasks) > 1:
+            raise errors.VmError(msg=f'此虚拟机有多个未完成的迁移任务，迁移善后工作请先联系管理员手动处理。')
+
+        if some_todo_tasks:
+            try:
+                if not self.handle_some_todo_migrate_log(task_log=some_todo_tasks[0]):
+                    raise errors.VmError()
+            except errors.VmError as e:
+                raise errors.VmError(msg=f'此虚拟机有未完成的迁移任务，迁移善后工作请先联系管理员手动处理。')
+
+    def _pre_live_migrate(self, vm, dest_host_id: int):
+        """
+        动态迁移前工作
         :return:
-            MigrateTask()   # success
+            Host()      # 目标宿主机
 
         :raises: VmError
         """
@@ -47,22 +82,7 @@ class VmMigrateManager:
             raise errors.VmError.from_error(
                 errors.Unsupported(msg='虚拟主机为本地硬盘，不支持迁移'))
 
-        # 2m内有未完成的迁移任务
-        if vm.migrate_log_set.filter(status=MigrateTask.Status.IN_PROCESS,
-                                     migrate_time__lt=(timezone.now() - timedelta(minutes=2))).exists():
-            raise errors.VmError(msg=f'此虚拟机正在迁移, 未防止迁移冲突,请等待一段时间后重试')
-
-        # 是否有迁移任务需要善后工作
-        task_qs = vm.migrate_log_set.filter(status=MigrateTask.Status.SOME_TODO).order_by('-id').all()
-        if len(task_qs) > 1:
-            raise errors.VmError(msg=f'此虚拟机有多个未完成的迁移任务，迁移善后工作请先联系管理员手动处理。')
-        m_log = task_qs.first()
-        if m_log is not None:
-            try:
-                if not self.handle_some_todo_migrate_log(task_log=m_log):
-                    raise errors.VmError()
-            except errors.VmError as e:
-                raise errors.VmError(msg=f'此虚拟机有未完成的迁移任务，迁移善后工作请先联系管理员手动处理。')
+        self._vm_old_task_check(vm)
 
         # 虚拟机的状态
         host = vm.host
@@ -92,9 +112,8 @@ class VmMigrateManager:
             raise errors.VmError(msg='目标宿主机和云主机宿主机不在同一个机组')
 
         # 检测目标宿主机是否处于活动状态
-        dest_vm_host = VirtHost(host_ipv4=dest_host.ipv4)
         try:
-            dest_vm_host.get_connection()
+            VirtHost(host_ipv4=dest_host.ipv4).get_connection()
         except VirHostDown as e:
             raise errors.VmError(msg=f'无法连接宿主机,{str(e)}')
         except VirtError as e:
@@ -105,9 +124,26 @@ class VmMigrateManager:
         if pci_devices:
             raise errors.VmError(msg='请先卸载主机挂载的PCI设备')
 
+        return dest_host
+
+    def live_migrate_vm(self, vm: Vm, dest_host_id: int):
+        """
+        迁移虚拟机
+
+        :param vm: 虚拟机元数据对象
+        :param dest_host_id: 目标宿主机id
+        :return:
+            MigrateTask()   # success
+
+        :raises: VmError
+        """
+        dest_host = self._pre_live_migrate(vm=vm, dest_host_id=dest_host_id)
+
+        vm_uuid = vm.get_uuid()
+        src_host = vm.host
         m_task = MigrateTask(vm=vm, vm_uuid=vm_uuid, src_host=src_host, src_host_ipv4=src_host.ipv4,
                              dst_host=dest_host, dst_host_ipv4=dest_host.ipv4, migrate_time=timezone.now(),
-                             tag=MigrateTask.Tag.MIGRATE_LIVE, status=MigrateTask.Status.IN_PROCESS)
+                             tag=MigrateTask.Tag.MIGRATE_LIVE, status=MigrateTask.Status.WAITING)
 
         # 目标宿主机资源申请
         try:
@@ -130,16 +166,45 @@ class VmMigrateManager:
         return m_task
 
     @staticmethod
-    def live_migrate_vm_task(m_task_id):
-        m_task = MigrateTask.objects.select_related('vm', 'src_host', 'dst_host').filter(id=m_task_id).first()
-        if m_task is None:
-            return
-        dest_host = m_task.dst_host
-        src_host = m_task.src_host
+    def _do_task_failed(m_task, message: str):
+        """
+        :raises: VmError
+        """
         vm = m_task.vm
+        dest_host = m_task.dst_host
+        # 释放目标宿主机资源
+        if dest_host.free(vcpu=vm.vcpu, mem=vm.mem):
+            m_task.dst_is_claim = False
 
+        m_task.status = m_task.Status.FAILED
+        m_task.content = message
+        r = m_task.do_save(update_fields=['dst_is_claim', 'status', 'content'])
+        if r is not None:
+            raise errors.VmError.from_error(r)
+
+    @staticmethod
+    def live_migrate_vm_task(m_task_id):
+        with transaction.atomic():
+            m_task = MigrateTask.objects.select_for_update().select_related(
+                'vm', 'src_host', 'dst_host').filter(id=m_task_id).first()
+            if m_task is None:
+                return
+
+            if m_task.status != m_task.Status.WAITING:
+                return
+
+            m_task.status = m_task.Status.IN_PROCESS
+            m_task.do_save(update_fields=['status'])
+
+        VmMigrateManager._live_migrate_vm_task(m_task)
+
+    @staticmethod
+    def _live_migrate_vm_task(m_task):
         # 迁移虚拟机
         try:
+            dest_host = m_task.dst_host
+            src_host = m_task.src_host
+            vm = m_task.vm
             dest_vm_host = VirtHost(host_ipv4=m_task.dst_host_ipv4)
             try:
                 dest_conn = dest_vm_host.get_connection()
@@ -151,13 +216,7 @@ class VmMigrateManager:
             src_domain = get_vm_domain(vm)
             src_domain.live_migrate(dest_host_conn=dest_conn, undefine_source=True)
         except Exception as e:
-            # 释放目标宿主机资源
-            if dest_host.free(vcpu=vm.vcpu, mem=vm.mem):
-                m_task.dst_is_claim = False
-
-            m_task.status = m_task.Status.FAILED
-            m_task.content = str(e)
-            m_task.do_save()
+            VmMigrateManager._do_task_failed(m_task=m_task, message=str(e))
             return
 
         log_msg = ''

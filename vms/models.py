@@ -573,6 +573,7 @@ class MigrateTask(models.Model):
         MIGRATE_STATIC = 'static', _('静态迁移')
 
     class Status(models.TextChoices):
+        WAITING = 'wait', _('等待迁移')
         FAILED = 'failed', _('迁移失败')
         IN_PROCESS = 'in-process', _('正在迁移')
         SOME_TODO = 'some-todo', _('迁移完成，有些需要善后的工作')
