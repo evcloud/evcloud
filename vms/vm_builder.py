@@ -1,15 +1,22 @@
 import uuid
 
-from ceph.managers import RadosError
+from ceph.managers import RadosError, ImageExistsError
 from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
 from image.managers import ImageManager, ImageError
+from image.models import Image
 from network.managers import VlanManager, MacIPManager, NetworkError
-from utils.ev_libvirt.virt import VirtError, VirtHost
+from utils.ev_libvirt.virt import (
+    VirtError, VmDomain, VirtHost
+)
 from .models import Vm
 from utils import errors
 from .scheduler import HostMacIPScheduler
 from .manager import VmManager
 from .xml_builder import VmXMLBuilder
+
+
+def get_vm_domain(vm: Vm):
+    return VmDomain(host_ip=vm.host.ipv4, vm_uuid=vm.get_uuid())
 
 
 class VmBuilder:
@@ -363,3 +370,124 @@ class VmBuilder:
             raise errors.VmError(msg=str(e))
 
         return vm
+
+    @staticmethod
+    def reset_image_create_vm(vm: Vm, new_image: Image):
+        """
+        更换镜像创建虚拟机
+
+        :param vm: Vm对象
+        :param new_image: 新系统镜像 Image()
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        try:
+            vm_uuid = vm.uuid
+            host = vm.host
+            disk_name = vm.disk
+            new_pool = new_image.ceph_pool
+            new_data_pool = new_pool.data_pool if new_pool.has_data_pool else None
+            old_vm_xml_desc = get_vm_domain(vm).xml_desc()
+
+            # 虚拟机xml
+            xml_desc = VmXMLBuilder().build_vm_xml_desc(
+                vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name, image=new_image, mac_ip=vm.mac_ip)
+            rbd_manager = new_image.get_rbd_manager()
+        except Exception as e:
+            raise errors.VmError(msg=str(e))
+
+        new_disk_ok = False
+        vm_domain = None
+        try:
+            try:
+                rbd_manager.clone_image(snap_image_name=new_image.base_image, snap_name=new_image.snap,
+                                        new_image_name=disk_name, data_pool=new_data_pool)
+            except ImageExistsError as e:
+                pass
+            new_disk_ok = True
+            try:
+                vm_domain = VmDomain.define(host_ipv4=host.ipv4, xml_desc=xml_desc)     # 新xml覆盖定义虚拟机
+            except VirtError as e:
+                raise errors.VmError(msg=str(e))
+
+            vm.image = new_image
+            vm.xml = xml_desc
+            vm.disk_type = vm.DiskType.CEPH_RBD
+            try:
+                vm.save(update_fields=['image', 'xml', 'disk_type'])
+            except Exception as e:
+                raise errors.VmError(msg=f'更新虚拟机元数据失败, {str(e)}')
+            return vm
+        except Exception as e:
+            if new_disk_ok:
+                try:
+                    rbd_manager.remove_image(image_name=disk_name)  # 删除新的系统盘image
+                except RadosError:
+                    pass
+            if vm_domain is not None:
+                try:
+                    VmDomain.define(host_ipv4=host.ipv4, xml_desc=old_vm_xml_desc)  # 覆盖定义回原虚拟机
+                except VirtError:
+                    pass
+
+            raise errors.VmError(msg=str(e))
+
+    @staticmethod
+    def migrate_create_vm(vm: Vm, new_host):
+        """
+        虚拟机迁移目标宿主机上创建虚拟机
+
+        :param vm: Vm对象
+        :param new_host: 目标宿主机Host()
+        :return: (                  # success
+            Vm(),
+            begin_create: bool      # True：从新构建vm xml desc定义的vm，硬盘等设备需要重新挂载;
+                                    # False：实时获取源vm xml desc, 原挂载的设备不受影响
+        )
+
+        :raises: VmError
+        """
+        vm_uuid = vm.uuid
+        xml_desc = None
+        begin_create = False  # vm xml不是从新构建的
+
+        # 实时获取vm xml desc
+        try:
+            xml_desc = get_vm_domain(vm).xml_desc()
+        except Exception as e:
+            pass
+
+        if not xml_desc:  # 实时获取vm xml, 从新构建虚拟机xml
+            begin_create = True  # vm xml从新构建的
+            try:
+                xml_desc = VmXMLBuilder().build_vm_xml_desc(
+                    vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=vm.disk, image=vm.image, mac_ip=vm.mac_ip)
+            except Exception as e:
+                raise errors.VmError(msg=f'构建虚拟机xml错误，{str(e)}')
+
+        new_vm_domain = None
+        try:
+            # 创建虚拟机
+            try:
+                new_vm_domain = VmDomain.define(host_ipv4=new_host.ipv4, xml_desc=xml_desc)
+            except VirtError as e:
+                raise errors.VmError(msg=str(e))
+
+            vm.host = new_host
+            vm.xml = xml_desc
+            try:
+                vm.save(update_fields=['host', 'xml'])
+            except Exception as e:
+                raise errors.VmError(msg=f'更新虚拟机元数据失败, {str(e)}')
+
+            return vm, begin_create
+        except Exception as e:
+            # 目标宿主机删除虚拟机
+            if new_vm_domain is not None:
+                try:
+                    new_vm_domain.undefine()
+                except VirtError:
+                    pass
+            raise errors.VmError(msg=str(e))

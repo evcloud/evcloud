@@ -1,29 +1,8 @@
-import subprocess
-
 from django.db.models import Q
 
 from compute.managers import CenterManager, GroupManager, ComputeError
-from .models import (Vm, VmArchive, VmLog, VmDiskSnap, Flavor)
+from .models import (Vm, VmArchive, VmLog, Flavor)
 from utils.errors import VmError
-from utils import errors
-
-
-def host_alive(host_ipv4: str, times=3, timeout=3):
-    """
-    检测目标主机是否可访问
-
-    :param host_ipv4: 宿主机IP
-    :param times: ping次数
-    :param timeout:
-    :return:
-        True    # 可访问
-        False   # 不可
-    """
-    cmd = f'ping -c {times} -i 0.1 -W {timeout} {host_ipv4}'
-    res, info = subprocess.getstatusoutput(cmd)
-    if res == 0:
-        return True
-    return False
 
 
 class VmManager:

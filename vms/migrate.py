@@ -1,15 +1,16 @@
 from datetime import timedelta
 
-import libvirt
 from django.utils import timezone
 
 from compute.managers import HostManager
+from vdisk.manager import VdiskManager
 from utils.ev_libvirt.virt import (
     VirtError, VmDomain, VirDomainNotExist, VirHostDown, VirtHost
 )
 from utils import errors
 from .models import (Vm, MigrateTask)
 from .tasks import creat_migrate_vm_task
+from .vm_builder import VmBuilder, get_vm_domain
 
 
 class VmMigrateManager:
@@ -93,7 +94,7 @@ class VmMigrateManager:
         # 检测目标宿主机是否处于活动状态
         dest_vm_host = VirtHost(host_ipv4=dest_host.ipv4)
         try:
-            dest_conn = dest_vm_host.get_connection()
+            dest_vm_host.get_connection()
         except VirHostDown as e:
             raise errors.VmError(msg=f'无法连接宿主机,{str(e)}')
         except VirtError as e:
@@ -120,9 +121,8 @@ class VmMigrateManager:
             dest_host.free(vcpu=vm.vcpu, mem=vm.mem)
             raise errors.VmError(msg=f'创建迁移任务记录错误,{str(r)}')
 
-        r = creat_migrate_vm_task(self.live_migrate_vm_task, vm=vm, m_task=m_task, src_domain=src_domain,
-                                  dest_conn=dest_conn)
-        if r is not None:
+        r = creat_migrate_vm_task(self.live_migrate_vm_task, m_task_id=m_task.id)
+        if isinstance(r, Exception):
             dest_host.free(vcpu=vm.vcpu, mem=vm.mem)
             m_task.delete()
             raise errors.VmError(msg=f'创建迁移任务错误,{str(r)}')
@@ -130,12 +130,25 @@ class VmMigrateManager:
         return m_task
 
     @staticmethod
-    def live_migrate_vm_task(vm, m_task: MigrateTask, src_domain: VmDomain, dest_conn: libvirt.virConnect):
+    def live_migrate_vm_task(m_task_id):
+        m_task = MigrateTask.objects.select_related('vm', 'src_host', 'dst_host').filter(id=m_task_id).first()
+        if m_task is None:
+            return
         dest_host = m_task.dst_host
         src_host = m_task.src_host
+        vm = m_task.vm
 
         # 迁移虚拟机
         try:
+            dest_vm_host = VirtHost(host_ipv4=m_task.dst_host_ipv4)
+            try:
+                dest_conn = dest_vm_host.get_connection()
+            except VirHostDown as e:
+                raise errors.VmError(msg=f'无法连接宿主机,{str(e)}')
+            except VirtError as e:
+                raise errors.VmError(msg=f'连接宿主机失败,{str(e)}')
+
+            src_domain = get_vm_domain(vm)
             src_domain.live_migrate(dest_host_conn=dest_conn, undefine_source=True)
         except Exception as e:
             # 释放目标宿主机资源
@@ -229,3 +242,167 @@ class VmMigrateManager:
             task_log.do_save()
 
         return ok
+
+    @staticmethod
+    def _pre_static_migrite(vm: Vm, host_id: int, force: bool):
+        """
+        静态迁移虚拟机前处理
+
+        :param host_id: 宿主机id
+        :param force: True(强制迁移)，False(普通迁移)
+        :return:
+            Host()   # success
+
+        :raises: VmError
+        """
+        if vm.disk_type == vm.DiskType.LOCAL:
+            raise errors.VmError.from_error(
+                errors.Unsupported(msg='虚拟主机为本地硬盘，不支持迁移'))
+
+        # 虚拟机的状态
+        vm_domain = get_vm_domain(vm)
+        try:
+            run = vm_domain.is_running()
+        except VirHostDown as e:
+            if not force:
+                raise errors.VmError(msg=f'无法连接宿主机,{str(e)}')
+        except VirDomainNotExist as e:
+            pass
+        except VirtError as e:
+            raise errors.VmError(msg=f'获取虚拟机运行状态失败,{str(e)}')
+        else:
+            if run:
+                if not force:
+                    raise errors.VmRunningError(msg='虚拟机正在运行，请先关闭虚拟机')
+
+                # 强制迁移，先尝试断电
+                try:
+                    vm_domain.poweroff()
+                except VirtError as e:
+                    pass
+
+        # 是否同宿主机组
+        old_host = vm.host
+        try:
+            new_host = HostManager.get_host_by_id(host_id=host_id)
+        except errors.ComputeError as e:
+            raise errors.VmError(msg=str(e))
+        if not new_host:
+            raise errors.VmError(msg='指定的目标宿主机不存在')
+
+        if old_host.id == new_host.id:
+            raise errors.VmError(msg='不能在同一个宿主机上迁移')
+        if new_host.group_id != old_host.group_id:
+            raise errors.VmError(msg='目标宿主机和云主机宿主机不在同一个机组')
+
+        # 检测目标宿主机是否处于活动状态
+        alive = VirtHost(host_ipv4=new_host.ipv4).host_alive()
+        if not alive:
+            raise errors.VmError(msg='目标宿主机处于未活动状态，请重新选择迁移目标宿主机')
+
+        # PCI设备
+        pci_devices = vm.pci_devices
+        if pci_devices:
+            if not force:
+                raise errors.VmError(msg='请先卸载主机挂载的PCI设备')
+
+            # 卸载设备
+            for device in pci_devices:
+                try:
+                    device.umount()
+                except errors.DeviceError as e:
+                    raise errors.VmError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
+
+        return new_host
+
+    def static_migrate(self, vm: Vm, host_id: int, force: bool = False):
+        """
+        静态迁移虚拟机
+
+        :param vm: Vm对象
+        :param host_id: 宿主机id
+        :param force: True(强制迁移)，False(普通迁移)
+        :return:
+            Vm()   # success
+
+        :raises: VmError
+        """
+        vm_uuid = vm.get_uuid()
+        old_host = vm.host
+
+        new_host = self._pre_static_migrite(vm=vm, host_id=host_id, force=force)
+        m_log = MigrateTask(vm=vm, vm_uuid=vm_uuid, src_host=old_host, src_host_ipv4=old_host.ipv4,
+                            dst_host=new_host, dst_host_ipv4=new_host.ipv4, migrate_time=timezone.now(),
+                            tag=MigrateTask.Tag.MIGRATE_STATIC)
+
+        # 目标宿主机资源申请
+        try:
+            new_host = HostManager.claim_from_host(host_id=host_id, vcpu=vm.vcpu, mem=vm.mem)
+        except errors.ComputeError as e:
+            raise errors.VmError(msg=str(e))
+
+        m_log.dst_is_claim = True
+        # 目标宿主机创建虚拟机
+        try:
+            vm, from_begin_create = VmBuilder.migrate_create_vm(vm=vm, new_host=new_host)
+        except Exception as e:
+            # 释放目标宿主机资源
+            new_host.free(vcpu=vm.vcpu, mem=vm.mem)
+            raise errors.VmError(msg=str(e))
+
+        new_host.vm_created_num_add_1()  # 宿主机虚拟机数+1
+
+        m_log.do_save()
+
+        log_msg = ''
+        if from_begin_create:   # 重新构建vm xml创建的vm, 需要重新挂载硬盘等设备
+            # 向虚拟机挂载硬盘
+            vdisks = vm.vdisks
+            vm_domain = get_vm_domain(vm)
+            for vdisk in vdisks:
+                try:
+                    disk_xml = vdisk.xml_desc(dev=vdisk.dev)
+                    vm_domain.attach_device(xml=disk_xml)
+                except (VirtError, Exception) as e:
+                    log_msg += f'vdisk(uuid={vdisk.uuid}) 挂载失败,err={str(e)}；\n'
+                    try:
+                        VdiskManager.umount_from_vm(vdisk_uuid=vdisk.uuid)
+                    except errors.VdiskError as e2:
+                        log_msg += f'vdisk(uuid={vdisk.uuid})和vm(uuid={vm_uuid}元数据挂载关系解除失败),err={str(e2)}；\n'
+
+            # 如果挂载了硬盘，更新vm元数据中的xml
+            if vdisks:
+                try:
+                    xml_desc = vm_domain.xml_desc()
+                    vm.xml = xml_desc
+                    vm.save(update_fields=['xml'])
+                except Exception:
+                    pass
+
+        # 删除原宿主机上的虚拟机
+        try:
+            ok = VmDomain(host_ip=old_host.ipv4, vm_uuid=vm_uuid).undefine()
+            if ok:
+                m_log.src_undefined = True
+                old_host.vm_created_num_sub_1()  # 宿主机虚拟机数-1
+        except VirtError as e:
+            log_msg += f'源host({old_host.ipv4})上的vm(uuid={vm_uuid})删除失败，err={str(e)};\n'
+
+        # 源宿主机资源释放
+        if old_host.free(vcpu=vm.vcpu, mem=vm.mem):
+            m_log.src_is_free = True
+        else:
+            log_msg += f'源host({old_host.ipv4})资源(vcpu={vm.vcpu}, mem={vm.mem}MB)释放失败;\n'
+
+        # 迁移日志
+        if log_msg:
+            m_log.status = m_log.Status.SOME_TODO
+        else:
+            log_msg = '迁移正常'
+            m_log.status = m_log.Status.COMPLETE
+
+        m_log.content = log_msg
+        m_log.migrate_complete_time = timezone.now()
+        m_log.do_save()
+
+        return vm

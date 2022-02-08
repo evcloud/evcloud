@@ -204,7 +204,14 @@ class VirtHost:
         self.host_ipv4 = host_ipv4
         self._conn = None
 
-    def _host_alive(self, times=3, timeout=3):
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        if isinstance(self._conn, libvirt.virConnect) or hasattr(self._conn, 'close'):
+            self._conn.close()
+
+    def host_alive(self, times=3, timeout=3):
         """
         检测宿主机是否可访问
 
@@ -221,9 +228,9 @@ class VirtHost:
 
         return False
 
-    def _get_connection(self):
+    def open_connection(self):
         """
-        建立与宿主机的连接
+        建立一个新的与宿主机的连接
 
         :return:
             success: libvirt.virConnect
@@ -233,7 +240,7 @@ class VirtHost:
         """
         host_ip = self.host_ipv4
         if host_ip:
-            if not self._host_alive():
+            if not self.host_alive():
                 raise VirHostDown(msg='无法访问宿主机')
             name = f'qemu+ssh://{host_ip}/system?no_tty=1'      # no_tty如果设置为非零值，如果它无法自动登录到远程计算机，它将阻止ssh询问密码
         else:
@@ -249,7 +256,7 @@ class VirtHost:
         :raise VirtError(), VirHostDown()
         """
         if self._conn is None:
-            self._conn = self._get_connection()
+            self._conn = self.open_connection()
 
         return self._conn
 
