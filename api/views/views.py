@@ -229,7 +229,14 @@ class VmsViewSet(CustomGenericViewSet):
                 "attach_time": "2020-03-06T14:46:27.149648+08:00"
                 "remarks": ""
               }
-            ]
+            ],
+            "host_info": {
+              "id": 4,
+              "ipv4": "10.0.200.83",
+              "group": {
+                "id": 4
+              }
+            }
           }
         }
         >>Http Code: 状态码400：请求失败;

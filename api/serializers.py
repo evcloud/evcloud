@@ -383,11 +383,12 @@ class VmDetailSerializer(serializers.ModelSerializer):
     image_info = serializers.SerializerMethodField()
     vdisks = serializers.SerializerMethodField()
     pci_devices = serializers.SerializerMethodField()
+    host_info = serializers.SerializerMethodField()
 
     class Meta:
         model = Vm
         fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'image_info', 'disk', 'sys_disk_size', 'host', 'mac_ip',
-                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices')
+                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices','host_info')
         # depth = 1
 
     @staticmethod
@@ -435,6 +436,16 @@ class VmDetailSerializer(serializers.ModelSerializer):
     def get_pci_devices(obj):
         devs = obj.pci_devices.select_related('host__group', 'vm')
         return PCIDeviceSerializer(instance=devs, many=True, required=False).data
+
+    @staticmethod
+    def get_host_info(obj):
+        host = obj.host
+        if host:
+            return {
+                'id': host.id, 'ipv4': host.ipv4, 'group': {'id': host.group_id}
+            }
+
+        return None
 
 
 class VmChangePasswordSerializer(serializers.Serializer):
