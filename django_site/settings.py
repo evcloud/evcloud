@@ -162,6 +162,8 @@ AUTH_USER_MODEL = 'users.UserProfile'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+USE_REGISTER_USER = False   # 是否允许注册用户，自定义参数
+
 # 避免django把未以/结尾的url重定向到以/结尾的url
 # APPEND_SLASH=False
 

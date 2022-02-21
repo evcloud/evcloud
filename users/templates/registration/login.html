@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
-
+{% load custom_tags %}
 <html lang="zh-hans">
 <head>
     <title>登录 | 云主机平台</title>
@@ -39,7 +39,9 @@
                     <div class="form-group">
                         <input class="btn btn-primary" type="submit" value="登录">
                         <a class="btn text-warning" href="{% url 'users:forget' %}">忘记密码</a>
-                        <a class="btn btn-info float-right" onclick="alert('不允许个人注册，请联系管理员');return false;" href="{% url 'users:register' %}">注册</a>
+                        {% use_register_user as use_register %}
+                        <a class="btn btn-info float-right" {% if use_register %}href="{% url 'users:register' %}"
+                            {% else %}onclick="alert('不允许个人注册，请联系管理员');return false;" href="#"{% endif %}>注册</a>
                     </div>
                 </form>
             </div>

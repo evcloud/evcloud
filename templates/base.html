@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,6 +45,7 @@
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
+            {% if user.is_authenticated %}
                 <li class="nav-item" id="nav_vm_list"><a class="nav-link" href="{% url "vms:vms-list" %}">云主机</a></li>
                 <li class="nav-item" id="nav_vdisk_list"><a class="nav-link" href="{% url "vdisk:vdisk-list" %}">云硬盘</a></li>
                 <li class="nav-item" id="nav_image_list"><a class="nav-link" href="{% url "image:image-list" %}">镜像</a></li>
@@ -54,6 +56,7 @@
                     <li class="nav-item" id="nav_vlan_list"><a class="nav-link" href="{% url "network:vlan_list" %}">网络</a></li>
                     <li class="nav-item" id="nav_reports"><a class="nav-link" href="{% url 'reports:reports-list' %}">统计报表</a></li>
                 {% endif %}
+            {% endif %}
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
@@ -84,7 +87,11 @@
                     </li>
                 {% else %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'users:login' %}">登录</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'users:register' %}">注册</a></li>
+                    {% use_register_user as use_register %}
+                    <li class="nav-item">
+                        <a class="nav-link" {% if use_register %}href="{% url 'users:register' %}"
+                            {% else %}onclick="alert('不允许个人注册，请联系管理员');return false;" href="#"{% endif %}>注册</a>
+                    </li>
                 {% endif %}
             </ul>
         </div>

@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth import logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 
 from rest_framework.authtoken.models import Token
 
@@ -103,6 +104,10 @@ def register_user(request):
     """
     用户注册函数视图
     """
+    use_register = getattr(settings, 'USE_REGISTER_USER', False)
+    if not use_register:
+        return render(request, 'message.html', context={'message': '不允许个人注册，请联系管理员'})
+
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         # 表单数据验证通过
