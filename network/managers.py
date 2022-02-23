@@ -78,12 +78,12 @@ class VlanManager:
             group_set = user.group_set.all()
 
         if group:
-            if not group_set:
+            if group_set is None:
                 group_set = GroupManager().get_group_queryset()
 
             group_set = group_set.filter(id=group)
         elif center:
-            if group_set:
+            if group_set is not None:
                 group_set = group_set.filter(center=center)
             else:
                 group_set = CenterManager().get_group_queryset_by_center(center)
@@ -94,8 +94,12 @@ class VlanManager:
         elif is_public is False:
             queryset = queryset.filter(tag=Vlan.NET_TAG_PRIVATE)
 
-        if group_set:
-            queryset = queryset.filter(group__in=Subquery(group_set.values('id'))).all()
+        if group_set is not None:
+            group_ids = group_set.values('id')
+            if not group_ids:
+                return queryset.none()
+
+            queryset = queryset.filter(group__in=group_ids).all()
 
         return queryset
 
