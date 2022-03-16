@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, BasePermission
@@ -28,6 +29,9 @@ from api import serializers
 from utils import errors as exceptions
 from api.paginations import MacIpLimitOffsetPagination
 from api.viewsets import CustomGenericViewSet
+
+
+VPN_USER_ACTIVE_DEFAULT = getattr(settings, 'VPN_USER_ACTIVE_DEFAULT', False)
 
 
 def serializer_error_msg(errors, default=''):
@@ -3371,7 +3375,8 @@ class VPNViewSet(CustomGenericViewSet):
 
         create_user = request.user.username
         try:
-            vpn = mgr.create_vpn(username=username, password=password, remarks=create_user, create_user=create_user)
+            vpn = mgr.create_vpn(username=username, password=password, remarks=create_user, create_user=create_user,
+                                 active=VPN_USER_ACTIVE_DEFAULT)
         except VPNError as e:
             e.msg = f'创建用户vpn账户失败, {e}'
             return self.exception_response(e)

@@ -342,6 +342,9 @@ SWAGGER_SETTINGS = {
     },
 }
 
+# create vpn user default active/inactive
+VPN_USER_ACTIVE_DEFAULT = False
+
 # 导入安全相关的settings
 from .security import *
 
