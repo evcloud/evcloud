@@ -21,9 +21,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from version import __version__
-
-admin.AdminSite.site_header = 'EVCloud后台管理（管理员登录）'
-admin.AdminSite.site_title = '管理员登录'
+from . import admin_site    # admin后台一些设置
 
 
 def home(request):
