@@ -1,6 +1,6 @@
 from django.db.models import Q
 
-from .models import Image, ImageType
+from .models import Image
 from compute.managers import CenterManager, ComputeError
 from utils.errors import ImageError
 
@@ -30,15 +30,6 @@ class ImageManager:
             return Image.objects.filter(id=image_id).first()
         except Exception as e:
             raise ImageError(msg=f'查询镜像时错误,{str(e)}')
-
-    @staticmethod
-    def get_image_type_queryset():
-        """
-        可用镜像类型查询集
-        :return:
-            QuerySet()
-        """
-        return ImageType.objects.all()
 
     @staticmethod
     def get_image_queryset():

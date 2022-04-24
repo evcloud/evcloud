@@ -27,21 +27,6 @@ class VmXmlTemplate(models.Model):
         verbose_name_plural = '08_虚拟机XML模板'
 
 
-class ImageType(models.Model):
-    """
-    镜像镜像类型
-    """
-    id = models.AutoField(primary_key=True)
-    name = models.CharField('类型名称', max_length=100, unique=True)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = '镜像分类'
-        verbose_name_plural = '09_镜像分类'
-
-
 class Image(models.Model):
     """
     操作系统镜像
@@ -71,7 +56,6 @@ class Image(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='镜像名称', max_length=100)
     version = models.CharField(verbose_name='系统版本信息', max_length=100)
-    type = models.ForeignKey(to=ImageType, on_delete=models.CASCADE, verbose_name='类型')
     ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.CASCADE, verbose_name='CEPH存储后端')
     tag = models.SmallIntegerField(verbose_name='镜像标签', choices=CHOICES_TAG, default=TAG_USER)
     sys_type = models.SmallIntegerField(verbose_name='系统类型', choices=CHOICES_SYS_TYPE, default=SYS_TYPE_OTHER)

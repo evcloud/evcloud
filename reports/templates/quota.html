@@ -48,11 +48,11 @@
                         }
                     },
                     data: {
-                        labels: ['已用', '总量'],
+                        labels: ['已用', '可用'],
                         datasets: [{
                             label: '已用',
                             backgroundColor: [window.chartColors.grey, window.chartColors.green],
-                            data: [data.used, data.total]
+                            data: [data.used, data.total - data.used]
                         }]
                     }
                 }

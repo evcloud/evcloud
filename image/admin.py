@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 
-from .models import VmXmlTemplate, Image, ImageType
+from .models import VmXmlTemplate, Image
 
 
 @admin.register(VmXmlTemplate)
@@ -8,13 +8,6 @@ class VmXmlTemplateAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'name',)
     list_display = ('id', 'name', 'desc')
     search_fields = ('name', 'desc')
-
-
-@admin.register(ImageType)
-class ImageTypeAdmin(admin.ModelAdmin):
-    list_display_links = ('id', 'name',)
-    list_display = ('id', 'name')
-    search_fields = ('name',)
 
 
 @admin.register(Image)
