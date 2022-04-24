@@ -1771,6 +1771,7 @@ class ImageViewSet(CustomGenericViewSet):
     """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
+    lookup_field = 'id'
 
     @swagger_auto_schema(
         operation_summary='获取系统镜像列表',
@@ -1840,7 +1841,8 @@ class ImageViewSet(CustomGenericViewSet):
                   "create_time": "2020-03-06T14:46:27.149648+08:00",
                   "desc": "centos8",
                   "default_user": "root",
-                  "default_password": "cnic.cn"
+                  "default_password": "cnic.cn",
+                  "size": 100
                 }
               ]
             }
@@ -1867,6 +1869,56 @@ class ImageViewSet(CustomGenericViewSet):
 
         serializer = self.get_serializer(queryset, many=True)
         return Response({'results': serializer.data})
+
+    @swagger_auto_schema(
+        operation_summary='查询系统镜像'
+    )
+    def retrieve(self, request, *args, **kwargs):
+        """
+        查询系统镜像
+
+            http code 200:
+            {
+              "id": 1,
+              "name": "centos8",
+              "version": "64bit",
+              "sys_type": {
+                "id": 2,
+                "name": "Linux"
+              },
+              "tag": {
+                "id": 0,
+                "name": "基础镜像"
+              },
+              "enable": true,
+              "create_time": "2020-03-06T14:46:27.149648+08:00",
+              "desc": "centos8",
+              "default_user": "root",
+              "default_password": "cnic.cn",
+              "size": 100
+            }
+            http code 400, 404:
+            {
+              "code": 400,
+              "err_code": "BadRequest", # NoSuchImage
+              "code_text": "镜像id无效"
+            }
+        """
+        image_id = kwargs.get(self.lookup_field)
+        image_id = str_to_int_or_default(image_id, None)
+        if image_id is None:
+            return self.exception_response(exceptions.BadRequestError(msg='镜像id无效'))
+
+        try:
+            image = ImageManager().get_image_by_id(image_id=image_id)
+        except exceptions.Error as exc:
+            return self.exception_response(exc)
+
+        if image is None:
+            return self.exception_response(exceptions.NoSuchImage())
+
+        serializer = self.get_serializer(image)
+        return Response(data=serializer.data)
 
     def get_serializer_class(self):
         """

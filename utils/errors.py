@@ -351,3 +351,8 @@ class NoHostGroupError(Error):
     code = 409
     msg = '没有可用的宿主机资源'
     err_code = 'NoHostGroupAvailable'
+
+
+class NoSuchImage(NotFoundError):
+    msg = '没有此镜像'
+    err_code = 'NoSuchImage'
