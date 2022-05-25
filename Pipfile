@@ -15,7 +15,7 @@ djangorestframework-simplejwt = "==4.3.*"
 django-debug-toolbar = "==2.*"
 uwsgi = "==2.0.19.1"
 drf-yasg = "==1.20.0"
-pyjwt = "==1.7.1"
+pyjwt = "==2.4.0"
 
 [requires]
 python_version = "3.6"
