@@ -6,14 +6,14 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-django = "==3.2.5"
+django = "==3.2.13"
 mysqlclient = "==2.0.3"
 djangorestframework = "==3.12.4"
 libvirt-python = "==7.0.0"
 websockify = "==0.9.*"
 djangorestframework-simplejwt = "==4.3.*"
 django-debug-toolbar = "==2.*"
-uwsgi = "==2.0.19.1"
+uwsgi = "==2.0.20"
 drf-yasg = "==1.20.0"
 pyjwt = "==1.7.1"
 
