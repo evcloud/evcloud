@@ -10,9 +10,9 @@
 ![image](docs/static/docs/images/spice-console.png "Vm VNC")
 ![image](docs/static/docs/images/reports.png "reports")
 
-## 环境搭建(CentOS7)
+## 环境搭建(CentOS9)
 ### 1 安装python和Git
-请自行安装python3.6和Git。
+请自行安装python3.9和Git。
 使用Git拉取代码： 
 ```
 git clone https://github.com/evcloud/evcloud.git
@@ -30,6 +30,14 @@ pipenv install
 #### （2） 使用系统python环境
 在代码工程根目录下，即文件requirements.txt同目录下运行命令：  
 ```pip3 install -r requirements.txt```
+
+如果通过pip安装过程中安装libvirt-python失败，使用下面命令安装。
+```
+dnf uninstall python3-libvirt.x86_64
+
+# 如果使用了虚拟python环境，libvirt_python复制到你的虚拟python环境
+cp /usr/lib64/python3.9/site-packages/libvirt* /root/.local/share/virtualenvs/evcloud-b1zsp8qp/lib/python3.9/site-packages/ -r
+```
 
 ### 3 安全敏感信息配置文件
 安全信息配置demo文件security_demo.py修改文件名为security.py，根据自己情况完成配置。
@@ -51,13 +59,17 @@ DATABASES = {
 ```   
 
 ### 5 CEPH依赖库安装
-根据自己ceph版本安装对应版本的包，与ceph的通信默认使用官方librados的python包python36-rados，python36-rbd的rpm包安装成功后，python包会自动安装到
-系统python3第三方扩展包路径下（/usr/lib64/python3.6/site-packages/）。    
+根据自己ceph版本安装对应版本的包，与ceph的通信默认使用官方librados的python包python3-rados，python3-rbd的rpm包安装成功后，python包会自动安装到
+系统python3第三方扩展包路径下（/usr/lib64/python3.9/site-packages/）。    
 使用python虚拟环境的，需要手动把路径下的python包文件rados*和rbd*复制到你的虚拟python环境*/site-packages/下。
 ```
-yum install -y http://download.ceph.com/rpm-nautilus/el7/x86_64/librados2-14.2.1-0.el7.x86_64.rpm
-yum install -y http://download.ceph.com/rpm-nautilus/el7/x86_64/python36-rados-14.2.1-0.el7.x86_64.rpm
-yum install -y http://download.ceph.com/rpm-nautilus/el7/x86_64/python-rbd-14.2.4-0.el7.x86_64.rpm
+dnf install librados-devel.x86_64 -y
+dnf install python3-rados.x86_64 -y
+dnf install python3-rbd.x86_64 -y
+
+# 如果使用了虚拟python环境，rados*和rbd*复制到你的虚拟python环境
+cp /usr/lib64/python3.9/site-packages/rados* /root/.local/share/virtualenvs/evcloud-b1zsp8qp/lib/python3.9/site-packages/ -r    
+cp /usr/lib64/python3.9/site-packages/rbd* /root/.local/share/virtualenvs/evcloud-b1zsp8qp/lib/python3.9/site-packages/ -r
 ```
 
 ### 6 运行服务
@@ -82,14 +94,14 @@ pip3 install websockify
 ```
 替换websockify的token插件，使用项目中自定义的token插件，根据自己环境修改以下命令中的PROJECT_PATH和PYTHON_PATH：
 ```
-ln -s PROJECT_PATH/novnc/token_plugin_mysql/token_plugin_mysql.py PYTHON_PATH/python3.6/site-packages/websockify/token_plugins.py
+ln -s PROJECT_PATH/novnc/token_plugin_mysql/token_plugin_mysql.py PYTHON_PATH/python3.9/site-packages/websockify/token_plugins.py
 ```
-下载noVNC（https://github.com/novnc/noVNC）为 /var/www/console/novnc。
-下载spice-html5（https://gitlab.freedesktop.org/spice/spice-html5）为 /var/www/console/spice。
+WEB console客户端noVNC（https://github.com/novnc/noVNC）和 spice-html5（https://gitlab.freedesktop.org/spice/spice-html5） 在项目目录static/console下。
 
 启动websockify服务
+运行01run_novnc.sh脚本，或直接执行命令：
 ```
-websockify 0.0.0.0:84 --daemon --web=/usr/share/noVNC --token-plugin=TokenMysql --token-source='mysql'
+websockify 0.0.0.0:84 --daemon --web=/home/uwsgi/evcloud/static/console --token-plugin=TokenMysql --token-source='mysql'
 ```
 请对应设置项目配置文件settings.py中参数NOVNC_SERVER_PORT的值。
 
