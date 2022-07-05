@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-django = "==3.2.13"
+django = "==3.2.14"
 mysqlclient = "==2.1.0"
 djangorestframework = "==3.13.1"
 libvirt-python = "==8.4.0"
