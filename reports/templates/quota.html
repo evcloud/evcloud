@@ -62,16 +62,16 @@
         function initQuotaCharts(){
             let cpu_total = {{ quota.vcpu_total }};
             let cpu_used = {{ quota.vcpu_allocated }};
-            let mem_total = {{ quota.mem_total }} - {{ quota.mem_reserved }};
+            let mem_total = {{ quota.mem_total }};
             let mem_used = {{ quota.mem_allocated }};
             let ips_total = {{ quota.ips_total }};
             let ips_used = {{ quota.ips_used }};
             let vm_total = {{ quota.vm_limit }};
             let vm_used = {{ quota.vm_created }};
 
-            let mem_title = '内存 (' + sizeFormat(mem_total, "MB") + ')'
+            let mem_title = '内存 (' + sizeFormat(mem_total, "GB") + ')'
             let vcpu_subtitle = "已使用 " + cpu_used + " of " + cpu_total;
-            let mem_subtitle = "已使用 " + parseInt(mem_used/1024) + "Gb of " + parseInt(mem_total/1024) + "Gb";
+            let mem_subtitle = "已使用 " + mem_used + "Gb of " + mem_total+ "Gb";
             let ips_subtitle = "已使用 " + ips_used + " of " + ips_total;
             let vm_subtitle = "已使用 " + vm_used + " of " + vm_total;
 

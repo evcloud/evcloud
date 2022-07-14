@@ -71,7 +71,7 @@
         {{ each results }}
             <option value="{{ $value.id }}">
                 {{ $value.ipv4 }}(vCPU:{{$value.vcpu_allocated}}/{{$value.vcpu_total - $value.vcpu_allocated}}/{{$value.vcpu_total}}, 
-                RAM:{{$value.mem_allocated}}Mb/{{$value.mem_total - $value.mem_allocated -$value.mem_reserved}}Mb/{{$value.mem_total}}Mb),
+                RAM:{{$value.mem_allocated}}Gb/{{$value.mem_total - $value.mem_allocated}}Gb/{{$value.mem_total}}Gb),
                 Num:{{$value.vm_created}}/{{$value.vm_limit - $value.vm_created}}/{{$value.vm_limit}}
             </option>
         {{/each}}
@@ -83,7 +83,7 @@
         if(!group){
             return;
         }
-        let qs = encode_params({group_id:group});
+        let qs = encode_params({group_id:group, mem_unit:'GB'});
         let api = build_absolute_url('/api/v3/host/?'+ qs);
         $.ajax({
             url: api,

@@ -45,11 +45,11 @@ class VmXMLBuilder:
         try:
             root = xml.get_root()
             node = root.getElementsByTagName('memory')[0]
-            node.attributes['unit'].value = 'MiB'
+            node.attributes['unit'].value = 'GiB'
             node.firstChild.data = mem
 
             node = root.getElementsByTagName('currentMemory')[0]
-            node.attributes['unit'].value = 'MiB'
+            node.attributes['unit'].value = 'GiB'
             node.firstChild.data = mem
 
             return root.toxml()
@@ -151,6 +151,24 @@ class VmXMLBuilder:
         pool_name = pool.pool_name
         ceph = pool.ceph
         xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+
+        # mem参数单位为GB，根据xml模版中的单位进行换算
+        xml = XMLEditor()
+        if not xml.set_xml(xml_tpl):
+            raise errors.VmError(msg='虚拟机xml模版内容无效')
+        try:
+            root = xml.get_root()
+            node = root.getElementsByTagName('currentMemory')[0]
+            if node.attributes['unit'].value == 'MiB':
+                mem = mem * 1024
+            elif node.attributes['unit'].value == 'GiB':
+                pass
+            elif node.attributes['unit'].value == 'KiB':
+                mem = mem * 1024 * 1024
+            else:
+                raise errors.VmError(msg='虚拟机xml模版中的currentMemory单位必须为KiB、MiB或GiB')
+        except Exception as e:
+            raise errors.VmError(msg='虚拟机创建时单位换算发生错误')
         xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph.uuid,
                                   ceph_pool=pool_name, diskname=vm_disk_name, ceph_username=ceph.username,
                                   ceph_hosts_xml=ceph.hosts_xml, mac=mac_ip.mac, bridge=mac_ip.vlan.br)

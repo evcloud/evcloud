@@ -25,7 +25,7 @@ def sizeformat(value, arg="B"):
         return avoid_wrapping(value)
 
     def filesize_number_format(val):
-        return formats.number_format(round(val, 1), 1)
+        return formats.number_format(round(val))
 
     # 在原函数的基础上，添加了单位参数，使不同量级数据都可以被格式化
     switch = {

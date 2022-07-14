@@ -304,6 +304,13 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='关键字查询'
+            ),
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
             )
         ]
     )
@@ -313,6 +320,11 @@ class VmsViewSet(CustomGenericViewSet):
         host_id = str_to_int_or_default(request.query_params.get('host_id', 0), default=0)
         user_id = str_to_int_or_default(request.query_params.get('user_id', 0), default=0)
         search = request.query_params.get('search', '')
+
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
 
         user = request.user
         manager = VmManager()
@@ -330,15 +342,24 @@ class VmsViewSet(CustomGenericViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, context={'mem_unit': mem_unit}, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, context={'mem_unit': mem_unit}, many=True)
         data = {'results': serializer.data}
         return Response(data)
 
     @swagger_auto_schema(
         operation_summary='查询PCI设备可挂载的虚拟机',
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
         responses={
             200: ''
         }
@@ -378,6 +399,11 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的PCI ID')
             return self.exception_response(exc)
 
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
         try:
             dev = PCIDeviceManager().get_device_by_id(device_id=pci_id)
         except DeviceError as exc:
@@ -402,15 +428,24 @@ class VmsViewSet(CustomGenericViewSet):
 
         page = self.paginate_queryset(qs)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, context={'mem_unit': mem_unit}, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(qs, many=True)
+        serializer = self.get_serializer(qs, context={'mem_unit': mem_unit}, many=True)
         data = {'results': serializer.data}
         return Response(data)
 
     @swagger_auto_schema(
         operation_summary='查询硬盘可挂载的虚拟机',
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
         responses={
             200: ''
         }
@@ -449,6 +484,10 @@ class VmsViewSet(CustomGenericViewSet):
         if not vdisk_uuid:
             exc = exceptions.BadRequestError(msg='无效的VDisk UUID')
             return self.exception_response(exc)
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
 
         try:
             vdisk = VdiskManager().get_vdisk_by_uuid(uuid=vdisk_uuid, related_fields=('quota__group',))
@@ -475,10 +514,10 @@ class VmsViewSet(CustomGenericViewSet):
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, context={'mem_unit': mem_unit}, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, context={'mem_unit': mem_unit}, many=True)
         data = {'results': serializer.data}
         return Response(data)
 
@@ -491,6 +530,13 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='指定分配IP类型，可选值public（公网）、 private（私网）'
+            ),
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
             )
         ],
         responses={
@@ -509,7 +555,12 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='参数ip-type的值无效')
             return self.exception_response(exc)
 
-        serializer = self.get_serializer(data=request.data)
+        mem_unit = str.upper(request.data.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
+        serializer = self.get_serializer(data=request.data, context={'mem_unit': mem_unit})
         if not serializer.is_valid(raise_exception=False):
             code_text = serializer_error_msg(errors=serializer.errors, default='参数验证有误')
             exc = exceptions.BadRequestError(msg=code_text)
@@ -543,16 +594,31 @@ class VmsViewSet(CustomGenericViewSet):
             'code': 201,
             'code_text': '创建成功',
             'data': request.data,
-            'vm': serializers.VmSerializer(vm).data
+            'vm': serializers.VmSerializer(vm, context={'mem_unit': mem_unit}).data
         }, status=status.HTTP_201_CREATED)
 
     @swagger_auto_schema(
         operation_summary='获取虚拟机详细信息',
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
         responses={
             200: ''
         }
     )
     def retrieve(self, request, *args, **kwargs):
+
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
             vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('image', 'mac_ip', 'host', 'user'))
@@ -568,7 +634,7 @@ class VmsViewSet(CustomGenericViewSet):
         return Response(data={
             'code': 200,
             'code_text': '获取虚拟机信息成功',
-            'vm': self.get_serializer(vm).data
+            'vm': self.get_serializer(vm, context={'mem_unit': mem_unit}).data
         })
 
     @swagger_auto_schema(
@@ -614,6 +680,15 @@ class VmsViewSet(CustomGenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='修改虚拟机vcpu和内存大小',
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
         responses={
             200: """
                 {
@@ -641,8 +716,12 @@ class VmsViewSet(CustomGenericViewSet):
             }
         """
         vm_uuid = kwargs.get(self.lookup_field, '')
+        mem_unit = str.upper(request.data.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={'mem_unit': mem_unit})
         if not serializer.is_valid(raise_exception=False):
             code_text = serializer_error_msg(serializer.errors, '参数验证有误')
             exc = exceptions.BadRequestError(msg=code_text)
@@ -1548,6 +1627,12 @@ class HostViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=False,
                 description='宿主机组id'
+            ),
+            openapi.Parameter(
+                name='mem_unit', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（MB、GB、默认为MB）'
             )
         ]
     )
@@ -1569,7 +1654,6 @@ class HostViewSet(CustomGenericViewSet):
                   "vcpu_allocated": 14,
                   "mem_total": 132768,
                   "mem_allocated": 9216,
-                  "mem_reserved": 12038,
                   "vm_limit": 10,
                   "vm_created": 8,
                   "enable": true,
@@ -1579,6 +1663,10 @@ class HostViewSet(CustomGenericViewSet):
             }
         """
         group_id = int(request.query_params.get('group_id', 0))
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
 
         try:
             queryset = HostManager().filter_hosts_queryset(group_id=group_id)
@@ -1587,10 +1675,10 @@ class HostViewSet(CustomGenericViewSet):
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, context={'mem_unit': mem_unit}, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, context={'mem_unit': mem_unit}, many=True)
         return Response(serializer.data)
 
     def get_serializer_class(self):
@@ -2760,6 +2848,15 @@ class StatCenterViewSet(CustomGenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='获取所有资源统计信息',
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
         responses={
             200: ''
         }
@@ -2778,7 +2875,6 @@ class StatCenterViewSet(CustomGenericViewSet):
                   "name": "怀柔分中心",
                   "mem_total": 165536,
                   "mem_allocated": 15360,
-                  "mem_reserved": 2038,
                   "vcpu_total": 54,
                   "vcpu_allocated": 24,
                   "vm_created": 6
@@ -2791,7 +2887,6 @@ class StatCenterViewSet(CustomGenericViewSet):
                   "center__name": "怀柔分中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
-                  "mem_reserved": 2038,
                   "vcpu_total": 24,
                   "vcpu_allocated": 24,
                   "vm_created": 6
@@ -2804,7 +2899,6 @@ class StatCenterViewSet(CustomGenericViewSet):
                   "group__name": "宿主机组1",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
-                  "mem_reserved": 2038,
                   "vcpu_total": 24,
                   "vcpu_allocated": 24,
                   "vm_created": 6
@@ -2812,18 +2906,41 @@ class StatCenterViewSet(CustomGenericViewSet):
               ]
             }
         """
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
         centers = CenterManager().get_stat_center_queryset().values(
-            'id', 'name', 'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+            'id', 'name', 'mem_total', 'mem_allocated', 'vcpu_total', 'vcpu_allocated', 'vm_created')
         groups = GroupManager().get_stat_group_queryset().values(
             'id', 'name', 'center__name', 'mem_total', 'mem_allocated',
-            'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created')
+            'vcpu_total', 'vcpu_allocated', 'vm_created')
         hosts = Host.objects.select_related('group').values(
             'id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
-            'mem_reserved', 'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+            'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+
+        for objs in [centers, groups, hosts]:
+            for item in objs:
+                if mem_unit in ['MB', 'UNKNOWN']:
+                    item['mem_total'] = item['mem_total'] * 1024
+                    item['mem_allocated'] = item['mem_allocated'] * 1024
+                    item['mem_unit'] = 'MB'
+                else:
+                    item['mem_unit'] = 'GB'
         return Response(data={'code': 200, 'code_text': 'get ok', 'centers': centers, 'groups': groups, 'hosts': hosts})
 
     @swagger_auto_schema(
         operation_summary='获取一个分中心的资源统计信息',
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
         responses={
             200: ''
         }
@@ -2842,7 +2959,6 @@ class StatCenterViewSet(CustomGenericViewSet):
                   "name": "怀柔分中心",
                   "mem_total": 165536,
                   "mem_allocated": 15360,
-                  "mem_reserved": 2038,
                   "vcpu_total": 54,
                   "vcpu_allocated": 24,
                   "vm_created": 6
@@ -2854,7 +2970,6 @@ class StatCenterViewSet(CustomGenericViewSet):
                   "center__name": "怀柔分中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
-                  "mem_reserved": 2038,
                   "vcpu_total": 24,
                   "vcpu_allocated": 24,
                   "vm_created": 6
@@ -2862,10 +2977,15 @@ class StatCenterViewSet(CustomGenericViewSet):
               ]
             }
         """
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
         c_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if c_id > 0:
             center = CenterManager().get_stat_center_queryset(filters={'id': c_id}).values(
-                'id', 'name', 'mem_total', 'mem_allocated', 'mem_reserved', 'vcpu_total',
+                'id', 'name', 'mem_total', 'mem_allocated', 'vcpu_total',
                 'vcpu_allocated', 'vm_created').first()
         else:
             center = None
@@ -2875,12 +2995,31 @@ class StatCenterViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         groups = GroupManager().get_stat_group_queryset(filters={'center': c_id}).values(
-            'id', 'name', 'center__name', 'mem_total', 'mem_allocated', 'mem_reserved',
+            'id', 'name', 'center__name', 'mem_total', 'mem_allocated',
             'vcpu_total', 'vcpu_allocated', 'vm_created')
+
+        for objs in [[center], groups]:
+            for item in objs:
+                if mem_unit in ['MB', 'UNKNOWN']:
+                    item['mem_total'] = item['mem_total'] * 1024
+                    item['mem_allocated'] = item['mem_allocated'] * 1024
+                    item['mem_unit'] = 'MB'
+                else:
+                    item['mem_unit'] = 'GB'
+
         return Response(data={'code': 200, 'code_text': 'get ok', 'center': center, 'groups': groups})
 
     @swagger_auto_schema(
         operation_summary='获取一个机组的资源统计信息',
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
         responses={
             200: ''
         }
@@ -2900,7 +3039,6 @@ class StatCenterViewSet(CustomGenericViewSet):
                   "center__name": "怀柔分中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
-                  "mem_reserved": 2038,
                   "vcpu_total": 24,
                   "vcpu_allocated": 24,
                   "vm_created": 6
@@ -2912,7 +3050,6 @@ class StatCenterViewSet(CustomGenericViewSet):
                   "group__name": "宿主机组1",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
-                  "mem_reserved": 2038,
                   "vcpu_total": 24,
                   "vcpu_allocated": 24,
                   "vm_created": 6
@@ -2920,10 +3057,15 @@ class StatCenterViewSet(CustomGenericViewSet):
               ]
             }
         """
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
         g_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if g_id > 0:
             group = GroupManager().get_stat_group_queryset(filters={'id': g_id}).values(
-                'id', 'name', 'center__name', 'mem_total', 'mem_allocated', 'mem_reserved',
+                'id', 'name', 'center__name', 'mem_total', 'mem_allocated',
                 'vcpu_total', 'vcpu_allocated', 'vm_created').first()
         else:
             group = None
@@ -2933,8 +3075,17 @@ class StatCenterViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         hosts = Host.objects.select_related('group').filter(group=g_id).values(
-            'id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated', 'mem_reserved',
+            'id', 'ipv4', 'group__name', 'mem_total', 'mem_allocated',
             'vcpu_total', 'vcpu_allocated', 'vm_created').all()
+
+        for objs in [[group], hosts]:
+            for item in objs:
+                if mem_unit in ['MB', 'UNKNOWN']:
+                    item['mem_total'] = item['mem_total'] * 1024
+                    item['mem_allocated'] = item['mem_allocated'] * 1024
+                    item['mem_unit'] = 'MB'
+                else:
+                    item['mem_unit'] = 'GB'
         return Response(data={'code': 200, 'code_text': 'get ok', 'group': group, 'hosts': hosts})
 
     def get_serializer_class(self):
@@ -3303,7 +3454,16 @@ class FlavorViewSet(CustomGenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='列举硬件配置样式',
-        request_body=no_body
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ]
     )
     def list(self, request, *args, **kwargs):
         """
@@ -3323,13 +3483,18 @@ class FlavorViewSet(CustomGenericViewSet):
                   ]
                 }
         """
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
         queryset = FlavorManager().get_user_flaver_queryset(user=request.user)
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, context={'mem_unit': mem_unit}, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, context={'mem_unit': mem_unit}, many=True)
         return Response({'results': serializer.data})
 
     def get_serializer_class(self):

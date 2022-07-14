@@ -19,11 +19,6 @@ function chart_init() {
         data: {
             labels: [],
             datasets: [{
-                label: '预留',
-                backgroundColor: window.chartColors.red,
-                maxBarThickness: 50,
-                data: []
-            },{
                 label: '已用',
                 backgroundColor: window.chartColors.grey,
                 maxBarThickness: 50,
@@ -39,7 +34,7 @@ function chart_init() {
             plugins: {
                 title: {
                     display: true,
-                    text: '内存 (MB)'
+                    text: '内存 (GB)'
                 }
             },
             tooltips: {
@@ -153,7 +148,7 @@ function sizeFormat(val, unit){
                 val = val / 1024;
                 value = sizeFormat(val, 'MB');
             }else{
-                value = val.toFixed(2) + 'KB';
+                value = val.toFixed(0) + 'KB';
             }
              break;
         case "MB":
@@ -161,7 +156,7 @@ function sizeFormat(val, unit){
                 val = val / 1024;
                 value = sizeFormat(val, 'GB');
             }else{
-                value = val.toFixed(2) + 'MB';
+                value = val.toFixed(0) + 'MB';
             }
             break;
         case "GB":
@@ -169,7 +164,7 @@ function sizeFormat(val, unit){
                 val = val / 1024;
                 value = sizeFormat(val, 'TB');
             }else{
-                value = val.toFixed(2) + 'GB';
+                value = val.toFixed(0) + 'GB';
             }
             break;
         case "TB":
@@ -177,11 +172,11 @@ function sizeFormat(val, unit){
                 val = val / 1024;
                 value = sizeFormat(val, 'PB');
             }else{
-                value = val.toFixed(2) + 'TB';
+                value = val.toFixed(0) + 'TB';
             }
             break;
         case "PB":
-            value = val.toFixed(2) + 'PB';
+            value = val.toFixed(0) + 'PB';
             break;
         default:
             value = val + unit;

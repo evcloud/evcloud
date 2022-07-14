@@ -72,8 +72,9 @@
         function get_stat_data_ajax() {
             let center_name_dom = $("#id-current-center");
             let center_id = center_name_dom.attr("data-center-id");
+            let qs = encode_params({mem_unit:'GB'});
             $.ajax({
-                url: build_absolute_url('/api/v3/stat/' + center_id + '/center/'),
+                url: build_absolute_url('/api/v3/stat/' + center_id + '/center/?' + qs),
                 type: 'get',
                 success: function (data) {
                     center_name_dom.text(data.center.name);
@@ -93,9 +94,8 @@
                     window.chart_cpu.update();
 
                     window.chart_mem.data.labels = chart_data.names;
-                    window.chart_mem.data.datasets[0].data = chart_data.mem_reserved;
-                    window.chart_mem.data.datasets[1].data = chart_data.mem_used;
-                    window.chart_mem.data.datasets[2].data = chart_data.mem_free;
+                    window.chart_mem.data.datasets[0].data = chart_data.mem_used;
+                    window.chart_mem.data.datasets[1].data = chart_data.mem_free;
                     window.chart_mem.update();
                 },
                 error: function (e) {
@@ -109,10 +109,10 @@
             {{ set c = $data }}
             <td>{{c.vcpu_total}}</td>
             <td>{{c.vcpu_allocated}}</td>
-            <td>{{c.vcpu_allocated | percentageFormat c.vcpu_total}}</td>
-            <td>{{c.mem_total | sizeFormat 'MB'}}</td>
-            <td>{{c.mem_allocated | sizeFormat 'MB'}}</td>
-            <td>{{c.mem_allocated | percentageFormat c.mem_total}}</td>
+            <td>{{c.vcpu_allocated | percentageFormat: c.vcpu_total}}</td>
+            <td>{{c.mem_total | sizeFormat: 'GB'}}</td>
+            <td>{{c.mem_allocated | sizeFormat: 'GB'}}</td>
+            <td>{{c.mem_allocated | percentageFormat: c.mem_total}}</td>
             <td>{{c.vm_created}}</td>
         </tr>
     `);
@@ -124,10 +124,10 @@
             <td><a href="/reports/group/{{c.id}}/">{{c.name}}</a></td>
             <td>{{c.vcpu_total}}</td>
             <td>{{c.vcpu_allocated}}</td>
-            <td>{{c.vcpu_allocated | percentageFormat c.vcpu_total}}</td>
-            <td>{{c.mem_total | sizeFormat 'MB'}}</td>
-            <td>{{c.mem_allocated | sizeFormat 'MB'}}</td>
-            <td>{{c.mem_allocated | percentageFormat c.mem_total}}</td>
+            <td>{{c.vcpu_allocated | percentageFormat: c.vcpu_total}}</td>
+            <td>{{c.mem_total | sizeFormat: 'GB'}}</td>
+            <td>{{c.mem_allocated | sizeFormat: 'GB'}}</td>
+            <td>{{c.mem_allocated | percentageFormat: c.mem_total}}</td>
             <td>{{c.vm_created}}</td>
         </tr>
         {{/each}}
@@ -146,14 +146,13 @@
                     names.push(g.name);
                     vms.push(g.vm_created);
                     mem_used.push(g.mem_allocated);
-                    mem_reserved.push(g.mem_reserved);
-                    mem_free.push(g.mem_total - g.mem_allocated - g.mem_reserved);
+                    mem_free.push(g.mem_total - g.mem_allocated);
                     cpu_used.push(g.vcpu_allocated);
                     cpu_free.push(g.vcpu_total - g.vcpu_allocated);
                 });
             }
             return {
-                names: names, mem_free: mem_free, mem_used: mem_used, mem_reserved: mem_reserved, vms: vms,
+                names: names, mem_free: mem_free, mem_used: mem_used, vms: vms,
                 cpu_used: cpu_used, cpu_free: cpu_free
             };
         }

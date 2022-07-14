@@ -80,7 +80,7 @@ class Vm(VmBase):
     uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=200)
     vcpu = models.IntegerField(verbose_name='CPU数')
-    mem = models.IntegerField(verbose_name='内存大小', help_text='单位MB')
+    mem = models.IntegerField(verbose_name='内存大小', help_text='单位GB')
     disk = models.CharField(verbose_name='系统盘名称', max_length=100, unique=True,
                             help_text='vm自己的系统盘，保存于ceph中的rdb文件名称')
     image = models.ForeignKey(to=Image, on_delete=models.CASCADE, verbose_name='源镜像',
@@ -660,7 +660,7 @@ class Flavor(models.Model):
     """
     id = models.AutoField(primary_key=True, verbose_name='ID')
     vcpus = models.IntegerField(verbose_name=_('虚拟CPU数'), validators=[MinValueValidator(1)])
-    ram = models.IntegerField(verbose_name=_('内存'), validators=[MinValueValidator(512)], help_text=_('单位MB'))
+    ram = models.IntegerField(verbose_name=_('内存'), validators=[MinValueValidator(1)], help_text=_('单位GB'))
     public = models.BooleanField(verbose_name=_('是否公开'), default=True, help_text=_('非公开的普通用户不可见，超级用户可见'))
     enable = models.BooleanField(verbose_name=_('是否可用'), default=True)
 

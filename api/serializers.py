@@ -1,3 +1,5 @@
+import math
+
 from rest_framework import serializers
 
 from vms.models import Vm, MigrateTask
@@ -48,6 +50,16 @@ class VmSerializer(serializers.ModelSerializer):
         img = obj.image
         return img.name if img else ""
 
+    def to_representation(self, instance):
+        """Convert `GB` to 'MB' depending on the requirement."""
+        ret = super().to_representation(instance)
+        if 'GB' == self.context.get('mem_unit'):
+            ret['mem_unit'] = 'GB'
+        else:
+            ret['mem'] = ret['mem'] * 1024
+            ret['mem_unit'] = 'MB'
+        return ret
+
 
 class VmCreateSerializer(serializers.Serializer):
     """
@@ -56,8 +68,8 @@ class VmCreateSerializer(serializers.Serializer):
     image_id = serializers.IntegerField(label='镜像id', required=True, min_value=1, help_text='系统镜像id')
     vcpu = serializers.IntegerField(label='cpu数', min_value=1, required=False,
                                     allow_null=True, default=None, help_text='cpu数')
-    mem = serializers.IntegerField(label='内存大小', min_value=512, required=False,
-                                   allow_null=True, default=None, help_text='单位MB')
+    mem = serializers.IntegerField(label='内存大小', min_value=1, required=False,
+                                   allow_null=True, default=None, help_text='单位GB')
     vlan_id = serializers.IntegerField(label='子网id', required=False, allow_null=True,
                                        min_value=1, help_text='子网id', default=None)
     center_id = serializers.IntegerField(label='分中心id', required=False, allow_null=True,
@@ -89,6 +101,14 @@ class VmCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(detail={'code_text': '必须提交flavor_id或者直接指定vcpu和mem)'})
         return data
 
+    def to_internal_value(self, instance):
+        """Convert `MB` to 'GB' if mem_unit is 'MB' or null."""
+        ret = super().to_internal_value(instance)
+        if 'GB' == self.context.get('mem_unit'):
+            pass
+        else:
+            ret['mem'] = math.ceil(ret['mem'] / 1024)
+        return ret
 
 class VmPatchSerializer(serializers.Serializer):
     """
@@ -98,8 +118,8 @@ class VmPatchSerializer(serializers.Serializer):
                                          help_text='配置样式id')
     vcpu = serializers.IntegerField(label='cpu数', min_value=1, required=False, allow_null=True, default=0,
                                     help_text='cpu数')
-    mem = serializers.IntegerField(label='内存大小', min_value=512, required=False, allow_null=True, default=0,
-                                   help_text='单位MB')
+    mem = serializers.IntegerField(label='内存大小', min_value=1, required=False, allow_null=True, default=0,
+                                   help_text='单位GB')
 
     def validate(self, data):
         vcpu = data.get('vcpu')
@@ -110,6 +130,14 @@ class VmPatchSerializer(serializers.Serializer):
             raise serializers.ValidationError(detail={'code_text': '必须提交flavor_id或者直接指定vcp或mem)'})
         return data
 
+    def to_internal_value(self, instance):
+        """Convert `MB` to 'GB' if mem_unit is 'MB' or null."""
+        ret = super().to_internal_value(instance)
+        if 'GB' == self.context.get('mem_unit'):
+            pass
+        else:
+            ret['mem'] = math.ceil(ret['mem'] / 1024)
+        return ret
 
 class CenterSerializer(serializers.ModelSerializer):
     """
@@ -136,8 +164,18 @@ class HostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Host
         fields = ('id', 'ipv4', 'group', 'vcpu_total', 'vcpu_allocated', 'mem_total', 'mem_allocated',
-                  'mem_reserved', 'vm_limit', 'vm_created', 'enable', 'desc')
+                'vm_limit', 'vm_created', 'enable', 'desc')
 
+    def to_representation(self, instance):
+        """Convert `GB` to 'MB' depending on the requirement."""
+        ret = super().to_representation(instance)
+        if 'GB' == self.context.get('mem_unit'):
+            ret['mem_unit'] = 'GB'
+        else:
+            ret['mem_total'] = ret['mem_total'] * 1024
+            ret['mem_allocated'] = ret['mem_allocated'] * 1024
+            ret['mem_unit'] = 'MB'
+        return ret
 
 class VlanSerializer(serializers.ModelSerializer):
     """
@@ -447,6 +485,16 @@ class VmDetailSerializer(serializers.ModelSerializer):
 
         return None
 
+    def to_representation(self, instance):
+        """Convert `GB` to 'MB' depending on the requirement."""
+        ret = super().to_representation(instance)
+        if 'GB' == self.context.get('mem_unit'):
+            ret['mem_unit'] = 'GB'
+        else:
+            ret['mem'] = ret['mem'] * 1024
+            ret['mem_unit'] = 'MB'
+        return ret
+
 
 class VmChangePasswordSerializer(serializers.Serializer):
     """
@@ -461,6 +509,15 @@ class FlavorSerializer(serializers.Serializer):
     vcpus = serializers.IntegerField(label='虚拟CPU数')
     ram = serializers.IntegerField(label='内存MB')
 
+    def to_representation(self, instance):
+        """Convert `GB` to 'MB' depending on the requirement."""
+        ret = super().to_representation(instance)
+        if 'GB' == self.context.get('mem_unit'):
+            ret['mem_unit'] = 'GB'
+        else:
+            ret['ram'] = ret['ram'] * 1024
+            ret['mem_unit'] = 'MB'
+        return ret
 
 class VPNCreateSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, min_length=1, max_length=150)

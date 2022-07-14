@@ -285,7 +285,6 @@ class CenterManager:
         return qs.annotate(
             mem_total=DefaultSum('group_set__hosts_set__mem_total'),
             mem_allocated=DefaultSum('group_set__hosts_set__mem_allocated'),
-            mem_reserved=DefaultSum('group_set__hosts_set__mem_reserved'),
             real_cpu=DefaultSum('group_set__hosts_set__real_cpu'),
             vcpu_total=DefaultSum('group_set__hosts_set__vcpu_total'),
             vcpu_allocated=DefaultSum('group_set__hosts_set__vcpu_allocated'),
@@ -535,8 +534,7 @@ class GroupManager:
         return qs.select_related('center').annotate(
             mem_total=DefaultSum('hosts_set__mem_total'), mem_allocated=DefaultSum('hosts_set__mem_allocated'),
             vcpu_total=DefaultSum('hosts_set__vcpu_total'), vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
-            real_cpu=DefaultSum('hosts_set__real_cpu'),
-            mem_reserved=DefaultSum('hosts_set__mem_reserved'), vm_created=DefaultSum('hosts_set__vm_created')).all()
+            real_cpu=DefaultSum('hosts_set__real_cpu'), vm_created=DefaultSum('hosts_set__vm_created')).all()
 
     def compute_quota(self, user):
         """
@@ -546,7 +544,6 @@ class GroupManager:
             quota = Host.objects.filter(enable=True).aggregate(
                 mem_total=DefaultSum('mem_total'),
                 mem_allocated=DefaultSum('mem_allocated'),
-                mem_reserved=DefaultSum('mem_reserved'),
                 vcpu_total=DefaultSum('vcpu_total'),
                 vcpu_allocated=DefaultSum('vcpu_allocated'),
                 real_cpu=DefaultSum('real_cpu'),

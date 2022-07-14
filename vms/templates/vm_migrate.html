@@ -22,7 +22,7 @@
                             <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-vm-uuid">{{ vm.hex_uuid }}</dd>
                             <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
                             <dt class="col-2 text-right">CPU数:</dt> <dd class="col-10">{{ vm.vcpu }}</dd>
-                            <dt class="col-2 text-right">内存:</dt> <dd class="col-10">{{ vm.mem }} MB</dd>
+                            <dt class="col-2 text-right">内存:</dt> <dd class="col-10">{{ vm.mem }} GB</dd>
                             <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
                             <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
                             <dt class="col-2 text-right">宿主机:</dt> <dd class="col-10">{{ vm.host.ipv4 }}</dd>
@@ -37,7 +37,7 @@
                                         <option value="">--</option>
                                         {% for h in hosts %}
                                             <option value="{{ h.id }}">{{ h.ipv4 }} (cpu:{{ h.vcpu_allocated }}/{{ h.vcpu_total }},
-                                                mem:{{ h.mem_allocated|add:h.mem_reserved }}Mb/{{ h.mem_total }}Mb,
+                                                mem:{{ h.mem_allocated }}GB/{{ h.mem_total }}GB,
                                                 num:{{h.vm_created}}/{{h.vm_limit}})</option>
                                         {% endfor %}
                                     </select>

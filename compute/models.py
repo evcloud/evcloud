@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import F, Sum, Count
 from django.contrib.auth import get_user_model
 
+from pcservers.models import PcServer
 
 User = get_user_model()     # 获取用户模型
 
@@ -79,13 +80,14 @@ class Host(models.Model):
     """
     id = models.AutoField(primary_key=True)
     group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set', verbose_name='宿主机所属的组')
+    pcserver = models.OneToOneField(to=PcServer, related_name='pc_server_host', blank=True, null=True, on_delete=models.CASCADE, verbose_name='物理服务器')
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
     real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU总数')
+    real_mem = models.IntegerField(default=30, verbose_name='真实物理内存大小(Gb)')
     vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU总数')
     vcpu_allocated = models.IntegerField(default=0, verbose_name='已分配CPU总数')
-    mem_total = models.IntegerField(default=32768, verbose_name='宿主机总内存大小(Mb)')
-    mem_allocated = models.IntegerField(default=0, verbose_name='宿主机已分配内存大小(Mb)')
-    mem_reserved = models.IntegerField(default=2038, verbose_name='宿主机要保留的内存空间大小(Mb)')
+    mem_total = models.IntegerField(default=30, verbose_name='宿主机可用内存大小(Gb)')
+    mem_allocated = models.IntegerField(default=0, verbose_name='宿主机已分配内存大小(Gb)')
     vm_limit = models.IntegerField(default=10, verbose_name='本机可创建虚拟机数量上限')
     vm_created = models.IntegerField(default=0, verbose_name='本机已创建虚拟机数量')
     enable = models.BooleanField(default=True, verbose_name='宿主机状态')
@@ -94,6 +96,7 @@ class Host(models.Model):
     ipmi_host = models.CharField(max_length=100, default='', blank=True)
     ipmi_user = models.CharField(max_length=100, default='', blank=True)
     ipmi_password = models.CharField(max_length=100, default='', blank=True)
+
 
     class Meta:
         verbose_name = '宿主机'
@@ -119,7 +122,7 @@ class Host(models.Model):
             True: 没有足够的内存可用
             False: 内存足够使用
         """
-        free_mem = self.mem_total - self.mem_reserved - self.mem_allocated
+        free_mem = self.mem_total - self.mem_allocated
         return mem > free_mem
 
     def exceed_vcpu_limit(self, vcpu: int):
@@ -326,3 +329,7 @@ class Host(models.Model):
 
         self._stats_now_data = {'vcpu': vcpu_now, 'mem': mem_now, 'vm_num': count}
         return self._stats_now_data
+
+    def save(self, *args, **kwargs):
+        self.ipv4 = self.pcserver.host_ipv4
+        super().save(*args, **kwargs)

@@ -95,7 +95,7 @@
                                         <select name="flavor_id" class="form-control" id="id-flavor">
                                             <option value="" data-vcpu="" data-ram="">自定义</option>
                                             {% for f in flavors %}
-                                                <option value="{{ f.id }}" data-vcpu="{{ f.vcpus }}" data-ram="{{ f.ram }}">CPU: {{ f.vcpus }}核 / RAM: {{ f.ram }}MB</option>
+                                                <option value="{{ f.id }}" data-vcpu="{{ f.vcpus }}" data-ram="{{ f.ram }}">CPU: {{ f.vcpus }}核 / RAM: {{ f.ram }}GB</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -115,7 +115,7 @@
                                             </div>
                                             <input name="mem" type="text" class="form-control" onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')" aria-label="RAM">
                                             <div class="input-group-append">
-                                                <span class="input-group-text">MB</span>
+                                                <span class="input-group-text">GB</span>
                                             </div>
                                         </div>
                                     </div>
@@ -155,6 +155,7 @@
                             <button type="submit" class="btn btn-primary float-right">创建</button>
                         </div>
                     </div>
+                    <input name="mem_unit" type="hidden" id="mem_unit" value="GB">
                 </form>
             </div>
             <div class="panel-footer">

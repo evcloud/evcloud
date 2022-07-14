@@ -58,6 +58,7 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
     path('docs/', include('docs.urls', namespace='docs')),
     path('about/', about, name='about'),
+    path('pcservers/', include('pcservers.urls', namespace='compute')),
 ]
 
 if settings.DEBUG:

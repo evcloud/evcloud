@@ -94,7 +94,7 @@
                         <td>{{ vm.image }}</td>
                         <td>{{ vm.host_ipv4 }}</td>
                         <td>
-                            {{ vm.vcpu }} / {{ vm.mem|sizeformat:'MB' }}
+                            {{ vm.vcpu }} / {{ vm.mem|sizeformat:'GB' }}
                         </td>
                         <td>
                             {% with vm.vdisks as vdisks %}

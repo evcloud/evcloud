@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-from compute.models import Host
 
 User = get_user_model()
 
@@ -100,7 +99,6 @@ class PcServer(models.Model):
     use_for = models.TextField(blank=True, default='', verbose_name='用途')
     remarks = models.TextField(blank=True, default='', verbose_name='备注')
     hardware_info = models.TextField(blank=True, default='', verbose_name='硬件配置信息')
-    host = models.OneToOneField(to=Host, related_name='pc_server', blank=True, null=True, on_delete=models.SET_NULL, verbose_name='宿主机')
 
     class Meta:
         ordering = ['id']
