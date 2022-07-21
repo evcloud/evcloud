@@ -1,3 +1,8 @@
+## v3.1.8
+* 更新内存计量单位为GB（接口、功能操作）；
+* 建立宿主机与物理服务器OneToOne关联；
+* 升级PyJWT、djangorestframework库版本；
+
 ## v3.1.1
 * 新增about view；
 * API异常响应内容增加错误码，自定义异常处理；

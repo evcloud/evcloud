@@ -12,7 +12,6 @@ idna==3.3
 inflection==0.5.1
 itypes==1.2.0
 Jinja2==3.1.2
-libvirt-python==8.4.0
 MarkupSafe==2.1.1
 mysqlclient==2.1.0
 numpy==1.23.0
@@ -20,8 +19,6 @@ packaging==21.3
 PyJWT==2.4.0
 pyparsing==3.0.9
 pytz==2022.1
-rados==2.0.0
-rbd==2.0.0
 requests==2.28.0
 ruamel.yaml==0.17.21
 ruamel.yaml.clib==0.2.6
