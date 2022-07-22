@@ -331,6 +331,7 @@ class Host(models.Model):
         return self._stats_now_data
 
     def save(self, *args, **kwargs):
-        if not self.pcserver:
+        if self.pcserver:
             self.ipv4 = self.pcserver.host_ipv4
+            
         super().save(*args, **kwargs)
