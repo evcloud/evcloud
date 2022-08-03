@@ -14,7 +14,6 @@ itypes==1.2.0
 Jinja2==3.1.2
 MarkupSafe==2.1.1
 mysqlclient==2.1.0
-numpy==1.23.0
 packaging==21.3
 PyJWT==2.4.0
 pyparsing==3.0.9
