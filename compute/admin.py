@@ -37,7 +37,7 @@ class HostAdmin(admin.ModelAdmin):
                     'mem_total', 'mem_allocated', 'mem_allocated_now', 'vm_created', 'vm_created_now', 'enable', 'desc')
     list_filter = ['group']
     search_fields = ['ipv4']
-    actions = ['test_connect_host']
+    actions = ['test_connect_host', 'update_host_quota']
 
     @admin.display(description='测试宿主机是否可访问连接')
     def test_connect_host(self, request, queryset):
@@ -64,6 +64,30 @@ class HostAdmin(admin.ModelAdmin):
                 self.message_user(request, f"无法连接宿主机{len(not_conn_hosts)}个: {not_conn_hosts}", level=messages.ERROR)
         else:
             self.message_user(request, "所选宿主机都可访问连接", level=messages.SUCCESS)
+
+    @admin.display(description='更新宿主机的资源使用量')
+    def update_host_quota(self, request, queryset):
+        """
+        更新宿主机的资源使用量
+        """
+        failed_hosts = []
+        for host in queryset:
+            try:
+                s = host.stats_vcpu_mem_vms_now()
+                vcpu_allocated = s.get('vcpu')
+                mem_allocated = s.get('mem')
+                vm_num = s.get('vm_num')
+                host.vcpu_allocated = vcpu_allocated
+                host.mem_allocated = mem_allocated
+                host.vm_created = vm_num
+                host.save(update_fields=['vcpu_allocated', 'mem_allocated', 'vm_created'])
+            except Exception:
+                failed_hosts.append(host.ipv4)
+
+        if failed_hosts:
+            self.message_user(request, f"更新宿主机失败{len(failed_hosts)}个: {failed_hosts}", level=messages.ERROR)
+        else:
+            self.message_user(request, "所选宿主机都更新成功", level=messages.SUCCESS)
 
     @admin.display(description='实时统计的已分配VCPU')
     def vcpu_allocated_now(self, obj):
