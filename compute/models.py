@@ -333,5 +333,5 @@ class Host(models.Model):
     def save(self, *args, **kwargs):
         if self.pcserver:
             self.ipv4 = self.pcserver.host_ipv4
-            
+
         super().save(*args, **kwargs)
