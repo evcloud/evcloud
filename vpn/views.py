@@ -7,6 +7,7 @@ from django.http import FileResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.serializers import Serializer
 from drf_yasg.utils import swagger_auto_schema
 
 from utils.paginators import NumsPaginator
@@ -169,6 +170,7 @@ class VPNFileViewSet(viewsets.GenericViewSet):
     """
     permission_classes = []
     pagination_class = None
+    serializer_class = Serializer
 
     @swagger_auto_schema(
         operation_summary='下载用户vpn配置文件'

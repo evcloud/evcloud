@@ -3510,7 +3510,7 @@ class VPNViewSet(CustomGenericViewSet):
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     lookup_field = 'username'
-    lookup_value_regex = '.+'
+    lookup_value_regex = '[^/.]+'
 
     @swagger_auto_schema(
         operation_summary='获取用户vpn信息',
@@ -3663,6 +3663,102 @@ class VPNViewSet(CustomGenericViewSet):
         if not vpn.set_password(password, modified_user=request.user.username):
             exc = exceptions.VPNError(msg='修改用户vpn密码失败')
             return self.exception_response(exc)
+
+        return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_summary='激活vpn账户',
+        request_body=no_body,
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=["post"], detail=True, url_path='active', url_name='active-vpn')
+    def active_vpn(self, request, *args, **kwargs):
+        """
+        激活vpn账户
+
+            http code 200:
+                {
+                  "username": "testuser",
+                  "password": "password",
+                  "active": true,
+                  "create_time": "2020-07-29T15:12:08.715731+08:00",
+                  "modified_time": "2020-07-29T15:12:08.715998+08:00"
+                }
+            http code 4xx, 5xx:
+                {
+                  "err_code": "BadRequest",
+                  "code_text": "xxx"
+                }
+
+            错误码：
+                404:
+                    NoSuchVPN: vpn账户不存在
+                500:
+                    InternalServerError: 激活用户vpn失败
+        """
+        username = kwargs.get(self.lookup_field)
+
+        mgr = VPNManager()
+        vpn = mgr.get_vpn(username=username)
+        if not vpn:
+            self.exception_response(exceptions.NoSuchVPN())
+
+        if vpn.active is not True:
+            vpn.active = True
+            try:
+                vpn.save(update_fields=['active', 'modified_time'])
+            except Exception as e:
+                return self.exception_response(exceptions.VPNError(msg=f'激活用户vpn失败，{str(e)}'))
+
+        return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_summary='停用vpn账户',
+        request_body=no_body,
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=['post'], url_path='deactive', detail=True, url_name='deactive-vpn')
+    def deactive_vpn(self, request, *args, **kwargs):
+        """
+        停用vpn账户
+
+            http code 200:
+                {
+                  "username": "testuser",
+                  "password": "password",
+                  "active": true,
+                  "create_time": "2020-07-29T15:12:08.715731+08:00",
+                  "modified_time": "2020-07-29T15:12:08.715998+08:00"
+                }
+            http code 4xx, 5xx:
+                {
+                  "err_code": "BadRequest",
+                  "code_text": "xxx"
+                }
+
+            错误码：
+                404:
+                    NoSuchVPN: vpn账户不存在
+                500:
+                    InternalServerError: 激活用户vpn失败
+        """
+        username = kwargs.get(self.lookup_field)
+
+        mgr = VPNManager()
+        vpn = mgr.get_vpn(username=username)
+        if not vpn:
+            self.exception_response(exceptions.NoSuchVPN())
+
+        if vpn.active is not False:
+            vpn.active = False
+            try:
+                vpn.save(update_fields=['active', 'modified_time'])
+            except Exception as e:
+                return self.exception_response(exceptions.VPNError(msg=f'停用用户vpn失败，{str(e)}'))
 
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
 

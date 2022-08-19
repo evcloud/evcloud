@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.core.exceptions import PermissionDenied
+from django.db.models import QuerySet
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
@@ -45,6 +46,8 @@ def exception_handler(exc, context):
 
 
 class CustomGenericViewSet(GenericViewSet):
+    queryset = QuerySet().none()
+
     @staticmethod
     def exception_response(exc):
         if not isinstance(exc, errors.Error):
