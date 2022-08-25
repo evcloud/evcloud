@@ -11,7 +11,14 @@
                 </div>
                 <div class="p-2">
                     <h5>{% trans '版本' %}</h5>
-                    <p>{{ version }}</p>
+                    <p><span>{{ version }}</span>&emsp;
+                        {% if version_timestamp %}
+                            <span>{{ version_timestamp }}</span>&emsp;
+                        {% endif %}
+                        <span><a href="{% url 'docs:docs' %}#/changelog" target="view_window">
+                            {% trans '变更日志' %}</a>
+                        </span>
+                    </p>
                 </div>
                 <div class="p-2">
                     <h5>{% trans '关于我们' %}</h5>

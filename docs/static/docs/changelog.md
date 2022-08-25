@@ -1,7 +1,52 @@
+## v3.1.9
+* 后台宿主机列表增加action，测试宿主机是否可连接和更新宿主机资源使用量   
+* 增加VPNActive、VPNDeactive 激活停用vpn接口和测试用例  
+* "关于"网页修改，增加当前版本时间和变更日志链接  
+
 ## v3.1.8
 * 更新内存计量单位为GB（接口、功能操作）；
 * 建立宿主机与物理服务器OneToOne关联；
 * 升级PyJWT、djangorestframework库版本；
+
+## v3.1.7
+* 基于CentOS9, 升级到Python3.9，及依赖包升级  
+* 添加spice和novnc的html5客户端静态文件到static/console目录下  
+
+## v3.1.6
+* 用户注册功能是否启用可以配置的实现  
+* ListVlan api当用户没有任何宿主机组访问权限时返回所有vlan的问题修复  
+* AppVPN api创建的vpn账户默认未激活  
+* 移除model ImageType,ListImages响应数据增加镜像大小size，资源配额视图饼形图改为已用和可用  
+* add DetailImage api and testcase  
+* django, uwsgi版本升级  
+
+## v3.1.5
+* vm动态迁移优化  
+* vm换镜像时disk_type改为RBD,当vm domain name不是hex uuid时获取vnc找不到domain的问题  
+* 当vm系统盘是宿主机本地盘时, vm列表一些vm操作选项不可用  
+* VmInstance、VmDomain相关代码优化  
+* vm创建api增加sys_disk_size,可指定系统盘容量大小  
+* vms manager部分代码拆分抽象封装类VmInstance、VmBuilder、VmXMLBuilder  
+* vm系统盘扩容api和view  
+* vm add sys_disk_size  
+* image model add size  
+* 因chartjs更新，统计报表图形修复  
+* 支持spice远程控制台  
+* ServerDetail api response add 'host_info' data  
+
+## v3.1.4
+* 可用资源配额 
+* 硬盘支持vm运行状态下挂载 
+* vm动态迁移优化
+
+## v3.1.3
+* vm动态迁移 
+* vm内存、io信息图标实现查询显示 
+* 其他一些改进优化
+
+## v3.1.2
+* upgrade django3.2 
+* vdisk和vm在同一个分中心可挂载
 
 ## v3.1.1
 * 新增about view；

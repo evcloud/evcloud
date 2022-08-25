@@ -20,7 +20,7 @@ from django.shortcuts import redirect, render
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from version import __version__
+from version import __version__, __version_timestamp__
 from . import admin_site    # admin后台一些设置
 
 
@@ -29,7 +29,7 @@ def home(request):
 
 
 def about(request):
-    return render(request, 'about.html', context={'version': __version__})
+    return render(request, 'about.html', context={'version': __version__, 'version_timestamp': __version_timestamp__})
 
 
 schema_view = get_schema_view(
