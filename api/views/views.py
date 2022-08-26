@@ -3510,7 +3510,7 @@ class VPNViewSet(CustomGenericViewSet):
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     lookup_field = 'username'
-    lookup_value_regex = '[^/.]+'
+    lookup_value_regex = '[^/]+'      # 匹配排除“/”的任意字符串
 
     @swagger_auto_schema(
         operation_summary='获取用户vpn信息',
