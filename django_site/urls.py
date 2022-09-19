@@ -20,7 +20,7 @@ from django.shortcuts import redirect, render
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from version import __version__, __version_timestamp__
+from version import __version__, __version_git_change_set__
 from . import admin_site    # admin后台一些设置
 
 
@@ -29,8 +29,10 @@ def home(request):
 
 
 def about(request):
-    return render(request, 'about.html', context={'version': __version__, 'version_timestamp': __version_timestamp__})
+    return render(request, 'about.html', context={'version': __version__, 'version_git_change_set': __version_git_change_set__})
 
+def app_nav(request):
+    return render(request, 'app_nav.html')
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -58,6 +60,7 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
     path('docs/', include('docs.urls', namespace='docs')),
     path('about/', about, name='about'),
+    path('appnav/', app_nav, name='appnav'),
     path('pcservers/', include('pcservers.urls', namespace='compute')),
 ]
 

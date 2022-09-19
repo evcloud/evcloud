@@ -32,7 +32,8 @@
             </div>
             <div class="card-body">
                 <div class="text-center h3">
-                    <span id="id-vm-uuid">{{ vm.hex_uuid }}</span>
+                    <strong>{{ vm.ipv4 }}</strong>
+                    (<span id="id-vm-uuid">{{ vm.hex_uuid }}</span>)
                     {% include 'vm_operations.html' %}
                     <span class="h5" id="vm_task_{{ vm.hex_uuid }}"></span>
                 </div>

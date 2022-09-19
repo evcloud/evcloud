@@ -217,9 +217,9 @@ class VmBuilder:
 
         :raise VmError
         """
-        macip = None    # 申请的macip
+        macip = None  # 申请的macip
         vlan = None
-        diskname = None     # clone的系统镜像
+        diskname = None  # clone的系统镜像
 
         if vcpu <= 0:
             raise errors.VmError.from_error(errors.BadRequestError(msg='无法创建虚拟机,vcpu参数无效'))
@@ -232,7 +232,7 @@ class VmBuilder:
         if sys_disk_size and sys_disk_size > 5 * 1024:
             raise errors.VmError(msg='系统盘容量不得大于5TB')
 
-        image = self.get_image(image_id)    # 镜像
+        image = self.get_image(image_id)  # 镜像
         try:
             image_size = image.get_size()
         except Exception as e:
@@ -253,10 +253,10 @@ class VmBuilder:
 
         # 如果指定了vlan或ip
         if ipv4:
-            macip = self.available_macip(ipv4=ipv4, user=user, ip_public=ip_public)       # ip是否可用
+            macip = self.available_macip(ipv4=ipv4, user=user, ip_public=ip_public)  # ip是否可用
             groups, host_or_none = self.get_groups_host_check_perms(
                 center_id=center_id, group_id=group_id, host_id=host_id, user=user, vlan=macip.vlan)
-            macip = self._macip_manager.apply_for_free_ip(ipv4=ipv4)    # 分配ip
+            macip = self._macip_manager.apply_for_free_ip(ipv4=ipv4)  # 分配ip
             if not macip:
                 raise errors.VmError.from_error(errors.MacIpApplyFailed(msg='指定的IP地址不可用，不存在或已被占用'))
             vlan = macip.vlan
@@ -271,7 +271,7 @@ class VmBuilder:
             groups, host_or_none = self.get_groups_host_check_perms(
                 center_id=center_id, group_id=group_id, host_id=host_id, user=user)
 
-        host = None     # 指示是否分配了宿主机和资源，指示创建失败时释放资源
+        host = None  # 指示是否分配了宿主机和资源，指示创建失败时释放资源
         try:
             # 向宿主机申请资源
             scheduler = HostMacIPScheduler()
@@ -290,14 +290,14 @@ class VmBuilder:
 
             # 创建虚拟机的系统镜像disk
             try:
-                rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap,
-                                        new_image_name=vm_uuid, data_pool=data_pool)
-                diskname = vm_uuid
+                    rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap,
+                                            new_image_name=vm_uuid, data_pool=data_pool)
+                    diskname = vm_uuid
             except RadosError as e:
                 raise errors.VmError(msg=f'clone image error, {str(e)}')
 
             if sys_disk_size and sys_disk_size > image_size:
-                if rbd_manager.resize_rbd_image(image_name=diskname, size=sys_disk_size * 1024**3) is not True:
+                if rbd_manager.resize_rbd_image(image_name=diskname, size=sys_disk_size * 1024 ** 3) is not True:
                     raise errors.VmError(msg=f'resize system disk size error')
             else:
                 sys_disk_size = image_size
@@ -309,7 +309,7 @@ class VmBuilder:
             if macip:
                 self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
             if host:
-                self._host_manager.free_to_host(host_id=host.id, vcpu=vcpu, mem=mem)    # 释放已申请的宿主机资源
+                self._host_manager.free_to_host(host_id=host.id, vcpu=vcpu, mem=mem)  # 释放已申请的宿主机资源
             if diskname:
                 try:
                     rbd_manager.remove_image(image_name=diskname)
@@ -320,10 +320,90 @@ class VmBuilder:
 
         host.vm_created_num_add_1()  # 宿主机已创建虚拟机数量+1
         try:
-            vm.update_sys_disk_size()   # 系统盘有变化，更新系统盘大小
+            vm.update_sys_disk_size()  # 系统盘有变化，更新系统盘大小
         except Exception as e:
             pass
 
+        return vm
+
+    def create_vm_for_image(self, image_id: int, vcpu: int, mem: int, host_id=None, ipv4=None):
+        """
+        创建一个镜像虚拟机
+
+        说明：
+            host_id不能为空，必须为127.0.0.1的宿主机，ipv4可以为镜像专用子网中的任意ip，可以重复使用；
+
+        备注：虚拟机的名称和系统盘名称同虚拟机的uuid
+
+        :param image_id: 镜像id
+        :param vcpu: cpu数
+        :param mem: 内存大小
+        :param host_id: 宿主机id
+        :param ipv4:  指定要创建的虚拟机ip
+        :return:
+            Vm()
+            raise VmError
+
+        :raise VmError
+        """
+        if vcpu <= 0:
+            raise errors.VmError.from_error(errors.BadRequestError(msg='无法创建虚拟机,vcpu参数无效'))
+        if mem <= 0:
+            raise errors.VmError.from_error(errors.BadRequestError(msg='无法创建虚拟机,men参数无效'))
+        if not (host_id and host_id > 0):
+            raise errors.VmError.from_error(errors.BadRequestError(msg='无法创建虚拟机,必须指定一个有效host_id参数'))
+
+        # 申请资源
+        try:
+            host = self._host_manager.claim_from_host(host_id=host_id, vcpu=vcpu, mem=mem)
+            macip = MacIPManager.get_macip_by_ipv4(ipv4)
+        except ComputeError as e:
+            raise errors.ScheduleError.from_error(e)
+
+        # 创建虚拟机
+        try:
+            try:
+                # 构造虚拟机xml
+                image = self.get_image(image_id)  # 镜像
+                diskname = image.base_image
+                vm_uuid = self.new_uuid_obj().hex
+                xml_desc = VmXMLBuilder().build_vm_xml_desc(vm_uuid=vm_uuid, mem=mem, vcpu=vcpu,
+                                                            vm_disk_name=diskname,
+                                                            image=image, mac_ip=macip)
+            except Exception as e:
+                raise errors.VmError(msg=f'构建虚拟机xml错误,{str(e)}')
+
+            try:
+                # 保存元数据
+                vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname,
+                        host=host, mac_ip=macip, xml=xml_desc, image=image)
+                image.vm_uuid = vm_uuid
+                image.vm_mem = mem
+                image.vm_vcpu = vcpu
+                image.vm_host = host
+                image.vm_mac_ip = macip
+                image.save()
+            except Exception as e:
+                raise errors.VmError(msg=f'创建镜像虚拟机元数据错误,{str(e)}')
+
+            try:
+                # 创建虚拟机
+                VirtHost(host_ipv4=host.ipv4).define(xml_desc=xml_desc)
+            except VirtError as e:
+                image.vm_uuid = None
+                image.vm_mem = None
+                image.vm_vcpu = None
+                image.vm_host = None
+                image.vm_mac_ip = None
+                image.save()
+                raise errors.VmError(msg=str(e))
+        except Exception as e:
+            if macip:
+                self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
+            if host:
+                self._host_manager.free_to_host(host_id=host.id, vcpu=vcpu, mem=mem)  # 释放已申请的宿主机资源
+            raise errors.VmError(msg=str(e))
+        host.vm_created_num_add_1()  # 宿主机已创建虚拟机数量+1
         return vm
 
     @staticmethod

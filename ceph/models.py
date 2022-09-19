@@ -13,7 +13,7 @@ class CephCluster(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=100, unique=True)
     center = models.ForeignKey(to=Center, on_delete=models.CASCADE, verbose_name='所属分中心', related_name='ceph_clusters')
-    has_auth = models.BooleanField(verbose_name='是否需要认证', default=True, help_text='未选中时，不使用uuid字段，uuid设置为空')
+    has_auth = models.BooleanField(verbose_name='需要认证', default=True, help_text='未选中时，不使用uuid字段，uuid设置为空')
     uuid = models.CharField(verbose_name='xml中ceph的uuid', max_length=50, blank=True,
                             help_text='xml中ceph配置的uuid,libvirt通过uuid获取访问ceph的用户key')
     config = models.TextField(verbose_name='ceph集群配置文本', default='')
@@ -100,10 +100,10 @@ class CephPool(models.Model):
     """
     id = models.AutoField(primary_key=True)
     pool_name = models.CharField(verbose_name='POOL名称', max_length=100)
-    has_data_pool = models.BooleanField(default=False, verbose_name='是否有独立存储POOL')
+    has_data_pool = models.BooleanField(default=False, verbose_name='具备独立存储POOL')
     data_pool = models.CharField(verbose_name='数据存储POOL名称', max_length=100, blank=True, default='')
     ceph = models.ForeignKey(to=CephCluster, on_delete=models.CASCADE)
-    enable = models.BooleanField(default=True, verbose_name='是否启用')
+    enable = models.BooleanField(default=True, verbose_name='启用存储POOL')
     remarks = models.CharField(max_length=255, default='', blank=True, verbose_name='备注')
 
     class Meta:

@@ -12,12 +12,19 @@
                 <div class="p-2">
                     <h5>{% trans '版本' %}</h5>
                     <p><span>{{ version }}</span>&emsp;
-                        {% if version_timestamp %}
-                            <span>{{ version_timestamp }}</span>&emsp;
+                        {% if version_git_change_set.timestamp %}
+                            <span>{{ version_git_change_set.timestamp }}</span>&emsp;
+                        {% endif %}
+                        {% if version_git_change_set.author %}
+                            <span>{{ version_git_change_set.author }}</span>&emsp;
                         {% endif %}
                         <span><a href="{% url 'docs:docs' %}#/changelog" target="view_window">
                             {% trans '变更日志' %}</a>
                         </span>
+                        <br/>
+                        {% if version_git_change_set.content %}
+                            <span>{{ version_git_change_set.content }}</span>&emsp;
+                        {% endif %}
                     </p>
                 </div>
                 <div class="p-2">

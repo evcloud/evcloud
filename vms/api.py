@@ -75,6 +75,29 @@ class VmAPI:
         )
         return instance.vm
 
+    def create_vm_for_image(self, image_id: int, vcpu: int, mem: int, host_id=None, ipv4=None):
+        """
+        为镜像创建一个虚拟机
+
+        说明：
+            host_id不能为空，必须为127.0.0.1的宿主机，ipv4可以为镜像专用子网中的任意ip，可以重复使用；
+
+        备注：虚拟机的名称和系统盘名称同虚拟机的uuid
+
+        :param image_id: 镜像id
+        :param vcpu: cpu数
+        :param mem: 内存大小
+        :param host_id: 宿主机id
+        :param ipv4:  指定要创建的虚拟机ip
+        :return:
+            Vm()
+            raise VmError
+
+        :raise VmError
+        """
+        instance = VmInstance.create_instance_for_image(image_id=image_id, vcpu=vcpu, mem=mem, host_id=host_id, ipv4=ipv4)
+        return instance.vm
+
     def delete_vm(self, vm_uuid: str, user=None, force=False):
         """
         删除一个虚拟机
@@ -90,6 +113,21 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         return VmInstance(vm=vm).delete(force=force)
+
+    def delete_vm_for_image(self, vm=None):
+        """
+        删除一个虚拟机
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :param force:   是否强制删除， 会强制关闭正在运行的虚拟机
+        :return:
+            True
+            raise VmError
+
+        :raise VmError
+        """
+        return VmInstance(vm=vm).delete_for_image(force=True)
 
     def edit_vm_vcpu_mem(self, vm_uuid: str, vcpu: int = 0, mem: int = 0, user=None, force=False):
         """
@@ -115,6 +153,29 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         return VmInstance(vm=vm).edit_vcpu_mem(vcpu=vcpu, mem=mem, force=force)
 
+    def edit_vm_vcpu_mem_for_image(self, vm, vcpu: int = 0, mem: int = 0):
+        """
+        修改虚拟机vcpu和内存大小
+
+        :param vm_uuid: 虚拟机uuid
+        :param vcpu:要修改的vcpu数，默认0 不修改
+        :param mem: 要修改的内存大小，默认0 不修改
+        :param user: 用户
+        :param force:   是否强制修改, 会强制关闭正在运行的虚拟机
+        :return:
+            True
+            raise VmError
+
+        :raise VmError
+        """
+        if vcpu < 0 or mem < 0:
+            raise errors.VmError.from_error(errors.BadRequestError(msg='vcpu或mem不能小于0'))
+
+        if vcpu == 0 and mem == 0:
+            return True
+
+        return VmInstance(vm=vm).edit_vcpu_mem(vcpu=vcpu, mem=mem, force=True, update_vm=False)
+
     def vm_operations(self, vm_uuid: str, op: str, user):
         """
         操作虚拟机
@@ -129,6 +190,33 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         return VmInstance(vm=vm).operations(op=op)
+
+    def vm_operations_for_image(self, vm, op: str):
+        """
+        操作虚拟机
+
+        :param vm_uuid: 虚拟机uuid
+        :param op: 操作，['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']
+        :param user: 用户
+        :return:
+            True    # success
+            False   # failed
+        :raise VmError
+        """
+        return VmInstance(vm=vm).operations(op=op)
+
+    def get_vm_status_for_image(self, vm):
+        """
+        获取虚拟机的运行状态
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :return:
+            (state_code:int, state_str:str)     # success
+
+        :raise VmError()
+        """
+        return VmInstance(vm=vm).status()
 
     def get_vm_status(self, vm_uuid: str, user):
         """

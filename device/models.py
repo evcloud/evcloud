@@ -20,7 +20,7 @@ class PCIDevice(models.Model):
     vm = models.ForeignKey(to=Vm, null=True, blank=True, related_name='device_set', on_delete=models.SET_NULL,
                            verbose_name='挂载于虚拟机')
     attach_time = models.DateTimeField(null=True, blank=True, verbose_name='挂载时间')
-    enable = models.BooleanField(default=True, verbose_name='状态')
+    enable = models.BooleanField(default=True, verbose_name='启用设备')
     remarks = models.TextField(null=True, blank=True, verbose_name='备注')
     host = models.ForeignKey(to=Host, on_delete=models.CASCADE, related_name='pci_devices', verbose_name='宿主机')
     address = models.CharField(max_length=100, help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0')

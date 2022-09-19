@@ -25,7 +25,8 @@ class Vlan(models.Model):
     gateway = models.GenericIPAddressField(verbose_name='网关')
     dns_server = models.CharField(verbose_name='DNS服务IP', max_length=255)
     dhcp_config = models.TextField(verbose_name='DHCP部分配置信息')
-    enable = models.BooleanField(verbose_name='状态', default=True)
+    enable = models.BooleanField(verbose_name='启用网络', default=True)
+    image_specialized = models.BooleanField(verbose_name='镜像虚拟机专用', default=False)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
 
     def __str__(self):

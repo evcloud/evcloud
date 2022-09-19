@@ -89,6 +89,7 @@ $.ajaxSettings.beforeSend = function(xhr, settings){
 function getForm2Obj(form_node) {
     let o = {};
     let a = $(form_node).serializeArray();
+    console.log('-----------------------------', a)
     $.each(a, function () {
         if (o[this.name] !== undefined) {
             if (!o[this.name].push) {

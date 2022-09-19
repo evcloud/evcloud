@@ -3,8 +3,9 @@ from django.db.models import F, Sum, Count
 from django.contrib.auth import get_user_model
 
 from pcservers.models import PcServer
+from utils.errors import ComputeError
 
-User = get_user_model()     # 获取用户模型
+User = get_user_model()  # 获取用户模型
 
 
 class Center(models.Model):
@@ -36,7 +37,7 @@ class Group(models.Model):
     center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的分中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
-    users = models.ManyToManyField(to=User, blank=True, related_name='group_set')     # 有权访问此组的用户
+    users = models.ManyToManyField(to=User, blank=True, related_name='group_set')  # 有权访问此组的用户
 
     def __str__(self):
         return self.name
@@ -58,7 +59,7 @@ class Group(models.Model):
         if not user or not user.id:
             return False
 
-        if user.is_superuser:   # 超级用户
+        if user.is_superuser:  # 超级用户
             return True
 
         return self.users.filter(id=user.id).exists()
@@ -80,17 +81,18 @@ class Host(models.Model):
     """
     id = models.AutoField(primary_key=True)
     group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set', verbose_name='宿主机所属的组')
-    pcserver = models.OneToOneField(to=PcServer, related_name='pc_server_host', blank=True, null=True, on_delete=models.CASCADE, verbose_name='物理服务器')
+    pcserver = models.OneToOneField(to=PcServer, related_name='pc_server_host', blank=True, null=True,
+                                    on_delete=models.CASCADE, verbose_name='物理服务器')
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
     real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU总数')
     real_mem = models.IntegerField(default=30, verbose_name='真实物理内存大小(Gb)')
     vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU总数')
     vcpu_allocated = models.IntegerField(default=0, verbose_name='已分配CPU总数')
-    mem_total = models.IntegerField(default=30, verbose_name='宿主机可用内存大小(Gb)')
-    mem_allocated = models.IntegerField(default=0, verbose_name='宿主机已分配内存大小(Gb)')
-    vm_limit = models.IntegerField(default=10, verbose_name='本机可创建虚拟机数量上限')
-    vm_created = models.IntegerField(default=0, verbose_name='本机已创建虚拟机数量')
-    enable = models.BooleanField(default=True, verbose_name='宿主机状态')
+    mem_total = models.IntegerField(default=30, verbose_name='云主机可用内存总量(Gb)')
+    mem_allocated = models.IntegerField(default=0, verbose_name='云主机已用内存(Gb)')
+    vm_limit = models.IntegerField(default=10, verbose_name='本地云主机数量上限')
+    vm_created = models.IntegerField(default=0, verbose_name='本地已创建云主机数量')
+    enable = models.BooleanField(default=True, verbose_name='启用宿主机')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
 
     ipmi_host = models.CharField(max_length=100, default='', blank=True)
@@ -304,7 +306,7 @@ class Host(models.Model):
         """
         from vms.models import Vm
 
-        if hasattr(self, '_stats_now_data'):   # 缓存
+        if hasattr(self, '_stats_now_data'):  # 缓存
             return self._stats_now_data
 
         err_ret = {'vcpu': -1, 'mem': -1, 'vm_num': -1}
@@ -333,5 +335,12 @@ class Host(models.Model):
     def save(self, *args, **kwargs):
         if self.pcserver:
             self.ipv4 = self.pcserver.host_ipv4
+            self.real_cpu = self.pcserver.real_cpu
+            self.real_mem = self.pcserver.real_mem
 
         super().save(*args, **kwargs)
+
+    def delete(self, using=None, keep_parents=False):
+        if self.ipv4 == '127.0.0.1':
+            raise ComputeError(msg='127.0.0.1为镜像专用宿主机，不能删除')
+        super().delete(using=using, keep_parents=keep_parents)

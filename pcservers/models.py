@@ -89,6 +89,8 @@ class PcServer(models.Model):
     due_time = models.DateTimeField(null=True, blank=True, verbose_name='到期时间')
     tag_no = models.CharField(max_length=255, verbose_name='标签号/序列号')
     location = models.CharField(max_length=255, verbose_name='所在位置')
+    real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU总数')
+    real_mem = models.IntegerField(default=30, verbose_name='真实物理内存大小(Gb)')
     host_ipv4 = models.CharField(max_length=100, verbose_name='主机IPv4地址')
     ipmi_ip = models.CharField(max_length=100, verbose_name='IPMI管理地址')
     host_ipv6 = models.CharField(max_length=100, default='', blank=True, verbose_name='主机IPv6地址')

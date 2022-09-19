@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block boby %}
+    <main role="main">
+      <div class="d-flex p-2 alert-secondary justify-content-center">
+          <h4>Evcloud后台配置项</h4>
+      </div>
+      <div class="py-2 bg-light">
+        <div class="container">
+
+          <div class="row">
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-secondary text-white justify-content-center">
+                    <span class="badge badge-light m-1">1</span>
+                    服务器配置
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/pcservers/department/" role="button">部门</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/pcservers/room/" role="button">机房</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/pcservers/servertype/" role="button">型号</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/pcservers/pcserver/" role="button">服务器</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-secondary text-white justify-content-center">
+                    <span class="badge badge-light m-1">2</span>
+                    宿主机配置
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/compute/center/" role="button">分中心</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/compute/group/" role="button">宿主机组</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/compute/host/" role="button">宿主机</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-secondary text-white justify-content-center">
+                    <span class="badge badge-light m-1">3</span>
+                    网络配置
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/network/vlan/" role="button">VLAN子网</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/network/macip/" role="button">MAC IP地址</a>
+                </div>
+              </div>
+            </div>
+
+             <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-secondary text-white justify-content-center">
+                    <span class="badge badge-light m-1">4</span>
+                    CEPH配置
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/ceph/cephcluster/" role="button">CEPH集群</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/ceph/cephpool/" role="button">CEPH池</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-secondary text-white justify-content-center">
+                    <span class="badge badge-light m-1">5</span>
+                    云主机配置
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/image/vmxmltemplate/" role="button">云主机XML配置</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/image/image/" role="button">云主机系统镜像</a>
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/vms/flavor/" role="button">云主机硬件配置</a>
+                </div>
+              </div>
+            </div>
+             <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-secondary text-white justify-content-center">
+                   <span class="badge badge-light m-1">6</span>
+                   云硬盘配置
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/vdisk/quota/" role="button">云硬盘池</a>
+                </div>
+              </div>
+            </div>
+
+             <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-secondary text-white justify-content-center">
+                    <span class="badge badge-light m-1">7</span>
+                    VPN配置
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/vpn/vpnconfig/" role="button">VPN配置文件</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-secondary text-white justify-content-center">
+                    <span class="badge badge-light m-1">8</span>
+                    PCIE配置
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-primary btn-sm btn-block" href="/admin/device/pcidevice/" role="button">PCIE设备</a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex p-2 alert-secondary justify-content-center">
+          <h4>Evcloud后台管理项</h4>
+      </div>
+      <div class="py-2 bg-light">
+        <div class="container">
+
+          <div class="row">
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-info text-white justify-content-center">
+                    云主机管理
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/vms/vm/" role="button">云主机</a>
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/vms/vmarchive/" role="button">云主机归档标</a>
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/vms/vmdisksnap/" role="button">云主机快照</a>
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/vms/migratetask/" role="button">云主机迁移记录</a>
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/vms/vmlog/" role="button">云主机错误日志</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-info text-white justify-content-center">
+                    云硬盘管理
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/vdisk/vdisk/" role="button">云硬盘</a>
+                </div>
+                <div class="d-flex p-2 bg-info text-white justify-content-center">
+                    NOVNC管理
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/novnc/token/" role="button">NOVNC客户端TOKENS</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-info text-white justify-content-center">
+                    用户管理
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/users/userprofile/" role="button">用户</a>
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/auth/group/" role="button">用户分组</a>
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/vpn/vpnauth/" role="button">VPN用户</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="card mb-4 shadow-sm">
+                <div class="d-flex p-2 bg-info text-white justify-content-center">
+                    认证管理
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/authtoken/tokenproxy/" role="button">身份认证TOKENS</a>
+                </div>
+                <div class="d-flex p-2 bg-info text-white justify-content-center">
+                   日志管理
+                </div>
+                <div class="card-body">
+                    <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/admin/logentry/" role="button">操作日志</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+    </main>
+{% endblock %}

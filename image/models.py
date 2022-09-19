@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 
 from ceph.models import CephPool
 from ceph.managers import get_rbd_manager, RadosError
+from compute.models import Host
+from network.models import MacIP
 
 User = get_user_model()
 
@@ -75,6 +77,12 @@ class Image(models.Model):
     default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
     size = models.IntegerField(verbose_name='镜像大小（Gb）', default=0,
                                help_text='image size不是整Gb大小，要向上取整，如1.1GB向上取整为2Gb')
+    vm_host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机', null=True, blank=True,
+                                default=None)
+    vm_uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, null=True, blank=True, )
+    vm_mac_ip = models.ForeignKey(to=MacIP, on_delete=models.CASCADE, verbose_name='MAC IP', null=True, blank=True, )
+    vm_vcpu = models.IntegerField(verbose_name='CPU数', null=True, blank=True, )
+    vm_mem = models.IntegerField(verbose_name='内存大小', help_text='单位GB', null=True, blank=True, )
 
     def __str__(self):
         return self.name
@@ -100,7 +108,7 @@ class Image(models.Model):
     def save(self, *args, **kwargs):
         if self.create_newsnap:  # 选中创建snap复选框
             self._create_snap()
-        elif self.enable and not self.snap:     # 启用状态，如果没有快照就创建
+        elif self.enable and not self.snap:  # 启用状态，如果没有快照就创建
             self._create_snap()
 
         super().save(*args, **kwargs)
@@ -126,18 +134,18 @@ class Image(models.Model):
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             try:
-                rbd.remove_snap(image_name=self.base_image, snap=self.snap)     # 删除旧快照
+                rbd.remove_snap(image_name=self.base_image, snap=self.snap)  # 删除旧快照
             except RadosError as e:
                 pass
             rbd.create_snap(image_name=self.base_image, snap_name=snap_name, protected=True)
         except RadosError as e:
             raise Exception(f'create_snap error, {str(e)}')
-
         self.snap = snap_name
         return True
 
     def delete(self, using=None, keep_parents=False):
         self._remove_image()
+        self._remove_image_vm()
         super().delete(using=using, keep_parents=keep_parents)
 
     def _remove_image(self):
@@ -158,12 +166,27 @@ class Image(models.Model):
 
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
-            rbd.remove_snap(image_name=self.base_image, snap_name=self.snap)
-            if self.tag != self.TAG_BASE:
-                rbd.remove_image(image_name=self.base_image)
+            if rbd.image_exists(self.base_image):
+                rbd.remove_snap(image_name=self.base_image, snap=self.snap)
+                if self.tag != self.TAG_BASE:
+                    rbd.remove_image(image_name=self.base_image)
         except (RadosError, Exception) as e:
             raise Exception(f'remove snap or image error, {str(e)}')
 
+        return True
+
+    def _remove_image_vm(self):
+        try:
+            if self.vm_uuid:
+                from vms.api import VmAPI
+                from vms.models import Vm
+                vm = Vm(uuid=self.vm_uuid, name=self.vm_uuid, vcpu=self.vm_vcpu, mem=self.vm_mem,
+                        disk=self.base_image,
+                        host=self.vm_host, mac_ip=self.vm_mac_ip, image=self)
+                api = VmAPI()
+                api.delete_vm_for_image(vm)
+        except Exception as e:
+            raise Exception(f'remove vm of image error, {str(e)}')
         return True
 
     def get_size(self):

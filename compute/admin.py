@@ -94,15 +94,24 @@ class HostAdmin(admin.ModelAdmin):
         s = obj.stats_vcpu_mem_vms_now()
         return s.get('vcpu')
 
-    @admin.display(description='实时统计的已分配MEM')
+    vcpu_allocated_now.short_description = '实时统计的已分配VCPU'
+
     def mem_allocated_now(self, obj):
         s = obj.stats_vcpu_mem_vms_now()
         return s.get('mem')
 
-    @admin.display(description='实时统计虚拟机数')
+    mem_allocated_now.short_description = '实时统计的已分配MEM'
+
     def vm_created_now(self, obj):
         s = obj.stats_vcpu_mem_vms_now()
         return s.get('vm_num')
+
+    vm_created_now.short_description = '实时统计虚拟机数'
+
+    def group(self, obj):
+        return obj.desc.group
+
+    group.short_description = "group"
 
     # 重写编辑页, 继承父类方法
     def change_view(self, request, object_id, form_url='', extra_context=None):
@@ -110,7 +119,7 @@ class HostAdmin(admin.ModelAdmin):
             'id', 'pcserver', 'group', 'ipv4', 'real_cpu', 'real_mem', 'vcpu_total', 'vcpu_allocated',
             'mem_total', 'mem_allocated', 'vm_limit', 'vm_created', 'enable', 'desc'
         )  # 将自定义的字段注册到编辑页中
-        self.readonly_fields = ('id', 'ipv4')
+        self.readonly_fields = ('id', 'ipv4', 'real_cpu', 'real_mem')
         return super(HostAdmin, self).change_view(request, object_id, form_url=form_url, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
@@ -119,7 +128,7 @@ class HostAdmin(admin.ModelAdmin):
             'mem_total', 'vm_limit', 'mem_allocated', 'vm_created', 'enable', 'desc', 'ipmi_host',
             'ipmi_user', 'ipmi_password'
         )  # 将自定义的字段注册到编辑页中
-        self.readonly_fields = ('ipv4',)
+        self.readonly_fields = ('ipv4', 'real_cpu', 'real_mem')
         return super(HostAdmin, self).add_view(request, form_url=form_url, extra_context=extra_context)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):

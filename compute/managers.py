@@ -15,6 +15,7 @@ class DefaultSum(Sum):
     """
     累加结果为None时，返回默认值, 只是用于int和float
     """
+
     def __init__(self, *expressions, distinct=False, filter=None, return_if_none=0, **extra):
         self.return_if_none = return_if_none
         super().__init__(*expressions, distinct=distinct, filter=filter, **extra)
@@ -41,6 +42,7 @@ class CenterManager:
     """
     分中心管理器
     """
+
     def __init__(self):
         # 分中心对象缓存，分中心对象数据有变化，需要清除缓存或设置覆盖缓存
         self._cache_centers = {}
@@ -295,6 +297,7 @@ class GroupManager:
     """
     宿主机组管理器
     """
+
     def __init__(self):
         # 机组对象缓存，机组对象数据有变化，需要清除缓存或设置覆盖缓存
         self._cache_groups = {}
@@ -409,9 +412,9 @@ class GroupManager:
         :raise ComputeError
         """
         group = self.enforce_group_obj(group_or_id)
-        return group.hosts_set.all()
+        return group.hosts_set.filter(~Q(ipv4='127.0.0.1')).all()
 
-    def get_enable_host_ids_by_group(self,  group_or_id):
+    def get_enable_host_ids_by_group(self, group_or_id):
         """
         通过宿主机组对象和id获取宿主机id list
 
@@ -428,7 +431,7 @@ class GroupManager:
             raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
         return ids
 
-    def get_all_host_ids_by_group(self,  group_or_id):
+    def get_all_host_ids_by_group(self, group_or_id):
         """
         通过宿主机组对象和id获取所有（包括未激活的）宿主机id list
 
@@ -570,7 +573,7 @@ class GroupManager:
         g_ids = user.group_set.all().values_list('id', flat=True)
         ip_data = Vlan.objects.filter(group__in=g_ids, enable=True).aggregate(
             ips_total=Count('macips', filter=Q(macips__enable=True)),
-            ips_used=Count('macips', filter=Q(macips__enable=True)&Q(macips__used=True))
+            ips_used=Count('macips', filter=Q(macips__enable=True) & Q(macips__used=True))
         )
         quota.update(ip_data)
         return quota
@@ -580,6 +583,7 @@ class HostManager:
     """
     宿主机管理器
     """
+
     @staticmethod
     def get_host_by_id(host_id: int):
         """
@@ -639,7 +643,7 @@ class HostManager:
         if not isinstance(group_id, int) or group_id < 0:
             raise ComputeError(msg='宿主机组ID参数有误')
         try:
-            hosts_qs = Host.objects.filter(group=group_id).all()
+            hosts_qs = Host.objects.filter(group=group_id).filter(~Q(ipv4='127.0.0.1')).all()
             return list(hosts_qs)
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
@@ -661,13 +665,13 @@ class HostManager:
 
         qs = None
         if group_id > 0:
-            qs = Host.objects.filter(group=group_id).all()
+            qs = Host.objects.filter(group=group_id).filter(~Q(ipv4='127.0.0.1')).all()
 
         if qs is None:
-            qs = Host.objects.all()
+            qs = Host.objects.filter(~Q(ipv4='127.0.0.1')).all()
 
         if enable:
-            qs = qs.filter(enable=True).all()
+            qs = qs.filter(enable=True).filter(~Q(ipv4='127.0.0.1')).all()
 
         return qs
 
@@ -773,13 +777,13 @@ class HostManager:
         if not isinstance(mem, int) or mem <= 0:
             raise ComputeError(msg='参数有误，mem必须是一个正整数')
 
-        random.shuffle(hosts)   # 随机打乱
+        random.shuffle(hosts)  # 随机打乱
         for host in hosts:
             # 宿主机是否满足资源需求
             if not host.meet_needs(vcpu=vcpu, mem=mem):
                 continue
 
-            if not claim:    # 立即申请资源
+            if not claim:  # 立即申请资源
                 continue
 
             host = self.claim_from_host(host_id=host.id, vcpu=vcpu, mem=mem)

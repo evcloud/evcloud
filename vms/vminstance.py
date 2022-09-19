@@ -73,6 +73,30 @@ class VmInstance:
                                    remarks=remarks, ip_public=ip_public, sys_disk_size=sys_disk_size)
         return cls(vm=vm)
 
+    @classmethod
+    def create_instance_for_image(cls, image_id: int, vcpu: int, mem: int, host_id=None, ipv4=None):
+        """
+        为镜像创建虚拟机
+
+        说明：
+            host_id不能为空，必须为127.0.0.1的宿主机，ipv4可以为镜像专用子网中的任意ip，可以重复使用；
+
+        备注：虚拟机的名称和系统盘名称同虚拟机的uuid
+
+        :param image_id: 镜像id
+        :param vcpu: cpu数
+        :param mem: 内存大小
+        :param host_id: 宿主机id
+        :param ipv4:  指定要创建的虚拟机ip
+        :return:
+            VmInstance()
+            raise VmError
+
+        :raise VmError
+        """
+        vm = VmBuilder().create_vm_for_image(image_id=image_id, vcpu=vcpu, mem=mem, host_id=host_id, ipv4=ipv4)
+        return cls(vm=vm)
+
     def get_xml_desc(self):
         """
         动态从宿主机获取虚拟机的xml内容
@@ -278,13 +302,69 @@ class VmInstance:
         vm_ahv.rename_sys_disk_archive()
         return True
 
-    def edit_vcpu_mem(self, vcpu: int = 0, mem: int = 0,  force=False):
+    def delete_for_image(self, force=False):
+        """
+        删除一个镜像虚拟机
+
+        :param force:   是否强制删除， 会强制关闭正在运行的虚拟机
+        :return:
+            True
+            raise VmError
+
+        :raise VmError
+        """
+        # 虚拟机的状态
+        domain = self.vm_domain
+        vm = self.vm
+        host = vm.host
+        try:
+            run = domain.is_running()
+        except VirDomainNotExist as e:
+            run = False
+        except VirHostDown as e:
+            if not force:  # 非强制删除
+                raise errors.VmError(msg='无法连接宿主机')
+            run = False
+        except VirtError as e:
+            raise errors.VmError(msg=f'获取虚拟机运行状态失败, {str(e)}')
+
+        if run:
+            try:
+                domain.poweroff()
+            except VirtError as e:
+                raise errors.VmRunningError(msg=f'关闭虚拟机失败，{str(e)}')
+        # 删除虚拟机
+        undefine_result = '已删除'
+        try:
+            if not domain.undefine():
+                raise errors.VmError(msg='删除虚拟机失败')
+        except VirHostDown:
+            undefine_result = '未删除'
+        except (VirtError, errors.VmError):
+            raise errors.VmError(msg='删除虚拟机失败')
+
+        log_manager = VmLogManager()
+        # 宿主机已创建虚拟机数量-1
+        if not host.vm_created_num_sub_1():
+            msg = f'镜像虚拟机（uuid={vm.get_uuid()}）{undefine_result}，宿主机（id={host.id}; ipv4={host.ipv4}）' \
+                  f'已创建虚拟机数量-1失败, 请手动-1。'
+            log_manager.add_log(title='镜像宿主机已创建虚拟机数量-1失败',
+                                about=log_manager.about.ABOUT_HOST_VM_CREATED, text=msg)
+        # 释放宿主机资源
+        if not host.free(vcpu=vm.vcpu, mem=vm.mem):
+            msg = f'释放镜像宿主机资源失败, 虚拟机uuid={vm.get_uuid()};\n 宿主机信息：id={host.id}; ipv4={host.ipv4};\n' \
+                  f'未释放资源：mem={vm.mem}MB;vcpu={vm.vcpu}；\n请查看核对虚拟机是否已成功删除并归档，如果已删除请手动释放此宿主机资源'
+            log_manager.add_log(title='释放镜像宿主机men, cpu资源失败', about=log_manager.about.ABOUT_MEM_CPU, text=msg)
+        return True
+
+    def edit_vcpu_mem(self, vcpu: int = 0, mem: int = 0,  force=False, update_vm=True):
         """
         修改虚拟机vcpu和内存大小
 
         :param vcpu:要修改的vcpu数，默认0 不修改
         :param mem: 要修改的内存大小，默认0 不修改
         :param force:   是否强制修改, 会强制关闭正在运行的虚拟机
+        :param update_vm: 是否更新虚拟机元数据，对于镜像虚拟机不更新
         :return:
             True
             raise VmError
@@ -361,18 +441,18 @@ class VmInstance:
         except VirtError as e:
             host.deduct_delta(cpu_delta=-cpu_delta, mem_delta=-mem_delta)   # 宿主机资源扣除或释放还原
             raise errors.VmError(msg='修改虚拟机失败')
-
-        try:
-            vm.xml = vm_domain.xml_desc()
-            vm.save()
-        except Exception as e:
-            host.deduct_delta(cpu_delta=-cpu_delta, mem_delta=-mem_delta)  # 宿主机资源扣除或释放还原
+        if update_vm:
             try:
-                vm_domain.host.define(xml_desc=old_xml_desc)
-            except VirtError:
-                pass
+                vm.xml = vm_domain.xml_desc()
+                vm.save()
+            except Exception as e:
+                host.deduct_delta(cpu_delta=-cpu_delta, mem_delta=-mem_delta)  # 宿主机资源扣除或释放还原
+                try:
+                    vm_domain.host.define(xml_desc=old_xml_desc)
+                except VirtError:
+                    pass
 
-            raise errors.VmError(msg=f'修改虚拟机元数据失败, {str(e)}')
+                raise errors.VmError(msg=f'修改虚拟机元数据失败, {str(e)}')
 
         return True
 
