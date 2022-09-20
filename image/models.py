@@ -77,10 +77,10 @@ class Image(models.Model):
     default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
     size = models.IntegerField(verbose_name='镜像大小（Gb）', default=0,
                                help_text='image size不是整Gb大小，要向上取整，如1.1GB向上取整为2Gb')
-    vm_host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机', null=True, blank=True,
+    vm_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, verbose_name='宿主机', null=True, blank=True,
                                 default=None)
     vm_uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, null=True, blank=True, )
-    vm_mac_ip = models.ForeignKey(to=MacIP, on_delete=models.CASCADE, verbose_name='MAC IP', null=True, blank=True, )
+    vm_mac_ip = models.ForeignKey(to=MacIP, on_delete=models.SET_NULL, verbose_name='MAC IP', null=True, blank=True, )
     vm_vcpu = models.IntegerField(verbose_name='CPU数', null=True, blank=True, )
     vm_mem = models.IntegerField(verbose_name='内存大小', help_text='单位GB', null=True, blank=True, )
 
