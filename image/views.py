@@ -115,7 +115,7 @@ class ImageAddView(View):
     """
 
     def get(self, request, *args, **kwargs):
-        local_host = Host.objects.get(ipv4='127.0.0.1')
+        local_host = Host.objects.filter(ipv4='127.0.0.1').first()
         if local_host:
             form = ImageModelForm(form_type='add')
             vm_fields = ['vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem']

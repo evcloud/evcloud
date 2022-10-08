@@ -5,7 +5,7 @@ import datetime
 from django.utils.version import get_version
 
 
-VERSION = (3, 1, 10, 'rc', 1)     # 'alpha', 'beta', 'rc', 'final'
+VERSION = (3, 1, 10, 'rc', 2)     # 'alpha', 'beta', 'rc', 'final'
 
 
 def get_git_changeset():
@@ -15,7 +15,7 @@ def get_git_changeset():
         return None
     repo_dir = os.path.dirname(os.path.abspath(__file__))
     git_log = subprocess.run(
-        "git log --pretty=\"format:%ct||%an||%s\" --quiet -1 HEAD",
+        'git log --pretty="format:%ct||%an||%s" --quiet -1 HEAD',
         capture_output=True,
         shell=True,
         cwd=repo_dir,
@@ -29,6 +29,7 @@ def get_git_changeset():
         timestamp = datetime.datetime.fromtimestamp(int(timestamp), tz=tz)
     except Exception:
         return None
+
     return {'timestamp': timestamp.strftime("%Y/%m/%d %H:%M:%S"), 'author': cmd_output[1], 'content': cmd_output[2]}
 
 
