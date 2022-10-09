@@ -59,7 +59,7 @@ class PCIDeviceManager:
         """
         try:
             h_ids = GroupManager().get_user_host_ids(user=user)
-            qs = self.get_device_queryset().filter(id__in=h_ids).all()
+            qs = self.get_device_queryset().filter(host__id__in=h_ids).all()
         except ComputeError as e:
             raise DeviceError(msg=str(e))
         return qs
@@ -188,7 +188,7 @@ class PCIDeviceManager:
         if device.type == device.TYPE_GPU:
             return GPUDevice(db=device)
 
-        return DeviceError(msg='未知设备')
+        raise DeviceError(msg='未知设备')
 
     def mount_to_vm(self, device: PCIDevice, vm):
         """
