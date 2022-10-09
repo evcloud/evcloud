@@ -290,9 +290,9 @@ class VmBuilder:
 
             # 创建虚拟机的系统镜像disk
             try:
-                    rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap,
-                                            new_image_name=vm_uuid, data_pool=data_pool)
-                    diskname = vm_uuid
+                rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap,
+                                        new_image_name=vm_uuid, data_pool=data_pool)
+                diskname = vm_uuid
             except RadosError as e:
                 raise errors.VmError(msg=f'clone image error, {str(e)}')
 
