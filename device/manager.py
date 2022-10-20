@@ -59,7 +59,7 @@ class PCIDeviceManager:
         """
         try:
             h_ids = GroupManager().get_user_host_ids(user=user)
-            qs = self.get_device_queryset().filter(host__id__in=h_ids).all()
+            qs = self.get_device_queryset().filter(host__in=h_ids).all()
         except ComputeError as e:
             raise DeviceError(msg=str(e))
         return qs
