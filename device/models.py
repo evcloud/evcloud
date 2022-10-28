@@ -10,9 +10,11 @@ class PCIDevice(models.Model):
     """
     TYPE_UNKNOW = 0
     TYPE_GPU = 1
+    TYPE_ETH = 2
     CHOICES_TYPE = (
         (TYPE_UNKNOW, '未知设备'),
-        (TYPE_GPU, 'GPU')
+        (TYPE_GPU, 'GPU'),
+        (TYPE_ETH, '网卡')
     )
 
     id = models.AutoField(primary_key=True)
