@@ -23,7 +23,10 @@
                         </span>
                         <br/>
                         {% if version_git_change_set.content %}
-                            <span>{{ version_git_change_set.content }}</span>&emsp;
+                            {% for log in version_git_change_set.content %}
+                                <span>（{{ forloop.counter }}）{{ log.2 }}</span>&emsp;
+                                <br/>
+                            {% endfor %}
                         {% endif %}
                     </p>
                 </div>

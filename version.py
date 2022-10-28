@@ -15,7 +15,7 @@ def get_git_changeset():
         return None
     repo_dir = os.path.dirname(os.path.abspath(__file__))
     git_log = subprocess.run(
-        'git log --pretty="format:%ct||%an||%s" --quiet -1 HEAD',
+        'git log --pretty="format:%ct||%an||%s" --quiet -3',
         capture_output=True,
         shell=True,
         cwd=repo_dir,
@@ -23,14 +23,15 @@ def get_git_changeset():
     )
 
     try:
-        cmd_output = git_log.stdout.split('||')
-        timestamp = cmd_output[0]
+        cmd_output = git_log.stdout.split('\n')
+        head_logs = [item.split('||') for item in cmd_output]
+        timestamp = head_logs[0][0]
         tz = datetime.timezone.utc
         timestamp = datetime.datetime.fromtimestamp(int(timestamp), tz=tz)
     except Exception:
         return None
 
-    return {'timestamp': timestamp.strftime("%Y/%m/%d %H:%M:%S"), 'author': cmd_output[1], 'content': cmd_output[2]}
+    return {'timestamp': timestamp.strftime("%Y/%m/%d %H:%M:%S"), 'author': head_logs[0][1], 'content': head_logs}
 
 
 __version__ = get_version(VERSION)

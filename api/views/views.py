@@ -29,7 +29,7 @@ from api import serializers
 from utils import errors as exceptions
 from api.paginations import MacIpLimitOffsetPagination
 from api.viewsets import CustomGenericViewSet
-
+from version import __version__
 
 VPN_USER_ACTIVE_DEFAULT = getattr(settings, 'VPN_USER_ACTIVE_DEFAULT', False)
 
@@ -80,6 +80,7 @@ class IsSuperUser(BasePermission):
     """
     Allows access only to super users.
     """
+
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_superuser)
 
@@ -329,7 +330,7 @@ class VmsViewSet(CustomGenericViewSet):
         user = request.user
         manager = VmManager()
         try:
-            if user.is_superuser:   # 当前是超级用户，user_id查询参数有效
+            if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
                 self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
                                                             search=search, user_id=user_id, all_no_filters=True)
             else:
@@ -1306,7 +1307,7 @@ class VmsViewSet(CustomGenericViewSet):
         data = serializer.validated_data
         username = data.get('username')
         password = data.get('password')
-        
+
         try:
             VmAPI().vm_change_password(vm_uuid=vm_uuid, user=request.user, username=username, password=password)
         except VmError as e:
@@ -2008,6 +2009,58 @@ class ImageViewSet(CustomGenericViewSet):
         serializer = self.get_serializer(image)
         return Response(data=serializer.data)
 
+    @swagger_auto_schema(
+        operation_summary='修改镜像备注信息',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='remark',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='镜像备注信息'
+            )
+        ],
+        responses={
+            200: """
+                {
+                    'code': 200,
+                    'code_text': '修改镜像备注信息成功'
+                }
+                """,
+            "400, 403, 500": """
+                    {
+                        'code': xxx,
+                        'code_text': 'xxx',
+                        "err_code": "xxx"
+                    }
+                    """
+        }
+    )
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='image-remark')
+    def vm_remark(self, request, *args, **kwargs):
+        """
+        修改镜像备注信息
+        """
+        remark = request.query_params.get('remark', None)
+        if remark is None:
+            exc = exceptions.BadRequestError(msg='参数有误，无效的备注信息')
+            return self.exception_response(exc)
+
+        image_id = kwargs.get(self.lookup_field)
+        image_id = str_to_int_or_default(image_id, None)
+        if image_id is None:
+            return self.exception_response(exceptions.BadRequestError(msg='镜像id无效'))
+
+        try:
+            image = ImageManager().get_image_by_id(image_id=image_id)
+            image.desc = remark
+            image.save()
+        except exceptions.Error as exc:
+            return self.exception_response(exc)
+
+        return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -2042,6 +2095,7 @@ class AuthTokenViewSet(ObtainAuthToken):
         例如Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b；
         此外，可选Path参数,“new”，?new=true用于刷新生成一个新token；
     """
+
     @staticmethod
     def get(request, *args, **kwargs):
         user = request.user
@@ -2169,6 +2223,7 @@ class JWTRefreshView(TokenRefreshView):
     """
     Refresh JWT视图
     """
+
     @swagger_auto_schema(
         operation_summary='刷新access JWT',
         responses={
@@ -2327,7 +2382,7 @@ class VDiskViewSet(CustomGenericViewSet):
         user = request.user
         manager = VdiskManager()
         try:
-            if user.is_superuser:    # 当前是超级用户，user_id查询参数有效
+            if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
                 queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
                                                          search=search, user_id=user_id, all_no_filters=True)
             else:
@@ -2599,7 +2654,7 @@ class VDiskViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         try:
-            vdisk.rename_disk_rbd_name()        # 修改ceph rbd名称为删除格式的名称
+            vdisk.rename_disk_rbd_name()  # 修改ceph rbd名称为删除格式的名称
         except exceptions.VdiskError as e:
             pass
 
@@ -3249,7 +3304,7 @@ class PCIDeviceViewSet(CustomGenericViewSet):
         vm_uuid = kwargs.get('vm_uuid', '')
 
         try:
-            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', ))
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host',))
         except VmError as e:
             return self.exception_response(e)
 
@@ -3510,7 +3565,7 @@ class VPNViewSet(CustomGenericViewSet):
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     lookup_field = 'username'
-    lookup_value_regex = '[^/]+'      # 匹配排除“/”的任意字符串
+    lookup_value_regex = '[^/]+'  # 匹配排除“/”的任意字符串
 
     @swagger_auto_schema(
         operation_summary='获取用户vpn信息',
@@ -3825,4 +3880,27 @@ class MigrateTaskViewSet(CustomGenericViewSet):
         if self.action == 'retrieve':
             return serializers.MigrateTaskSerializer
 
+        return Serializer
+
+
+class VersionViewSet(CustomGenericViewSet):
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+
+    @swagger_auto_schema(
+        operation_summary='查询部署版本',
+        request_body=no_body
+    )
+    def list(self, request, *args, **kwargs):
+        """
+        查询当前部署EVCloud版本
+        """
+        return Response(data={'version': __version__})
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
         return Serializer
