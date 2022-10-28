@@ -3,7 +3,7 @@
 {% load  sizeformat %}
 
 {% block head %}
-
+    <link rel="stylesheet" type="text/css" href="{% static 'image/image_list.css' %}">
 {% endblock %}
 {% block title %}镜像列表{% endblock %}
 
@@ -88,15 +88,14 @@
                         <td class="mouse-hover" style="max-width: 200px;">
                             <div>
                                 <span>{{ image.desc|default_if_none:'' }}</span>
-                                <span class="mouse-hover-show edit_vm_remark" data-image-id="{{ image.id }}"
-                                      style="display:none;" title="修改备注">
-                                    <span class="glyphicon glyphicon-pencil"></span>
+                                <span class="mouse-hover-show edit_image_remark" data-image-id="{{ image.id }}" title="修改备注">
+                                    <span class="fa fa-edit"></span>
                                 </span>
                             </div>
                             <div id="remarks_edit" style="display:none;">
                                 <textarea id="remarks">{{ image.desc|default_if_none:'' }}</textarea>
-                                <span class="save_vm_remark" title="保存备注" data-image-id="{{ image.id }}">
-                                    <span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+                                <span class="save_image_remark" title="保存备注" data-image-id="{{ image.id }}">
+                                    <span class="fa fa-save" aria-hidden="true"></span>
                                 </span>
                             </div>
                         </td>

@@ -135,7 +135,30 @@ class VmXMLBuilder:
         disk.removeChild(auth[0])
         return root.toxml()
 
-    def build_vm_xml_desc(self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str, image, mac_ip):
+    @staticmethod
+    def xml_remove_huge_page(xml_desc: str):
+        """
+        去除vm xml中大页内存配置
+
+        :param xml_desc: 定义虚拟机的xml内容
+        :return:
+            xml: str    # success
+
+        :raise:  VmError
+        """
+        xml = XMLEditor()
+        if not xml.set_xml(xml_desc):
+            raise errors.VmError(msg='虚拟机xml文本无效')
+
+        root = xml.get_root()
+        huge_page_node = root.getElementsByTagName('memoryBacking')
+        if not huge_page_node:
+            return xml_desc
+
+        root.removeChild(huge_page_node[0])
+        return root.toxml()
+
+    def build_vm_xml_desc(self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str, image, mac_ip, is_image_vm=False):
         """
         构建虚拟机的xml
         :param vm_uuid:
@@ -175,5 +198,8 @@ class VmXMLBuilder:
 
         if not ceph.has_auth:
             xml_desc = self.xml_remove_sys_disk_auth(xml_desc)
+
+        if is_image_vm:
+            xml_desc = self.xml_remove_huge_page(xml_desc)
 
         return xml_desc

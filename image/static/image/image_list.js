@@ -31,6 +31,40 @@
         11: 'warning'
     };
 
+    $('.edit_image_remark').click(function (e) {
+        e.preventDefault();
+
+        let div_show = $(this).parent();
+        div_show.hide();
+		div_show.next().show();
+    });
+
+    $('.save_image_remark').click(function (e) {
+        e.preventDefault();
+        let image_id = $(this).attr('data-image-id');
+        let dom_remark = $(this).prev();
+        let remark = dom_remark.val();
+        let div_edit = dom_remark.parent();
+        let div_show = div_edit.prev();
+
+        $.ajax({
+			url: '/api/v3/image/' + image_id + '/remark/?remark='+ remark,
+			type: 'patch',
+			success:function(data){
+			    div_show.children("span:first").text(remark);
+			},
+            error: function(e){
+			    alert('修改失败');
+            },
+			complete:function() {
+				div_show.show();
+				div_edit.hide();
+			}
+		});
+
+    });
+
+
     //
     // 页面刷新时执行
     window.onload = function () {

@@ -369,9 +369,9 @@ class VmBuilder:
                 vm_uuid = self.new_uuid_obj().hex
                 xml_desc = VmXMLBuilder().build_vm_xml_desc(vm_uuid=vm_uuid, mem=mem, vcpu=vcpu,
                                                             vm_disk_name=diskname,
-                                                            image=image, mac_ip=macip)
+                                                            image=image, mac_ip=macip, is_image_vm=True)
             except Exception as e:
-                raise errors.VmError(msg=f'构建虚拟机xml错误,{str(e)}')
+                raise errors.VmError(msg=f'构建镜像虚拟机xml错误,{str(e)}')
 
             try:
                 # 保存元数据
