@@ -6,9 +6,9 @@
     </button>
     <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
         <button class="dropdown-item bg-success btn-vm-start" type="button" data-vm-uuid="{{ vm.hex_uuid }}">开机</button>
-        <button class="dropdown-item bg-warning btn-vm-shutdown" type="button" data-vm-uuid="{{ vm.hex_uuid }}">关机</button>
+        <button class="dropdown-item bg-warning btn-vm-shutdown" type="button" data-vm-uuid="{{ vm.hex_uuid }}">软关机</button>
         <button class="dropdown-item bg-warning btn-vm-reboot" type="button" data-vm-uuid="{{ vm.hex_uuid }}">软重启</button>
-        <button class="dropdown-item bg-warning btn-vm-poweroff" type="button" data-vm-uuid="{{ vm.hex_uuid }}">强制断电</button>
+        <button class="dropdown-item bg-warning btn-vm-poweroff" type="button" data-vm-uuid="{{ vm.hex_uuid }}">硬断电</button>
         <button class="dropdown-item bg-danger btn-vm-delete" type="button" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
         <button class="dropdown-item bg-danger btn-vm-delete-force" type="button" data-vm-uuid="{{ vm.hex_uuid }}">强制删除</button>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载硬盘</a>
