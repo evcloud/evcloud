@@ -79,9 +79,9 @@
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="{% url 'users:logout' %}?next=/">登出</a>
                             <a class="dropdown-item" href="{% url 'users:change_password' %}">修改密码</a>
-                            <div class="dropdown-divider"></div>
                             {% if user.is_superuser %}
-                                <a class="dropdown-item" href="{% url 'admin:index' %}">后台管理</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{% url 'appnav' %}">后台管理</a>
                             {% endif %}
                         </div>
                     </li>
