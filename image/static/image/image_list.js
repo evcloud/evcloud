@@ -36,7 +36,7 @@
 
         let div_show = $(this).parent();
         div_show.hide();
-		div_show.next().show();
+        div_show.next().show();
     });
 
     $('.save_image_remark').click(function (e) {
@@ -48,19 +48,19 @@
         let div_show = div_edit.prev();
 
         $.ajax({
-			url: '/api/v3/image/' + image_id + '/remark/?remark='+ remark,
-			type: 'patch',
-			success:function(data){
-			    div_show.children("span:first").text(remark);
-			},
-            error: function(e){
-			    alert('修改失败');
+            url: '/api/v3/image/' + image_id + '/remark/?remark=' + remark,
+            type: 'patch',
+            success: function (data) {
+                div_show.children("span:first").text(remark);
             },
-			complete:function() {
-				div_show.show();
-				div_edit.hide();
-			}
-		});
+            error: function (e) {
+                alert('修改失败');
+            },
+            complete: function () {
+                div_show.show();
+                div_edit.hide();
+            }
+        });
 
     });
 
@@ -160,9 +160,12 @@
     // 更新镜像点击事件
     $(".btn-image-update").click(function (e) {
         e.preventDefault();
+
         let api = build_absolute_url('image/');
         let image_id = $(this).attr('data-image-id');
-        let json_data = JSON.stringify({'image_id': image_id});
+        let current_button = $(this);
+        let snap_element = $('#snap_' + image_id);
+        current_button.html(`<i class="fa fa-spinner fa-pulse"></i>`);
         $.ajax({
             url: api,
             type: 'put',
@@ -170,9 +173,11 @@
             dataType: "json",
             success: function (data, status, xhr) {
                 if (xhr.status === 200) {
-                    if (confirm('镜像更新成功,刷新查看？')) {
-                        window.location = '/image/';
-                    }
+                    snap_element.html(data.snap + `<span class="badge badge-secondary">new</span>`)
+                    current_button.html(`更新`);
+                    // if (confirm('镜像更新成功,刷新查看？')) {
+                    //     window.location = '/image/';
+                    // }
                 } else {
                     alert("镜像更新失败！" + data.code_text);
                 }
@@ -289,6 +294,22 @@
 
             }
         })
+    });
+
+    //展开或关闭表格行
+    $(".btn-row-expand-or-collapse").click(function (e) {
+        let image_id = $(this).attr('data-image-id');
+        let row_id = '#row_collapse_' + image_id;
+        let td_selector_id = "#td_selector_" + image_id;
+        let td_data_id = "#td_data_" + image_id;
+        if ($(this).html().indexOf('fa-angle-right') != -1) {
+            $(this).html(`<i class="fa fa-angle-down fa-lg"></i>`);
+        } else {
+            $(this).html(`<i class="fa fa-angle-right fa-lg"></i>`);
+        }
+        $(td_selector_id).toggleClass('no-col-border');
+        $(td_data_id).toggleClass('no-col-border');
+        $(row_id).collapse('toggle')
     });
 
 })();

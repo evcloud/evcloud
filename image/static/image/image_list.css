@@ -1,6 +1,50 @@
-.mouse-hover:hover .mouse-hover-show{
+.mouse-hover:hover .mouse-hover-show {
     display: inline-block;
 }
-.mouse-hover-show{
+
+.mouse-hover-show {
     display: none;
+}
+
+.operation-button {
+    min-width: 40px;
+}
+
+.dropdown-menu {
+    min-width: unset;
+}
+
+.col-form-label {
+    color: #99a9bf;
+}
+
+.form-control-plaintext {
+    color: #606266;
+}
+
+.btn-row-expand-or-collapse:hover {
+    cursor: pointer;
+}
+
+.collapse-row {
+    background-color: rgba(0, 0, 0, .015);
+}
+
+.no-col-border {
+    border-top: none !important;
+    padding: 0 !important;
+}
+
+.table th, .table td {
+    vertical-align: middle !important;
+}
+
+.badge-hidden {
+    color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 8px;
+}
+
+.badge-secondary {
+    font-size: 8px;
 }

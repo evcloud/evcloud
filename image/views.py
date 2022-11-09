@@ -19,7 +19,7 @@ from utils.errors import NovncError, VmError
 from utils.paginators import NumsPaginator
 from vms.models import Vm
 from vms.vminstance import VmInstance
-from .forms import ImageVmCreateFrom, ImageModelForm
+from .forms import ImageVmCreateFrom
 from .managers import ImageManager, ImageError
 from vms.manager import FlavorManager
 from .models import Image, VmXmlTemplate
@@ -93,7 +93,7 @@ class ImageView(View):
         except Exception as e:
             return JsonResponse({'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'更新镜像失败，{str(e)}'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '更新镜像快照成功'},
+        return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '更新镜像快照成功', 'snap': target_image.snap},
                             status=status.HTTP_200_OK)
 
     def get_page_context(self, request, vms_queryset, context: dict):
@@ -107,101 +107,6 @@ class ImageView(View):
         context['images'] = images_page
         context['count'] = paginator.count
         return context
-
-
-class ImageAddView(View):
-    """
-    创建镜像视图
-    """
-
-    def get(self, request, *args, **kwargs):
-        local_host = Host.objects.filter(ipv4='127.0.0.1').first()
-        if local_host:
-            form = ImageModelForm(form_type='add')
-            vm_fields = ['vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem']
-            return render(request, 'image_add.html', context={'form': form, 'vm_fields': vm_fields})
-        else:
-            return render(request, 'error.html', {'errors': ['创建镜像虚拟机前必须创建IP为127.0.0.1的宿主机']})
-
-    def post(self, request, *args, **kwargs):
-        post = request.POST
-        form = ImageModelForm(data=post, form_type='add')
-        if not form.is_valid():
-            vm_fields = ['vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem']
-            return render(request, 'image_add.html', context={'form': form, 'vm_fields': vm_fields})
-        try:
-            with transaction.atomic():
-                image = form.save()
-                api = VmAPI()
-                validated_data = {'image_id': image.id, 'vcpu': image.vm_vcpu,
-                                  'mem': image.vm_mem, 'host_id': image.vm_host.id,
-                                  'ipv4': image.vm_mac_ip.ipv4}
-                vm = api.create_vm_for_image(**validated_data)
-                image.vm_uuid = vm.uuid
-                image.save()
-        except Exception as e:
-            return render(request, 'error.html', {'errors': ['新增错误', str(e)]})
-        return redirect(to=reverse('image:image-list'))
-
-
-class ImageChangeView(View):
-    """
-    更新镜像视图
-    """
-
-    def get(self, request, *args, **kwargs):
-        local_host = Host.objects.get(ipv4='127.0.0.1')
-        if local_host:
-            pk = kwargs.get('id')
-            image = ImageManager().get_image_by_id(pk)
-            if not image:
-                return render(request, 'error.html', {'errors': [f'id 为{pk}的镜像不存在']})
-            form = ImageModelForm(instance=image, form_type='change')
-            vm_fields = ['vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem']
-            return render(request, 'image_change.html', context={'form': form, 'vm_fields': vm_fields})
-        else:
-            return render(request, 'error.html', {'errors': ['创建镜像虚拟机前必须创建IP为127.0.0.1的宿主机']})
-
-    def post(self, request, *args, **kwargs):
-        pk = kwargs.get('id')
-        image = ImageManager().get_image_by_id(pk)
-        form = ImageModelForm(request.POST, instance=ImageManager().get_image_by_id(pk), form_type='change')
-        if not image:
-            form.add_error(field=None, error=f'id 为{pk}的镜像不存在')
-            vm_fields = ['vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem']
-            return render(request, 'image_change.html', context={'form': form, 'vm_fields': vm_fields})
-
-        if not form.is_valid():
-            vm_fields = ['vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem']
-            return render(request, 'image_change.html', context={'form': form, 'vm_fields': vm_fields})
-        try:
-            with transaction.atomic():
-                new_image = form.save()
-                if image.base_image != new_image.base_image:
-                    vm = Vm(uuid=new_image.vm_uuid, name=new_image.vm_uuid, vcpu=new_image.vm_vcpu,
-                            mem=new_image.vm_mem,
-                            disk=new_image.base_image,
-                            host=new_image.vm_host, mac_ip=new_image.vm_mac_ip, image=new_image)
-                    api = VmAPI()
-                    api.delete_vm_for_image(vm)
-                    validated_data = {'image_id': new_image.id, 'vcpu': new_image.vm_vcpu,
-                                      'mem': new_image.vm_mem, 'host_id': new_image.vm_host.id,
-                                      'ipv4': new_image.vm_mac_ip.ipv4}
-                    vm = api.create_vm_for_image(**validated_data)
-                    new_image.vm_uuid = vm.uuid
-                    new_image.save()
-                else:
-                    if image.vm_mem != new_image.vm_mem or image.vm_vcpu != new_image.vm_vcpu:
-                        vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem,
-                                disk=image.base_image,
-                                host=image.vm_host, mac_ip=image.vm_mac_ip, image=image)
-                        api = VmAPI()
-                        api.edit_vm_vcpu_mem_for_image(vm=vm, vcpu=new_image.vm_vcpu, mem=new_image.vm_mem)
-        except Exception as e:
-            form.add_error(field=None, error=f'更新镜像错误，{str(e)}')
-            vm_fields = ['vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem']
-            return render(request, 'image_change.html', context={'form': form, 'vm_fields': vm_fields})
-        return redirect(to=reverse('image:image-list'))
 
 
 class ImageDeleteView(View):
@@ -272,6 +177,7 @@ class ImageVmOperateView(View):
     '''
       镜像虚拟机操作API
     '''
+
     def post(self, request, *args, **kwargs):
         post = request.POST
         image_id = str_to_int_or_default(post['image_id'], 0)

@@ -106,12 +106,41 @@ class Image(models.Model):
         return self.get_sys_type_display()
 
     def save(self, *args, **kwargs):
+        self._create_image_if_not_exist()
         if self.create_newsnap:  # 选中创建snap复选框
             self._create_snap()
         elif self.enable and not self.snap:  # 启用状态，如果没有快照就创建
             self._create_snap()
 
         super().save(*args, **kwargs)
+
+    def _create_image_if_not_exist(self):
+        """
+        若不存在rbd镜像则创建空的rbd镜像，
+        :return:
+            True    # 创建镜像
+            raise Exception   # 未创建镜像
+        :raises: raise Exception
+        """
+        ceph_pool = self.ceph_pool
+        if not ceph_pool:
+            raise Exception('create_snap failed, can not get ceph_pool')
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            raise Exception('create_snap failed, can not get ceph')
+        try:
+            if self.size is not None:
+                image_size = self.size * 1024 ** 3
+            else:
+                image_size = 40 * 1024 ** 3
+            rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
+            if not rbd.image_exists(self.base_image):
+                rbd.create_image(name=self.base_image, size=image_size, data_pool=pool_name)
+                return True
+        except RadosError as e:
+            raise Exception(f'create_image_if_not_exist error, {str(e)}')
+        return False
 
     def _create_snap(self):
         """
@@ -158,11 +187,11 @@ class Image(models.Model):
         """
         ceph_pool = self.ceph_pool
         if not ceph_pool:
-            raise Exception('create_snap failed, can not get ceph_pool')
+            raise Exception('remove_image failed, can not get ceph_pool')
         pool_name = ceph_pool.pool_name
         config = ceph_pool.ceph
         if not config:
-            raise Exception('create_snap failed, can not get ceph')
+            raise Exception('remove_image failed, can not get ceph')
 
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)

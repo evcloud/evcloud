@@ -12,9 +12,12 @@
         <div class="card">
             <div class="card-header">
                 <span class="card-title"><strong>镜像列表 ({{ count }})</strong></span>
-                <span>
-                    <a class="btn btn-sm btn-primary float-right" href="{% url 'image:image-add' %}">新增镜像</a>
-                </span>
+                {% if user.is_superuser %}
+                    <span>
+                        <a class="btn btn-sm btn-primary float-right" href="{% url 'admin:image_image_add' %}"
+                           target="_blank">新增镜像</a>
+                    </span>
+                {% endif %}
             </div>
             <div class="card-body">
                 <form role="form" class="form-horizontal" method="get" action="">
@@ -62,35 +65,69 @@
             <table class="table table-hover table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                 <thead class="thead-light">
                 <tr>
-                    <th>名称</th>
-                    <th>版本信息</th>
-                    <th>系统类型</th>
-                    <th>镜像标签</th>
-                    <th>创建时间</th>
+                    <th style="width: 50px"></th>
+                    <th style="width: 280px">名称</th>
+                    <th style="width: 50px">启用</th>
+                    <th style="width: 90px">系统类型</th>
+                    <th style="width: 100px">镜像标签</th>
+                    <th style="width: 120px">虚拟机模板</th>
+                    <th style="width: 220px">生效快照</th>
+
                     <th>备注</th>
-                    <th>状态
-                        <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i>
-                        </button>
-                    </th>
-                    <th>操作</th>
+                    {% if user.is_superuser %}
+                        <th style="width: 150px">
+                            <span>云主机状态</span>
+                            <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i
+                                    class="fa fa-sync"></i>
+                            </button>
+                        </th>
+                        <th style="width: 150px">操作</th>
+                    {% endif %}
                 </tr>
                 </thead>
                 <tbody>
                 {% for image in images %}
                     <tr id="tr_{{ image.id }}">
                         <input type="hidden" class="item-checkbox" value="{{ image.id }}" name="select_vm">
-                        <td title="{{ image.id }}"><a
-                                href="{% url 'image:image-change' id=image.id %}"><b>{{ image.name }}</b></a></td>
-                        <td>{{ image.version }}</td>
+                        <td>
+                            <div class="btn-row-expand-or-collapse" data-image-id="{{ image.id }}">
+                                <i class="fa fa-angle-right fa-lg"></i>
+                            </div>
+                        </td>
+                        {% if user.is_superuser %}
+                            <td title="{{ image.id }}"><a
+                                    href="{% url 'admin:image_image_change' object_id=image.id %}"
+                                    target="_blank"><b>{{ image.name }}</b></a></td>
+                        {% else %}
+                            <td title="{{ image.id }}"><a
+                                    href="#"><b>{{ image.name }}</b></a></td>
+                        {% endif %}
+                        {% if image.enable %}
+                            <td>是</td>
+                        {% else %}
+                            <td>否</td>
+                        {% endif %}
                         <td>{{ image.sys_type_display }}</td>
                         <td>{{ image.tag_display }}</td>
-                        <td>{{ image.create_time|date:'Y-m-d H:i:s' }}</td>
+                        <td>{{ image.xml_tpl }}</td>
+                        <td>
+                            <span id="snap_{{ image.id }}">{{ image.snap }} <span
+                                    class="badge-hidden">new</span> </span>
+                            {% if user.is_superuser %}
+                                <button type="button" class="btn btn-sm btn-warning btn-image-update operation-button"
+                                        data-image-id="{{ image.id }}">更新
+                                </button>
+                            {% endif %}
+                        </td>
                         <td class="mouse-hover" style="max-width: 200px;">
                             <div>
                                 <span>{{ image.desc|default_if_none:'' }}</span>
-                                <span class="mouse-hover-show edit_image_remark" data-image-id="{{ image.id }}" title="修改备注">
-                                    <span class="fa fa-edit"></span>
-                                </span>
+                                {% if user.is_superuser %}
+                                    <span class="mouse-hover-show edit_image_remark" data-image-id="{{ image.id }}"
+                                          title="修改备注">
+                                        <span class="fa fa-edit"></span>
+                                    </span>
+                                {% endif %}
                             </div>
                             <div id="remarks_edit" style="display:none;">
                                 <textarea id="remarks">{{ image.desc|default_if_none:'' }}</textarea>
@@ -99,57 +136,75 @@
                                 </span>
                             </div>
                         </td>
-                        <td><span id="vm_status_{{ image.id }}"></span></td>
-                        <td>
-                            {% if image.vm_uuid %}
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-info btn-vnc-open"
-                                            data-image-id="{{ image.id }}">
-                                        <i class="fa fa-desktop"></i></button>
-                                    <button type="button" class="btn btn-sm btn-success dropdown-toggle"
-                                            id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
-                                            aria-expanded="false">操作
-                                    </button>
-                                    <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
-                                        <button class="dropdown-item bg-success btn-vm-start" type="button"
-                                                data-image-id="{{ image.id }}">开机
+                        {% if user.is_superuser %}
+                            <td><span id="vm_status_{{ image.id }}"></span></td>
+                            <td>
+                                {% if image.vm_uuid %}
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-info btn-vnc-open operation-button"
+                                                data-image-id="{{ image.id }}">
+                                            <i class="fa fa-desktop"></i></button>
+                                        <button type="button"
+                                                class="btn btn-sm btn-success dropdown-toggle operation-button"
+                                                id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                                                aria-expanded="false">
+                                            <i class="fa fa-power-off"></i></button>
                                         </button>
-                                        <button class="dropdown-item bg-warning btn-vm-shutdown" type="button"
-                                                data-image-id="{{ image.id }}">关机
-                                        </button>
-                                        <button class="dropdown-item bg-warning btn-vm-reboot" type="button"
-                                                data-image-id="{{ image.id }}">软重启
-                                        </button>
-                                        <button class="dropdown-item bg-warning btn-vm-poweroff" type="button"
-                                                data-image-id="{{ image.id }}">强制断电
-                                        </button>
-                                        <button class="dropdown-item bg-warning btn-image-update" type="button"
-                                                data-image-id="{{ image.id }}">更新镜像快照
-                                        </button>
-                                        <a class="dropdown-item bg-danger btn-vm-delete"
-                                           href="{% url 'image:image-delete' id=image.id %}">删除镜像</a>
+                                        <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
+                                            <button class="dropdown-item bg-success btn-vm-start" type="button"
+                                                    data-image-id="{{ image.id }}">开机
+                                            </button>
+                                            <button class="dropdown-item bg-warning btn-vm-shutdown" type="button"
+                                                    data-image-id="{{ image.id }}">软关机
+                                            </button>
+                                            <button class="dropdown-item bg-warning btn-vm-poweroff" type="button"
+                                                    data-image-id="{{ image.id }}">硬断电
+                                            </button>
+                                        </div>
+                                        <a class="btn btn-sm btn-danger operation-button"
+                                           href="{% url 'image:image-delete' id=image.id %}">删除</a>
+
                                     </div>
-                                </div>
-                            {% else %}
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-info btn-vnc-open" disabled
-                                            data-image-id="{{ image.id }}">
-                                        <i class="fa fa-desktop"></i></button>
-                                    <button type="button" class="btn btn-sm btn-success dropdown-toggle"
-                                            id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
-                                            aria-expanded="false">操作
-                                    </button>
-                                    <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
-                                        <a class="dropdown-item bg-primary"
-                                           href="{% url 'image:image-vm-create' image_id=image.id %}">创建虚拟机</a>
-                                        <button class="dropdown-item bg-warning btn-image-update" type="button"
-                                                data-image-id="{{ image.id }}">更新镜像
-                                        </button>
-                                        <a class="dropdown-item bg-danger btn-vm-delete"
-                                           href="{% url 'image:image-delete' id=image.id %}">删除镜像</a>
+                                {% else %}
+                                    <div class="btn-group">
+                                        <a class="btn btn-sm btn-primary"
+                                           href="{% url 'image:image-vm-create' image_id=image.id %}">创建云主机</a>
+                                        <a class="btn btn-sm btn-danger operation-button"
+                                           href="{% url 'image:image-delete' id=image.id %}">删除</a>
                                     </div>
-                                </div>
-                            {% endif %}
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                    <tr>
+                        <td class="no-col-border collapse-row" id="td_selector_{{ image.id }}"></td>
+                        <td colspan="8" class="no-col-border collapse-row" id="td_data_{{ image.id }}">
+                            <div class="collapse" id="row_collapse_{{ image.id }}">
+                                <form>
+                                    <div class="form-group row">
+                                        <label for="default_user" class="col-sm-1 col-form-label">默认用户名</label>
+                                        <span class="col-sm-3 form-control-plaintext"
+                                              id="default_user">{{ image.default_user }}</span>
+                                        <label for="default_password" class="col-sm-1 col-form-label">默认密码</label>
+                                        <span class="col-sm-3 form-control-plaintext"
+                                              id="default_password">{{ image.default_password }}</span>
+                                        <label for="size" class="col-sm-1 col-form-label">镜像大小</label>
+                                        <span class="col-sm-3 form-control-plaintext"
+                                              id="size">{{ image.size }} GB</span>
+                                    </div>
+                                    <div class="form-group row">
+                                        <label for="name" class="col-sm-1 col-form-label">创建时间</label>
+                                        <span class="col-sm-3 form-control-plaintext"
+                                              id="name">{{ image.create_time }}</span>
+                                        <label for="version" class="col-sm-1 col-form-label">更新时间</label>
+                                        <span class="col-sm-3 form-control-plaintext"
+                                              id="version">{{ image.update_time }}</span>
+                                        <label for="sys_type_display" class="col-sm-1 col-form-label">创建人</label>
+                                        <span class="col-sm-3 form-control-plaintext"
+                                              id="sys_type_display">{{ image.user }}</span>
+                                    </div>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}
