@@ -84,12 +84,12 @@ class Host(models.Model):
     pcserver = models.OneToOneField(to=PcServer, related_name='pc_server_host', blank=True, null=True,
                                     on_delete=models.CASCADE, verbose_name='物理服务器')
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
-    real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU总数')
-    real_mem = models.IntegerField(default=30, verbose_name='真实物理内存大小(Gb)')
-    vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU总数')
-    vcpu_allocated = models.IntegerField(default=0, verbose_name='已分配CPU总数')
-    mem_total = models.IntegerField(default=30, verbose_name='云主机可用内存总量(Gb)')
-    mem_allocated = models.IntegerField(default=0, verbose_name='云主机已用内存(Gb)')
+    real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU(核)')
+    real_mem = models.IntegerField(default=30, verbose_name='真实物理内存(Gb)')
+    vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU(核）')
+    vcpu_allocated = models.IntegerField(default=0, verbose_name='已用CPU（核）')
+    mem_total = models.IntegerField(default=30, verbose_name='虚拟内存(GB)')
+    mem_allocated = models.IntegerField(default=0, verbose_name='已用内存(GB)')
     vm_limit = models.IntegerField(default=10, verbose_name='本地云主机数量上限')
     vm_created = models.IntegerField(default=0, verbose_name='本地已创建云主机数量')
     enable = models.BooleanField(default=True, verbose_name='启用宿主机')
@@ -106,6 +106,7 @@ class Host(models.Model):
 
     def __str__(self):
         return self.ipv4
+
 
     def exceed_vm_limit(self):
         """

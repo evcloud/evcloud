@@ -563,7 +563,6 @@ class GroupManager:
         quota = user.group_set.all().aggregate(
             mem_total=DefaultSum('hosts_set__mem_total', filter=Q(hosts_set__enable=True)),
             mem_allocated=DefaultSum('hosts_set__mem_allocated'),
-            mem_reserved=DefaultSum('hosts_set__mem_reserved'),
             vcpu_total=DefaultSum('hosts_set__vcpu_total'),
             vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
             real_cpu=DefaultSum('hosts_set__real_cpu'),
@@ -738,14 +737,15 @@ class HostManager:
             False   # failed
         """
         # 释放资源
-        try:
-            host = Host.objects.filter(id=host_id).first()
-            if not host:
-                return False
+        with transaction.atomic():
+            try:
+                host = Host.objects.select_for_update().filter(id=host_id).first()
+                if not host:
+                    return False
 
-            return host.free(vcpu=vcpu, mem=mem)
-        except Exception:
-            return False
+                return host.free(vcpu=vcpu, mem=mem)
+            except Exception:
+                return False
 
     def filter_meet_requirements(self, hosts: list, vcpu: int, mem: int, claim=False):
         """
@@ -791,3 +791,21 @@ class HostManager:
                 return host
 
         return None
+
+    @staticmethod
+    def update_host_quota(host_id: int):
+        """
+        更新宿主机已分配资源
+
+        :param host_id: 宿主机id
+        """
+        with transaction.atomic():
+            host = Host.objects.select_for_update().filter(id=host_id).first()
+            s = host.stats_vcpu_mem_vms_now()
+            vcpu_allocated = s.get('vcpu')
+            mem_allocated = s.get('mem')
+            vm_num = s.get('vm_num')
+            host.vcpu_allocated = vcpu_allocated
+            host.mem_allocated = mem_allocated
+            host.vm_created = vm_num
+            host.save(update_fields=['vcpu_allocated', 'mem_allocated', 'vm_created'])

@@ -33,8 +33,8 @@ class GroupAdmin(admin.ModelAdmin):
 @admin.register(Host)
 class HostAdmin(admin.ModelAdmin):
     list_display_links = ('ipv4',)
-    list_display = ('id', 'ipv4', 'group', 'real_cpu', 'real_mem', 'vcpu_total', 'vcpu_allocated', 'vcpu_allocated_now',
-                    'mem_total', 'mem_allocated', 'mem_allocated_now', 'vm_created', 'vm_created_now', 'enable', 'desc')
+    list_display = ('id', 'ipv4', 'group', 'pc_server_resource', 'vcpu_total', 'vcpu_allocated',
+                    'mem_total', 'mem_allocated', 'vm_limit', 'vm_created', 'enable', 'desc')
     list_filter = ['group']
     search_fields = ['ipv4']
     actions = ['test_connect_host', 'update_host_quota']
@@ -89,24 +89,13 @@ class HostAdmin(admin.ModelAdmin):
         else:
             self.message_user(request, "所选宿主机都更新成功", level=messages.SUCCESS)
 
-    @admin.display(description='实时统计的已分配VCPU')
-    def vcpu_allocated_now(self, obj):
-        s = obj.stats_vcpu_mem_vms_now()
-        return s.get('vcpu')
+    @admin.display(description='真实物理资源')
+    def pc_server_resource(self, obj):
+        resource = f'{obj.pcserver.real_cpu}核/{obj.pcserver.real_mem}GB'
+        return resource
 
-    vcpu_allocated_now.short_description = '实时统计的已分配VCPU'
+    pc_server_resource.short_description = '真实物理资源'
 
-    def mem_allocated_now(self, obj):
-        s = obj.stats_vcpu_mem_vms_now()
-        return s.get('mem')
-
-    mem_allocated_now.short_description = '实时统计的已分配MEM'
-
-    def vm_created_now(self, obj):
-        s = obj.stats_vcpu_mem_vms_now()
-        return s.get('vm_num')
-
-    vm_created_now.short_description = '实时统计虚拟机数'
 
     def group(self, obj):
         return obj.desc.group
@@ -116,19 +105,19 @@ class HostAdmin(admin.ModelAdmin):
     # 重写编辑页, 继承父类方法
     def change_view(self, request, object_id, form_url='', extra_context=None):
         self.fields = (
-            'id', 'pcserver', 'group', 'ipv4', 'real_cpu', 'real_mem', 'vcpu_total', 'vcpu_allocated',
+            'id', 'pcserver', 'group', 'ipv4', 'pc_server_resource', 'vcpu_total', 'vcpu_allocated',
             'mem_total', 'mem_allocated', 'vm_limit', 'vm_created', 'enable', 'desc'
         )  # 将自定义的字段注册到编辑页中
-        self.readonly_fields = ('id', 'ipv4', 'real_cpu', 'real_mem')
+        self.readonly_fields = ('id', 'ipv4', 'pc_server_resource')
         return super(HostAdmin, self).change_view(request, object_id, form_url=form_url, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
         self.fields = (
-            'group', 'pcserver', 'ipv4', 'real_cpu', 'real_mem', 'vcpu_total', 'vcpu_allocated',
+            'group', 'pcserver', 'ipv4', 'pc_server_resource', 'vcpu_total', 'vcpu_allocated',
             'mem_total', 'vm_limit', 'mem_allocated', 'vm_created', 'enable', 'desc', 'ipmi_host',
             'ipmi_user', 'ipmi_password'
         )  # 将自定义的字段注册到编辑页中
-        self.readonly_fields = ('ipv4', 'real_cpu', 'real_mem')
+        self.readonly_fields = ('ipv4', 'pc_server_resource')
         return super(HostAdmin, self).add_view(request, form_url=form_url, extra_context=extra_context)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
