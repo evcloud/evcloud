@@ -3,53 +3,77 @@
 
 {% block title %}资源统计列表{% endblock %}
 
-{% block head %}{% endblock %}
+{% block head %}
+        <link rel="stylesheet" type="text/css" href="{% static 'reports/reports.css' %}">
+{% endblock %}
 
 {% block boby %}
-    <div class="container-fluid col-lg-12">
-        <p class="h4">机组资源统计:<strong id="id-current" data-id="{{ group_id }}"></strong></p>
-        <div class="card border-info">
-            <table class="table" id="id-table-group">
-                <thead class="thead-light">
-                <tr>
-                    <th>总cpu(/核)</th>
-                    <th>已分配cpu(/核)</th>
-                    <th>cpu分配率</th>
-                    <th>总内存</th>
-                    <th>已使用内存</th>
-                    <th>内存使用率</th>
-                    <th>云主机数</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="card border-success">
-                <div class="card-header">
-                    <b class="card-title">宿主机</b>
-                </div>
-                <table class="table" id="id-table-host">
-                    <thead class="thead-light">
-                    <tr>
-                        <th>IP</th>
-                        <th>宿主机组</th>
-                        <th>总cpu(/核)</th>
-                        <th>已分配cpu(/核)</th>
-                        <th>cpu分配率</th>
-                        <th>总内存</th>
-                        <th>已使用内存</th>
-                        <th>内存使用率</th>
-                        <th>云主机数</th>
-                    </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+    <div class="container-fluid d-flex flex-column h-100">
+        <div class="d-flex px-3">
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="#">全部</a></li>
+                <li class="breadcrumb-item"><a href="#" id="center-id-current"></a></li>
+                <li class="breadcrumb-item active" aria-current="page" id="id-current" data-id="{{ group_id }}"></li>
+              </ol>
+            </nav>
+{#            <p class="h5">机组资源统计:<strong id="id-current" data-id="{{ group_id }}"></strong></p>#}
+        </div>
+        <div class="d-flex px-3" style="flex: 1">
+            <div style="width: 200px">
+                <ul class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+                  <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#host" aria-controls="host" aria-selected="false">宿主机</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#graph" aria-controls="graph" aria-selected="false">可视化图表</a>
+                  </li>
+                </ul>
             </div>
-            <div class="card-body">
-                <canvas id="id-chart-vm" height="100"></canvas>
-                <hr/>
-                <canvas id="id-chart-cpu" height="100"></canvas>
-                <hr/>
-                <canvas id="id-chart-mem" height="100"></canvas>
+            <div class="pl-lg-1 flex-grow-1">
+                <div class="tab-content d-flex flex-column h-100">
+                    <div class="card border-info">
+                        <table class="table" id="id-table-group">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>总cpu(/核)</th>
+                                <th>已分配cpu(/核)</th>
+                                <th>cpu分配率</th>
+                                <th>总内存</th>
+                                <th>已使用内存</th>
+                                <th>内存使用率</th>
+                                <th>云主机数</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="card tab-pane fade show active" style="flex: 1" id="host" role="tabpanel" aria-labelledby="host-tab">
+                        <table class="table" id="id-table-host">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>IP</th>
+                                <th>宿主机组</th>
+                                <th>总cpu(/核)</th>
+                                <th>已分配cpu(/核)</th>
+                                <th>cpu分配率</th>
+                                <th>总内存</th>
+                                <th>已使用内存</th>
+                                <th>内存使用率</th>
+                                <th>云主机数</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="card tab-pane fade show p-2" id="graph" role="tabpanel" aria-labelledby="graph-tab">
+                        <canvas id="id-chart-vm" height="100"></canvas>
+                        <hr/>
+                        <canvas id="id-chart-cpu" height="100"></canvas>
+                        <hr/>
+                        <canvas id="id-chart-mem" height="100"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -71,14 +95,16 @@
         };
 
         function get_stat_data_ajax(){
-            let name_dom = $("#id-current");
-            let id = name_dom.attr("data-id");
+            let group_name_dom = $("#id-current");
+            let center_name_dom = $("#center-id-current")
+            let id = group_name_dom.attr("data-id");
             let qs = encode_params({mem_unit:'GB'});
             $.ajax({
                 url: build_absolute_url('/api/v3/stat/' + id + '/group/?' + qs),
                 type: 'get',
                 success:function(data){
-                    name_dom.text(data.group.name);
+                    group_name_dom.text(data.group.name);
+                    center_name_dom.text(data.group.center__name)
                     let html = render_group_table(data.group);
                     $("#id-table-group").children(':first-child').append(html);
                     html = render_host_table(data.hosts);
