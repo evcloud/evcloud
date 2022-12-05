@@ -166,3 +166,70 @@ function isoTimeToLocal(isoTime) {
     }
     return lTime;
 }
+
+ /**
+  * 自定义Loading插件，来自网络
+  * @param {Object} config
+  * {
+  * content[加载显示文本]
+  * }
+  * @param {String} config
+  * 加载显示文本
+  * @refer 依赖 JQuery-1.9.1及以上、Bootstrap-3.3.7及以上
+  * @return {KZ_Loading} 对象实例
+  */
+ function KZ_Loading(config) {
+     if (this instanceof KZ_Loading) {
+         const domTemplate = '<div class="modal fade kz-loading" data-kzid="@@KZ_Loadin_ID@@" backdrop="static" keyboard="false"><div style="width: 200px;height:20px; z-index: 20000; position: absolute; text-align: center; left: 50%; top: 50%;margin-left:-100px;margin-top:-10px"> <div class="spinner-border text-primary" role="status"> <span class="sr-only">Loading...</span> </div><h5 style="color: white">@@KZ_Loading_Text@@</h5></div></div>';
+         this.config = {
+             content: 'loading...'
+         };
+         if (config != null) {
+             if (typeof config === 'string') {
+                 this.config = Object.assign(this.config, {
+                     content: config
+                 });
+             } else if (typeof config === 'object') {
+                 this.config = Object.assign(this.config, config);
+             }
+         }
+         this.id = new Date().getTime().toString();
+         this.state = 'hide';
+
+         /*显示 */
+         this.show = function () {
+             $('.kz-loading[data-kzid=' + this.id + ']').modal({
+                 backdrop: 'static',
+                 keyboard: false
+             });
+             this.state = 'show';
+         };
+         /*隐藏 */
+         this.hide = function (callback) {
+             $('.kz-loading[data-kzid=' + this.id + ']').modal('hide');
+             this.state = 'hide';
+             if (callback) {
+                 callback();
+             }
+         };
+         /*销毁dom */
+         this.destroy = function () {
+             var that = this;
+             this.hide(function () {
+                 var node = $('.kz-loading[data-kzid=' + that.id + ']');
+                 node.next().remove();
+                 node.remove();
+                 that.show = function () {
+                     throw new Error('对象已销毁！');
+                 };
+                 that.hide = function () {};
+                 that.destroy = function () {};
+             });
+         }
+
+         var domHtml = domTemplate.replace('@@KZ_Loadin_ID@@', this.id).replace('@@KZ_Loading_Text@@', this.config.content);
+         $('body').append(domHtml);
+     } else {
+         return new KZ_Loading(config);
+     }
+ }

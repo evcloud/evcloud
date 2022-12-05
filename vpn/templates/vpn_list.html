@@ -105,5 +105,9 @@
 {% endblock %}
 
 {% block script %}
-{#    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>#}
+    <script>
+         window.onload = function() {
+            $("#nav_vpn_list").addClass("active");// 激活列表导航栏
+         };
+    </script>
 {% endblock %}

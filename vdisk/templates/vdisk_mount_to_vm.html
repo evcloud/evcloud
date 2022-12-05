@@ -32,7 +32,7 @@
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 {% if disk.vm %}
                     <div>
-                        <p class="text-warning h3">此硬盘不能挂载，硬盘已被挂载使用，挂载云主机uuid: {{ disk.vm.hex_uuid }}，IP: {{ disk.vm.ipv4 }}</p>
+                        <p class="text-warning h3">此硬盘不能挂载，硬盘已被挂载使用，挂载云主机uuid: {{ disk.vm.hex_uuid }}，IP: <a href="{% url 'vms:vm-detail' vm_uuid=disk.vm.uuid %}">{{ disk.vm.ipv4 }}</a></p>
                     </div>
                 {% else %}
                     <div>
