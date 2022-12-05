@@ -1,5 +1,6 @@
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
+from compute.managers import HostManager
 from utils.errors import VmError, VmNotExistError
 from utils import errors
 from .manager import VmManager
@@ -443,7 +444,7 @@ class VmAPI:
 
     def migrate_vm(self, vm_uuid: str, host_id: int, user, force: bool = False):
         """
-        迁移虚拟机
+        迁移虚拟机，迁移后强制更新源与目标Host资源分配信息
 
         :param vm_uuid: 虚拟机uuid
         :param host_id: 宿主机id
@@ -457,7 +458,10 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
 
-        return VmInstance(vm=vm).migrate(host_id=host_id, force=force)
+        new_vm = VmInstance(vm=vm).migrate(host_id=host_id, force=force)
+        HostManager.update_host_quota(host_id=vm.host_id)
+        HostManager.update_host_quota(host_id=new_vm.host_id)
+        return new_vm
 
     def reset_sys_disk(self, vm_uuid: str, user):
         """
@@ -507,7 +511,7 @@ class VmAPI:
 
     def live_migrate_vm(self, vm_uuid: str, dest_host_id: int, user):
         """
-        迁移虚拟机
+        迁移虚拟机，迁移后强制更新源与目标Host资源分配信息
 
         :param vm_uuid: 虚拟机uuid
         :param dest_host_id: 目标宿主机id
@@ -519,7 +523,10 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
-        return VmInstance(vm).live_migrate(dest_host_id=dest_host_id)
+        task = VmInstance(vm).live_migrate(dest_host_id=dest_host_id)
+        HostManager.update_host_quota(host_id=vm.host_id)
+        HostManager.update_host_quota(host_id=dest_host_id)
+        return task
 
     def get_vm_stats(self, vm_uuid: str, user):
         """

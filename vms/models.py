@@ -11,9 +11,9 @@ from compute.models import Host
 from network.models import MacIP
 from ceph.managers import get_rbd_manager, CephClusterManager, RadosError
 from ceph.models import CephPool
+from compute.managers import HostManager
 from utils.ev_libvirt.virt import VmDomain
 from utils.errors import Error
-
 
 # 获取用户模型
 User = get_user_model()
@@ -86,7 +86,7 @@ class Vm(VmBase):
     image = models.ForeignKey(to=Image, on_delete=models.CASCADE, verbose_name='源镜像',
                               help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
     user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL,
-                             related_name='user_vms',  null=True)
+                             related_name='user_vms', null=True)
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
     init_password = models.CharField(max_length=20, default='', blank=True, verbose_name='root初始密码')
@@ -152,7 +152,7 @@ class Vm(VmBase):
             True    # has
             False   # no
         """
-        if not isinstance(user.id, int):    # 未认证用户
+        if not isinstance(user.id, int):  # 未认证用户
             return False
 
         if user.is_superuser:
@@ -222,6 +222,24 @@ class Vm(VmBase):
             size_gb = math.ceil(size / 1024 ** 3)
             self.sys_disk_size = size_gb
             self.save(update_fields=['sys_disk_size'])
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        删除虚拟机时强制更新Host资源分配信息
+        """
+        super().delete(using=using, keep_parents=keep_parents)
+        HostManager.update_host_quota(host_id=self.host_id)
+
+    def save(self, *args, **kwargs):
+        """
+        新增虚拟机时强制更新Host资源分配信息
+        """
+        is_insert = False
+        if not self.pk:
+            is_insert = True
+        super().save(*args, **kwargs)
+        if is_insert:
+            HostManager.update_host_quota(host_id=self.host_id)
 
 
 class VmArchive(VmBase):
