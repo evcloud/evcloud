@@ -67,10 +67,10 @@
                 <tr>
                     <th style="width: 50px"></th>
                     <th style="width: 280px">名称</th>
-                    <th style="width: 50px">启用</th>
+                    <th style="width: 60px">启用</th>
                     <th style="width: 90px">系统类型</th>
                     <th style="width: 100px">镜像标签</th>
-                    <th style="width: 120px">虚拟机模板</th>
+                    <th style="width: 180px">虚拟机模板</th>
                     <th style="width: 220px">生效快照</th>
 
                     <th>备注</th>
@@ -102,10 +102,17 @@
                             <td title="{{ image.id }}"><a
                                     href="#"><b>{{ image.name }}</b></a></td>
                         {% endif %}
-                        {% if image.enable %}
-                            <td>是</td>
+                        {% if user.is_superuser %}
+                            <td>
+                                <div class="custom-control custom-switch image-enable-switch" id="toggle_state_switch_{{ image.id }}" data-image-id="{{ image.id }}">
+                                  <input type="checkbox" class="custom-control-input" id="checkbox_enable_{{ image.id }}" {% if image.enable %} checked {% endif %}>
+                                  <label class="custom-control-label" for="switch_enable_{{ image.id }}">
+                                      <span id="switch_loading_button_{{ image.id }}"></span>
+                                  </label>
+                                </div>
+                            </td>
                         {% else %}
-                            <td>否</td>
+                            <td>是</td>
                         {% endif %}
                         <td>{{ image.sys_type_display }}</td>
                         <td>{{ image.tag_display }}</td>

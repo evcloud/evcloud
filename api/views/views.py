@@ -1943,7 +1943,7 @@ class ImageViewSet(CustomGenericViewSet):
 
         try:
             queryset = ImageManager().filter_image_queryset(center_id=center_id, sys_type=sys_type, tag=tag,
-                                                            search=search, all_no_filters=True)
+                                                            search=search, all_no_filters=True).filter(enable=True)
         except exceptions.ImageError as e:
             exc = exceptions.BadRequestError(msg=str(e))
             return self.exception_response(exc)

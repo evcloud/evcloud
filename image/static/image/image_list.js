@@ -68,6 +68,7 @@
     //
     // 页面刷新时执行
     window.onload = function () {
+        $("#nav_image_list").addClass("active");// 激活列表导航栏
         // 虚拟机列表运行状态查询更新
         update_vms_status(get_image_list_uuid_array());
     };
@@ -85,6 +86,7 @@
 
         return arr;
     }
+
 
     // 获取并设置虚拟机的运行状态
     function get_vm_status(vmid) {
@@ -169,7 +171,7 @@
         $.ajax({
             url: api,
             type: 'put',
-            data: {'image_id': image_id},
+            data: {'image_id': image_id, 'operation': 'snap_update'},
             dataType: "json",
             success: function (data, status, xhr) {
                 if (xhr.status === 200) {
@@ -194,6 +196,45 @@
 
             }
         })
+    });
+
+    // 镜像启用开关点击事件
+    $('.image-enable-switch').click(function (e) {
+        e.preventDefault();
+        let image_id = $(this).attr('data-image-id');
+        let loading_button = $('#switch_loading_button_' + image_id);
+        let checkbox_enable = $('#checkbox_enable_' + image_id);
+        loading_button.html(`<i class="fa fa-spinner fa-pulse"></i>`);
+        checkbox_enable.prop('disabled', true);
+
+        let api = build_absolute_url('image/');
+        $.ajax({
+            url: api,
+            type: 'put',
+            data: {'image_id': image_id, 'operation': 'enable_update'},
+            dataType: "json",
+            success: function (data, status, xhr) {
+                if (xhr.status === 200) {
+                    loading_button.html(``);
+                    var state = checkbox_enable.prop('checked');
+                    checkbox_enable.prop("checked",!state);
+                    checkbox_enable.prop('disabled', false);
+                } else {
+                    alert("镜像启用失败！" + data.code_text);
+                }
+            },
+            error: function (xhr) {
+                let msg = '镜像启用失败!';
+                try {
+                    msg = msg + xhr.responseJSON.code_text;
+                } catch (e) {
+                }
+                alert(msg);
+            },
+            complete: function () {
+
+            }
+        });
     });
 
     // 开机点击事件

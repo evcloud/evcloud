@@ -55,11 +55,12 @@ class ImageView(View):
         tag = str_to_int_or_default(request.GET.get('tag', 0), 0)
         sys_type = str_to_int_or_default(request.GET.get('sys_type', 0), 0)
         search = request.GET.get('search', '')
-
+        # 超级用户可以查看所有镜像，包括被禁用镜像
+        auth = request.user
         try:
             api = ImageManager()
             queryset = api.filter_image_queryset(center_id=center_id, tag=tag, sys_type=sys_type, search=search,
-                                                 all_no_filters=True)
+                                                 all_no_filters=auth.is_superuser)
         except ImageError as e:
             return render(request, 'error.html', {'errors': ['查询镜像时错误', str(e)]})
 
@@ -86,14 +87,19 @@ class ImageView(View):
         """
         param = QueryDict(request.body)
         try:
+            operation = param.get('operation')
             image_id = int(param.get('image_id'))
             target_image = Image.objects.filter(id=image_id).first()
-            target_image.create_newsnap = True
-            target_image.save()
+            if operation == 'snap_update':
+                target_image.create_newsnap = True
+                target_image.save()
+            elif operation == 'enable_update':
+                target_image.enable = not target_image.enable
+                target_image.save()
         except Exception as e:
             return JsonResponse({'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'更新镜像失败，{str(e)}'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '更新镜像快照成功', 'snap': target_image.snap},
+        return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '更新镜像成功', 'snap': target_image.snap},
                             status=status.HTTP_200_OK)
 
     def get_page_context(self, request, vms_queryset, context: dict):
@@ -136,7 +142,10 @@ class ImageVmCreateView(View):
 
     def get(self, request, *args, **kwargs):
         image_id = str_to_int_or_default(kwargs.get('image_id', 0), 0)
-        form = ImageVmCreateFrom(initial={'image_id': image_id})
+        try:
+            form = ImageVmCreateFrom(initial={'image_id': image_id})
+        except Exception as e:
+            return render(request, 'error.html', {'errors': ['创建镜像虚拟机错误，请确认已创建127.0.0.1宿主机与镜像专用vlan', str(e)]})
         context = {
             'form': form,
             'image': Image.objects.get(id=image_id)

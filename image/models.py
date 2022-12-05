@@ -179,7 +179,7 @@ class Image(models.Model):
 
     def _remove_image(self):
         """
-        删除image，需先删除其快照。（基础镜像不删除rbd image，基础镜像rbd image由管理员手动处理）
+        删除image， 重命名镜像（不区分基础镜像与用户镜像）, 已删除镜像名格式为：x_image_{time}_{image_name}
         :return:
             True    # success
             raise Exception   # failed
@@ -196,9 +196,9 @@ class Image(models.Model):
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             if rbd.image_exists(self.base_image):
-                rbd.remove_snap(image_name=self.base_image, snap=self.snap)
-                if self.tag != self.TAG_BASE:
-                    rbd.remove_image(image_name=self.base_image)
+                time_str = timezone.now().strftime('%Y%m%d%H%M%S')
+                new_image_name = f"x_image_{time_str}_{self.base_image}"
+                rbd.rename_image(image_name=self.base_image, new_name=new_image_name)
         except (RadosError, Exception) as e:
             raise Exception(f'remove snap or image error, {str(e)}')
 

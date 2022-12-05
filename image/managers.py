@@ -38,7 +38,7 @@ class ImageManager:
         :return:
             QuerySet()
         """
-        return Image.objects.filter(enable=True).all()
+        return Image.objects.all()
 
     def get_image_queryset_by_center(self, center_or_id):
         """
@@ -106,10 +106,9 @@ class ImageManager:
         """
         if center_id <= 0 and sys_type <= 0 and tag <= 0 and not search:
             if not all_no_filters:
-                raise ImageError(msg='查询条件无效')
-
-            return self.get_image_queryset().select_related(*related_fields).all()
-
+                return self.get_image_queryset().filter(enable=True).select_related(*related_fields).all()
+            else:
+                return self.get_image_queryset().select_related(*related_fields).all()
         queryset = None
         if center_id > 0:
             queryset = self.get_image_queryset_by_center(center_id)
@@ -131,5 +130,7 @@ class ImageManager:
                 queryset = queryset.filter(Q(desc__icontains=search) | Q(name__icontains=search)).all()
             else:
                 queryset = self.get_image_queryset().filter(Q(desc__icontains=search) | Q(name__icontains=search)).all()
-
-        return queryset.select_related(*related_fields).all()
+        if not all_no_filters:
+            return queryset.filter(enable=True).select_related(*related_fields).all()
+        else:
+            return queryset.select_related(*related_fields).all()

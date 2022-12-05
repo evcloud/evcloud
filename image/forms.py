@@ -14,7 +14,7 @@ class ImageVmCreateFrom(forms.Form):
                                     required=True, widget=forms.Select(attrs={'class': 'form-control'}))
     vcpu = forms.IntegerField(label='CPU核数', initial=1, required=True,
                               widget=forms.NumberInput(attrs={'class': 'form-control'}))
-    mem = forms.IntegerField(label='内存大小', initial=1, required=True,
+    mem = forms.IntegerField(label='内存(GB)', initial=1, required=True,
                              widget=forms.NumberInput(attrs={'class': 'form-control'}))
     image_id = forms.IntegerField(label='系统镜像', required=True, widget=forms.HiddenInput)
 
