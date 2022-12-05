@@ -382,7 +382,7 @@ class VmBuilder:
                 image.vm_vcpu = vcpu
                 image.vm_host = host
                 image.vm_mac_ip = macip
-                image.save()
+                image.save(update_fields=['vm_uuid', 'vm_mem', 'vm_vcpu', 'vm_host', 'vm_mac_ip'])
             except Exception as e:
                 raise errors.VmError(msg=f'创建镜像虚拟机元数据错误,{str(e)}')
 

@@ -39,11 +39,14 @@
         let btn_submit = $(this);
         btn_submit.addClass('disabled'); //鼠标悬停时，使按钮表现为不可点击状态
         btn_submit.attr('disabled', true);//失能对应按钮
+        let loading = new KZ_Loading('虚拟机关机迁移中...');
+        loading.show();
         $.ajax({
             url: api,
             type: 'post',
             contentType: 'application/json',
             success: function (data, status, xhr) {
+                loading.destroy();
                 if (xhr.status === 201){
                     alert('云主机迁移成功');
                 }else{
@@ -51,6 +54,7 @@
                 }
             },
             error: function (xhr) {
+                loading.destroy();
                 let msg = '云主机迁移失败!';
                 try{
                     msg = xhr.responseJSON.code_text;
@@ -58,6 +62,7 @@
                 alert(msg);
             },
             complete: function () {
+                loading.destroy();
                 btn_submit.removeClass('disabled');   //鼠标悬停时，使按钮表现为可点击状态
                 btn_submit.attr('disabled', false); //激活对应按钮
             }

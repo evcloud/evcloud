@@ -10,7 +10,6 @@ from image.models import Image
 from device.manager import PCIDeviceManager, DeviceError
 from utils.paginators import NumsPaginator
 
-
 User = get_user_model()
 
 
@@ -34,7 +33,7 @@ class VmsView(View):
     """
     虚拟机类视图
     """
-    NUM_PER_PAGE = 20   # Show num per page
+    NUM_PER_PAGE = 20  # Show num per page
 
     def get(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.GET.get('center', 0), 0)
@@ -47,7 +46,7 @@ class VmsView(View):
         auth = request.user
         if auth.is_superuser:
             users = User.objects.all()
-        else:   # 普通用户只能查看自己的虚拟机，无用户下拉框选项
+        else:  # 普通用户只能查看自己的虚拟机，无用户下拉框选项
             users = None
             user_id = auth.id
 
@@ -96,6 +95,7 @@ class VmsView(View):
 
 class VmCreateView(View):
     """创建虚拟机类视图"""
+
     def get(self, request, *args, **kwargs):
         center_id = str_to_int_or_default(request.GET.get('center_id', 0), 0)
 
@@ -172,6 +172,7 @@ class VmMountDiskView(View):
 
 class VmDetailView(View):
     """虚拟机详情类视图"""
+
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
 
@@ -186,6 +187,7 @@ class VmDetailView(View):
 
 class VmEditView(View):
     """虚拟机修改类视图"""
+
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
 
@@ -204,6 +206,7 @@ class VmEditView(View):
 
 class VmResetView(View):
     """虚拟机重置系统镜像类视图"""
+
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
 
@@ -220,6 +223,7 @@ class VmResetView(View):
 
 class VmMigrateView(View):
     """虚拟机迁移类视图"""
+
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
 
@@ -230,11 +234,13 @@ class VmMigrateView(View):
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
         hosts = HostManager().get_hosts_by_group_id(group_id=vm.host.group_id)
+        hosts = list(filter(lambda host: host.id != vm.host_id, hosts))
         return render(request, 'vm_migrate.html', context={'vm': vm, 'hosts': hosts})
 
 
 class VmLiveMigrateView(View):
     """虚拟机动态迁移类视图"""
+
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
 
@@ -245,6 +251,7 @@ class VmLiveMigrateView(View):
             return render(request, 'error.html', {'errors': ['云主机不存在']})
 
         hosts = HostManager().get_hosts_by_group_id(group_id=vm.host.group_id)
+        hosts = list(filter(lambda host: host.id != vm.host_id, hosts))
         return render(request, 'vm_live_migrate.html', context={'vm': vm, 'hosts': hosts})
 
 
@@ -290,6 +297,7 @@ class VmMountPCIView(View):
 
 class VmSysDiskExpandView(View):
     """虚拟机系统盘扩容类视图"""
+
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
 
@@ -303,4 +311,3 @@ class VmSysDiskExpandView(View):
             return render(request, 'error.html', {'errors': ['没有此云主机的访问权限']})
 
         return render(request, 'vm_disk_expand.html', context={'vm': vm})
-

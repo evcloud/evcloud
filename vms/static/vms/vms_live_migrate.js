@@ -31,6 +31,9 @@
         let btn_submit = $(this);
         btn_submit.addClass('disabled'); //鼠标悬停时，使按钮表现为不可点击状态
         btn_submit.attr('disabled', true);//失能对应按钮
+
+        let loading = new KZ_Loading('虚拟机动态迁移中...');
+        loading.show();
         $.ajax({
             url: api,
             type: 'post',
@@ -48,6 +51,7 @@
                 }else{
                     alert("云主机动态迁移请求失败！" + data['code_text']);
                 }
+                loading.destroy();
             },
             error: function (xhr) {
                 let msg = '云主机动态迁移请求失败!';
@@ -55,9 +59,10 @@
                     msg = xhr.responseJSON.code_text;
                 }catch (e) {}
                 alert(msg);
+                loading.destroy();
             },
             complete: function () {
-
+                loading.destroy();
             }
         })
     });

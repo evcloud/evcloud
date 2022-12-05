@@ -70,9 +70,8 @@
         <option value="">自动选择</option>
         {{ each results }}
             <option value="{{ $value.id }}">
-                {{ $value.ipv4 }}(vCPU:{{$value.vcpu_allocated}}/{{$value.vcpu_total - $value.vcpu_allocated}}/{{$value.vcpu_total}}, 
-                RAM:{{$value.mem_allocated}}Gb/{{$value.mem_total - $value.mem_allocated}}Gb/{{$value.mem_total}}Gb),
-                Num:{{$value.vm_created}}/{{$value.vm_limit - $value.vm_created}}/{{$value.vm_limit}}
+                {{ $value.ipv4 }}(总资源:{{$value.vcpu_total}}核/{{$value.mem_total}}GB，剩余:{{$value.vcpu_total - $value.vcpu_allocated}}核/{{$value.mem_total - $value.mem_allocated}}GB),
+                (VM上限:{{$value.vm_limit}}个/剩余:{{$value.vm_limit - $value.vm_created}}个)
             </option>
         {{/each}}
     `);

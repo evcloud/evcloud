@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load  sizeformat %}
+{% load  mathfilters %}
 
 {% block title %}动态迁移云主机{% endblock %}
 
@@ -36,9 +37,10 @@
                                     <select name="host_id" class="form-control" id="id-host">
                                         <option value="">--</option>
                                         {% for h in hosts %}
-                                            <option value="{{ h.id }}">{{ h.ipv4 }} (cpu:{{ h.vcpu_allocated }}/{{ h.vcpu_total }},
-                                                mem:{{ h.mem_allocated }}GB/{{ h.mem_total }}GB,
-                                                num:{{h.vm_created}}/{{h.vm_limit}})</option>
+                                            <option value="{{ h.id }}">
+                                             {{ h.ipv4 }}(总资源:{{ h.vcpu_total }}核/{{ h.mem_total }}GB，剩余:{{ h.vcpu_total|subtract:h.vcpu_allocated }}核/{{ h.mem_total|subtract:h.mem_allocated }}GB),
+                                                (VM上限:{{ h.vm_limit }}个/剩余:{{ h.vm_limit |subtract:h.vm_created }}个)
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </div>
