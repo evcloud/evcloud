@@ -270,6 +270,43 @@
         })
     });
 
+     // 删除虚拟机点击事件
+    $(".btn-vm-delete").click(function (e) {
+        e.preventDefault();
+        if(!confirm('确定删除镜像虚拟机（删除虚拟机不会删除镜像）？'))
+		    return;
+        let image_id = $(this).attr('data-image-id');
+        let api = build_absolute_url('image/image-vm-operate/');
+        let node_status = $("#vm_status_" + image_id);
+        node_status.html(`删除中`);
+        $.ajax({
+            url: api,
+            type: 'post',
+            dataType: "json",
+            data: {'image_id': image_id, 'operation': 'delete-vm'},
+            success: function (data, status, xhr) {
+                if (xhr.status === 200) {
+                    get_vm_status(image_id)
+                } else {
+                    alert("虚拟机启动失败！" + data.code_text);
+                }
+                window.location = '/image/';
+            },
+            error: function (xhr) {
+                let msg = '删除虚拟机操作失败!';
+                try {
+                    msg = msg + xhr.responseJSON.code_text;
+                } catch (e) {
+                }
+                alert(msg);
+                window.location = '/image/';
+            },
+            complete: function () {
+
+            }
+        })
+    });
+
     // 关机点击事件
     $(".btn-vm-shutdown").click(function (e) {
         e.preventDefault();

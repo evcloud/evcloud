@@ -201,7 +201,7 @@ class ImageVmOperateView(View):
             return JsonResponse({'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'镜像查询错误，{str(e)}'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        if operation not in ['get-vnc-url', 'get-vm-status', 'start-vm', 'shutdown-vm', 'poweroff-vm']:
+        if operation not in ['get-vnc-url', 'get-vm-status', 'start-vm', 'shutdown-vm', 'poweroff-vm', 'delete-vm']:
             return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': '镜像操作参数错误'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -242,6 +242,20 @@ class ImageVmOperateView(View):
             api = VmAPI()
             api.vm_operations_for_image(vm=vm, op='poweroff')
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '虚拟机关闭成功'}, status=status.HTTP_200_OK)
+
+        if operation == 'delete-vm':
+            vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, disk=image.base_image,
+                    host=image.vm_host, mac_ip=image.vm_mac_ip, image=image)
+            api = VmAPI()
+            api.delete_vm_for_image(vm)
+            image.vm_uuid = None
+            image.vm_mem = None
+            image.vm_cpu = None
+            image.vm_host = None
+            image.vm_mac_ip = None
+            image.create_newsnap = False
+            image.save()
+            return JsonResponse({'code': status.HTTP_200_OK, 'msg': '镜像虚拟机删除成功'}, status=status.HTTP_200_OK)
 
         if operation == 'get-vm-status':
             if not image.vm_uuid:

@@ -167,6 +167,9 @@
                                             <button class="dropdown-item bg-warning btn-vm-poweroff" type="button"
                                                     data-image-id="{{ image.id }}">硬断电
                                             </button>
+                                            <button class="dropdown-item bg-danger btn-vm-delete" type="button"
+                                                    data-image-id="{{ image.id }}">删除VM
+                                            </button>
                                         </div>
                                         <a class="btn btn-sm btn-danger operation-button"
                                            href="{% url 'image:image-delete' id=image.id %}">删除</a>

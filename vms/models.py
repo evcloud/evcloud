@@ -228,7 +228,6 @@ class Vm(VmBase):
         删除虚拟机时强制更新Host资源分配信息
         """
         super().delete(using=using, keep_parents=keep_parents)
-        HostManager.update_host_quota(host_id=self.host_id)
 
     def save(self, *args, **kwargs):
         """
