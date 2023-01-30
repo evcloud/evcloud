@@ -22,19 +22,20 @@ def vnc_view(req):
         dic = {'vncid': vncid}
         http_host = req.META['HTTP_HOST']
         http_host = http_host.split(':')[0]
+        http_scheme = req.scheme
 
         if NOVNC_PORT == 80:
             if protocol_type == 'spice':
-                dic['url'] = f'http://{http_host}/novnc_nginx/spice/spice_auto.html?path=websockify/?token={vncid}'
+                dic['url'] = f'{http_scheme}://{http_host}/novnc_nginx/spice/spice_auto.html?path=websockify/?token={vncid}'
             else:
-                dic['url'] = f'http://{http_host}/novnc_nginx/novnc/vnc_lite.html?path=websockify/?token={vncid}'
+                dic['url'] = f'{http_scheme}://{http_host}/novnc_nginx/novnc/vnc_lite.html?path=websockify/?token={vncid}'
 
             return render(req, 'novnc.html', dic)
 
         http_host = f'{http_host}:{NOVNC_PORT}'
         if protocol_type == 'spice':
-            url = f'http://{http_host}/spice/spice_auto.html?path=websockify/?token={vncid}'
+            url = f'{http_scheme}://{http_host}/spice/spice_auto.html?path=websockify/?token={vncid}'
         else:
-            url = f'http://{http_host}/novnc/vnc_lite.html?path=websockify/?token={vncid}'
+            url = f'{http_scheme}://{http_host}/novnc/vnc_lite.html?path=websockify/?token={vncid}'
 
         return redirect(to=url)
