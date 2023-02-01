@@ -30,7 +30,7 @@ def vnc_view(req):
             else:
                 dic['url'] = f'{http_scheme}://{http_host}/novnc_nginx/novnc/vnc_lite.html?path=websockify/?token={vncid}'
 
-            return redirect(to=dic['url'])
+            return render(req, 'novnc.html', dic)
 
         http_host = f'{http_host}:{NOVNC_PORT}'
         if protocol_type == 'spice':

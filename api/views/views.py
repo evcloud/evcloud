@@ -912,7 +912,10 @@ class VmsViewSet(CustomGenericViewSet):
             e.msg = f'创建虚拟机vnc失败，{str(e)}'
             return self.exception_response(e)
 
-        url = request.build_absolute_uri(url)
+        http_host = request.META['HTTP_HOST']
+        http_host = http_host.split(':')[0]
+        http_scheme = 'https'
+        url = f'{http_scheme}://{http_host}{url}'
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
                               'vnc': {'id': vnc_id, 'url': url}})
 
