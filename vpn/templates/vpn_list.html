@@ -49,6 +49,9 @@
                     <th>激活状态</th>
                     <th>创建时间</th>
                     <th>修改时间</th>
+                    <th>过期时间</th>
+                    <th>创建人</th>
+                    <th>备注</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -68,6 +71,9 @@
                         </td>
                         <td>{{ obj.create_time|date:'Y-m-d H:i:s' }}</td>
                         <td>{{ obj.modified_time|date:'Y-m-d H:i:s' }}</td>
+                        <td>{{ obj.expired_time|date:'Y-m-d H:i:s' }}</td>
+                        <td>{{ obj.create_user}}</td>
+                        <td>{{ obj.remarks}}</td>
                     </tr>
                 {% endfor %}
             </table>
