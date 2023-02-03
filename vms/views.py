@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.views.generic.base import View
 from django.contrib.auth import get_user_model
 
+from utils.errors import VmAccessDeniedError, VmNotExistError
 from .manager import VmManager, VmError, FlavorManager
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from vdisk.manager import VdiskManager, VdiskError
@@ -55,7 +56,8 @@ class VmsView(View):
             queryset = v_manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
                                                      search=search, user_id=user_id, all_no_filters=auth.is_superuser)
         except VmError as e:
-            return render(request, 'error.html', {'errors': ['查询虚拟机时错误', str(e)]})
+            error = VmError(msg='查询虚拟机时错误', err=e)
+            return error.render(request=request)
 
         queryset = queryset.prefetch_related('vdisk_set')  # 反向预查询硬盘（避免多次访问数据库）
         try:
@@ -72,7 +74,8 @@ class VmsView(View):
             else:
                 hosts = None
         except ComputeError as e:
-            return render(request, 'error.html', {'errors': ['查询虚拟机时错误', str(e)]})
+            error = ComputeError(msg='查询虚拟机时错误', err=e)
+            return error.render(request=request)
 
         context = {'center_id': center_id if center_id > 0 else None, 'centers': centers, 'groups': groups,
                    'group_id': group_id if group_id > 0 else None, 'hosts': hosts,
@@ -109,10 +112,11 @@ class VmCreateView(View):
                     center_id = centers.first().id
 
             if center_id > 0:
-                images = ImageManager().get_image_queryset_by_center(center_id).filter(tag=Image.TAG_BASE)
+                images = ImageManager().get_image_queryset_by_center(center_id).filter(tag=Image.TAG_BASE, enable=True)
                 groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
         except (ComputeError, ImageError) as e:
-            return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
+            error = ComputeError(msg='查询分中心列表时错误', err=e)
+            return error.render(request=request)
 
         context = {
             'center_id': center_id if center_id > 0 else None,
@@ -136,7 +140,10 @@ class VmMountDiskView(View):
         vm_manager = VmManager()
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
         if not vm:
-            return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云主机不存在']})
+            try:
+                raise VmNotExistError(msg='【挂载硬盘时错误】【云主机不存在】')
+            except VmNotExistError as error:
+                return error.render(request=request)
 
         group = vm.host.group
         user = request.user
@@ -151,7 +158,9 @@ class VmMountDiskView(View):
                 queryset = disk_manager.filter_vdisk_queryset(group_id=group.id, search=search,
                                                               user_id=user.id, related_fields=related_fields)
         except VdiskError as e:
-            return render(request, 'error.html', {'errors': ['查询硬盘列表时错误', str(e)]})
+            error = VdiskError(msg='查询硬盘列表时错误', err=e)
+            return error.render(request=request)
+
         queryset = queryset.filter(vm=None).all()
         context = {'vm': vm, 'search': search}
         context = self.get_vdisks_list_context(request=request, queryset=queryset, context=context)
@@ -180,7 +189,10 @@ class VmDetailView(View):
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host__group', 'image__ceph_pool',
                                                                         'mac_ip__vlan'))
         if not vm:
-            return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云主机不存在']})
+            try:
+                raise VmNotExistError(msg='【挂载硬盘时错误】【云主机不存在】')
+            except VmNotExistError as error:
+                return error.render(request=request)
 
         return render(request, 'vm_detail.html', context={'vm': vm})
 
@@ -195,7 +207,10 @@ class VmEditView(View):
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
             'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
-            return render(request, 'error.html', {'errors': ['云主机不存在']})
+            try:
+                raise VmNotExistError(msg='云主机不存在')
+            except VmNotExistError as error:
+                return error.render(request=request)
 
         context = {
             'flavors': FlavorManager().get_user_flaver_queryset(user=request.user),
@@ -214,7 +229,10 @@ class VmResetView(View):
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
             'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
-            return render(request, 'error.html', {'errors': ['云主机不存在']})
+            try:
+                raise VmNotExistError(msg='云主机不存在')
+            except VmNotExistError as error:
+                return error.render(request=request)
 
         images = ImageManager().filter_image_queryset(
             center_id=vm.host.group.center_id, sys_type=0, tag=Image.TAG_BASE, search='')
@@ -231,7 +249,10 @@ class VmMigrateView(View):
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
             'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
-            return render(request, 'error.html', {'errors': ['云主机不存在']})
+            try:
+                raise VmNotExistError(msg='云主机不存在')
+            except VmNotExistError as error:
+                return error.render(request=request)
 
         hosts = HostManager().get_hosts_by_group_id(group_id=vm.host.group_id)
         hosts = list(filter(lambda host: host.id != vm.host_id, hosts))
@@ -248,7 +269,10 @@ class VmLiveMigrateView(View):
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
             'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
-            return render(request, 'error.html', {'errors': ['云主机不存在']})
+            try:
+                raise VmNotExistError(msg='云主机不存在')
+            except VmNotExistError as error:
+                return error.render(request=request)
 
         hosts = HostManager().get_hosts_by_group_id(group_id=vm.host.group_id)
         hosts = list(filter(lambda host: host.id != vm.host_id, hosts))
@@ -266,7 +290,10 @@ class VmMountPCIView(View):
         vm_manager = VmManager()
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host__group', 'image'))
         if not vm:
-            return render(request, 'error.html', {'errors': ['挂载PCI设备时错误', '云主机不存在']})
+            try:
+                raise VmNotExistError(msg='【挂载PCI设备时错误】【云主机不存在】')
+            except VmNotExistError as error:
+                return error.render(request=request)
 
         host = vm.host
         user = request.user
@@ -276,7 +303,8 @@ class VmMountPCIView(View):
             queryset = mgr.filter_pci_queryset(host_id=host.id, search=search,
                                                user=user, related_fields=('host__group',))
         except DeviceError as e:
-            return render(request, 'error.html', {'errors': ['查询PCI设备列表时错误', str(e)]})
+            error = DeviceError(msg='查询PCI设备列表时错误', err=e)
+            return error.render(request=request)
 
         context = {'vm': vm, 'search': search}
         context = self.get_pci_list_context(request=request, queryset=queryset, context=context)
@@ -305,9 +333,15 @@ class VmSysDiskExpandView(View):
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=(
             'host', 'image__ceph_pool__ceph'))
         if not vm:
-            return render(request, 'error.html', {'errors': ['云主机不存在']})
+            try:
+                raise VmNotExistError(msg='云主机不存在')
+            except VmNotExistError as error:
+                return error.render(request=request)
 
         if not vm.user_has_perms(request.user):
-            return render(request, 'error.html', {'errors': ['没有此云主机的访问权限']})
+            try:
+                raise VmAccessDeniedError(msg='没有此云主机的访问权限')
+            except VmAccessDeniedError as error:
+                return error.render(request=request)
 
         return render(request, 'vm_disk_expand.html', context={'vm': vm})

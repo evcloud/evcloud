@@ -1,29 +1,18 @@
-import json
-import uuid
-
-from django.db import transaction
-from django.forms import model_to_dict
-from django.http import QueryDict, HttpResponse, JsonResponse, Http404
+from django.contrib.auth import get_user_model
+from django.http import QueryDict, JsonResponse
 from django.shortcuts import render, redirect, reverse
 from django.views import View
-from django.contrib.auth import get_user_model
-from django.utils import timezone
 from rest_framework import status
 
-from ceph.models import CephCluster, CephPool
 from compute.managers import CenterManager, ComputeError
-from ceph.managers import get_rbd_manager, CephClusterManager, RadosError
-from compute.models import Host
 from novnc.manager import NovncTokenManager
-from utils.errors import NovncError, VmError
+from utils.errors import NovncError, VmError, NoSuchImage
 from utils.paginators import NumsPaginator
+from vms.api import VmAPI
 from vms.models import Vm
-from vms.vminstance import VmInstance
 from .forms import ImageVmCreateFrom
 from .managers import ImageManager, ImageError
-from vms.manager import FlavorManager
-from .models import Image, VmXmlTemplate
-from vms.api import VmAPI
+from .models import Image
 
 User = get_user_model()
 
@@ -62,12 +51,14 @@ class ImageView(View):
             queryset = api.filter_image_queryset(center_id=center_id, tag=tag, sys_type=sys_type, search=search,
                                                  all_no_filters=auth.is_superuser)
         except ImageError as e:
-            return render(request, 'error.html', {'errors': ['查询镜像时错误', str(e)]})
+            error = ImageError(msg='查询镜像时错误', err=e)
+            return error.render(request=request)
 
         try:
             centers = CenterManager().get_center_queryset()
         except ComputeError as e:
-            return render(request, 'error.html', {'errors': ['查询分中心时错误', str(e)]})
+            error = ComputeError(msg='查询分中心时错误', err=e)
+            return error.render(request=request)
 
         context = {
             'center_id': center_id if center_id > 0 else None,
@@ -91,16 +82,17 @@ class ImageView(View):
             image_id = int(param.get('image_id'))
             target_image = Image.objects.filter(id=image_id).first()
             if operation == 'snap_update':
-                target_image.create_newsnap = True
+                target_image.create_snap()
                 target_image.save()
+                return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '更新镜像成功', 'snap': target_image.snap},
+                                    status=status.HTTP_200_OK)
             elif operation == 'enable_update':
                 target_image.enable = not target_image.enable
                 target_image.save()
+                return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '镜像启用成功'}, status=status.HTTP_200_OK)
         except Exception as e:
-            return JsonResponse({'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'更新镜像失败，{str(e)}'},
+            return JsonResponse({'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'更新镜像操作失败，{str(e)}'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '更新镜像成功', 'snap': target_image.snap},
-                            status=status.HTTP_200_OK)
 
     def get_page_context(self, request, vms_queryset, context: dict):
         # 分页显示
@@ -130,7 +122,8 @@ class ImageDeleteView(View):
             if image:
                 image.delete()
         except Exception as e:
-            return render(request, 'error.html', {'errors': [f'删除镜像错误{e}']})
+            error = ImageError(msg='删除镜像错误', err=e)
+            return error.render(request=request)
 
         return redirect(to=reverse('image:image-list'))
 
@@ -145,7 +138,9 @@ class ImageVmCreateView(View):
         try:
             form = ImageVmCreateFrom(initial={'image_id': image_id})
         except Exception as e:
-            return render(request, 'error.html', {'errors': ['创建镜像虚拟机错误，请确认已创建127.0.0.1宿主机与镜像专用vlan', str(e)]})
+            error = NoSuchImage(msg='【创建镜像虚拟机错误】请确认已创建127.0.0.1宿主机与镜像专用vlan', err=e)
+            return error.render(request=request)
+
         context = {
             'form': form,
             'image': Image.objects.get(id=image_id)
@@ -162,7 +157,8 @@ class ImageVmCreateView(View):
             api = ImageManager()
             image = api.get_image_by_id(image_id)
         except ImageError as e:
-            return render(request, 'error.html', {'errors': ['查询镜像时错误', str(e)]})
+            error = ImageError(msg='查询镜像时错误', err=e)
+            return error.render(request=request)
 
         form = ImageVmCreateFrom(data=post)
         if not form.is_valid():
@@ -244,17 +240,13 @@ class ImageVmOperateView(View):
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '虚拟机关闭成功'}, status=status.HTTP_200_OK)
 
         if operation == 'delete-vm':
-            vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, disk=image.base_image,
-                    host=image.vm_host, mac_ip=image.vm_mac_ip, image=image)
-            api = VmAPI()
-            api.delete_vm_for_image(vm)
+            image.remove_image_vm()
             image.vm_uuid = None
             image.vm_mem = None
             image.vm_cpu = None
             image.vm_host = None
             image.vm_mac_ip = None
-            image.create_newsnap = False
-            image.save()
+            image.save(update_fields=['vm_uuid', 'vm_mem', 'vm_vcpu', 'vm_host', 'vm_mac_ip'])
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '镜像虚拟机删除成功'}, status=status.HTTP_200_OK)
 
         if operation == 'get-vm-status':

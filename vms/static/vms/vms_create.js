@@ -253,7 +253,7 @@
     });
 
     //
-    // 加载宿主机下拉框渲染模板
+    // 加载镜像下拉框渲染模板
     //
     let render_image_select_items = template.compile(`
         {{ each results }}

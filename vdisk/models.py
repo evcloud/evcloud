@@ -298,7 +298,7 @@ class Vdisk(models.Model):
         if has_auth:
             return """
             <disk type='network' device='disk'>
-                  <driver name='qemu'/>
+                  <driver name='qemu' cache='unsafe' discard='ignore'/>
                   <auth username='{auth_user}'>
                     <secret type='ceph' uuid='{auth_uuid}'/>
                   </auth>
@@ -310,7 +310,7 @@ class Vdisk(models.Model):
             """
         return """
             <disk type='network' device='disk'>
-                  <driver name='qemu'/>
+                  <driver name='qemu' cache='unsafe' discard='ignore'/>
                   <source protocol='rbd' name='{pool}/{name}'>
                     {hosts_xml}
                   </source>

@@ -40,7 +40,7 @@ class VmBuilder:
         """
         return uuid.uuid4()
 
-    def get_image(self, image_id: int):
+    def get_image(self, image_id: int, for_image_vm: bool = False):
         """
         获取image
 
@@ -56,7 +56,7 @@ class VmBuilder:
             raise errors.VmError(err=e)
         if not image:
             raise errors.VmError(msg='镜像ID参数有误，未找到指定系统镜像')
-        if not image.enable:
+        if not image.enable and not for_image_vm:
             raise errors.VmError(msg='镜像ID参数有误，镜像未启用')
 
         return image
@@ -364,7 +364,7 @@ class VmBuilder:
         try:
             try:
                 # 构造虚拟机xml
-                image = self.get_image(image_id)  # 镜像
+                image = self.get_image(image_id=image_id, for_image_vm=True)  # 镜像
                 diskname = image.base_image
                 vm_uuid = self.new_uuid_obj().hex
                 xml_desc = VmXMLBuilder().build_vm_xml_desc(vm_uuid=vm_uuid, mem=mem, vcpu=vcpu,

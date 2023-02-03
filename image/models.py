@@ -63,8 +63,6 @@ class Image(models.Model):
     sys_type = models.SmallIntegerField(verbose_name='系统类型', choices=CHOICES_SYS_TYPE, default=SYS_TYPE_OTHER)
     base_image = models.CharField(verbose_name='镜像', max_length=200, default='', help_text='用于创建镜像快照')
     enable = models.BooleanField(verbose_name='启用', default=True, help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
-    create_newsnap = models.BooleanField('更新模板', default=False, help_text="""选中该选项，保存时会基于基础镜像"
-           "创建新快照（以当前时间作为快照名称）,更新操作系统模板。新建snap时请确保基础镜像处于关机状态！""")  # 这个字段不需要持久化存储，用于获取用户页面选择
     snap = models.CharField(verbose_name='当前生效镜像快照', max_length=200, default='', blank=True, editable=True)
     xml_tpl = models.ForeignKey(to=VmXmlTemplate, on_delete=models.CASCADE, verbose_name='xml模板',
                                 help_text='使用此镜象创建虚拟机时要使用的XML模板，不同类型的镜像有不同的XML格式')
@@ -106,12 +104,10 @@ class Image(models.Model):
         return self.get_sys_type_display()
 
     def save(self, *args, **kwargs):
-        self._create_image_if_not_exist()
-        if self.create_newsnap:  # 选中创建snap复选框
-            self._create_snap()
-        elif self.enable and not self.snap:  # 启用状态，如果没有快照就创建
-            self._create_snap()
-
+        if not self.pk:  # 如果新增系统镜像
+            self._create_image_if_not_exist()
+            if not self.snap:  # 如果没有快照就创建
+                self.create_snap()
         super().save(*args, **kwargs)
 
     def _create_image_if_not_exist(self):
@@ -142,7 +138,7 @@ class Image(models.Model):
             raise Exception(f'create_image_if_not_exist error, {str(e)}')
         return False
 
-    def _create_snap(self):
+    def create_snap(self):
         """
         从基image创建快照snap，
         :return:
@@ -159,7 +155,6 @@ class Image(models.Model):
             raise Exception('create_snap failed, can not get ceph')
 
         snap_name = timezone.now().strftime("%Y%m%d_%H%M%S")
-        self.create_newsnap = False
         try:
             rbd = get_rbd_manager(ceph=config, pool_name=pool_name)
             try:
@@ -174,7 +169,7 @@ class Image(models.Model):
 
     def delete(self, using=None, keep_parents=False):
         self._remove_image()
-        self._remove_image_vm()
+        self.remove_image_vm()
         super().delete(using=using, keep_parents=keep_parents)
 
     def _remove_image(self):
@@ -204,11 +199,13 @@ class Image(models.Model):
 
         return True
 
-    def _remove_image_vm(self):
+    def remove_image_vm(self):
         try:
             if self.vm_uuid:
                 from vms.api import VmAPI
                 from vms.models import Vm
+                if not self.vm_host:
+                    self.vm_host = Host({'ipv4': '127.0.0.1'})
                 vm = Vm(uuid=self.vm_uuid, name=self.vm_uuid, vcpu=self.vm_vcpu, mem=self.vm_mem,
                         disk=self.base_image,
                         host=self.vm_host, mac_ip=self.vm_mac_ip, image=self)

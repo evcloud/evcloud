@@ -16,12 +16,22 @@ Including another URLconf
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
+
+from django.urls import include, path, re_path
+from django.views.static import serve
+from django.contrib.auth.decorators import login_required
+
 from django.shortcuts import redirect, render
+from drf_yasg.generators import OpenAPISchemaGenerator
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+
+from utils.errors import SystemRunningError
 from version import __version__, __version_git_change_set__
-from . import admin_site    # admin后台一些设置
+from django.conf.urls import handler500
+
+from . import admin_site  # admin后台一些设置
 
 
 def home(request):
@@ -29,18 +39,34 @@ def home(request):
 
 
 def about(request):
-    return render(request, 'about.html', context={'version': __version__, 'version_git_change_set': __version_git_change_set__})
+    return render(request, 'about.html',
+                  context={'version': __version__, 'version_git_change_set': __version_git_change_set__})
+
 
 def app_nav(request):
     return render(request, 'app_nav.html')
 
+
+def custom_500(request, *args, **argv):
+    error = SystemRunningError()
+    return error.render(request=request)
+
+
+class BothHttpAndHttpsSchemaGenerator(OpenAPISchemaGenerator):
+    def get_schema(self, request=None, public=False):
+        schema = super().get_schema(request, public)
+        schema.schemes = ["http", "https"]
+        return schema
+
+
 schema_view = get_schema_view(
-   openapi.Info(
-      title="EVCloud API",
-      default_version='v3',
-   ),
-   public=False,
-   permission_classes=(permissions.AllowAny,),
+    openapi.Info(
+        title="EVCloud API",
+        default_version='v3',
+    ),
+    public=False,
+    generator_class=BothHttpAndHttpsSchemaGenerator,
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
@@ -60,16 +86,21 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='redoc'),
     path('docs/', include('docs.urls', namespace='docs')),
     path('about/', about, name='about'),
-    path('appnav/', app_nav, name='appnav'),
+    path('appnav/', login_required(app_nav), name='appnav'),
     path('pcservers/', include('pcservers.urls', namespace='compute')),
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
 ]
 
 if settings.DEBUG:
     import debug_toolbar
+
     urlpatterns = [
-        path('__debug__/', include(debug_toolbar.urls)),
+                      path('__debug__/', include(debug_toolbar.urls)),
 
-        # For django versions before 2.0:
-        # url(r'^__debug__/', include(debug_toolbar.urls)),
+                      # For django versions before 2.0:
+                      # url(r'^__debug__/', include(debug_toolbar.urls)),
 
-    ] + urlpatterns
+                  ] + urlpatterns
+
+if not settings.DEBUG:
+    handler500 = 'django_site.urls.custom_500'

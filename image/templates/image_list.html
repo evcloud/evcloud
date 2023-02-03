@@ -81,7 +81,7 @@
                                     class="fa fa-sync"></i>
                             </button>
                         </th>
-                        <th style="width: 150px">操作</th>
+                        <th style="width: 200px">操作</th>
                     {% endif %}
                 </tr>
                 </thead>
@@ -172,7 +172,7 @@
                                             </button>
                                         </div>
                                         <a class="btn btn-sm btn-danger operation-button"
-                                           href="{% url 'image:image-delete' id=image.id %}">删除</a>
+                                           href="{% url 'image:image-delete' id=image.id %}">删除镜像</a>
 
                                     </div>
                                 {% else %}
@@ -180,7 +180,7 @@
                                         <a class="btn btn-sm btn-primary"
                                            href="{% url 'image:image-vm-create' image_id=image.id %}">创建云主机</a>
                                         <a class="btn btn-sm btn-danger operation-button"
-                                           href="{% url 'image:image-delete' id=image.id %}">删除</a>
+                                           href="{% url 'image:image-delete' id=image.id %}">删除镜像</a>
                                     </div>
                                 {% endif %}
                             </td>

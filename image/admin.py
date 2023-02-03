@@ -54,7 +54,5 @@ class ImageAdmin(admin.ModelAdmin):
         self.fields = (
             'name', 'version', 'tag', 'sys_type', 'size', 'ceph_pool', 'base_image',
             'enable', 'xml_tpl', 'default_user', 'default_password', 'desc', 'user',
-        )  # 将自定义的字段注册到编辑页中
-        self.readonly_fields = (
-        'snap', 'vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem', 'create_time', 'update_time',)
+        )  # 将自定义的字段注册到新增页中
         return super(ImageAdmin, self).add_view(request, form_url=form_url, extra_context=extra_context)

@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.views import View
 
 from compute.managers import CenterManager, GroupManager, ComputeError
+from utils.errors import DeviceNotFound
 from vms.manager import VmManager
 from utils.paginators import NumsPaginator
 from .manager import PCIDeviceManager, DeviceError
@@ -46,7 +47,8 @@ class PCIView(View):
             queryset = p_manager.filter_pci_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
                                                      search=search, type_id=type_id, user=user, all_no_filters=True)
         except DeviceError as e:
-            return render(request, 'error.html', {'errors': ['查询PCI设备时错误', str(e)]})
+            error = DeviceError(msg='查询PCI设备时错误', err=e)
+            return error.render(request=request)
 
         try:
             centers = c_manager.get_center_queryset()
@@ -60,7 +62,8 @@ class PCIView(View):
             else:
                 hosts = None
         except ComputeError as e:
-            return render(request, 'error.html', {'errors': ['查询PCI设备时错误', str(e)]})
+            error = ComputeError(msg='查询PCI设备时错误', err=e)
+            return error.render(request=request)
 
         context = {'center_id': center_id if center_id > 0 else None, 'centers': centers, 'groups': groups,
                    'group_id': group_id if group_id > 0 else None, 'hosts': hosts,
@@ -92,7 +95,10 @@ class PCIMountView(View):
         mgr = PCIDeviceManager()
         dev = mgr.get_device_by_id(device_id=pci_id, related_fields=('host__group', 'vm'))
         if not dev:
-            return render(request, 'error.html', {'errors': ['挂载PCI设备时错误', 'PCI设备不存在']})
+            try:
+                raise DeviceNotFound(msg='【挂载PCI设备时错误】【PCI设备不存在】')
+            except DeviceNotFound as error:
+                return error.render(request=request)
 
         context = {'device': dev, 'search': search}
         # 如果已被挂载
@@ -112,7 +118,8 @@ class PCIMountView(View):
                 queryset = vm_manager.filter_vms_queryset(host_id=host.id, search=search, user_id=user.id,
                                                           related_fields=related_fields)
         except vm_manager.VmError as e:
-            return render(request, 'error.html', {'errors': ['查询挂载云主机列表时错误', str(e)]})
+            error = vm_manager.VmError (msg='查询挂载云主机列表时错误', err=e)
+            return error.render(request=request)
 
         context = self.get_vms_list_context(request=request, queryset=queryset, context=context)
         return render(request, 'pci_mount.html', context=context)
