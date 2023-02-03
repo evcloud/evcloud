@@ -25,7 +25,7 @@ class CenterAdmin(admin.ModelAdmin):
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
-    list_display = ('id', 'name', 'center', 'desc')
+    list_display = ('id', 'name', 'center', 'enable', 'desc')
     list_filter = ['center']
     search_fields = ['name']
     filter_horizontal = ['users']

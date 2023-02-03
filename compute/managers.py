@@ -159,7 +159,7 @@ class CenterManager:
         :raise ComputeError
         """
         center = self.enforce_center_obj(center_or_id)
-        return center.group_set.all()
+        return center.group_set.filter(enable=True).all()
 
     @staticmethod
     def get_user_group_queryset(user):
@@ -171,9 +171,9 @@ class CenterManager:
             groups: QuerySet   # success
         """
         if user.is_superuser:
-            return Group.objects.all()
+            return Group.objects.filter(enable=True).all()
 
-        return user.group_set.all()
+        return user.group_set.filter(enable=True).all()
 
     def get_user_group_ids(self, user):
         """
@@ -204,7 +204,7 @@ class CenterManager:
         """
         if isinstance(center_or_id, Center) or isinstance(center_or_id, int):
             qs = self.get_user_group_queryset(user)
-            return qs.filter(center=center_or_id)
+            return qs.filter(center=center_or_id, enable=True)
 
         raise errors.ComputeError.from_error(errors.BadRequestError(msg='无效的center id'))
 
@@ -340,7 +340,7 @@ class GroupManager:
 
     @staticmethod
     def get_group_queryset():
-        return Group.objects.all()
+        return Group.objects.filter(enable=True).all()
 
     @staticmethod
     def get_group_by_id(group_id: int):

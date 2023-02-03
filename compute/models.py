@@ -36,6 +36,7 @@ class Group(models.Model):
     id = models.AutoField(primary_key=True)
     center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的分中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
+    enable = models.BooleanField(default=True, verbose_name='启用宿主机组')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
     users = models.ManyToManyField(to=User, blank=True, related_name='group_set')  # 有权访问此组的用户
 

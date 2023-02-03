@@ -1534,7 +1534,7 @@ class GroupViewSet(CustomGenericViewSet):
     """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
-    queryset = Group.objects.all()
+    queryset = Group.objects.filter(enable=True).all()
 
     @swagger_auto_schema(
         operation_summary='获取宿主机组列表',
