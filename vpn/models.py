@@ -17,7 +17,7 @@ class VPNAuth(models.Model):
     active = models.BooleanField(verbose_name='激活状态', default=True)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
     modified_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
-    expired_time = models.DateTimeField(verbose_name='过期时间', auto_now=False, default=None, blank=True)
+    expired_time = models.DateTimeField(verbose_name='过期时间', auto_now=False, default=None, blank=True, null=True)
     create_user = models.CharField(verbose_name='创建者', max_length=255, default='')
     modified_user = models.CharField(verbose_name='修改者', max_length=255, default='')
     remarks = models.CharField(verbose_name='备注', max_length=255, default='', blank=True)
