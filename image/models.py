@@ -91,7 +91,7 @@ class Image(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='镜像名称', max_length=100)
     sys_type = models.SmallIntegerField(verbose_name='系统类型', choices=CHOICES_SYS_TYPE, default=SYS_TYPE_OTHER)
-    version = models.CharField(verbose_name='系统发行编号', max_length=64)
+    version = models.CharField(verbose_name='系统发行编号', max_length=100)
     release = models.SmallIntegerField(verbose_name='系统发行版本', choices=RELEASE_CHOICES, default=RELEASE_CENTOS)
     architecture = models.SmallIntegerField(verbose_name='系统架构', choices=ARCHITECTURE_CHOICES,
                                             default=ARCHITECTURE_X86_64)

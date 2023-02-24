@@ -33,6 +33,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='image',
             name='version',
-            field=models.CharField(max_length=64, verbose_name='系统发行编号'),
+            field=models.CharField(max_length=100, verbose_name='系统发行编号'),
         ),
     ]
