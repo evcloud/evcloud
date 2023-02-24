@@ -55,12 +55,51 @@ class Image(models.Model):
         (SYS_TYPE_OTHER, '其他'),
     )
 
+    RELEASE_WINDOWS_DESKTOP = 1
+    RELEASE_WINDOWS_SERVER = 2
+    RELEASE_UBUNTU = 3
+    RELEASE_FEDORA = 4
+    RELEASE_CENTOS = 5
+    RELEASE_UNKNOWN = 6
+    RELEASE_CHOICES = (
+        (RELEASE_WINDOWS_DESKTOP, 'Windows Desktop'),
+        (RELEASE_WINDOWS_SERVER, 'Windows Server'),
+        (RELEASE_UBUNTU, 'Ubuntu'),
+        (RELEASE_FEDORA, 'Fedora'),
+        (RELEASE_CENTOS, 'Centos'),
+        (RELEASE_UNKNOWN, 'Unknown'),
+    )
+
+    ARCHITECTURE_X86_64 = 1
+    ARCHITECTURE_I386 = 2
+    ARCHITECTURE_ARM_64 = 3
+    ARCHITECTURE_UNKNOWN = 4
+    ARCHITECTURE_CHOICES = (
+        (ARCHITECTURE_X86_64, 'x86-64'),
+        (ARCHITECTURE_I386, 'i386'),
+        (ARCHITECTURE_ARM_64, 'arm-64'),
+        (ARCHITECTURE_UNKNOWN, 'unknown'),
+    )
+
+    BOOT_UEFI = 1
+    BOOT_BIOS = 2
+    BOOT_CHOICES = (
+        (BOOT_UEFI, 'UEFI'),
+        (BOOT_BIOS, 'BIOS'),
+    )
+
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='镜像名称', max_length=100)
-    version = models.CharField(verbose_name='系统版本信息', max_length=100)
+    sys_type = models.SmallIntegerField(verbose_name='系统类型', choices=CHOICES_SYS_TYPE, default=SYS_TYPE_OTHER)
+    version = models.CharField(verbose_name='系统发行编号', max_length=64)
+    release = models.SmallIntegerField(verbose_name='系统发行版本', choices=RELEASE_CHOICES, default=RELEASE_CENTOS)
+    architecture = models.SmallIntegerField(verbose_name='系统架构', choices=ARCHITECTURE_CHOICES,
+                                            default=ARCHITECTURE_X86_64)
+    boot_mode = models.SmallIntegerField(verbose_name='系统启动方式', choices=BOOT_CHOICES, default=BOOT_BIOS)
+    nvme_support = models.BooleanField(verbose_name='支持NVME设备', default=False)
+
     ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.CASCADE, verbose_name='CEPH存储后端')
     tag = models.SmallIntegerField(verbose_name='镜像标签', choices=CHOICES_TAG, default=TAG_USER)
-    sys_type = models.SmallIntegerField(verbose_name='系统类型', choices=CHOICES_SYS_TYPE, default=SYS_TYPE_OTHER)
     base_image = models.CharField(verbose_name='镜像', max_length=200, default='', help_text='用于创建镜像快照')
     enable = models.BooleanField(verbose_name='启用', default=True, help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
     snap = models.CharField(verbose_name='当前生效镜像快照', max_length=200, default='', blank=True, editable=True)
@@ -102,6 +141,14 @@ class Image(models.Model):
     @property
     def sys_type_display(self):
         return self.get_sys_type_display()
+
+    @property
+    def release_display(self):
+        return self.get_release_display()
+
+    @property
+    def architecture_display(self):
+        return self.get_architecture_display()
 
     def save(self, *args, **kwargs):
         if not self.pk:  # 如果新增系统镜像

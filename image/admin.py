@@ -41,7 +41,7 @@ class ImageAdmin(admin.ModelAdmin):
     # 重写编辑页, 继承父类方法
     def change_view(self, request, object_id, form_url='', extra_context=None):
         self.fields = (
-            'name', 'version', 'tag', 'sys_type', 'size', 'ceph_pool', 'base_image',
+            'name', 'tag', 'sys_type', 'release', 'version', 'architecture', 'boot_mode', 'nvme_support', 'size', 'ceph_pool', 'base_image',
             'snap', 'enable', 'xml_tpl', 'default_user', 'default_password', 'desc', 'user', 'create_time',
             'update_time', 'vm_host', 'vm_uuid', 'vm_mac_ip', 'vm_vcpu', 'vm_mem'
         )  # 将自定义的字段注册到编辑页中
@@ -52,7 +52,7 @@ class ImageAdmin(admin.ModelAdmin):
 
     def add_view(self, request, form_url='', extra_context=None):
         self.fields = (
-            'name', 'version', 'tag', 'sys_type', 'size', 'ceph_pool', 'base_image',
+            'name', 'tag', 'sys_type', 'release', 'version', 'architecture', 'boot_mode', 'nvme_support', 'size', 'ceph_pool', 'base_image',
             'enable', 'xml_tpl', 'default_user', 'default_password', 'desc', 'user',
         )  # 将自定义的字段注册到新增页中
         return super(ImageAdmin, self).add_view(request, form_url=form_url, extra_context=extra_context)

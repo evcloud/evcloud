@@ -22,7 +22,9 @@ class VmSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vm
-        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'ip', 'user', 'create_time')
+        fields = (
+            'uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'ip', 'user',
+            'create_time')
         # depth = 1
 
     @staticmethod
@@ -82,7 +84,7 @@ class VmCreateSerializer(serializers.Serializer):
     ipv4 = serializers.CharField(label='ipv4', required=False, allow_blank=True, max_length=255, default='')
     flavor_id = serializers.IntegerField(label='配置样式id', required=False, allow_null=True,
                                          default=None, help_text='配置样式id')
-    sys_disk_size = serializers.IntegerField(label='系统盘大小', min_value=50, max_value=5*1024, required=False,
+    sys_disk_size = serializers.IntegerField(label='系统盘大小', min_value=50, max_value=5 * 1024, required=False,
                                              allow_null=True, default=None, help_text='单位GB')
 
     def validate(self, data):
@@ -109,6 +111,7 @@ class VmCreateSerializer(serializers.Serializer):
         else:
             ret['mem'] = math.ceil(ret['mem'] / 1024)
         return ret
+
 
 class VmPatchSerializer(serializers.Serializer):
     """
@@ -139,10 +142,12 @@ class VmPatchSerializer(serializers.Serializer):
             ret['mem'] = math.ceil(ret['mem'] / 1024)
         return ret
 
+
 class CenterSerializer(serializers.ModelSerializer):
     """
     分中心序列化器
     """
+
     class Meta:
         model = Center
         fields = ('id', 'name', 'location', 'desc')
@@ -152,6 +157,7 @@ class GroupSerializer(serializers.ModelSerializer):
     """
     宿主机组序列化器
     """
+
     class Meta:
         model = Group
         fields = ('id', 'name', 'center', 'desc')
@@ -161,10 +167,11 @@ class HostSerializer(serializers.ModelSerializer):
     """
     宿主机序列化器
     """
+
     class Meta:
         model = Host
         fields = ('id', 'ipv4', 'group', 'vcpu_total', 'vcpu_allocated', 'mem_total', 'mem_allocated',
-                'vm_limit', 'vm_created', 'enable', 'desc')
+                  'vm_limit', 'vm_created', 'enable', 'desc')
 
     def to_representation(self, instance):
         """Convert `GB` to 'MB' depending on the requirement."""
@@ -177,10 +184,12 @@ class HostSerializer(serializers.ModelSerializer):
             ret['mem_unit'] = 'MB'
         return ret
 
+
 class VlanSerializer(serializers.ModelSerializer):
     """
     子网网段序列化器
     """
+
     class Meta:
         model = Vlan
         fields = ('id', 'name', 'br', 'tag', 'enable', 'subnet_ip', 'net_mask', 'gateway', 'dns_server', 'remarks')
@@ -192,12 +201,15 @@ class ImageSerializer(serializers.ModelSerializer):
     """
     tag = serializers.SerializerMethodField()
     sys_type = serializers.SerializerMethodField()
+    release = serializers.SerializerMethodField()
+    architecture = serializers.SerializerMethodField()
     create_time = serializers.DateTimeField()
 
     class Meta:
         model = Image
-        fields = ('id', 'name', 'version', 'sys_type', 'tag', 'enable', 'create_time', 'desc',
-                  'default_user', 'default_password', 'size')
+        fields = (
+            'id', 'name', 'tag', 'sys_type', 'release', 'version', 'architecture', 'enable', 'create_time', 'desc',
+            'default_user', 'default_password', 'size')
 
     @staticmethod
     def get_tag(obj):
@@ -206,6 +218,14 @@ class ImageSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_sys_type(obj):
         return {'id': obj.sys_type, 'name': obj.sys_type_display}
+
+    @staticmethod
+    def get_release(obj):
+        return {'id': obj.release, 'name': obj.release_display}
+
+    @staticmethod
+    def get_architecture(obj):
+        return {'id': obj.architecture, 'name': obj.architecture_display}
 
 
 class AuthTokenDumpSerializer(serializers.Serializer):
@@ -426,7 +446,7 @@ class VmDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vm
         fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'image_info', 'disk', 'sys_disk_size', 'host', 'mac_ip',
-                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices','host_info')
+                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices', 'host_info')
         # depth = 1
 
     @staticmethod
@@ -518,6 +538,7 @@ class FlavorSerializer(serializers.Serializer):
             ret['ram'] = ret['ram'] * 1024
             ret['mem_unit'] = 'MB'
         return ret
+
 
 class VPNCreateSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, min_length=1, max_length=150)

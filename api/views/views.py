@@ -1910,6 +1910,21 @@ class ImageViewSet(CustomGenericViewSet):
                 [5,"Android"],
                 [6,"其他"]
             ]
+            系统发行版本: [
+                [1,"Windows Desktop"],
+                [2,"Windows Server"],
+                [3,"Ubuntu"],
+                [4,"Fedora"],
+                [5,"Centos"],
+                [6,"Unknown"]
+            ]
+            系统发行编号（64字符）：{win10,win11,2021,2019,2204,2004,36,37,7,8,9,....}
+            系统架构: [
+                [1,"x86-64"],
+                [2,"i386"],
+                [3,"arm-64"],
+                [4,"unknown"]
+            ]
 
             http code 200:
             {
@@ -1919,15 +1934,23 @@ class ImageViewSet(CustomGenericViewSet):
               "results": [
                 {
                   "id": 1,
-                  "name": "centos8",
-                  "version": "64bit",
+                  "name": "centos8-hadoop",
+                  "tag": {
+                    "id": 0,
+                    "name": "基础镜像"
+                  },
                   "sys_type": {
                     "id": 2,
                     "name": "Linux"
                   },
-                  "tag": {
-                    "id": 0,
-                    "name": "基础镜像"
+                  "release": {
+                    "id": 5,
+                    "name": "Centos"
+                  },
+                  "version": "8",
+                  "architecture": {
+                    "id": 1,
+                    "name": "x86-64"
                   },
                   "enable": true,
                   "create_time": "2020-03-06T14:46:27.149648+08:00",
@@ -1972,15 +1995,23 @@ class ImageViewSet(CustomGenericViewSet):
             http code 200:
             {
               "id": 1,
-              "name": "centos8",
-              "version": "64bit",
+              "name": "centos8-hadoop",
+              "tag": {
+                "id": 0,
+                "name": "基础镜像"
+              },
               "sys_type": {
                 "id": 2,
                 "name": "Linux"
               },
-              "tag": {
-                "id": 0,
-                "name": "基础镜像"
+              "release": {
+                "id": 5,
+                "name": "Centos"
+              },
+              "version": "8",
+              "architecture": {
+                "id": 1,
+                "name": "x86-64"
               },
               "enable": true,
               "create_time": "2020-03-06T14:46:27.149648+08:00",
