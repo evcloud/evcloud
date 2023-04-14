@@ -215,9 +215,7 @@ class ImageVmOperateView(View):
 
         if operation == 'start-vm':
             try:
-                vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem,
-                        disk=image.base_image,
-                        host=image.vm_host, mac_ip=image.vm_mac_ip, image=image)
+                vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, host=image.vm_host)
                 api = VmAPI()
                 api.vm_operations_for_image(vm=vm, op='start')
             except Exception as e:
@@ -226,15 +224,13 @@ class ImageVmOperateView(View):
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '虚拟机启动成功'}, status=status.HTTP_200_OK)
 
         if operation == 'shutdown-vm':
-            vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, disk=image.base_image,
-                    host=image.vm_host, mac_ip=image.vm_mac_ip, image=image)
+            vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, host=image.vm_host)
             api = VmAPI()
             api.vm_operations_for_image(vm=vm, op='shutdown')
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '虚拟机关闭成功'}, status=status.HTTP_200_OK)
 
         if operation == 'poweroff-vm':
-            vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, disk=image.base_image,
-                    host=image.vm_host, mac_ip=image.vm_mac_ip, image=image)
+            vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, host=image.vm_host)
             api = VmAPI()
             api.vm_operations_for_image(vm=vm, op='poweroff')
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '虚拟机关闭成功'}, status=status.HTTP_200_OK)
@@ -255,9 +251,7 @@ class ImageVmOperateView(View):
                                      'status': {'status_code': 11, 'status_text': '尚未创建镜像云主机'}},
                                     status=status.HTTP_200_OK)
             try:
-                vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem,
-                        disk=image.base_image,
-                        host=image.vm_host, mac_ip=image.vm_mac_ip, image=image)
+                vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, host=image.vm_host)
                 api = VmAPI()
                 code, msg = api.get_vm_status_for_image(vm=vm)
                 return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '获取虚拟机状态成功',

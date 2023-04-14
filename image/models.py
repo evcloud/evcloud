@@ -253,9 +253,7 @@ class Image(models.Model):
                 from vms.models import Vm
                 if not self.vm_host:
                     self.vm_host = Host({'ipv4': '127.0.0.1'})
-                vm = Vm(uuid=self.vm_uuid, name=self.vm_uuid, vcpu=self.vm_vcpu, mem=self.vm_mem,
-                        disk=self.base_image,
-                        host=self.vm_host, mac_ip=self.vm_mac_ip, image=self)
+                vm = Vm(uuid=self.vm_uuid, name=self.vm_uuid, vcpu=self.vm_vcpu, mem=self.vm_mem, host=self.vm_host)
                 api = VmAPI()
                 api.delete_vm_for_image(vm)
         except Exception as e:
