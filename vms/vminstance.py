@@ -19,6 +19,7 @@ from .vm_builder import VmBuilder, get_vm_domain
 
 class VmInstance:
     def __init__(self, vm: Vm):
+        self.vm_uuid = vm.get_uuid()  # 提前暂存uuid, vm元数据删除后主键uuid会被设为None
         self._vm = vm
         self._vm_domain = None
         self._vdisk_manager = VdiskManager()
@@ -263,16 +264,17 @@ class VmInstance:
             raise errors.VmError(msg='删除虚拟机失败')
 
         # 删除虚拟机元数据
+        vm_uuid = vm.get_uuid()     # 提前暂存uuid, vm元数据删除后主键uuid会被设为None
         try:
             vm.delete()
         except Exception as e:
-            msg = f'虚拟机（uuid={vm.get_uuid()}）{undefine_result}，并归档，但是虚拟机元数据删除失败;请手动删除虚拟机元数据。'
+            msg = f'虚拟机（uuid={vm_uuid}）{undefine_result}，并归档，但是虚拟机元数据删除失败;请手动删除虚拟机元数据。'
             log_manager.add_log(title='删除虚拟机元数据失败', about=log_manager.about.ABOUT_VM_METADATA, text=msg)
             raise errors.VmError(msg='删除虚拟机元数据失败')
 
         # 宿主机已创建虚拟机数量-1
         if not host.vm_created_num_sub_1():
-            msg = f'虚拟机（uuid={vm.get_uuid()}）{undefine_result}，并归档，宿主机（id={host.id}; ipv4={host.ipv4}）' \
+            msg = f'虚拟机（uuid={vm_uuid}）{undefine_result}，并归档，宿主机（id={host.id}; ipv4={host.ipv4}）' \
                   f'已创建虚拟机数量-1失败, 请手动-1。'
             log_manager.add_log(title='宿主机已创建虚拟机数量-1失败',
                                 about=log_manager.about.ABOUT_HOST_VM_CREATED, text=msg)
@@ -280,21 +282,21 @@ class VmInstance:
         # 释放mac ip
         mac_ip = vm.mac_ip
         if not mac_ip.set_free():
-            msg = f'释放mac ip资源失败, 虚拟机uuid={vm.get_uuid()};\n mac_ip信息：{mac_ip.get_detail_str()};\n ' \
+            msg = f'释放mac ip资源失败, 虚拟机uuid={vm_uuid};\n mac_ip信息：{mac_ip.get_detail_str()};\n ' \
                   f'请查看核对虚拟机是否已成功删除并归档，如果已删除请手动释放此mac_ip资源'
             log_manager.add_log(title='释放mac ip资源失败', about=log_manager.about.ABOUT_MAC_IP, text=msg)
 
         # 卸载所有挂载的虚拟硬盘
         try:
-            self._vdisk_manager.umount_all_from_vm(vm_uuid=vm.get_uuid())
+            self._vdisk_manager.umount_all_from_vm(vm_uuid=vm_uuid)
         except errors.VdiskError as e:
-            msg = f'删除虚拟机时，卸载所有虚拟硬盘失败, 虚拟机uuid={vm.get_uuid()};\n' \
+            msg = f'删除虚拟机时，卸载所有虚拟硬盘失败, 虚拟机uuid={vm_uuid};\n' \
                   f'请查看核对虚拟机是否已删除归档，请手动解除所有虚拟硬盘与虚拟机挂载关系'
             log_manager.add_log(title='删除虚拟机时，卸载所有虚拟硬盘失败', about=log_manager.about.ABOUT_VM_DISK, text=msg)
 
         # 释放宿主机资源
         if not host.free(vcpu=vm.vcpu, mem=vm.mem):
-            msg = f'释放宿主机资源失败, 虚拟机uuid={vm.get_uuid()};\n 宿主机信息：id={host.id}; ipv4={host.ipv4};\n' \
+            msg = f'释放宿主机资源失败, 虚拟机uuid={vm_uuid};\n 宿主机信息：id={host.id}; ipv4={host.ipv4};\n' \
                   f'未释放资源：mem={vm.mem}MB;vcpu={vm.vcpu}；\n请查看核对虚拟机是否已成功删除并归档，如果已删除请手动释放此宿主机资源'
             log_manager.add_log(title='释放宿主机men, cpu资源失败', about=log_manager.about.ABOUT_MEM_CPU, text=msg)
 
