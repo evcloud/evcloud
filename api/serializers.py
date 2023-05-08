@@ -49,8 +49,7 @@ class VmSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_image(obj):
-        img = obj.image
-        return img.name if img else ""
+        return obj.image_name
 
     def to_representation(self, instance):
         """Convert `GB` to 'MB' depending on the requirement."""
@@ -471,19 +470,14 @@ class VmDetailSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_image(obj):
-        img = obj.image
-        return img.name if img else ""
+        return obj.image_name
 
     @staticmethod
     def get_image_info(obj):
-        img = obj.image
-        if img:
-            return {
-                'id': img.id, 'name': img.name, 'desc': img.desc,
-                'default_user': img.default_user, 'default_password': img.default_password
-            }
-
-        return None
+        return {
+            'id': obj.image_id, 'name': obj.image_name, 'desc': obj.image_desc,
+            'default_user': obj.default_user, 'default_password': obj.default_password
+        }
 
     @staticmethod
     def get_vdisks(obj):

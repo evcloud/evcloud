@@ -158,22 +158,25 @@ class VmXMLBuilder:
         root.removeChild(huge_page_node[0])
         return root.toxml()
 
-    def build_vm_xml_desc(self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str, image, mac_ip, is_image_vm=False):
+    def build_vm_xml_desc(
+            self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str,
+            image_xml_tpl: str, ceph_pool, mac_ip, is_image_vm=False):
         """
         构建虚拟机的xml
         :param vm_uuid:
         :param mem:
         :param vcpu:
         :param vm_disk_name: vm的系统盘镜像rbd名称
-        :param image: 系统镜像实例
+        :param image_xml_tpl: 创建虚拟机的xml模板字符串
+        :param ceph_pool: 镜像所在的ceph pool
         :param mac_ip: MacIP实例
         :return:
             xml: str
         """
-        pool = image.ceph_pool
+        pool = ceph_pool
         pool_name = pool.pool_name
         ceph = pool.ceph
-        xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+        xml_tpl = image_xml_tpl  # 创建虚拟机的xml模板字符串
 
         # mem参数单位为GB，根据xml模版中的单位进行换算
         xml = XMLEditor()
@@ -192,6 +195,7 @@ class VmXMLBuilder:
                 raise errors.VmError(msg='虚拟机xml模版中的currentMemory单位必须为KiB、MiB或GiB')
         except Exception as e:
             raise errors.VmError(msg='虚拟机创建时单位换算发生错误')
+
         xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph.uuid,
                                   ceph_pool=pool_name, diskname=vm_disk_name, ceph_username=ceph.username,
                                   ceph_hosts_xml=ceph.hosts_xml, mac=mac_ip.mac, bridge=mac_ip.vlan.br)

@@ -463,20 +463,20 @@ class VmAPI:
         HostManager.update_host_quota(host_id=new_vm.host_id)
         return new_vm
 
-    def reset_sys_disk(self, vm_uuid: str, user):
-        """
-        重置虚拟机系统盘，恢复到创建时状态
-
-        :param vm_uuid: 虚拟机uuid
-        :param user: 用户
-        :return:
-            Vm()   # success
-
-        :raises: VmError
-        """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
-            'user', 'host__group', 'image__ceph_pool__ceph'))
-        return VmInstance(vm=vm).reset_sys_disk()
+    # def reset_sys_disk(self, vm_uuid: str, user):
+    #     """
+    #     重置虚拟机系统盘，恢复到创建时状态
+    #
+    #     :param vm_uuid: 虚拟机uuid
+    #     :param user: 用户
+    #     :return:
+    #         Vm()   # success
+    #
+    #     :raises: VmError
+    #     """
+    #     vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
+    #         'user', 'host__group', 'image__ceph_pool__ceph'))
+    #     return VmInstance(vm=vm).reset_sys_disk()
 
     def vm_change_password(self, vm_uuid: str, user, username: str, password: str):
         """
@@ -524,8 +524,8 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
         task = VmInstance(vm).live_migrate(dest_host_id=dest_host_id)
-        HostManager.update_host_quota(host_id=vm.host_id)
-        HostManager.update_host_quota(host_id=dest_host_id)
+        # HostManager.update_host_quota(host_id=vm.host_id)
+        # HostManager.update_host_quota(host_id=dest_host_id)
         return task
 
     def get_vm_stats(self, vm_uuid: str, user):

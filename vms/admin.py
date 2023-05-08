@@ -8,7 +8,9 @@ from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor
 class VmAdmin(admin.ModelAdmin):
     list_display_links = ('hex_uuid',)
     list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'sys_disk_size',
-                    'disk_type', 'user', 'create_time', 'remarks')
+                    'disk_type', 'user', 'create_time', 'remarks',
+                    'image_name', 'default_user', 'default_password', 'image_size', 'sys_type', 'version',
+                    'release', 'architecture', 'boot_mode', 'nvme_support', 'ceph_pool', 'image_parent', 'image_snap')
     search_fields = ['name', 'mac_ip__ipv4']
     list_filter = ['host', 'user']
     raw_id_fields = ('mac_ip', 'host', 'user', 'image')

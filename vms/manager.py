@@ -166,12 +166,12 @@ class VmArchiveManager:
             center = group.center
             mac_ip = vm.mac_ip
             vlan = mac_ip.vlan
-            image = vm.image
-            ceph_pool = image.ceph_pool
+            ceph_pool = vm.ceph_pool
+            image_id = vm.image_id or 0
 
             va = VmArchive(uuid=vm.get_uuid(), name=vm.name, vcpu=vm.vcpu, mem=vm.mem, disk=vm.disk, xml=vm.xml,
                            mac=mac_ip.mac, ipv4=mac_ip.ipv4, vlan_id=vlan.id, br=vlan.br,
-                           image_id=image.id, image_parent=image.base_image, ceph_id=ceph_pool.ceph.id,
+                           image_id=image_id, image_parent=vm.image_parent, ceph_id=ceph_pool.ceph.id,
                            ceph_pool=ceph_pool.pool_name, center_id=center.id, center_name=center.name,
                            group_id=group.id, group_name=group.name, host_id=host.id, host_ipv4=host.ipv4,
                            user=vm.user, create_time=vm.create_time, remarks=vm.remarks, disk_type=vm.disk_type,

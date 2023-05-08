@@ -83,8 +83,9 @@ class Vm(VmBase):
     mem = models.IntegerField(verbose_name='内存大小', help_text='单位GB')
     disk = models.CharField(verbose_name='系统盘名称', max_length=100, unique=True,
                             help_text='vm自己的系统盘，保存于ceph中的rdb文件名称')
-    image = models.ForeignKey(to=Image, on_delete=models.CASCADE, verbose_name='源镜像',
-                              help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
+    image = models.ForeignKey(
+        to=Image, on_delete=models.SET_NULL, db_constraint=False, null=True, blank=True, default=None,
+        verbose_name='源镜像', help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
     user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL,
                              related_name='user_vms', null=True)
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
@@ -94,6 +95,28 @@ class Vm(VmBase):
     host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机')
     xml = models.TextField(verbose_name='虚拟机当前的XML', help_text='定义虚拟机的当前的XML内容')
     mac_ip = models.OneToOneField(to=MacIP, on_delete=models.CASCADE, related_name='ip_vm', verbose_name='MAC IP')
+
+    image_name = models.CharField(verbose_name='镜像名称', max_length=100, default='')
+    image_parent = models.CharField(verbose_name='父镜像RBD名', max_length=255, default='', help_text='虚拟机系统盘镜像的父镜像')
+    image_snap = models.CharField(verbose_name='镜像快照', max_length=200, default='', blank=True, editable=True)
+    image_size = models.IntegerField(
+        verbose_name='镜像大小（Gb）', default=0, help_text='image size不是整Gb大小，要向上取整，如1.1GB向上取整为2Gb')
+    sys_type = models.SmallIntegerField(
+        verbose_name='系统类型', choices=Image.CHOICES_SYS_TYPE, default=Image.SYS_TYPE_OTHER)
+    version = models.CharField(verbose_name='系统发行编号', max_length=100, default='')
+    release = models.SmallIntegerField(
+        verbose_name='系统发行版本', choices=Image.RELEASE_CHOICES, default=Image.RELEASE_CENTOS)
+    architecture = models.SmallIntegerField(
+        verbose_name='系统架构', choices=Image.ARCHITECTURE_CHOICES, default=Image.ARCHITECTURE_X86_64)
+    boot_mode = models.SmallIntegerField(verbose_name='系统启动方式', choices=Image.BOOT_CHOICES, default=Image.BOOT_BIOS)
+    nvme_support = models.BooleanField(verbose_name='支持NVME设备', default=False)
+    ceph_pool = models.ForeignKey(
+        to=CephPool, on_delete=models.DO_NOTHING, verbose_name='CEPH存储后端',
+        null=True, db_constraint=False, default=None)
+    default_user = models.CharField(verbose_name='系统默认登录用户名', max_length=32, default='root')
+    default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
+    image_desc = models.TextField(verbose_name='系统镜像描述', default='', blank=True)
+    image_xml_tpl = models.TextField(verbose_name='XML模板', default='')
 
     def __str__(self):
         return self.name
@@ -129,7 +152,7 @@ class Vm(VmBase):
             True    # success
             False   # failed
         """
-        ceph_pool = self.image.ceph_pool
+        ceph_pool = self.ceph_pool
         if not ceph_pool:
             return False
         pool_name = ceph_pool.pool_name
@@ -215,10 +238,25 @@ class Vm(VmBase):
 
         return self.sys_disk_size
 
+    def get_rbd_manager(self):
+        ceph_pool = self.ceph_pool
+        if not ceph_pool:
+            raise Exception('can not get ceph_pool')
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            raise Exception('can not get ceph config')
+
+        return get_rbd_manager(ceph=config, pool_name=pool_name)
+
     def update_sys_disk_size(self):
         if self.disk_type == self.DiskType.CEPH_RBD:
-            image = self.image
-            size = image.get_size_from_ceph(image_name=self.disk)
+            try:
+                rbd_mgr = self.get_rbd_manager()
+                size = rbd_mgr.get_rbd_image_size(self.disk)
+            except (RadosError, Exception) as e:
+                raise Exception(str(e))
+
             size_gb = math.ceil(size / 1024 ** 3)
             self.sys_disk_size = size_gb
             self.save(update_fields=['sys_disk_size'])
@@ -239,6 +277,34 @@ class Vm(VmBase):
         super().save(*args, **kwargs)
         if is_insert:
             HostManager.update_host_quota(host_id=self.host_id)
+
+    def update_image_fields(self, image: Image):
+        """
+        更新镜像有关的字段信息，只更新此对象实例 不保存到数据库
+
+        :return: 更新字段名称的列表
+        """
+        self.image = image
+        self.image_name = image.name
+        self.image_parent = image.base_image
+        self.image_snap = image.snap
+        self.image_size = image.size
+        self.sys_type = image.sys_type
+        self.version = image.version
+        self.release = image.release
+        self.architecture = image.architecture
+        self.boot_mode = image.boot_mode
+        self.nvme_support = image.nvme_support
+        self.ceph_pool_id = image.ceph_pool_id
+        self.default_user = image.default_user
+        self.default_password = image.default_password
+        self.image_desc = image.desc
+        self.image_xml_tpl = image.xml_tpl.xml
+        return [
+            'image', 'image_name', 'image_parent', 'image_snap', 'image_size', 'sys_type', 'version', 'release',
+            'architecture', 'boot_mode', 'nvme_support', 'ceph_pool_id', 'default_user', 'default_password',
+            'image_desc', 'image_xml_tpl'
+        ]
 
 
 class VmArchive(VmBase):
@@ -518,8 +584,10 @@ class VmDiskSnap(models.Model):
         """
         if self.ceph_pool:
             return self.ceph_pool
-        if self.vm and self.vm.image:
-            self.ceph_pool = self.vm.image.ceph_pool
+
+        if self.vm:
+            self.ceph_pool = self.vm.ceph_pool
+
         return self.ceph_pool
 
     def get_rbd_manager(self):

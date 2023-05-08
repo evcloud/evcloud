@@ -367,9 +367,9 @@ class VmBuilder:
                 image = self.get_image(image_id=image_id, for_image_vm=True)  # 镜像
                 diskname = image.base_image
                 vm_uuid = self.new_uuid_obj().hex
-                xml_desc = VmXMLBuilder().build_vm_xml_desc(vm_uuid=vm_uuid, mem=mem, vcpu=vcpu,
-                                                            vm_disk_name=diskname,
-                                                            image=image, mac_ip=macip, is_image_vm=True)
+                xml_desc = VmXMLBuilder().build_vm_xml_desc(
+                    vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, vm_disk_name=diskname,
+                    image_xml_tpl=image.xml_tpl.xml, ceph_pool=image.ceph_pool, mac_ip=macip, is_image_vm=True)
             except Exception as e:
                 raise errors.VmError(msg=f'构建镜像虚拟机xml错误,{str(e)}')
 
@@ -377,6 +377,7 @@ class VmBuilder:
                 # 保存元数据
                 vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname,
                         host=host, mac_ip=macip, xml=xml_desc, image=image)
+                vm.update_image_fields(image=image)
                 image.vm_uuid = vm_uuid
                 image.vm_mem = mem
                 image.vm_vcpu = vcpu
@@ -429,8 +430,9 @@ class VmBuilder:
         """
         # 虚拟机xml
         try:
-            xml_desc = VmXMLBuilder().build_vm_xml_desc(vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, vm_disk_name=diskname,
-                                                        image=image, mac_ip=macip)
+            xml_desc = VmXMLBuilder().build_vm_xml_desc(
+                vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, vm_disk_name=diskname,
+                image_xml_tpl=image.xml_tpl.xml, ceph_pool=image.ceph_pool, mac_ip=macip)
         except Exception as e:
             raise errors.VmError(msg=f'构建虚拟机xml错误,{str(e)}')
 
@@ -438,6 +440,7 @@ class VmBuilder:
             # 创建虚拟机元数据
             vm = Vm(uuid=vm_uuid, name=vm_uuid, vcpu=vcpu, mem=mem, disk=diskname, user=user,
                     remarks=remarks, host=host, mac_ip=macip, xml=xml_desc, image=image, sys_disk_size=sys_disk_size)
+            vm.update_image_fields(image=image)
             vm.save()
         except Exception as e:
             raise errors.VmError(msg=f'创建虚拟机元数据错误,{str(e)}')
@@ -473,7 +476,8 @@ class VmBuilder:
 
             # 虚拟机xml
             xml_desc = VmXMLBuilder().build_vm_xml_desc(
-                vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name, image=new_image, mac_ip=vm.mac_ip)
+                vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name,
+                image_xml_tpl=new_image.xml_tpl.xml, ceph_pool=new_image.ceph_pool, mac_ip=vm.mac_ip)
             rbd_manager = new_image.get_rbd_manager()
         except Exception as e:
             raise errors.VmError(msg=str(e))
@@ -492,11 +496,11 @@ class VmBuilder:
             except VirtError as e:
                 raise errors.VmError(msg=str(e))
 
-            vm.image = new_image
             vm.xml = xml_desc
-            vm.disk_type = vm.DiskType.CEPH_RBD
+            vm.disk_type = vm.DiskType.CEPH_RBD.value
+            update_fields = vm.update_image_fields(image=new_image)
             try:
-                vm.save(update_fields=['image', 'xml', 'disk_type'])
+                vm.save(update_fields=update_fields + ['xml', 'disk_type'])
             except Exception as e:
                 raise errors.VmError(msg=f'更新虚拟机元数据失败, {str(e)}')
             return vm
@@ -543,7 +547,8 @@ class VmBuilder:
             begin_create = True  # vm xml从新构建的
             try:
                 xml_desc = VmXMLBuilder().build_vm_xml_desc(
-                    vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=vm.disk, image=vm.image, mac_ip=vm.mac_ip)
+                    vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=vm.disk,
+                    image_xml_tpl=vm.image_xml_tpl, ceph_pool=vm.ceph_pool, mac_ip=vm.mac_ip)
             except Exception as e:
                 raise errors.VmError(msg=f'构建虚拟机xml错误，{str(e)}')
 

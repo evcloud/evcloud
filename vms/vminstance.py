@@ -10,7 +10,7 @@ from device.manager import PCIDeviceManager
 from utils import errors
 from .xml_builder import VmXMLBuilder
 from .models import (
-    Vm, VmDiskSnap, rename_sys_disk_delete, rename_image
+    Vm, VmDiskSnap, rename_sys_disk_delete, rename_image, Image
 )
 from .manager import VmArchiveManager, VmLogManager
 from .migrate import VmMigrateManager
@@ -599,7 +599,7 @@ class VmInstance:
             raise errors.VmError.from_error(
                 errors.Unsupported(msg='虚拟主机为本地硬盘，不支持创建快照'))
 
-        ceph_pool = vm.image.ceph_pool
+        ceph_pool = vm.ceph_pool
         disk_snap = VmDiskSnap(disk=vm.disk, vm=vm, ceph_pool=ceph_pool, remarks=remarks)
         try:
             disk_snap.save()
@@ -751,52 +751,52 @@ class VmInstance:
         self.update_xml_from_domain()
         return device
 
-    def reset_sys_disk(self):
-        """
-        重置虚拟机系统盘，恢复到创建时状态
-
-        :return:
-            Vm()   # success
-
-        :raises: VmError
-        """
-        # 删除快照记录
-        self._require_shutdown()
-        vm = self.vm
-        try:
-            vm.sys_snaps.delete()
-        except Exception as e:
-            raise errors.VmError(msg=f'删除虚拟机系统盘快照失败，{str(e)}')
-
-        disk_name = vm.disk
-        ceph_pool = vm.image.ceph_pool
-        pool_name = ceph_pool.pool_name
-        ceph = ceph_pool.ceph
-        image = vm.image
-        data_pool = ceph_pool.data_pool if ceph_pool.has_data_pool else None
-
-        ok, deleted_disk = rename_sys_disk_delete(ceph=ceph, pool_name=pool_name, disk_name=disk_name)
-        if not ok:
-            raise errors.VmError(msg='虚拟机系统盘重命名失败')
-
-        rbd_manager = image.get_rbd_manager()
-        try:
-            rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap,
-                                    new_image_name=disk_name, data_pool=data_pool)
-        except (RadosError, ImageExistsError) as e:
-            # 原系统盘改回原名
-            try:
-                rename_image(ceph=ceph, pool_name=pool_name, image_name=deleted_disk, new_name=disk_name)
-            except Exception as exc:
-                pass
-            raise errors.VmError(msg=f'虚拟机系统盘创建失败, {str(e)}')
-
-        try:
-            vm.update_sys_disk_size()  # 系统盘有变化，更新系统盘大小
-        except Exception as e:
-            pass
-
-        return vm
+    # def reset_sys_disk(self):
+    #     """
+    #     重置虚拟机系统盘，恢复到创建时状态
+    #
+    #     :return:
+    #         Vm()   # success
+    #
+    #     :raises: VmError
+    #     """
+    #     # 删除快照记录
+    #     self._require_shutdown()
+    #     vm = self.vm
+    #     try:
+    #         vm.sys_snaps.delete()
+    #     except Exception as e:
+    #         raise errors.VmError(msg=f'删除虚拟机系统盘快照失败，{str(e)}')
+    #
+    #     disk_name = vm.disk
+    #     ceph_pool = vm.ceph_pool
+    #     pool_name = ceph_pool.pool_name
+    #     ceph = ceph_pool.ceph
+    #     image = vm.image
+    #     data_pool = ceph_pool.data_pool if ceph_pool.has_data_pool else None
+    #
+    #     ok, deleted_disk = rename_sys_disk_delete(ceph=ceph, pool_name=pool_name, disk_name=disk_name)
+    #     if not ok:
+    #         raise errors.VmError(msg='虚拟机系统盘重命名失败')
+    #
+    #     rbd_manager = image.get_rbd_manager()
+    #     try:
+    #         rbd_manager.clone_image(snap_image_name=image.base_image, snap_name=image.snap,
+    #                                 new_image_name=disk_name, data_pool=data_pool)
+    #     except (RadosError, ImageExistsError) as e:
+    #         # 原系统盘改回原名
+    #         try:
+    #             rename_image(ceph=ceph, pool_name=pool_name, image_name=deleted_disk, new_name=disk_name)
+    #         except Exception as exc:
+    #             pass
+    #         raise errors.VmError(msg=f'虚拟机系统盘创建失败, {str(e)}')
+    #
+    #     try:
+    #         vm.update_sys_disk_size()  # 系统盘有变化，更新系统盘大小
+    #     except Exception as e:
+    #         pass
+    #
+    #     return vm
 
     def change_sys_disk(self, image):
         """
@@ -811,8 +811,8 @@ class VmInstance:
         vm = self.vm
         new_image = image  # 镜像
         # 同一个iamge
-        if new_image.pk == vm.image.pk:
-            return self.reset_sys_disk()
+        # if new_image.pk == vm.image.pk:
+        #     return self.reset_sys_disk()
 
         # vm和image是否在同一个分中心
         host = vm.host
@@ -829,7 +829,7 @@ class VmInstance:
 
         # rename sys disk
         disk_name = vm.disk
-        old_pool = vm.image.ceph_pool
+        old_pool = vm.ceph_pool
         old_pool_name = old_pool.pool_name
         old_ceph = old_pool.ceph
         ok, deleted_disk = rename_sys_disk_delete(ceph=old_ceph, pool_name=old_pool_name, disk_name=disk_name)
@@ -883,8 +883,7 @@ class VmInstance:
         :raises: VmError
         """
         vm = self.vm
-        image = vm.image
-        if image.sys_type not in [image.SYS_TYPE_LINUX, image.SYS_TYPE_UNIX]:
+        if vm.sys_type not in [Image.SYS_TYPE_LINUX, Image.SYS_TYPE_UNIX]:
             raise errors.VmError(msg=f'只支持linux或unix系统虚拟主机修改密码')
 
         # 虚拟机的状态
@@ -951,10 +950,9 @@ class VmInstance:
             raise errors.VmAlreadyExistError(msg='虚拟主机未丢失, 无需修复')
 
         # disk rbd是否存在
-        image = vm.image
         disk_name = vm.disk
         try:
-            rbd_mgr = image.get_rbd_manager()
+            rbd_mgr = vm.get_rbd_manager()
             ok = rbd_mgr.image_exists(image_name=disk_name)
         except Exception as e:
             raise errors.VmError(msg=f'查询虚拟主机系统盘镜像时错误，{str(e)}')
@@ -964,7 +962,8 @@ class VmInstance:
 
         try:
             xml_desc = VmXMLBuilder().build_vm_xml_desc(
-                vm_uuid=vm.get_uuid(), mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name, image=image, mac_ip=vm.mac_ip)
+                vm_uuid=vm.get_uuid(), mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name,
+                image_xml_tpl=vm.image_xml_tpl, ceph_pool=vm.ceph_pool, mac_ip=vm.mac_ip)
         except Exception as e:
             raise errors.VmError(msg=f'构建虚拟主机xml错误，{str(e)}')
 
@@ -1037,7 +1036,7 @@ class VmInstance:
             raise errors.Unsupported(msg='系统盘大小不允许超过5Tb')
 
         try:
-            rbd = vm.image.get_rbd_manager()
+            rbd = vm.get_rbd_manager()
             ok = rbd.resize_rbd_image(image_name=vm.disk, size=new_size_bytes)
         except Exception as e:
             raise errors.VmError(msg=f'修改系统盘大小错误，{str(e)}')

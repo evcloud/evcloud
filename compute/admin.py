@@ -100,16 +100,15 @@ class HostAdmin(admin.ModelAdmin):
 
     @admin.display(description='真实物理资源')
     def pc_server_resource(self, obj):
-        resource = f'{obj.pcserver.real_cpu}核/{obj.pcserver.real_mem}GB'
-        return resource
+        if obj.pcserver:
+            return f'{obj.pcserver.real_cpu}核/{obj.pcserver.real_mem}GB'
 
-    pc_server_resource.short_description = '真实物理资源'
+        return 'not bind pcserver'
 
-
-    def group(self, obj):
-        return obj.desc.group
-
-    group.short_description = "group"
+    # def group(self, obj):
+    #     return obj.desc.group
+    #
+    # group.short_description = "group"
 
     # 重写编辑页, 继承父类方法
     def change_view(self, request, object_id, form_url='', extra_context=None):
