@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='vm',
             name='ceph_pool',
-            field=models.ForeignKey(db_constraint=False, default=None, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='ceph.cephpool', verbose_name='CEPH存储后端'),
+            field=models.ForeignKey(db_constraint=False, db_index=False, default=None, null=True, on_delete=django.db.models.deletion.DO_NOTHING, to='ceph.cephpool', verbose_name='CEPH存储后端'),
         ),
         migrations.AddField(
             model_name='vm',

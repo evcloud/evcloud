@@ -112,7 +112,7 @@ class Vm(VmBase):
     nvme_support = models.BooleanField(verbose_name='支持NVME设备', default=False)
     ceph_pool = models.ForeignKey(
         to=CephPool, on_delete=models.DO_NOTHING, verbose_name='CEPH存储后端',
-        null=True, db_constraint=False, default=None)
+        null=True, db_constraint=False, db_index=False, default=None)
     default_user = models.CharField(verbose_name='系统默认登录用户名', max_length=32, default='root')
     default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
     image_desc = models.TextField(verbose_name='系统镜像描述', default='', blank=True)
