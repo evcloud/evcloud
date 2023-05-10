@@ -4,6 +4,9 @@ from django.db import models
 from django.conf import settings
 
 from compute.models import Center
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 class CephCluster(models.Model):
@@ -113,3 +116,62 @@ class CephPool(models.Model):
 
     def __str__(self):
         return f'ceph<{self.ceph.name}>@pool<{self.pool_name}>'
+
+
+class GlobalConfig(models.Model):
+    """全局配置表"""
+
+    INSTANCE_ID = 1
+    id = models.AutoField(primary_key=True, default=INSTANCE_ID)
+    sitename = models.CharField(verbose_name='站点名称', max_length=50, default='EVcloud')
+    poweredby = models.CharField(verbose_name='技术支持', max_length=255, default='https://gitee.com/cstcloud-cnic/evcloud')
+    novnchttp = models.CharField(verbose_name='novnc http协议配置', max_length=10, default='http',
+                                 help_text='配置novnchttp协议 http/https')
+
+    class Meta:
+        db_table = 'site_global_config'
+        ordering = ['-id']
+        verbose_name = '全局配置表'
+        verbose_name_plural = '全局配置表'
+
+    def __str__(self):
+        return f'GlobalConfigTable<{self.sitename}>'
+
+    @classmethod
+    def get_instance(cls):
+        inst = cls.objects.filter(id=cls.INSTANCE_ID).first()
+        if not inst:
+            return None
+
+        return inst
+
+    def save(self, *args, **kwargs):
+
+        self.delete_global_config_cache()
+
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # 删除缓存
+        self.delete_global_config_cache()
+
+        super().delete(*args, **kwargs)
+
+    def clean(self):
+        if self.novnchttp not in ['http', 'https']:
+            raise ValidationError({'novnchttp': _('novnc http协议配置有误。')})
+
+    @staticmethod
+    def get_global_config():
+        global_config = cache.get('global_config_key')
+        if global_config:
+            return global_config
+
+        obj = GlobalConfig.get_instance()
+        cache.set('global_config_key', obj, 120)
+
+        return cache.get('global_config_key')
+
+    @staticmethod
+    def delete_global_config_cache():
+        cache.delete('global_config_key')
