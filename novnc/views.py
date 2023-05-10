@@ -24,6 +24,10 @@ def vnc_view(req):
         http_host = http_host.split(':')[0]
         http_scheme = 'https'
 
+        global_config_obj = GlobalConfig().get_global_config()
+        if global_config_obj:
+            http_scheme = global_config_obj.novnchttp
+
         if NOVNC_PORT == 80:
             if protocol_type == 'spice':
                 dic['url'] = f'{http_scheme}://{http_host}/novnc_nginx/spice/spice_auto.html?path=websockify/?token={vncid}'
