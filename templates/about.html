@@ -10,30 +10,46 @@
                     <p>{% trans 'EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。' %}</p>
                 </div>
                 <div class="p-2">
-                    <h5>{% trans '版本' %}</h5>
-                    <p><span>{{ version }}</span>&emsp;
-                        {% if version_git_change_set.timestamp %}
-                            <span>{{ version_git_change_set.timestamp }}</span>&emsp;
-                        {% endif %}
-                        {% if version_git_change_set.author %}
-                            <span>{{ version_git_change_set.author }}</span>&emsp;
-                        {% endif %}
-                        <span><a href="{% url 'docs:docs' %}#/changelog" target="view_window">
-                            {% trans '变更日志' %}</a>
-                        </span>
-                        <br/>
-                        {% if version_git_change_set.content %}
-                            {% for log in version_git_change_set.content %}
-                                <span>（{{ forloop.counter }}）{{ log.2 }}</span>&emsp;
-                                <br/>
-                            {% endfor %}
-                        {% endif %}
-                    </p>
-                </div>
-                <div class="p-2">
-                    <h5>{% trans '关于我们' %}</h5>
+                    <h5>{% trans '研发团队' %}</h5>
                     <p>{% trans '中国科学院计算机网络信息中心，科技云部。' %}</p>
                 </div>
+                <div class="p-2">
+                    <h5>{% trans '最新版本' %}   {{ version }}</h5>
+
+                    {%  if version_git_change_set  %}
+
+                        {% for value in version_git_change_set %}
+                            <p>
+                                <i class="fa fa-tag" aria-hidden="true" style="color: #0d6efd"></i>
+                                <span class="p-2 bd-highlight" style="color: #0d6efd">{{ value.0 }} </span>
+                                <hr/>
+                                <i class="fa fa-clock" aria-hidden="true" style="color: #0d6efd"></i>
+                                <span class="p-2 bd-highlight">{{ value.1 | date:'Y-m-d H:i:s'  }}</span>
+                                <i class="fa fa-user" aria-hidden="true" style="color: #0d6efd"></i>
+                                <span class="p-2 bd-highlight">{{ value.2 }}</span>
+                                <i class="fa fa-envelope" aria-hidden="true" style="color: #0d6efd"></i>
+                                <span class="p-2 bd-highlight">{{ value.3 }}</span>
+                              <span><a href="{% url 'docs:docs' %}#/changelog?id={{ value.0| cut:"." }}" target="view_window">
+                                    {% trans '变更日志' %}</a>
+                              </span>
+                            </p>
+                            <pre style="white-space: pre-wrap;word-wrap: break-word">{{ value.4 }}
+                            </pre>
+
+                        {% endfor %}
+
+                        {% else %}
+                        <p>
+                            无法获取版本日志， 详情请查看：
+                            <span><a href="{% url 'docs:docs' %}#/changelog" target="view_window">
+                                    {% trans '变更日志' %}</a>
+                            </span>
+                        </p>
+
+                    {%  endif %}
+
+                </div>
+
             </div>
         </div>
     </div>

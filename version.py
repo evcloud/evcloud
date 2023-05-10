@@ -14,24 +14,33 @@ def get_git_changeset():
     if "__file__" not in globals():
         return None
     repo_dir = os.path.dirname(os.path.abspath(__file__))
-    git_log = subprocess.run(
-        'git log --pretty="format:%ct||%an||%s" --quiet -3',
+
+    # %(*refname) %(*authorname) %(*authoremail) %(*authordate) %(*subject)
+    get_tag = subprocess.run(
+        "git for-each-ref --count=3 --sort='-taggerdate' "
+        "--format='%(refname:short) || %(taggerdate:format:%s) || %(*authorname) || %(*authoremail) || %(subject)'"
+        " refs/tags/*",
         capture_output=True,
         shell=True,
         cwd=repo_dir,
         text=True,
     )
-
     try:
-        cmd_output = git_log.stdout.split('\n')
-        head_logs = [item.split('||') for item in cmd_output]
-        timestamp = head_logs[0][0]
+        cmd_output = get_tag.stdout
+        lines = cmd_output.split('\n')[0:3]
         tz = datetime.timezone.utc
-        timestamp = datetime.datetime.fromtimestamp(int(timestamp), tz=tz)
+        git_tag_info = []
+        for line in lines:
+            tag = line.split('||')
+            if len(tag) == 5:
+                tag[1] = datetime.datetime.fromtimestamp(int(tag[1]), tz=tz)
+                tag[4] = tag[4].replace('*', '\n*')
+                git_tag_info.append(tag)
+
     except Exception:
         return None
 
-    return {'timestamp': timestamp.strftime("%Y/%m/%d %H:%M:%S"), 'author': head_logs[0][1], 'content': head_logs}
+    return git_tag_info
 
 
 __version__ = get_version(VERSION)
