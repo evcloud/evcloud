@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.conf import settings
 
+from ceph.models import GlobalConfig
 from novnc.manager import NovncTokenManager
 
 NOVNC_PORT = getattr(settings, 'NOVNC_SERVER_PORT', 80)
