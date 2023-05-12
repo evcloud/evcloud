@@ -17,9 +17,7 @@ def get_git_changeset():
 
     # %(*refname) %(*authorname) %(*authoremail) %(*authordate) %(*subject)
     get_tag = subprocess.run(
-        "git for-each-ref --count=3 --sort='-taggerdate' "
-        "--format='%(refname:short) || %(taggerdate:format:%s) || %(*authorname) || %(*authoremail) || %(subject)'"
-        " refs/tags/*",
+        'git log --pretty=format:"%an || %ae || %at || %s || %d" -100',
         capture_output=True,
         shell=True,
         cwd=repo_dir,
@@ -27,20 +25,31 @@ def get_git_changeset():
     )
     try:
         cmd_output = get_tag.stdout
-        lines = cmd_output.split('\n')[0:3]
+        lines = cmd_output.split('\n')
+        # {tag: [[作者， 时间， 提交内容]]}
         tz = datetime.timezone.utc
+        git_tag_dict = {}
         git_tag_info = []
+        tag_count = 1
+        tag = get_version(VERSION)
         for line in lines:
-            tag = line.split('||')
-            if len(tag) == 5:
-                tag[1] = datetime.datetime.fromtimestamp(int(tag[1]), tz=tz)
-                tag[4] = tag[4].replace('*', '\n*')
-                git_tag_info.append(tag)
+            if tag_count == 4:
+                break
+
+            commit_info = line.split('||')
+            if commit_info[4].startswith('  (tag:'):
+                git_tag_dict[tag] = git_tag_info
+                tag = commit_info[4].replace('  (tag: ', '').replace(')', '')
+                git_tag_info = []
+                tag_count += 1
+            commit_info[2] = datetime.datetime.fromtimestamp(int(commit_info[2]), tz=tz)
+            commit_info[4] = commit_info[4].replace(' ', '')
+            git_tag_info.append(commit_info)
 
     except Exception:
         return None
 
-    return git_tag_info
+    return git_tag_dict
 
 
 __version__ = get_version(VERSION)
