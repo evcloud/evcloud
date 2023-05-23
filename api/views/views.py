@@ -276,7 +276,7 @@ class VmsViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属分中心id'
+                description='所属数据中心id'
             ),
             openapi.Parameter(
                 name='group_id',
@@ -1480,7 +1480,7 @@ class VmsViewSet(CustomGenericViewSet):
 
 class CenterViewSet(CustomGenericViewSet):
     """
-    分中心类视图
+    数据中心类视图
     """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
@@ -1488,9 +1488,9 @@ class CenterViewSet(CustomGenericViewSet):
 
     def list(self, request, *args, **kwargs):
         """
-        获取分中心列表
+        获取数据中心列表
 
-            获取分中心列表信息
+            获取数据中心列表信息
 
             http code 200:
             {
@@ -1500,7 +1500,7 @@ class CenterViewSet(CustomGenericViewSet):
               "results": [
                 {
                   "id": 1,
-                  "name": "怀柔分中心",
+                  "name": "怀柔数据中心",
                   "location": "怀柔",
                   "desc": "xxx"
                 }
@@ -1544,7 +1544,7 @@ class GroupViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属分中心id'
+                description='所属数据中心id'
             ),
         ]
     )
@@ -1710,7 +1710,7 @@ class VlanViewSet(CustomGenericViewSet):
                 name='center_id', in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='分中心id'
+                description='数据中心id'
             ),
             openapi.Parameter(
                 name='group_id', in_=openapi.IN_QUERY,
@@ -1872,7 +1872,7 @@ class ImageViewSet(CustomGenericViewSet):
                 name='center_id', in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属分中心id'
+                description='所属数据中心id'
             ),
             openapi.Parameter(
                 name='tag', in_=openapi.IN_QUERY,
@@ -2330,7 +2330,7 @@ class VDiskViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属分中心id'
+                description='所属数据中心id'
             ),
             openapi.Parameter(
                 name='group_id',
@@ -2961,7 +2961,7 @@ class StatCenterViewSet(CustomGenericViewSet):
               "centers": [
                 {
                   "id": 1,
-                  "name": "怀柔分中心",
+                  "name": "怀柔数据中心",
                   "mem_total": 165536,
                   "mem_allocated": 15360,
                   "vcpu_total": 54,
@@ -2973,7 +2973,7 @@ class StatCenterViewSet(CustomGenericViewSet):
                 {
                   "id": 1,
                   "name": "宿主机组1",
-                  "center__name": "怀柔分中心",
+                  "center__name": "怀柔数据中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
                   "vcpu_total": 24,
@@ -3020,7 +3020,7 @@ class StatCenterViewSet(CustomGenericViewSet):
         return Response(data={'code': 200, 'code_text': 'get ok', 'centers': centers, 'groups': groups, 'hosts': hosts})
 
     @swagger_auto_schema(
-        operation_summary='获取一个分中心的资源统计信息',
+        operation_summary='获取一个数据中心的资源统计信息',
         manual_parameters=[
             openapi.Parameter(
                 name='mem_unit',
@@ -3037,7 +3037,7 @@ class StatCenterViewSet(CustomGenericViewSet):
     @action(methods=['get'], detail=True, url_path='center', url_name='center-stat')
     def center_stat(self, request, *args, **kwargs):
         """
-        获取一个分中心的资源统计信息列表
+        获取一个数据中心的资源统计信息列表
 
             http code 200:
             {
@@ -3045,7 +3045,7 @@ class StatCenterViewSet(CustomGenericViewSet):
               "code_text": "get ok",
               "center": {
                   "id": 1,
-                  "name": "怀柔分中心",
+                  "name": "怀柔数据中心",
                   "mem_total": 165536,
                   "mem_allocated": 15360,
                   "vcpu_total": 54,
@@ -3056,7 +3056,7 @@ class StatCenterViewSet(CustomGenericViewSet):
                 {
                   "id": 1,
                   "name": "宿主机组1",
-                  "center__name": "怀柔分中心",
+                  "center__name": "怀柔数据中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
                   "vcpu_total": 24,
@@ -3080,7 +3080,7 @@ class StatCenterViewSet(CustomGenericViewSet):
             center = None
 
         if not center:
-            exc = exceptions.NotFoundError(msg='分中心不存在')
+            exc = exceptions.NotFoundError(msg='数据中心不存在')
             return self.exception_response(exc)
 
         groups = GroupManager().get_stat_group_queryset(filters={'center': c_id}).values(
@@ -3125,7 +3125,7 @@ class StatCenterViewSet(CustomGenericViewSet):
               "group": {
                   "id": 1,
                   "name": "宿主机组1",
-                  "center__name": "怀柔分中心",
+                  "center__name": "怀柔数据中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
                   "vcpu_total": 24,
@@ -3201,7 +3201,7 @@ class PCIDeviceViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='筛选条件，所属分中心id'
+                description='筛选条件，所属数据中心id'
             ),
             openapi.Parameter(
                 name='group_id',

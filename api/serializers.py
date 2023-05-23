@@ -73,8 +73,8 @@ class VmCreateSerializer(serializers.Serializer):
                                    allow_null=True, default=None, help_text='单位GB')
     vlan_id = serializers.IntegerField(label='子网id', required=False, allow_null=True,
                                        min_value=1, help_text='子网id', default=None)
-    center_id = serializers.IntegerField(label='分中心id', required=False, allow_null=True,
-                                         min_value=1, help_text='分中心id', default=None)
+    center_id = serializers.IntegerField(label='数据中心id', required=False, allow_null=True,
+                                         min_value=1, help_text='数据中心id', default=None)
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True,
                                         min_value=1, help_text='宿主机组id', default=None)
     host_id = serializers.IntegerField(label='宿主机id', required=False, allow_null=True,
@@ -144,7 +144,7 @@ class VmPatchSerializer(serializers.Serializer):
 
 class CenterSerializer(serializers.ModelSerializer):
     """
-    分中心序列化器
+    数据中心序列化器
     """
 
     class Meta:
@@ -355,8 +355,8 @@ class VdiskCreateSerializer(serializers.Serializer):
                                         min_value=1, help_text='宿主机组id', default=None)
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True,
                                         min_value=1, help_text='宿主机组id', default=None)
-    center_id = serializers.IntegerField(label='分中心id', required=False, allow_null=True,
-                                         min_value=1, help_text='分中心id', default=None)
+    center_id = serializers.IntegerField(label='数据中心id', required=False, allow_null=True,
+                                         min_value=1, help_text='数据中心id', default=None)
     remarks = serializers.CharField(label='备注', required=False, allow_blank=True, default='')
 
     def validate(self, data):
