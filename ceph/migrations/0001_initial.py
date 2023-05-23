@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('keyring_file', models.CharField(blank=True, editable=False, help_text='点击保存，keyring文本会存储到这个文件, 此字段自动填充', max_length=200, verbose_name='keyring文件保存路径')),
                 ('hosts_xml', models.TextField(help_text="设置虚机xml中disk/source元素的ceph monitors信息，格式:&lt;host name='10.100.50.1' port='6789'/&gt;", null=True, verbose_name='ceph monitors')),
                 ('username', models.CharField(default='admin', help_text='ceph用户名，需与keyring文件一致', max_length=100, verbose_name='ceph用户名')),
-                ('center', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ceph_clusters', to='compute.Center', verbose_name='所属分中心')),
+                ('center', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ceph_clusters', to='compute.Center', verbose_name='所属数据中心')),
             ],
             options={
                 'verbose_name': 'CEPH集群',

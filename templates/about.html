@@ -35,8 +35,7 @@
 {#                                    {% trans '变更日志' %}</a>#}
 {#                              </span>#}
                             </p>
-                            <pre style="white-space: pre-wrap;word-wrap: break-word">{% for value_list in  value|slice:"10" %}{{value_list.3}}{{value_list.0}}<br>{% endfor %}
-                            </pre>
+                            <pre style="white-space: pre-wrap;word-wrap: break-word">{% for value_list in  value|slice:"10" %}{{value_list.3}}@{{value_list.0}}<br>{% endfor %}</pre>
 
                         {% endfor %}
 

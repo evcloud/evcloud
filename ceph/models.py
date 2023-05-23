@@ -15,7 +15,7 @@ class CephCluster(models.Model):
     """
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=100, unique=True)
-    center = models.ForeignKey(to=Center, on_delete=models.CASCADE, verbose_name='所属分中心', related_name='ceph_clusters')
+    center = models.ForeignKey(to=Center, on_delete=models.CASCADE, verbose_name='所属数据中心', related_name='ceph_clusters')
     has_auth = models.BooleanField(verbose_name='需要认证', default=True, help_text='未选中时，不使用uuid字段，uuid设置为空')
     uuid = models.CharField(verbose_name='xml中ceph的uuid', max_length=50, blank=True,
                             help_text='xml中ceph配置的uuid,libvirt通过uuid获取访问ceph的用户key')
@@ -135,7 +135,7 @@ class GlobalConfig(models.Model):
         verbose_name_plural = '全局配置表'
 
     def __str__(self):
-        return f'GlobalConfigTable<{self.sitename}>'
+        return f'GlobalConfig<{self.sitename}>'
 
     @classmethod
     def get_instance(cls):

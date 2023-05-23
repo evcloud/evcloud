@@ -10,8 +10,8 @@ User = get_user_model()  # 获取用户模型
 
 class Center(models.Model):
     """
-    分中心模型
-    一个分中心对应一个存储后端，存储虚拟机相关的数据，Ceph集群，虚拟机的虚拟硬盘和系统镜像使用ceph块存储
+    数中心中心模型
+    一个数据中心对应一个存储后端，存储虚拟机相关的数据，Ceph集群，虚拟机的虚拟硬盘和系统镜像使用ceph块存储
     """
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='数据中心名称', max_length=100, unique=True)
@@ -20,8 +20,8 @@ class Center(models.Model):
 
     class Meta:
         ordering = ('id',)
-        verbose_name = '分中心'
-        verbose_name_plural = '01_分中心'
+        verbose_name = '数据中心'
+        verbose_name_plural = '01_数据中心'
 
     def __str__(self):
         return self.name
@@ -34,7 +34,7 @@ class Group(models.Model):
     组用于权限隔离，某一个用户创建的虚拟机只能创建在指定的组的宿主机上，无权使用其他组的宿主机
     """
     id = models.AutoField(primary_key=True)
-    center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的分中心')
+    center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的数据中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
     enable = models.BooleanField(default=True, verbose_name='启用宿主机组')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')

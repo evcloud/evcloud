@@ -24,8 +24,8 @@ class Migration(migrations.Migration):
                 ('desc', models.CharField(blank=True, default='', max_length=200, verbose_name='简介')),
             ],
             options={
-                'verbose_name': '分中心',
-                'verbose_name_plural': '01_分中心',
+                'verbose_name': '数据中心',
+                'verbose_name_plural': '01_数据中心',
                 'ordering': ('id',),
             },
         ),

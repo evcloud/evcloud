@@ -329,8 +329,8 @@ class VmArchive(VmBase):
     ceph_id = models.IntegerField(verbose_name='CEPH集群id')
     ceph_pool = models.CharField(verbose_name='CEPH POOL', max_length=100, blank=True, default='')
 
-    center_id = models.IntegerField(verbose_name='分中心ID', blank=True, default=0)
-    center_name = models.CharField(verbose_name='分中心', max_length=100, blank=True, default='')
+    center_id = models.IntegerField(verbose_name='数据中心ID', blank=True, default=0)
+    center_name = models.CharField(verbose_name='数据中心', max_length=100, blank=True, default='')
     group_id = models.IntegerField(verbose_name='宿主机组ID', blank=True, default=0)
     group_name = models.CharField(verbose_name='宿主机组', max_length=100, null=True, blank=True)
     host_id = models.IntegerField(verbose_name='宿主机ID', blank=True, default=0)
