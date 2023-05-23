@@ -27,3 +27,10 @@ class GlobalConfigTableAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_add_permission(self, request):
+        is_exist = GlobalConfig.objects.first()
+        if is_exist:
+            return False
+
+        return super().has_add_permission(request=request)
