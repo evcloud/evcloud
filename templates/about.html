@@ -22,20 +22,20 @@
 
                     {%  if version_git_change_set  %}
 
-                        {% for key, value in version_git_change_set.items %}
+                        {% for tag, value in version_git_change_set.items %}
                             <p>
-                                <span class="p-2 bd-highlight" style="color: #0d6efd">{{ key}} </span>
+                                <span class="p-2 bd-highlight" style="color: #0d6efd">{{ tag }} </span>
 
-                                <span class="p-2 bd-highlight">{{ value.0.2 | date:'Y-m-d H:i:s'  }}</span>
+                                <span class="p-2 bd-highlight">发布时间：{{ value.0.2 | date:'Y-m-d H:i:s'  }}</span>
 
-                                <span class="p-2 bd-highlight">{{ value.0.0 }}</span>
+                                <span class="p-2 bd-highlight">发布人：{{ value.0.0 }}</span>
 
-                                <span class="p-2 bd-highlight">{{ value.0.1 }}</span>
+{#                                <span class="p-2 bd-highlight">{{ value.0.1 }}</span>#}
 {#                              <span><a href="{% url 'docs:docs' %}#/changelog?id={{ value.0| cut:"." }}" target="view_window">#}
 {#                                    {% trans '变更日志' %}</a>#}
 {#                              </span>#}
                             </p>
-                            <pre style="white-space: pre-wrap;word-wrap: break-word">{% for value_list in  value|slice:"10" %}{{value_list.3}}@{{value_list.0}}<br>{% endfor %}</pre>
+                            <pre style="white-space: pre-wrap;word-wrap: break-word">{% for value_list in  value|slice:"10" %}{{value_list.3}} 提交人：{{value_list.0}}<br>{% endfor %}</pre>
 
                         {% endfor %}
 

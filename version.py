@@ -31,17 +31,22 @@ def get_git_changeset():
         git_tag_dict = {}
         git_tag_info = []
         tag_count = 1
-        tag = get_version(VERSION)
+        tag = None
         for line in lines:
             if tag_count == 4:
                 break
 
             commit_info = line.split('||')
+            if commit_info[4].startswith('  (HEAD -> develop, tag:') or commit_info[4].startswith('  (HEAD -> master, tag:'):
+                com_tag = commit_info[4].split(',')[1]
+                commit_info[4] = '  (' + com_tag.replace(' ', '', 1) + ')'
+
             if commit_info[4].startswith('  (tag:'):
-                git_tag_dict[tag] = git_tag_info
+                if tag:
+                    git_tag_dict[tag] = git_tag_info
+                    tag_count += 1
                 tag = commit_info[4].replace('  (tag: ', '').replace(')', '')
                 git_tag_info = []
-                tag_count += 1
             commit_info[2] = datetime.datetime.fromtimestamp(int(commit_info[2]), tz=tz)
             commit_info[4] = commit_info[4].replace(' ', '')
             git_tag_info.append(commit_info)
