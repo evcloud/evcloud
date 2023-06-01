@@ -6,9 +6,9 @@ from .models import Vlan, MacIP
 @admin.register(Vlan)
 class VlanAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
-    list_display = ('id', 'name', 'br', 'tag', 'enable', 'group', 'subnet_ip', 'net_mask', 'gateway', 'dns_server')
+    list_display = ('id', 'br', 'vlan_id', 'name', 'tag', 'enable', 'group', 'subnet_ip', 'net_mask', 'gateway', 'dns_server')
     list_filter = ('enable', 'tag')
-    search_fields = ('name', 'br')
+    search_fields = ('name', 'br', 'vlan_id')
     list_select_related = ('group',)
 
 

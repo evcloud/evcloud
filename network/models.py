@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from compute.models import Center, Group
@@ -15,10 +16,11 @@ class Vlan(models.Model):
     )
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='VLAN名称', max_length=100)
+    br = models.CharField(verbose_name='网桥名', max_length=50)
+    vlan_id = models.IntegerField(verbose_name='vlan id', blank=True, null=True, default=None, validators=[MinValueValidator(0)])
+    name = models.CharField(verbose_name='VLAN描述', max_length=100)
     group = models.ForeignKey(to=Group, verbose_name='宿主机组', default=None, null=True,
                               on_delete=models.SET_NULL, related_name='vlan_set')
-    br = models.CharField(verbose_name='网桥', max_length=50)
     tag = models.SmallIntegerField(verbose_name='网络标签', choices=NET_TAG_CHOICES, default=NET_TAG_PRIVATE)
     subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')
     net_mask = models.GenericIPAddressField(verbose_name='子网掩码')
