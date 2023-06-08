@@ -109,7 +109,11 @@
                             <td>{{ disk.user }}</td>
                             <td>{{ disk.create_time|date:'Y-m-d H:i:s' }}</td>
                             {% if disk.vm %}
+                                {% if disk.vm.mac_ip %}
                                 <td>{{ disk.vm.ipv4 }}</td>
+                                {% else %}
+                                <td>无</td>
+                                {% endif %}
                                 <td>{{ disk.attach_time|date:'Y-m-d H:i:s' }}</td>
                             {% else %}
                                 <td>未挂载</td>

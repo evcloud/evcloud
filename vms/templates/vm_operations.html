@@ -5,6 +5,7 @@
         aria-expanded="false">操作
     </button>
     <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
+    {% if vm.vm_status == vm.VmStatus.NORMAL.value %}
         <button class="dropdown-item bg-success btn-vm-start" type="button" data-vm-uuid="{{ vm.hex_uuid }}">开机</button>
         <button class="dropdown-item bg-warning btn-vm-shutdown" type="button" data-vm-uuid="{{ vm.hex_uuid }}">软关机</button>
         <button class="dropdown-item bg-warning btn-vm-reboot" type="button" data-vm-uuid="{{ vm.hex_uuid }}">软重启</button>
@@ -27,7 +28,12 @@
         <button class="dropdown-item bg-info btn-vm-snap-create" type="button" data-vm-uuid="{{ vm.hex_uuid }}">创建快照</button>
         <button class="dropdown-item bg-warning btn-vm-miss-fix" type="button" data-vm-uuid="{{ vm.hex_uuid }}">丢失恢复</button>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-sys-disk-expand' vm_uuid=vm.hex_uuid %}">系统盘扩容</a>
+        <button class="dropdown-item bg-warning btn-vm-shelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">搁置</button>
         {% endif %}
+    {% else %}
+{#        <button class="dropdown-item bg-warning btn-vm-unshelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">恢复</button>#}
+        <a class="dropdown-item bg-warning" href="{% url 'vms:unshelve' vm_uuid=vm.hex_uuid %}">恢复</a>
+    {% endif %}
     </div>
 </div>
 
