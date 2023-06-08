@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 
 from image.models import Image
-from compute.models import Host
+from compute.models import Host, Center
 from network.models import MacIP
 from ceph.managers import get_rbd_manager, CephClusterManager, RadosError
 from ceph.models import CephPool
@@ -77,6 +77,10 @@ class Vm(VmBase):
     """
     虚拟机模型
     """
+    class VmStatus(models.TextChoices):
+        SHELVE = 'shelve', _('搁置')
+        NORMAL = 'normal', _('正常')
+
     uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=200)
     vcpu = models.IntegerField(verbose_name='CPU数')
@@ -92,9 +96,10 @@ class Vm(VmBase):
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
     init_password = models.CharField(max_length=20, default='', blank=True, verbose_name='root初始密码')
 
-    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机')
+    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机', blank=True, null=True, default=None)
     xml = models.TextField(verbose_name='虚拟机当前的XML', help_text='定义虚拟机的当前的XML内容')
-    mac_ip = models.OneToOneField(to=MacIP, on_delete=models.CASCADE, related_name='ip_vm', verbose_name='MAC IP')
+    mac_ip = models.OneToOneField(to=MacIP, on_delete=models.CASCADE, related_name='ip_vm', verbose_name='MAC IP',
+                                  blank=True, null=True, default=None)
 
     image_name = models.CharField(verbose_name='镜像名称', max_length=100, default='')
     image_parent = models.CharField(verbose_name='父镜像RBD名', max_length=255, default='', help_text='虚拟机系统盘镜像的父镜像')
@@ -117,6 +122,13 @@ class Vm(VmBase):
     default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
     image_desc = models.TextField(verbose_name='系统镜像描述', default='', blank=True)
     image_xml_tpl = models.TextField(verbose_name='XML模板', default='')
+    vm_status = models.CharField(verbose_name='实际运行状态', max_length=16, choices=VmStatus.choices,
+                                 default=VmStatus.NORMAL.value)
+    last_ip = models.ForeignKey(to=MacIP, verbose_name='虚拟机最后使用ip', blank=True, null=True, default=None,
+                                db_constraint=False, on_delete=models.SET_NULL, help_text='该字段在使用搁置服务时使用')
+
+    center = models.ForeignKey(to=Center, verbose_name='数据中心', blank=True, null=True, default=None,
+                               db_constraint=False, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.name
