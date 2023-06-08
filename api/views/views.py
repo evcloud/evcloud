@@ -1459,6 +1459,97 @@ class VmsViewSet(CustomGenericViewSet):
 
         return Response(data={'sys_disk_size': vm.get_sys_disk_size()})
 
+    @swagger_auto_schema(
+        operation_summary='虚拟机搁置',
+        request_body=no_body,
+        responses={
+            200: """"""
+        }
+    )
+    @action(methods=['post'], url_path='shelve', detail=True, url_name='vm-shelve')
+    def vm_shelve(self, request, *args, **kwargs):
+        """虚拟机搁置"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        api = VmAPI()
+        try:
+            api.vm_shelve(vm_uuid=vm_uuid, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+        return Response(data={'code': 201, 'code_text': '虚拟机已搁置'}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='搁置虚拟机恢复',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='group_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="指定宿主机组"
+            ),
+            openapi.Parameter(
+                name='host_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="指定宿主机"
+            ),
+            openapi.Parameter(
+                name='mac_ip_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="指定ip"
+            ),
+        ],
+        responses={
+            200: """"""
+        }
+    )
+    @action(methods=['post'], url_path='unshelve', detail=True, url_name='vm-unshelve')
+    def vm_unshelve(self, request, *args, **kwargs):
+        """搁置虚拟机恢复"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        host_id = str_to_int_or_default(request.query_params.get('host_id', '0'), default=0)
+        mac_ip_id = str_to_int_or_default(request.query_params.get('mac_ip_id', '0'), default=0)
+        group_id = str_to_int_or_default(request.query_params.get('group_id', '0'), default=0)
+        api = VmAPI()
+        try:
+            vm = api.vm_unshelve(vm_uuid=vm_uuid, group_id=group_id, host_id=host_id, mac_ip_id=mac_ip_id,
+                                 user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        return Response(data={'code': 201, 'code_text': '搁置虚拟机已恢复'}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='搁置虚拟机列表',
+        request_body=no_body,
+        responses={
+            200: """"""
+        }
+    )
+    @action(methods=['get'], url_path='shelve', detail=False, url_name='vm-shelve-list')
+    def vm_shelve_list(self, request, *args, **kwargs):
+        """搁置虚拟机列表"""
+        user = request.user
+        manager = VmManager()
+
+        try:
+            queryset = manager.filter_shelve_vm_queryset(user=user, is_superuser=user.is_superuser)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset)
+        data = {'results': serializer.data}
+        return Response(data)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -1475,6 +1566,8 @@ class VmsViewSet(CustomGenericViewSet):
             return serializers.VmPatchSerializer
         elif self.action == 'vm_change_password':
             return serializers.VmChangePasswordSerializer
+        elif self.action == 'vm_shelve_list':
+            return serializers.VmShelveListSerializer
         return Serializer
 
 

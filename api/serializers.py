@@ -510,6 +510,23 @@ class VmDetailSerializer(serializers.ModelSerializer):
         return ret
 
 
+class VmShelveListSerializer(serializers.ModelSerializer):
+    """
+    虚拟机搁置序列化器
+    """
+    user = serializers.SerializerMethodField()  # 自定义user字段内容
+
+    class Meta:
+        model = Vm
+        fields = (
+            'uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'user',
+            'create_time')
+
+    @staticmethod
+    def get_user(obj):
+        return {'id': obj.user.id, 'username': obj.user.username}
+
+
 class VmChangePasswordSerializer(serializers.Serializer):
     """
     虚拟主机修改密码

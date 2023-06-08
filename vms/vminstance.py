@@ -1046,3 +1046,75 @@ class VmInstance:
             return vm
 
         raise errors.VmError(msg='修改系统盘大小失败')
+
+    def shelve_vm(self):
+        """搁置虚拟机
+            1. 本地硬盘不支持搁置
+            2. 除GPU、网卡的其他PCI设备不支持搁置
+        """
+        vm = self.vm
+        vm_uuid = vm.get_uuid()
+        if self.vm_domain.is_running():
+            raise errors.VmRunningError(msg='请关闭虚拟机')
+
+        if vm.disk_type == vm.DiskType.LOCAL:
+            raise errors.VmError.from_error(
+                errors.Unsupported(msg='虚拟主机硬盘为本地硬盘，不支持搁置服务。'))
+
+        pci_devs = vm.pci_devices
+        pci_objs = pci_devs.exclude(type=PCIDevice.TYPE_GPU).exclude(type=PCIDevice.TYPE_ETH)
+        if pci_objs:
+            raise errors.VmError(msg='请先卸载PCI设备。')
+
+        for device in pci_devs:
+            try:
+                device.umount()
+            except errors.DeviceError as e:
+                raise errors.VmError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
+
+        log_manager = VmLogManager()
+
+        # 删除虚拟机
+        try:
+            if not self.vm_domain.undefine():
+                raise errors.VmError(msg='删除虚拟机失败')
+        except VirHostDown:
+            raise errors.VmError(msg='搁置服务失败。')
+        except (VirtError, errors.VmError):
+            raise errors.VmError(msg='删除虚拟机失败')
+
+        macip = vm.mac_ip
+        if not macip.set_free():
+            msg = f'释放mac ip资源失败, 虚拟机uuid={vm_uuid};\n mac_ip信息：{macip.get_detail_str()};\n ' \
+                  f'如果已删除虚拟机请手动释放此mac_ip资源'
+            log_manager.add_log(title='释放mac ip资源失败', about=log_manager.about.ABOUT_MAC_IP, text=msg)
+            raise errors.VmError(msg=msg)
+
+        # 释放宿主机资源
+        if not vm.host.free(vcpu=vm.vcpu, mem=vm.mem):
+            msg = f'释放宿主机资源失败, 虚拟机uuid={vm_uuid};\n 宿主机信息：id={vm.host.id}; ipv4={vm.host.ipv4};\n' \
+                  f'未释放资源：mem={vm.mem}MB;vcpu={vm.vcpu}'
+            raise errors.VmError(msg=msg)
+
+        # 宿主机已创建虚拟机数量-1
+        if not vm.host.vm_created_num_sub_1():
+            msg = f'镜像虚拟机（uuid={vm_uuid}），宿主机（id={vm.host.id}; ipv4={vm.host.ipv4}）' \
+                  f'已创建虚拟机数量-1失败, 请手动-1。'
+            log_manager.add_log(title='镜像宿主机已创建虚拟机数量-1失败',
+                                about=log_manager.about.ABOUT_HOST_VM_CREATED, text=msg)
+            raise errors.VmError(msg=msg)
+
+        vm.mac_ip = None
+        vm.host = None
+        vm.vm_status = vm.VmStatus.SHELVE.value
+        vm.last_ip = macip
+        vm.center = macip.vlan.group.center
+        vm.save(update_fields=['mac_ip', 'host', 'vm_status', 'last_ip', 'center'])
+        return True
+
+    def unshelve_vm(self, group_id, host_id, mac_ip_id, user):
+        """恢复搁置的虚拟机"""
+        vm = self.vm
+        return VmBuilder().unshelve_create_vm(vm=vm, group_id=group_id, host_id=host_id,
+                                              mac_ip_id=mac_ip_id, user=user)
+
