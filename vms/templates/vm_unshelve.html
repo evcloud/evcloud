@@ -30,6 +30,7 @@
                     <th>网桥名</th>
                     <th>vlan id</th>
                     <th>vlan描述</th>
+                    <th>公网/私网</th>
                     <th>状态</th>
                     <th>操作</th>
                 </tr>
@@ -43,6 +44,7 @@
                     <td>{{ ip.vlan.br }}</td>
                     <td>{{ ip.vlan.vlan_id |default:''}}</td>
                     <td>{{ ip.vlan.name }}</td>
+                    <td>{{ ip.vlan.get_tag_display }}</td>
 
                     <td>{{ ip.used| default:"空闲"}}</td>
                     <td>

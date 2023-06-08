@@ -406,6 +406,10 @@ class VmUnshelveNetworkViews(View):
             error = VmError(msg='查询可用ip资源时错误', err=e)
             return error.render(request=request)
 
+        if not mac_ip_queryset:
+            raise VmError(msg='无可用资源')
+
+        mac_ip_queryset = mac_ip_queryset.order_by('id')  # 分页排序，否则会有 UnorderedObjectListWarning 警告
 
         # 分页显示
         paginator = NumsPaginator(request, mac_ip_queryset, self.NUM_PER_PAGE)
