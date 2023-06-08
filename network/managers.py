@@ -341,3 +341,19 @@ class MacIPManager:
             return True
         except Exception as e:
             return False
+
+    @staticmethod
+    def get_free_ip_in_vlan(vlan_id: int):
+        """
+        获取子网中所有有可用的IP
+
+        :param vlan_id: 子网id
+        :return:
+            True: 有
+            False: 没有
+        """
+        qs = MacIP.get_all_free_ip_in_vlan(vlan_id)
+        if qs.count() > 0:
+            return qs
+
+        return None

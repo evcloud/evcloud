@@ -116,7 +116,7 @@ class VmManager:
         if center_id <= 0 and group_id <= 0 and host_id <= 0 and user_id <= 0 and not search:
             if not all_no_filters:
                 raise VmError(msg='查询虚拟机条件无效')
-            return self.get_vms_queryset().select_related(*related_fields).all()
+            return self.get_vms_queryset().select_related(*related_fields).exclude(vm_status=Vm.VmStatus.SHELVE.value).all()
 
         vm_queryset = None
         if host_id > 0:
@@ -140,7 +140,20 @@ class VmManager:
                 vm_queryset = Vm.objects.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
                                                 Q(uuid__icontains=search)).all()
 
-        return vm_queryset.select_related(*related_fields).all()
+        return vm_queryset.select_related(*related_fields).exclude(vm_status=Vm.VmStatus.SHELVE.value).all()
+
+    def filter_shelve_vm_queryset(self,  user, is_superuser: bool = False, related_fields: tuple = ()):
+        """获取搁置的虚拟机"""
+        if not related_fields:
+            related_fields = ('user', 'image')
+
+        if is_superuser:
+            return self.get_vms_queryset().select_related(*related_fields).exclude(
+                vm_status=Vm.VmStatus.NORMAL.value).all()
+
+        return self.get_user_vms_queryset(user=user.id).select_related(*related_fields).exclude(
+            vm_status=Vm.VmStatus.NORMAL.value).all()
+
 
 
 class VmArchiveManager:

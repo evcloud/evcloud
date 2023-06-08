@@ -19,7 +19,7 @@ class VmAPI:
         self._vdisk_manager = VdiskManager()
         self._pci_manager = PCIDeviceManager()
 
-    def _get_user_perms_vm(self, vm_uuid: str, user, related_fields: tuple = ()):
+    def _get_user_perms_vm(self, vm_uuid: str, user, related_fields: tuple = (), unshelve_flag=False):
         """
         获取用户有访问权的的虚拟机
 
@@ -38,6 +38,7 @@ class VmAPI:
         if not vm.user_has_perms(user=user):
             raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
+        self.vm_shelve_status(vm=vm, unshelve_flag=unshelve_flag)
         return vm
 
     def create_vm(self, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
@@ -547,3 +548,26 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('image__ceph_pool__ceph',))
         return VmInstance(vm).sys_disk_expand(expand_size)
+
+    def vm_unshelve(self, vm_uuid: str, group_id, host_id, mac_ip_id, user):
+        """虚拟机搁置服务恢复"""
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'host__group', 'user'),
+                                     unshelve_flag=True)
+        return VmInstance(vm).unshelve_vm(group_id=group_id, host_id=host_id, mac_ip_id=mac_ip_id, user=user)
+
+    def vm_shelve(self, vm_uuid: str, user):
+        """虚拟机搁置服务"""
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'host__group', 'user'))
+        return VmInstance(vm).shelve_vm()
+
+    def vm_shelve_status(self, vm, unshelve_flag=False):
+        """
+        检测 虚拟机的状态:搁置或正常。搁置状态不允许做其他操作（除恢复虚拟机）
+
+        unshelve_flag：用于虚拟机恢复时
+        """
+        if unshelve_flag:
+            return True
+
+        if vm.vm_status != vm.VmStatus.NORMAL.value:
+            raise errors.VmError(code=400, msg='虚拟机机状态搁置，无法满足要求操作。')
