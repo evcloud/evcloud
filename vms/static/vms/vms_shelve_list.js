@@ -28,10 +28,10 @@
 
         unshelve_vm_ajax(vm_uuid, mac_ip_id,function () {
             },
-            function () {
+            function (data) {
                 // node_vm_task.parents('tr').remove();
-                alert("虚拟机已恢复")
-                setTimeout(() => window.location.href = '/', 3000)
+                alert(data.code_text)
+                window.location.href = DOMAIN_NAME;
             });
     });
 })();
@@ -88,12 +88,12 @@ function unshelve_vm_ajax(vm_uuid, mac_ip_id, before_func, success_func, complat
         type: 'post',
         success: function (data, status_text) {
             if (typeof (success_func) === "function") {
-                success_func();
+                success_func(data);
             }
         },
         error: function (xhr, msg, err) {
             msg = get_err_msg_or_default(xhr, '虚拟机恢复失败;');
-            alert(msg);
+            alert(msg + ':' + err);
         },
         complete: function (xhr, ts) {
             if (typeof (complate_func) === "function") {

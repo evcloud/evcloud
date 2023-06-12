@@ -125,10 +125,10 @@ class Vm(VmBase):
     vm_status = models.CharField(verbose_name='实际运行状态', max_length=16, choices=VmStatus.choices,
                                  default=VmStatus.NORMAL.value)
     last_ip = models.ForeignKey(to=MacIP, verbose_name='虚拟机最后使用ip', blank=True, null=True, default=None,
-                                db_constraint=False, on_delete=models.SET_NULL, help_text='该字段在使用搁置服务时使用')
+                                db_constraint=False, db_index=False, on_delete=models.SET_NULL, help_text='该字段在使用搁置服务时使用')
 
     center = models.ForeignKey(to=Center, verbose_name='数据中心', blank=True, null=True, default=None,
-                               db_constraint=False, on_delete=models.SET_NULL)
+                               db_constraint=False, db_index=False, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.name
