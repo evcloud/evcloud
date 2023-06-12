@@ -3,6 +3,7 @@ from utils.ev_libvirt.virt import (
     VirtError, VmDomain, VirDomainNotExist, VirHostDown
 )
 from compute.managers import HostManager
+from utils.vm_normal_status import vm_normal_status
 from vdisk.manager import VdiskManager
 from vdisk.models import Vdisk
 from device.models import PCIDevice
@@ -663,6 +664,10 @@ class VmInstance:
         if not user.is_superuser:
             if snap.vm and not snap.vm.user_has_perms(user):
                 raise errors.VmError.from_error(errors.AccessDeniedError(msg='没有此快照的访问权限'))
+
+        status_bool = vm_normal_status(vm=snap.vm)
+        if status_bool is False:
+            raise errors.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作')
 
         return snap
 

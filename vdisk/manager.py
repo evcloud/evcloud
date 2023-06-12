@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from compute.managers import CenterManager, GroupManager, ComputeError
+from utils.vm_normal_status import vm_normal_status
 from .models import Vdisk
 from .models import Quota
 from utils.errors import VdiskError
@@ -459,6 +460,11 @@ class VdiskManager:
 
         if not disk.user_has_perms(user):
             raise errors.VdiskAccessDenied(msg='没有权限访问此硬盘')
+
+        # 搁置云主机，不允许
+        status_bool = vm_normal_status(vm=disk.vm)  # 没有挂载的云硬盘 vm 为None
+        if status_bool is False:
+            return errors.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作')
 
         disk.remarks = remarks
         try:

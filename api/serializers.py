@@ -342,7 +342,9 @@ class VdiskDetailSerializer(serializers.ModelSerializer):
     def get_vm(obj):
         vm = obj.vm
         if vm:
-            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+            if vm.mac_ip:
+                return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+            return {'uuid': vm.hex_uuid, 'ipv4': ''}  # 搁置的云主机没有ip
         return vm
 
 

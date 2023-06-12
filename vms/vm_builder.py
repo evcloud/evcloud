@@ -81,7 +81,7 @@ class VmBuilder:
 
         return vlan
 
-    def available_macip(self, ipv4: str, user, ip_public=None):
+    def available_macip(self, ipv4: str, user, ip_public=None, mac_ip_id=None):
         """
        指定mac ip是否空闲可用，是否满足网络类型, 是否有权限使用
 
@@ -91,10 +91,19 @@ class VmBuilder:
 
        :raise VmError
        """
-        try:
-            mac_ip = self._macip_manager.get_macip_by_ipv4(ipv4=ipv4)
-        except NetworkError as e:
-            raise errors.VmError(err=e)
+        mac_ip = None
+        if ipv4:
+            try:
+                mac_ip = self._macip_manager.get_macip_by_ipv4(ipv4=ipv4)
+            except NetworkError as e:
+                raise errors.VmError(err=e)
+        elif mac_ip_id:
+            try:
+                mac_ip = self._macip_manager.get_macip_by_id(macip_id=mac_ip_id)
+            except NetworkError as e:
+                raise errors.VmError(err=e)
+        else:
+            raise errors.VmError(msg=f'无法找到指定MAC IP')
 
         if not mac_ip:
             raise errors.VmError(msg='mac ip不存在')
@@ -600,7 +609,7 @@ class VmBuilder:
 
         if mac_ip_id:
             # 指定 ip
-            macip = self.available_macip(ipv4=vm.last_ip.ipv4, user=user)
+            macip = self.available_macip(ipv4=None, user=user, mac_ip_id=mac_ip_id)
             vlan = macip.vlan
             cneter_id = macip.vlan.group.center_id
             groups, host_or_none = self.get_groups_host_check_perms(center_id=cneter_id, group_id=group_id,
@@ -673,7 +682,7 @@ class VmBuilder:
                     disk_xml = vdisk.xml_desc(dev=vdisk.dev)
                     get_vm_domain(vm=vm).attach_device(xml=disk_xml)
                 except (VirtError, Exception) as e:
-                    msg = f'vdisk(uuid={vdisk.uuid}) 挂载失败,err={str(e)}；\n'
+                    msg = f'vdisk(uuid={vdisk.uuid}) 挂载失败, 请联系管理员， 虚拟机可正常使用,err={str(e)}；\n'
                     raise errors.VmError(msg=msg)
                 return True
 

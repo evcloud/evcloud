@@ -27,6 +27,7 @@ from device.manager import PCIDeviceManager, DeviceError
 from vpn.manager import VPNManager, VPNError
 from api import serializers
 from utils import errors as exceptions
+from utils.vm_normal_status import vm_normal_status
 from api.paginations import MacIpLimitOffsetPagination
 from api.viewsets import CustomGenericViewSet
 from version import __version__
@@ -632,6 +633,11 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
 
+        # 搁置云主机，不允许
+        status_bool = vm_normal_status(vm=vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作'))
+
         return Response(data={
             'code': 200,
             'code_text': '获取虚拟机信息成功',
@@ -901,6 +907,11 @@ class VmsViewSet(CustomGenericViewSet):
         if not vm.user_has_perms(user=request.user):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
+
+        # 搁置云主机，不允许
+        status_bool = vm_normal_status(vm=vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作'))
 
         vm_uuid = vm.get_uuid()
         host_ipv4 = vm.host.ipv4
@@ -2595,6 +2606,11 @@ class VDiskViewSet(CustomGenericViewSet):
             exc = exceptions.VmNotExistError(msg='虚拟机不存在')
             return self.exception_response(exc)
 
+        # 搁置云主机，不允许
+        status_bool = vm_normal_status(vm=vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作'))
+
         center_id = vm.host.group.center_id
         user = request.user
 
@@ -2771,6 +2787,11 @@ class VDiskViewSet(CustomGenericViewSet):
         if not vdisk.user_has_perms(user=request.user):
             exc = exceptions.VdiskAccessDenied(msg='没有权限访问此硬盘')
             return self.exception_response(exc)
+
+        # 搁置云主机，不允许
+        status_bool = vm_normal_status(vm=vdisk.vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作'))
 
         if vdisk.is_mounted:
             exc = exceptions.VdiskAlreadyMounted(msg='硬盘已被挂载使用，请先卸载后再删除')
@@ -3437,6 +3458,10 @@ class PCIDeviceViewSet(CustomGenericViewSet):
 
         if not vm:
             return self.exception_response(exceptions.VmNotExistError(msg='云主机不存在'))
+
+        status_bool = vm_normal_status(vm=vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作'))
 
         try:
             queryset = PCIDeviceManager().get_pci_queryset_by_host(host=vm.host)
