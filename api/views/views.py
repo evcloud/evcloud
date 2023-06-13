@@ -634,9 +634,9 @@ class VmsViewSet(CustomGenericViewSet):
                             status=status.HTTP_403_FORBIDDEN)
 
         # 搁置云主机，不允许
-        status_bool = vm_normal_status(vm=vm)
-        if status_bool is False:
-            return self.exception_response(exceptions.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作'))
+        # status_bool = vm_normal_status(vm=vm)
+        # if status_bool is False:
+        #     return self.exception_response(exceptions.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作'))
 
         return Response(data={
             'code': 200,

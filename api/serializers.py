@@ -447,8 +447,12 @@ class VmDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vm
         fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'image_info', 'disk', 'sys_disk_size', 'host', 'mac_ip',
-                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices', 'host_info')
+                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices', 'host_info', 'vm_status')
         # depth = 1
+
+    @staticmethod
+    def get_vm_status(obj):
+        return obj.vm_status
 
     @staticmethod
     def get_user(obj):
@@ -456,15 +460,22 @@ class VmDetailSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_host(obj):
+        if not obj.host:
+            return 'null'
         return obj.host.ipv4
 
     @staticmethod
     def get_mac_ip(obj):
+        if not obj.mac_ip:
+            return 'null'
         return obj.mac_ip.ipv4
 
     @staticmethod
     def get_ip(obj):
-        if obj.mac_ip.vlan:
+
+        if not obj.mac_ip:
+            return {'ipv4': 'null', 'public_ipv4': 'null'}
+        elif obj.mac_ip.vlan:
             public = obj.mac_ip.vlan.tag == obj.mac_ip.vlan.NET_TAG_PUBLIC
         else:
             public = False
