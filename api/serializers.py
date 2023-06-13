@@ -517,16 +517,36 @@ class VmShelveListSerializer(serializers.ModelSerializer):
     虚拟机搁置序列化器
     """
     user = serializers.SerializerMethodField()  # 自定义user字段内容
+    create_time = serializers.DateTimeField()  # format='%Y-%m-%d %H:%M:%S'
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Vm
         fields = (
-            'uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'user',
+            'uuid', 'name', 'vm_status', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'user',
             'create_time')
+
+    @staticmethod
+    def get_vm_status(obj):
+        return obj.vm_status
 
     @staticmethod
     def get_user(obj):
         return {'id': obj.user.id, 'username': obj.user.username}
+
+    @staticmethod
+    def get_image(obj):
+        return obj.image_name
+
+    def to_representation(self, instance):
+        """Convert `GB` to 'MB' depending on the requirement."""
+        ret = super().to_representation(instance)
+        if 'GB' == self.context.get('mem_unit'):
+            ret['mem_unit'] = 'GB'
+        else:
+            ret['mem'] = ret['mem'] * 1024
+            ret['mem_unit'] = 'MB'
+        return ret
 
 
 class VmChangePasswordSerializer(serializers.Serializer):

@@ -352,21 +352,34 @@ class VmShelveView(View):
     NUM_PER_PAGE = 20  # Show num per page
 
     def get(self, request, *args, **kwargs):
-        user = request.user
+        user_id = str_to_int_or_default(request.GET.get('user', 0), 0)
+        search = request.GET.get('search', '')
+
         v_manager = VmManager()
+
+        # 超级用户可以有用户下拉框选项
+        auth = request.user
+        if auth.is_superuser:
+            users = User.objects.all()
+        else:  # 普通用户只能查看自己的虚拟机，无用户下拉框选项
+            users = None
+            user_id = auth.id
+
         try:
-            queryset = v_manager.filter_shelve_vm_queryset(user=user, is_superuser=user.is_superuser)
+            queryset = v_manager.filter_shelve_vm_queryset(user_id=user_id, search=search, all_no_filters=auth.is_superuser)
         except VmError as e:
             error = VmError(msg='查询虚拟机时错误', err=e)
             return error.render(request=request)
 
+        queryset = queryset.prefetch_related('vdisk_set')  # 反向预查询硬盘（避免多次访问数据库）
         # 分页显示
         paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
         page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
         vms_page = paginator.get_page(page_num)
         page_nav = paginator.get_page_nav(vms_page)
 
-        context = {'page_nav': page_nav, 'vms': vms_page, 'count': paginator.count}
+        context = {'page_nav': page_nav, 'vms': vms_page, 'count': paginator.count, 'search': search, 'users': users,
+                   'user_id': user_id}
 
         return render(request, 'vm_shelve_list.html', context=context)
 
@@ -407,7 +420,7 @@ class VmUnshelveNetworkViews(View):
             return error.render(request=request)
 
         if not mac_ip_queryset:
-            raise VmError(msg='无可用资源')
+            raise NotFoundError(msg='无可用资源')
 
         mac_ip_queryset = mac_ip_queryset.order_by('id')  # 分页排序，否则会有 UnorderedObjectListWarning 警告
 
@@ -438,15 +451,15 @@ class VmUnshelveNetworkViews(View):
         """获取可以的IP集合"""
         last_ip = vm.last_ip
         center = vm.center
+        mac_queryset = None
         if last_ip:
             mac_queryset = macip_manager.filter_macip_queryset(vlan=last_ip.vlan, used=False)
-            return mac_queryset
-        elif center:
+
+        if not mac_queryset:
             vlan_queryset = self.get_vlan_by_center(vlan_manager=vlan_manager, center=center)
             try:
-                mac_ip_queryset = self.get_free_mac_ip_by_vlan(macip_manager=macip_manager, vlan_queryset=vlan_queryset)
+                mac_queryset = self.get_free_mac_ip_by_vlan(macip_manager=macip_manager, vlan_queryset=vlan_queryset)
             except NoMacIPError as e:
                 raise e
-            return mac_ip_queryset
-        else:
-            raise NotFoundError(msg=f'信息缺失，无法找到可用资源')
+
+        return mac_queryset

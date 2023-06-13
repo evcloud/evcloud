@@ -1537,6 +1537,29 @@ class VmsViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='搁置虚拟机列表',
         request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='user_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属用户id，当前为超级用户时此参数有效'
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='uuid - 备注 查询'
+            ),
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
         responses={
             200: """"""
         }
@@ -1544,20 +1567,33 @@ class VmsViewSet(CustomGenericViewSet):
     @action(methods=['get'], url_path='shelve', detail=False, url_name='vm-shelve-list')
     def vm_shelve_list(self, request, *args, **kwargs):
         """搁置虚拟机列表"""
+
+        user_id = str_to_int_or_default(request.query_params.get('user_id', '0'), default=0)
+        search = request.query_params.get('search', '')
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
         user = request.user
         manager = VmManager()
 
         try:
-            queryset = manager.filter_shelve_vm_queryset(user=user, is_superuser=user.is_superuser)
+            if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
+                self.queryset = manager.filter_shelve_vm_queryset(search=search, user_id=user_id, all_no_filters=True)
+            else:
+                self.queryset = manager.filter_shelve_vm_queryset(search=search, user_id=user.id)
         except VmError as e:
-            return Response(data=e.data(), status=e.status_code)
+            exc = exceptions.BadRequestError(msg=f'查询虚拟机时错误, {e}')
+            return self.exception_response(exc)
 
+        queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.get_serializer(page, many=True)
+            serializer = self.get_serializer(page, context={'mem_unit': mem_unit}, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset)
+        serializer = self.get_serializer(queryset, context={'mem_unit': mem_unit}, many=True)
         data = {'results': serializer.data}
         return Response(data)
 

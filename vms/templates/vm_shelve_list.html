@@ -3,7 +3,6 @@
 {% load  sizeformat %}
 
 {% block head %}
-{#    <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">#}
 {% endblock %}
 {% block title %}搁置云主机列表{% endblock %}
 
@@ -15,11 +14,30 @@
 
             </div>
             <p></p>
-{#            <div class="card-body">#}
-{#                <form role="form" class="form-horizontal" method="get" action="">#}
-{##}
-{#                </form>#}
-{#            </div>#}
+            <div class="card-body">
+                <form role="form" class="form-horizontal" method="get" action="">
+                    <div class="input-group" style="">
+
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="id-user">创建者</label>
+                        </div>
+                        <select name="user" class="custom-select" id="id-user">
+                            <option value="">--</option>
+                            {% for u in users %}
+                                <option value="{{ u.id }}"
+                                        {% if u.id == user_id %}selected {% endif %}>{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="input-group-prepend">
+                            <label class="input-group-text">关键字</label>
+                        </div>
+                        <input type="text" class="form-control" name="search" value="{{ search }}"
+                               placeholder="搜 UUID、备注"/>
+                        <span class="input-group-text"></span>
+                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                    </div>
+                </form>
+            </div>
             <table class="table table-hover text-center table-vm-list"
                    style="word-wrap:break-word;word-break:break-all;">
                 <thead class="thead-light">
@@ -32,11 +50,6 @@
                     <th>CPU/MEM</th>
                     <th>云硬盘</th>
                     <th width="180px">备注</th>
-                    <th>运行状态
-                        <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i>
-                        </button>
-                    </th>
-                    <th>任务</th>
                     <th>云主机状态</th>
                     <th>操作</th>
                 </tr>
@@ -46,18 +59,18 @@
                     <tr id="tr_{{ vm.hex_uuid }}">
                         <td>{{ forloop.counter }}</td>
                         {% if vm.last_ip %}
-                        <td title="{{ vm.hex_uuid }}"><a
-                                href="#"><b>{{ vm.last_ip.ipv4 }}</b></a>
-                        </td>
+                            <td title="{{ vm.hex_uuid }}"><a
+                                    href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.last_ip.ipv4 }}</b></a>
+                            </td>
                         {% else %}
-                        <td>无</td>
+                            <td>无</td>
                         {% endif %}
                         <td>{{ vm.user }}</td>
                         <td>{{ vm.image_name }}</td>
                         {% if vm.host %}
-                        <td>{{ vm.host_ipv4 }}</td>
+                            <td>{{ vm.host_ipv4 }}</td>
                         {% else %}
-                        <td>无</td>
+                            <td>无</td>
                         {% endif %}
                         <td>
                             {{ vm.vcpu }} / {{ vm.mem|sizeformat:'GB' }}
@@ -74,21 +87,8 @@
                             {% endwith %}
                         </td>
                         <td class="mouse-hover">
-                            <div>
-                                <span>{{ vm.remarks|default_if_none:'' }}</span>
-                                <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.hex_uuid }}" title="修改备注">
-                                    <i class="fa fa-edit"></i>
-                                </span>
-                            </div>
-                            <div id="remarks_edit" style="display:none">
-                                <textarea id="remarks">{{ vm.remarks|default_if_none:'' }}</textarea>
-                                <span class="save_vm_remark" title="保存备注" vm_uuid="{{ vm.hex_uuid }}">
-                                    <i class="fa fa-save"></i>
-                                </span>
-                            </div>
+                            {{ vm.remarks|default_if_none:'' }}
                         </td>
-                        <td><span id="vm_status_{{ vm.hex_uuid }}"></span></td>
-                        <td></td>
                         <td>{{ vm.get_vm_status_display }}</td>
 
                         <td>
@@ -142,8 +142,6 @@
 
 {% block script %}
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
-{#    <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>#}
-{#    <script type="text/javascript" src="{% static 'vms/vms_list.js' %}"></script>#}
     <script type="text/javascript" src="{% static 'vms/vms_shelve_list.js' %}"></script>
 {% endblock %}
 

@@ -32,7 +32,14 @@
             </div>
             <div class="card-body">
                 <div class="text-center h3">
+                    {% if vm.mac_ip %}
                     <strong>{{ vm.ipv4 }}</strong>
+                    {% elif vm.last_ip %}
+                    <strong>{{ vm.last_ip.ipv4 }}</strong>
+                    {% else %}
+                    <strong>无ip</strong>
+                    {% endif %}
+
                     (<span id="id-vm-uuid">{{ vm.hex_uuid }}</span>)
                     {% include 'vm_operations.html' %}
                     <span class="h5" id="vm_task_{{ vm.hex_uuid }}"></span>
@@ -61,7 +68,14 @@
                                     <div class="row">
                                         <div class="col-md-4"><strong>所属数据中心：</strong>{{ vm.host.group.center.name }}</div>
                                         <div class="col-md-4"><strong>所属集群：</strong>{{ vm.host.group.name }}</div>
-                                        <div class="col-md-4"><strong>宿主机IP：</strong>{{ vm.host.ipv4 }}</div>
+
+                                        <div class="col-md-4"><strong>宿主机IP：</strong>
+                                            {% if vm.host %}
+                                            {{ vm.host.ipv4 }}
+                                            {% else%}
+                                            暂无
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -95,10 +109,23 @@
                                 <div class="col-md-2"><strong>网络信息</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
+                                        {% if vm.mac_ip %}
                                         <div class="col-md-4"><strong>IP：</strong>{{vm.ipv4}}</div>
                                         <div class="col-md-4"><strong>MAC：</strong>{{ vm.mac_ip.mac }}</div>
                                         <div class="col-md-4"><strong>子网：</strong>{{ vm.mac_ip.vlan }}</div>
                                         <div class="col-md-4"><strong>网桥br：</strong>{{ vm.mac_ip.vlan.br }}</div>
+                                        {% elif vm.last_ip %}
+                                        <div class="col-md-4"><strong>原IP：</strong>{{vm.last_ip.ipv4}}</div>
+                                        <div class="col-md-4"><strong>原MAC：</strong>{{ vm.last_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>原子网：</strong>{{ vm.last_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>原网桥br：</strong>{{ vm.last_ip.vlan.br }}</div>
+                                        {% else %}
+
+                                        <div class="col-md-4"><strong>IP：</strong>无</div>
+                                        <div class="col-md-4"><strong>MAC：</strong>无</div>
+                                        <div class="col-md-4"><strong>子网：</strong>无</div>
+                                        <div class="col-md-4"><strong>网桥br：</strong>无</div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
