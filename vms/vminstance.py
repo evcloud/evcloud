@@ -1120,6 +1120,9 @@ class VmInstance:
     def unshelve_vm(self, group_id, host_id, mac_ip_id, user):
         """恢复搁置的虚拟机"""
         vm = self.vm
+        if vm.vm_status == vm.VmStatus.NORMAL.value:
+            raise errors.VmAccessDeniedError(msg='云主机拒绝此操作')
+
         return VmBuilder().unshelve_create_vm(vm=vm, group_id=group_id, host_id=host_id,
                                               mac_ip_id=mac_ip_id, user=user)
 
