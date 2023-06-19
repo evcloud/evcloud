@@ -22,7 +22,7 @@ urlpatterns = [
     re_path(r'^disk/expand/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmSysDiskExpandView.as_view()),
             name='vm-sys-disk-expand'),
     path('shelve-list', login_required(views.VmShelveView.as_view()), name='shelve-list'),
-    re_path(r'unshelve/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmUnshelveNetworkViews.as_view()),
+    re_path(r'unshelve/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmUnShelveView.as_view()),
             name='unshelve')
 
 ]

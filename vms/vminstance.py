@@ -1113,8 +1113,7 @@ class VmInstance:
         vm.host = None
         vm.vm_status = vm.VmStatus.SHELVE.value
         vm.last_ip = macip
-        vm.center = macip.vlan.group.center
-        vm.save(update_fields=['mac_ip', 'host', 'vm_status', 'last_ip', 'center'])
+        vm.save(update_fields=['mac_ip', 'host', 'vm_status', 'last_ip'])
         return True
 
     def unshelve_vm(self, group_id, host_id, mac_ip_id, user):

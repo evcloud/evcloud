@@ -56,6 +56,9 @@ class VmsView(View):
         try:
             queryset = v_manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
                                                      search=search, user_id=user_id, all_no_filters=auth.is_superuser)
+
+            queryset_shelve = v_manager.filter_shelve_vm_queryset(user_id=user_id, all_no_filters=auth.is_superuser)
+
         except VmError as e:
             error = VmError(msg='查询虚拟机时错误', err=e)
             return error.render(request=request)
@@ -80,7 +83,8 @@ class VmsView(View):
 
         context = {'center_id': center_id if center_id > 0 else None, 'centers': centers, 'groups': groups,
                    'group_id': group_id if group_id > 0 else None, 'hosts': hosts,
-                   'host_id': host_id if host_id > 0 else None, 'search': search, 'users': users, 'user_id': user_id}
+                   'host_id': host_id if host_id > 0 else None, 'search': search, 'users': users, 'user_id': user_id,
+                   'shelve_count': queryset_shelve.count()}
         context = self.get_vms_list_context(request, queryset, context)
         return render(request, 'vms_list.html', context=context)
 
@@ -367,6 +371,7 @@ class VmShelveView(View):
 
         try:
             queryset = v_manager.filter_shelve_vm_queryset(user_id=user_id, search=search, all_no_filters=auth.is_superuser)
+            queryset_normal = v_manager.filter_vms_queryset(user_id=user_id,  all_no_filters=auth.is_superuser)
         except VmError as e:
             error = VmError(msg='查询虚拟机时错误', err=e)
             return error.render(request=request)
@@ -379,7 +384,7 @@ class VmShelveView(View):
         page_nav = paginator.get_page_nav(vms_page)
 
         context = {'page_nav': page_nav, 'vms': vms_page, 'count': paginator.count, 'search': search, 'users': users,
-                   'user_id': user_id}
+                   'user_id': user_id, 'queryset_normal': queryset_normal.count()}
 
         return render(request, 'vm_shelve_list.html', context=context)
 
@@ -463,3 +468,55 @@ class VmUnshelveNetworkViews(View):
                 raise e
 
         return mac_queryset
+
+
+class VmUnShelveView(View):
+    """恢复虚拟机类视图"""
+
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+        vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=())
+        if not vm:
+            error = VmError(code=400, msg='查询错误，无虚拟机')
+            return error.render(request=request)
+
+        if vm.user.id != request.user.id:
+            error = VmError(code=400, msg='查询错误，无虚拟机')
+            return error.render(request=request)
+
+        center_id = 0
+        groups = None
+        # images = None
+
+        if vm.last_ip:
+            center_id = vm.last_ip.vlan.group.center_id
+
+        elif vm.center:
+            center_id = vm.center_id
+        else:
+            pass
+
+        try:
+            c_manager = CenterManager()
+            centers = c_manager.get_center_queryset()
+            if center_id == 0:
+                if len(centers) > 0:
+                    center_id = centers.first().id
+
+            if center_id > 0:
+                # images = ImageManager().get_image_queryset_by_center(center_id).filter(tag=Image.TAG_BASE, enable=True)
+                groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
+        except (ComputeError, ImageError) as e:
+            error = ComputeError(msg='查询分中心列表时错误', err=e)
+            return error.render(request=request)
+
+        context = {
+            'center_id': center_id if center_id > 0 else None,
+            'centers': centers,
+            'groups': groups,
+            'vm_uuid': vm_uuid,
+            # 'image_tags': Image.CHOICES_TAG,
+            # 'images': images,
+            # 'flavors': FlavorManager().get_user_flaver_queryset(user=request.user)
+        }
+        return render(request, 'vm_unshelve.html', context=context)

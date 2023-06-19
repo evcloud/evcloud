@@ -12,6 +12,7 @@ from .models import Vm
 from utils import errors
 from .scheduler import HostMacIPScheduler
 from .manager import VmManager
+from .xml import XMLEditor
 from .xml_builder import VmXMLBuilder
 
 
@@ -589,6 +590,49 @@ class VmBuilder:
                     pass
             raise errors.VmError(msg=str(e))
 
+    def get_mac_by_vm_last_ip_or_xml(self, vm):
+        """
+            根据vm 记录的last_ip 或 记录的当前xml找到 mac_ip 或 vlan资源
+
+            return macip, vlan group
+        """
+        mac_ip_obj = vm.last_ip
+
+        if mac_ip_obj and mac_ip_obj.can_used(): # mac 未被使用
+            macip = self._macip_manager.apply_for_free_ip(ipv4=mac_ip_obj.ipv4)
+            if not macip:
+                raise errors.VmError.from_error(errors.MacIpApplyFailed(msg='原先的IP地址不可用，不存在或已被占用'))
+            group_id = macip.vlan.group.id
+            return macip, group_id
+
+        br = None  # 网桥
+        xml = XMLEditor()
+        if not vm.xml or not xml.set_xml(vm.xml):
+            raise errors.VmError(msg='您必须指定host_id、group_ip、mac_ip_id中一个或多个参数')
+        root = xml.get_root()
+        networks = root.getElementsByTagName('interface')
+
+        for network in networks:
+            for tag in network.childNodes:
+                if tag.nodeName == 'source':
+                    try:
+                        br = tag.attributes.get('bridge').nodeValue
+                        break
+                    except Exception as e:
+                        pass
+            if br:
+                break
+
+        if not br:
+            raise errors.VmError(msg='您必须指定host_id、group_ip、mac_ip_id中一个或多个参数')
+
+        try:
+            vlan_obj = VlanManager.get_vlan_queryset().filter(br=br).first()
+        except Exception as e:
+            raise errors.VmError(msg='您必须指定host_id、group_ip、mac_ip_id中一个或多个参数')
+        group_id = vlan_obj.group.id
+        return None, group_id
+
     def get_group_host_macip(self, vm, group_id, host_id, mac_ip_id, user):
         """
         获取 宿主机组 宿主机 ip
@@ -604,16 +648,17 @@ class VmBuilder:
         macip = None
         groups = None
         host_or_none = None
-        cneter_id = None
+        cneter_id = 0
         vlan = None
 
         if mac_ip_id:
             # 指定 ip
             macip = self.available_macip(ipv4=None, user=user, mac_ip_id=mac_ip_id)
             vlan = macip.vlan
-            cneter_id = macip.vlan.group.center_id
-            groups, host_or_none = self.get_groups_host_check_perms(center_id=cneter_id, group_id=group_id,
-                                                                    host_id=host_id, user=user, vlan=vlan)
+            if host_id or group_id:
+                groups, host_or_none = self.get_groups_host_check_perms(center_id=cneter_id, group_id=group_id,
+                                                                        host_id=host_id, user=user, vlan=vlan)
+
             macip = self._macip_manager.apply_for_free_ip(ipv4=macip.ipv4)
             if not macip:
                 raise errors.VmError.from_error(errors.MacIpApplyFailed(msg='指定的IP地址不可用，不存在或已被占用'))
@@ -622,13 +667,7 @@ class VmBuilder:
             groups, host_or_none = self.get_groups_host_check_perms(center_id=cneter_id, group_id=group_id,
                                                                     host_id=host_id, user=user, vlan=vlan)
         else:
-            mac_ip_obj = vm.last_ip
-            cneter_id = vm.center.id
-            if mac_ip_obj and mac_ip_obj.can_used():
-                macip = self._macip_manager.apply_for_free_ip(ipv4=mac_ip_obj.ipv4)
-                if not macip:
-                    raise errors.VmError.from_error(errors.MacIpApplyFailed(msg='原先的IP地址不可用，不存在或已被占用'))
-                vlan = macip.vlan
+            macip, group_id = self.get_mac_by_vm_last_ip_or_xml(vm=vm)
 
             groups, host_or_none = self.get_groups_host_check_perms(center_id=cneter_id, group_id=group_id,
                                                                     host_id=host_id, user=user, vlan=vlan)
