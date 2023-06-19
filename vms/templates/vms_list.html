@@ -11,7 +11,8 @@
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>云主机列表 ({{ count }})</strong></span>
+                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:vms-list' %}">在线云主机 ({{ count }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:shelve-list' %}">已搁置 ({{ shelve_count }})</a></strong></span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vm-create' %}">
                     创建云主机
                 </a></span>

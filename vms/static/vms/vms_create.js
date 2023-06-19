@@ -136,7 +136,7 @@
     let render_ipv4_select_items = template.compile(`
         <option value="">自动选择</option>
         {{ each results }}
-            <option value="{{ $value.ipv4 }}">
+            <option value="{{ $value.ipv4 }}" title="{{ $value.id}}">
                 {{ $value.ipv4 }}
             </option>
         {{/each}}

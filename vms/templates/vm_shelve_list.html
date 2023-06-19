@@ -10,8 +10,8 @@
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>搁置云主机列表 ({{ count }})</strong></span>
-
+                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:vms-list' %}">在线云主机 ({{ queryset_normal }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:shelve-list' %}">已搁置 ({{ count }})</a></strong></span>
             </div>
             <p></p>
             <div class="card-body">
@@ -43,7 +43,7 @@
                 <thead class="thead-light">
                 <tr>
                     <th>编号</th>
-                    <th>源IP地址</th>
+                    <th>原IP地址</th>
                     <th>创建者</th>
                     <th>镜像</th>
                     <th>宿主机</th>
