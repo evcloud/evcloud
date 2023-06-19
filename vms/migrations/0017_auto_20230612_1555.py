@@ -15,11 +15,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='vm',
-            name='center',
-            field=models.ForeignKey(blank=True, db_constraint=False, db_index=False, default=None, null=True, on_delete=django.db.models.deletion.SET_NULL, to='compute.center', verbose_name='数据中心'),
-        ),
-        migrations.AddField(
-            model_name='vm',
             name='last_ip',
             field=models.ForeignKey(blank=True, db_constraint=False, db_index=False, default=None, help_text='该字段在使用搁置服务时使用', null=True, on_delete=django.db.models.deletion.SET_NULL, to='network.macip', verbose_name='虚拟机最后使用ip'),
         ),
