@@ -315,7 +315,7 @@ class Host(models.Model):
         if not self.id:
             return err_ret
         try:
-            a = Vm.objects.filter(host=self.id).aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('pk'))
+            a = Vm.objects.filter(host=self.id, vm_status='normal').aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('pk'))
         except Exception:
             return err_ret
 
