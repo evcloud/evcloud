@@ -3028,6 +3028,13 @@ class QuotaViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=False,
                 description='筛选条件，所属宿主机组id'
+            ),
+            openapi.Parameter(
+                name='enable',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description='True 列出可用的存储池'
             )
         ],
     )
@@ -3064,6 +3071,7 @@ class QuotaViewSet(CustomGenericViewSet):
             }
         """
         group_id = int(request.query_params.get('group_id', 0))
+        enable_bool = request.query_params.get('enable', 'false')  # str
         manager = VdiskManager()
 
         if group_id > 0:
@@ -3071,6 +3079,10 @@ class QuotaViewSet(CustomGenericViewSet):
         else:
             queryset = manager.get_quota_queryset()
             queryset = queryset.select_related('cephpool', 'cephpool__ceph', 'group').all()
+
+        if enable_bool == 'true':
+            queryset = queryset.filter(enable=True).all()
+
         try:
             page = self.paginate_queryset(queryset)
         except Exception as e:
