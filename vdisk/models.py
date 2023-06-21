@@ -29,6 +29,8 @@ class Quota(models.Model):
     total = models.IntegerField(verbose_name='可用总容量(GB)', default=0, help_text='单位GB')
     size_used = models.IntegerField(verbose_name='已使用容量(GB)', default=0, help_text='单位GB')
     max_vdisk = models.IntegerField(verbose_name='云硬盘最大容量(GB)', default=200, help_text='单位GB')
+    enable = models.BooleanField(verbose_name='存储池是否可用', default=True, help_text='开启和暂停使用2中状态, '
+                                                                                 '未开启使用不允许创建云硬盘时')
 
     class Meta:
         verbose_name = '云硬盘CEPH存储池'
@@ -92,6 +94,9 @@ class Quota(models.Model):
             True    # success
             False   # failed
         """
+        if self.enable is False:  # 存储池未开启则不能申请资源
+            return False
+
         if size <= 0:
             return True
 

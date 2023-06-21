@@ -257,7 +257,7 @@ class QuotaSimpleSerializer(serializers.Serializer):
         if not pool:
             return {}
 
-        return {'id': pool.id, 'name': pool.pool_name}
+        return {'id': pool.id, 'name': pool.pool_name, 'enable': obj.enable}
 
     @staticmethod
     def get_ceph(obj):
@@ -335,7 +335,7 @@ class VdiskDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vdisk
-        fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks')
+        fields = ('uuid', 'size', 'vm', 'dev', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks')
         depth = 1
 
     @staticmethod
@@ -346,6 +346,10 @@ class VdiskDetailSerializer(serializers.ModelSerializer):
                 return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
             return {'uuid': vm.hex_uuid, 'ipv4': ''}  # 搁置的云主机没有ip
         return vm
+
+    @staticmethod
+    def get_dev(obj):
+        return {'dev': obj.dev}
 
 
 class VdiskCreateSerializer(serializers.Serializer):

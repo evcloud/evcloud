@@ -2766,6 +2766,7 @@ class VDiskViewSet(CustomGenericViewSet):
                 "uuid": "296beb3413724456911077321a4247f9",
                 "size": 1,
                 "vm": null,
+                "dev": vdb
                 "user": {
                   "id": 1,
                   "username": "shun"
