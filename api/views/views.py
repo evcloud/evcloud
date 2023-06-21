@@ -1597,6 +1597,23 @@ class VmsViewSet(CustomGenericViewSet):
         data = {'results': serializer.data}
         return Response(data)
 
+    @swagger_auto_schema(
+        operation_summary='删除搁置虚拟机',
+        responses={
+            204: 'SUCCESS NO CONTENT'
+        }
+    )
+    @action(methods=['delete'], url_path='delshelve', detail=True, url_name='vm-unshelve-delete')
+    def vm_shelve_destroy(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        api = VmAPI()
+        try:
+            api.vm_delshelve(vm_uuid=vm_uuid, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+        return Response(data={'code': 204, 'code_text': '虚拟机已删除'}, status=status.HTTP_204_NO_CONTENT)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.

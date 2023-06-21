@@ -204,6 +204,52 @@ class VmArchiveManager:
             raise VmError(msg=str(e))
         return va
 
+
+    @staticmethod
+    def add_vm_delshelve_archive(vm: Vm):
+        """
+        添加一个搁置虚拟机的归档记录
+
+        :param vm: 虚拟机元数据对象
+        :return:
+            VmArchive() # success
+
+        :raises:  VmError
+        """
+        ceph_pool = vm.ceph_pool
+        image_id = vm.image_id or 0
+
+        if not vm.last_ip:
+
+            try:
+                va = VmArchive(uuid=vm.get_uuid(), name=vm.name, vcpu=vm.vcpu, mem=vm.mem, disk=vm.disk, xml=vm.xml,
+                               mac='', ipv4='', vlan_id=0, br='',
+                               image_id=image_id, image_parent=vm.image_parent, ceph_id=ceph_pool.ceph.id,
+                               ceph_pool=ceph_pool.pool_name, center_id=0, center_name='',
+                               group_id=0, group_name='', host_id=0, host_ipv4='',
+                               user=vm.user, create_time=vm.create_time, remarks=vm.remarks, disk_type=vm.disk_type,
+                               sys_disk_size=vm.sys_disk_size)
+                va.save()
+            except Exception as e:
+                raise VmError(msg=str(e))
+
+        try:
+            mac_ip = vm.last_ip
+            vlan = mac_ip.vlan
+            group = vlan.group
+            center = group.center
+            va = VmArchive(uuid=vm.get_uuid(), name=vm.name, vcpu=vm.vcpu, mem=vm.mem, disk=vm.disk, xml=vm.xml,
+                           mac=mac_ip.mac, ipv4=mac_ip.ipv4, vlan_id=vlan.id, br=vlan.br,
+                           image_id=image_id, image_parent=vm.image_parent, ceph_id=ceph_pool.ceph.id,
+                           ceph_pool=ceph_pool.pool_name, center_id=center.id, center_name=center.name,
+                           group_id=group.id, group_name=group.name, host_id=0, host_ipv4='',
+                           user=vm.user, create_time=vm.create_time, remarks=vm.remarks, disk_type=vm.disk_type,
+                           sys_disk_size=vm.sys_disk_size)
+            va.save()
+        except Exception as e:
+            raise VmError(msg=str(e))
+        return va
+
     @staticmethod
     def get_vm_archive(vm: Vm):
         return VmArchive.objects.filter(uuid=vm.get_uuid()).first()

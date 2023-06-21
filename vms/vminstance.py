@@ -1093,13 +1093,12 @@ class VmInstance:
             msg = f'释放mac ip资源失败, 虚拟机uuid={vm_uuid};\n mac_ip信息：{macip.get_detail_str()};\n ' \
                   f'如果已删除虚拟机请手动释放此mac_ip资源'
             log_manager.add_log(title='释放mac ip资源失败', about=log_manager.about.ABOUT_MAC_IP, text=msg)
-            raise errors.VmError(msg=msg)
 
         # 释放宿主机资源
         if not vm.host.free(vcpu=vm.vcpu, mem=vm.mem):
             msg = f'释放宿主机资源失败, 虚拟机uuid={vm_uuid};\n 宿主机信息：id={vm.host.id}; ipv4={vm.host.ipv4};\n' \
                   f'未释放资源：mem={vm.mem}MB;vcpu={vm.vcpu}'
-            raise errors.VmError(msg=msg)
+            log_manager.add_log(title='释放宿主机men, cpu资源失败', about=log_manager.about.ABOUT_MEM_CPU, text=msg)
 
         # 宿主机已创建虚拟机数量-1
         if not vm.host.vm_created_num_sub_1():
@@ -1107,7 +1106,6 @@ class VmInstance:
                   f'已创建虚拟机数量-1失败, 请手动-1。'
             log_manager.add_log(title='镜像宿主机已创建虚拟机数量-1失败',
                                 about=log_manager.about.ABOUT_HOST_VM_CREATED, text=msg)
-            raise errors.VmError(msg=msg)
 
         vm.mac_ip = None
         vm.host = None
@@ -1124,4 +1122,53 @@ class VmInstance:
 
         return VmBuilder().unshelve_create_vm(vm=vm, group_id=group_id, host_id=host_id,
                                               mac_ip_id=mac_ip_id, user=user)
+
+    def delshelve_vm(self):
+        """
+        删除搁置虚拟机 （虚拟机cpu、内存已被释放，宿主机数量 -1， ip释放）
+        1. 删除系统快照
+        2. 删除元数据信息
+        3. 删除挂载的硬盘信息
+        """
+        vm = self.vm
+        if vm.vm_status != vm.VmStatus.SHELVE.value:
+            raise errors.VmError(msg=f'无法操作虚拟机')
+
+        # 删除系统盘快照
+        try:
+            snaps = vm.sys_disk_snaps.all()
+            for snap in snaps:
+                snap.delete()
+        except Exception as e:
+            raise errors.VmError(msg=f'删除虚拟机系统盘快照失败,{str(e)}')
+
+        log_manager = VmLogManager()
+
+        # 归档虚拟机
+        try:
+            vm_ahv = VmArchiveManager().add_vm_delshelve_archive(vm)
+        except errors.VmError as e:
+            vm_ahv = VmArchiveManager().get_vm_archive(vm)
+            if not vm_ahv:
+                raise errors.VmError(msg=f'归档虚拟机失败，{str(e)}')
+
+        vm_uuid = vm.get_uuid()     # 提前暂存uuid, vm元数据删除后主键uuid会被设为None
+        try:
+            vm.delete()
+        except Exception as e:
+            msg = f'虚拟机（uuid={vm_uuid}）归档，但是虚拟机元数据删除失败;请手动删除虚拟机元数据。'
+            log_manager.add_log(title='删除虚拟机元数据失败', about=log_manager.about.ABOUT_VM_METADATA, text=msg)
+            raise errors.VmError(msg='删除虚拟机元数据失败')
+
+        # 卸载所有挂载的虚拟硬盘
+        try:
+            self._vdisk_manager.umount_all_from_vm(vm_uuid=vm_uuid)
+        except errors.VdiskError as e:
+            msg = f'删除虚拟机时，卸载所有虚拟硬盘失败, 虚拟机uuid={vm_uuid};\n' \
+                  f'请查看核对虚拟机是否已删除归档，请手动解除所有虚拟硬盘与虚拟机挂载关系'
+            log_manager.add_log(title='删除虚拟机时，卸载所有虚拟硬盘失败', about=log_manager.about.ABOUT_VM_DISK, text=msg)
+
+        # vm系统盘RBD镜像修改了已删除归档的名称
+        vm_ahv.rename_sys_disk_archive()
+        return True
 

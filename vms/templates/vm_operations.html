@@ -33,6 +33,7 @@
     {% else %}
 {#        <button class="dropdown-item bg-warning btn-vm-unshelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">恢复</button>#}
         <a class="dropdown-item bg-warning" href="{% url 'vms:unshelve' vm_uuid=vm.hex_uuid %}">恢复</a>
+        <button class="dropdown-item bg-danger btn-vm-delshelve" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
     {% endif %}
     </div>
 </div>

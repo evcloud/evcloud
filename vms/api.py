@@ -573,3 +573,11 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'host__group', 'user'))
         return VmInstance(vm).shelve_vm()
 
+    def vm_delshelve(self, vm_uuid: str, user):
+        """搁置虚拟机删除"""
+
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'last_ip', 'last_ip__vlan',
+                                                                                 'last_ip__vlan__group',
+                                                                                 'last_ip__vlan__group__center'), flag=True)
+        return VmInstance(vm).delshelve_vm()
+

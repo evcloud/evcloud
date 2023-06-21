@@ -389,87 +389,6 @@ class VmShelveView(View):
         return render(request, 'vm_shelve_list.html', context=context)
 
 
-class VmUnshelveNetworkViews(View):
-    """恢复 搁置虚拟机 空闲ip"""
-    NUM_PER_PAGE = 20  # Show num per page
-
-    def get(self, request, *args, **kwargs):
-        # user = request.user
-        vm_uuid = kwargs.get('vm_uuid', '')
-        vm_manager = VmManager()
-        vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid)
-        if not vm:
-            try:
-                raise VmNotExistError(msg='云主机不存在')
-            except VmNotExistError as error:
-                return error.render(request=request)
-
-        if not vm.user_has_perms(request.user):
-            try:
-                raise VmAccessDeniedError(msg='没有此云主机的访问权限')
-            except VmAccessDeniedError as error:
-                return error.render(request=request)
-
-        if vm.vm_status != vm.VmStatus.SHELVE.value:
-            try:
-                raise Unsupported(msg='此云主机不支持此操作')
-            except Unsupported as error:
-                return error.render(request=request)
-
-        macip_manager = MacIPManager()
-        vlan_manager = VlanManager()
-        try:
-            mac_ip_queryset = self.get_free_mac_ip(vm=vm, vlan_manager=vlan_manager, macip_manager=macip_manager)
-        except VmError as e:
-            error = VmError(msg='查询可用ip资源时错误', err=e)
-            return error.render(request=request)
-
-        if not mac_ip_queryset:
-            raise NotFoundError(msg='无可用资源')
-
-        mac_ip_queryset = mac_ip_queryset.order_by('id')  # 分页排序，否则会有 UnorderedObjectListWarning 警告
-
-        # 分页显示
-        paginator = NumsPaginator(request, mac_ip_queryset, self.NUM_PER_PAGE)
-        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
-        mac_page = paginator.get_page(page_num)
-        page_nav = paginator.get_page_nav(mac_page)
-        context = {'page_nav': page_nav, 'mac_ip': mac_page, 'count': paginator.count, 'vm_uuid': vm_uuid}
-        return render(request, 'vm_unshelve.html', context=context)
-
-    def get_free_mac_ip_by_vlan(self, macip_manager, vlan_queryset):
-        """通过vlan 获取 可用的ip"""
-
-        for vlan in vlan_queryset:
-            mac_ip_queryset = macip_manager.get_free_ip_in_vlan(vlan_id=vlan.id)
-            if mac_ip_queryset:
-                return mac_ip_queryset
-        raise NoMacIPError  # 没有mac ip 资源可用
-
-    def get_vlan_by_center(self, vlan_manager, center):
-        """通过 center 获取 vlan"""
-        vlan_queryset = vlan_manager.get_center_vlan_queryset(center=center)
-
-        return vlan_queryset
-
-    def get_free_mac_ip(self, vm, vlan_manager, macip_manager):
-        """获取可以的IP集合"""
-        last_ip = vm.last_ip
-        center = vm.center
-        mac_queryset = None
-        if last_ip:
-            mac_queryset = macip_manager.filter_macip_queryset(vlan=last_ip.vlan, used=False)
-
-        if not mac_queryset:
-            vlan_queryset = self.get_vlan_by_center(vlan_manager=vlan_manager, center=center)
-            try:
-                mac_queryset = self.get_free_mac_ip_by_vlan(macip_manager=macip_manager, vlan_queryset=vlan_queryset)
-            except NoMacIPError as e:
-                raise e
-
-        return mac_queryset
-
-
 class VmUnShelveView(View):
     """恢复虚拟机类视图"""
 
@@ -515,8 +434,5 @@ class VmUnShelveView(View):
             'centers': centers,
             'groups': groups,
             'vm_uuid': vm_uuid,
-            # 'image_tags': Image.CHOICES_TAG,
-            # 'images': images,
-            # 'flavors': FlavorManager().get_user_flaver_queryset(user=request.user)
         }
         return render(request, 'vm_unshelve.html', context=context)
