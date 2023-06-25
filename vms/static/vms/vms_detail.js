@@ -58,6 +58,11 @@
         return $("#id-vm-uuid").text();
     }
 
+    // 获取虚拟机搁置状态
+    function get_vm_shelve_status() {
+        return $("#vm_status_shelve").attr('title');
+    }
+
     // 获取并设置虚拟机的运行状态
     function get_vm_status() {
         let vmid = get_vm_uuid();
@@ -575,6 +580,11 @@
     function get_vm_stats(callback){
         let vm_uuid = get_vm_uuid();
         let api = build_vm_stats_api(vm_uuid);
+        let vm_status = get_vm_shelve_status()
+        if (vm_status === 'shelve'){
+            // 搁置状态
+            return
+        }
         $.ajax({
 			url: api,
 			type: 'get',

@@ -61,7 +61,11 @@
                         <label for="id-ipv4" class="offset-sm-1 col-sm-2 text-right col-form-label">IP</label>
                         <div class="col-sm-7">
                             <select name="ipv4" class="form-control" id="id-ipv4">
+                                {% if last_ip %}
+                                <option value="{{ last_ip.id }}">{{ last_ip.ipv4 }}</option>
+                                {% else %}
                                 <option value="">自动选择</option>
+                                {% endif %}
                             </select>
                         </div>
                     </div>

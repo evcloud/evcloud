@@ -103,8 +103,8 @@
         {% block boby %}{% endblock %}
     </div>
     <footer class="page-footer text-center bg-light p-2">
-        <p><a href="{% if global_config %}{{ global_config.poweredby }}
-            {% else %} https://gitee.com/cstcloud-cnic/evcloud {% endif %}">Powered by Evcloud </a> </p>
+        <p>Powered by <a href="{% if global_config %}{{ global_config.poweredby }}
+            {% else %} https://gitee.com/cstcloud-cnic/evcloud {% endif %}"> Evcloud </a> </p>
     </footer>
     <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'bootstrap-4.4.1/js/bootstrap.bundle.min.js' %}"></script>

@@ -120,7 +120,7 @@ class VmCreateView(View):
                 images = ImageManager().get_image_queryset_by_center(center_id).filter(tag=Image.TAG_BASE, enable=True)
                 groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
         except (ComputeError, ImageError) as e:
-            error = ComputeError(msg='查询分中心列表时错误', err=e)
+            error = ComputeError(msg='查询数据中心列表时错误', err=e)
             return error.render(request=request)
 
         context = {
@@ -370,8 +370,9 @@ class VmShelveView(View):
             user_id = auth.id
 
         try:
-            queryset = v_manager.filter_shelve_vm_queryset(user_id=user_id, search=search, all_no_filters=auth.is_superuser)
-            queryset_normal = v_manager.filter_vms_queryset(user_id=user_id,  all_no_filters=auth.is_superuser)
+            queryset = v_manager.filter_shelve_vm_queryset(user_id=user_id, search=search,
+                                                           all_no_filters=auth.is_superuser)
+            queryset_normal = v_manager.filter_vms_queryset(user_id=user_id, all_no_filters=auth.is_superuser)
         except VmError as e:
             error = VmError(msg='查询虚拟机时错误', err=e)
             return error.render(request=request)
@@ -404,29 +405,17 @@ class VmUnShelveView(View):
             return error.render(request=request)
 
         center_id = 0
-        groups = None
-        # images = None
-
         if vm.last_ip:
             center_id = vm.last_ip.vlan.group.center_id
-
-        elif vm.center:
-            center_id = vm.center_id
-        else:
-            pass
 
         try:
             c_manager = CenterManager()
             centers = c_manager.get_center_queryset()
-            if center_id == 0:
-                if len(centers) > 0:
-                    center_id = centers.first().id
-
-            if center_id > 0:
-                # images = ImageManager().get_image_queryset_by_center(center_id).filter(tag=Image.TAG_BASE, enable=True)
-                groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
-        except (ComputeError, ImageError) as e:
-            error = ComputeError(msg='查询分中心列表时错误', err=e)
+            if len(centers) > 0:
+                center_id = centers.first().id
+            groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
+        except ComputeError as e:
+            error = ComputeError(msg='查询数据中心列表时错误', err=e)
             return error.render(request=request)
 
         context = {
@@ -434,5 +423,6 @@ class VmUnShelveView(View):
             'centers': centers,
             'groups': groups,
             'vm_uuid': vm_uuid,
+            'last_ip': vm.last_ip,
         }
         return render(request, 'vm_unshelve.html', context=context)

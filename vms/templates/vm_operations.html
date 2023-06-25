@@ -1,6 +1,8 @@
 <div class="btn-group">
-    <button type="button" class="btn btn-sm btn-info btn-vnc-open" data-vm-uuid="{{ vm.hex_uuid }}">
+    {% if vm.vm_status == vm.VmStatus.NORMAL.value %}
+        <button type="button" class="btn btn-sm btn-info btn-vnc-open" data-vm-uuid="{{ vm.hex_uuid }}">
         <i class="fa fa-desktop"></i></button>
+    {% endif %}
     <button type="button" class="btn btn-sm btn-success dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
         aria-expanded="false">操作
     </button>
