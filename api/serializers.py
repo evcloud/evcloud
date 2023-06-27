@@ -250,6 +250,8 @@ class QuotaSimpleSerializer(serializers.Serializer):
     pool = serializers.SerializerMethodField(method_name='get_pool')
     ceph = serializers.SerializerMethodField(method_name='get_ceph')
     group = serializers.SerializerMethodField(method_name='get_group')
+    enable = serializers.SerializerMethodField(method_name='get_enable')
+
 
     @staticmethod
     def get_pool(obj):
@@ -276,6 +278,10 @@ class QuotaSimpleSerializer(serializers.Serializer):
         if not group:
             return {}
         return {'id': group.id, 'name': group.name}
+
+    @staticmethod
+    def get_enable(obj):
+        return obj.enable
 
 
 class QuotaListSerializer(QuotaSimpleSerializer):

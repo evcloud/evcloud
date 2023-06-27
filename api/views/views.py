@@ -2766,7 +2766,7 @@ class VDiskViewSet(CustomGenericViewSet):
                 "uuid": "296beb3413724456911077321a4247f9",
                 "size": 1,
                 "vm": null,
-                "dev": vdb
+                "dev": vdb,
                 "user": {
                   "id": 1,
                   "username": "shun"
@@ -3053,7 +3053,8 @@ class QuotaViewSet(CustomGenericViewSet):
                   "name": "group1云硬盘存储池",
                   "pool": {
                     "id": 1,
-                    "name": "vm1"
+                    "name": "vm1",
+                    "enable": true
                   },
                   "ceph": {
                     "id": 1,
@@ -3063,7 +3064,7 @@ class QuotaViewSet(CustomGenericViewSet):
                     "id": 1,
                     "name": "宿主机组1"
                   }
-                },
+                "enable": true,
                 "total": 100000,    # 总容量
                 "size_used": 30,    # 已用容量
                 "max_vdisk": 200    # 硬盘最大容量上限
