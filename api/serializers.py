@@ -250,7 +250,6 @@ class QuotaSimpleSerializer(serializers.Serializer):
     pool = serializers.SerializerMethodField(method_name='get_pool')
     ceph = serializers.SerializerMethodField(method_name='get_ceph')
     group = serializers.SerializerMethodField(method_name='get_group')
-    enable = serializers.SerializerMethodField(method_name='get_enable')
 
 
     @staticmethod
@@ -279,9 +278,6 @@ class QuotaSimpleSerializer(serializers.Serializer):
             return {}
         return {'id': group.id, 'name': group.name}
 
-    @staticmethod
-    def get_enable(obj):
-        return obj.enable
 
 
 class QuotaListSerializer(QuotaSimpleSerializer):
@@ -289,6 +285,7 @@ class QuotaListSerializer(QuotaSimpleSerializer):
     total = serializers.IntegerField()
     size_used = serializers.IntegerField()
     max_vdisk = serializers.IntegerField()
+    enable = serializers.BooleanField()
 
 
 class VdiskSerializer(serializers.ModelSerializer):
