@@ -51,7 +51,7 @@ class Quota(models.Model):
         if not self.id:
             return -1
         try:
-            a = Vdisk.objects.filter(quota=self.id).aggregate(total=Sum('size'))
+            a = Vdisk.objects.filter(quota=self.id, deleted=False).aggregate(total=Sum('size'))
         except Exception as e:
             return -1
         size = a.get('total', -1)
