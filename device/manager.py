@@ -4,7 +4,7 @@ from django.db.models import Q
 from utils.ev_libvirt.virt import VirtError, VmDomain
 from compute.managers import GroupManager, ComputeError, CenterManager, HostManager
 from .models import PCIDevice
-from .device import GPUDevice
+from .device import GPUDevice, HardDiskDevice
 from utils.errors import DeviceError, AcrossGroupConflictError
 
 
@@ -188,6 +188,9 @@ class PCIDeviceManager:
         if device.type == device.TYPE_GPU:
             return GPUDevice(db=device)
 
+        if device.type == device.TYPE_HD:
+            return HardDiskDevice(db=device)
+
         raise DeviceError(msg='未知设备')
 
     def mount_to_vm(self, device: PCIDevice, vm):
@@ -212,12 +215,12 @@ class PCIDeviceManager:
         except DeviceError as e:
             raise DeviceError(msg=f'与虚拟机建立挂载关系失败, {str(e)}')
 
-        xml_desc = dev.xml_desc
         try:
+            xml_desc = dev.xml_desc()
             if VmDomain(host_ip=host.ipv4, vm_uuid=vm.hex_uuid).attach_device(xml=xml_desc):
                 return True
             raise VirtError(msg='挂载到虚拟机失败')
-        except VirtError as e:
+        except (VirtError, Exception) as e:
             try:
                 dev.umount()
             except Exception:

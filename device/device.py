@@ -1,8 +1,11 @@
 from django.db import transaction
 from django.utils import timezone
-
+from utils import errors
+from vms.xml import XMLEditor
+from vms.xml_builder import VmXMLBuilder
 from .models import PCIDevice
 from utils.errors import DeviceError
+from vms.vm_builder import get_vm_domain
 
 
 class BaseDevice:
@@ -78,14 +81,15 @@ class BaseDevice:
 
 class BasePCIDevice(BaseDevice):
     def __init__(self, db):
-        address = db.address.split(':')
-        if len(address) != 4:
-            raise DeviceError(msg='DEVICE BDF设备号有误')
-        self._domain = address[0]
-        self._bus = address[1]
-        self._slot = address[2]
-        self._function = address[3]
-        super().__init__(db)
+        if db.type in [1, 2, 3]:  # PCIe网卡/PCIe硬盘/PCIeGPU
+            address = db.address.split(':')
+            if len(address) != 4:
+                raise DeviceError(msg='DEVICE BDF设备号有误')
+            self._domain = address[0]
+            self._bus = address[1]
+            self._slot = address[2]
+            self._function = address[3]
+        super().__init__(db)  # 本地硬盘
 
     @property
     def domain(self):
@@ -215,3 +219,78 @@ class GPUDevice(BasePCIDevice):
     GPU设备
     """
     pass
+
+
+class HardDiskDevice(BasePCIDevice):
+    """
+    本地硬盘设备
+    """
+
+    def __init__(self, db):
+        self.dev_drive = db.address
+        super().__init__(db)
+
+    def _vm_domain(self, vm):
+        self._vm_domain = get_vm_domain(vm=vm)
+        return self._vm_domain
+
+    def xml_tpl(self):
+        """本地硬盘xml模板"""
+        return """
+                <disk type='block' device='disk'>
+                  <driver name='qemu' type='raw' cache='none' io='native' discard='unmap'/>
+                  <source dev='{dev_drive}'/>
+                  <target dev='{dev}' bus='{bus}'/>
+                </disk>
+            """
+
+    def xml_desc(self, bus='virtio'):
+        if self.vm is None:
+            raise DeviceError(msg='vm 不能为None')
+
+        dev = self.get_dev_drive()
+        return self.xml_tpl().format(dev=dev, bus=bus, dev_drive=self.dev_drive)
+
+    def get_dev_drive(self):
+        """获取盘符"""
+        if self.vm is None:
+            raise errors.VmNotExistError(msg='无效的虚拟机')
+
+        xml_desc = self._vm_domain(vm=self.vm).xml_desc()
+        source_list, dev_list = self.get_vm_vdisk_dev_list(xml_desc=xml_desc)
+        if self.dev_drive in source_list:
+            raise errors.DeviceError(msg='不可以重复挂载同一块硬盘')
+        dev = VmXMLBuilder().new_vdisk_dev(dev_list)
+        if not dev:
+            raise errors.VmTooManyVdiskMounted()
+
+        return dev
+
+    def get_vm_vdisk_dev_list(self, xml_desc: str):
+        """
+        获取虚拟机所有硬盘的dev
+
+        :param xml_desc: 虚拟机xml
+        :return:
+            (disk:list, dev:list)    # disk = [disk_uuid, disk_uuid, ]; dev = ['vda', 'vdb', ]
+
+        :raises: VmError
+        """
+        dev_list = []
+        source_list = []
+        xml = XMLEditor()
+        if not xml.set_xml(xml_desc):
+            raise errors.VmError(msg='虚拟机xml文本无效')
+
+        root = xml.get_root()
+        devices = root.getElementsByTagName('devices')[0].childNodes
+        for d in devices:
+            if d.nodeName == 'disk':
+                for disk_child in d.childNodes:
+                    if disk_child.nodeName == 'source':
+                        source_disk = disk_child.getAttribute('dev')
+                        source_list.append(source_disk)
+                    if disk_child.nodeName == 'target':
+                        dev_list.append(disk_child.getAttribute('dev'))
+
+        return source_list, dev_list
