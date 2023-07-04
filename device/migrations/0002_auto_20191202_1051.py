@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('attach_time', models.DateTimeField(blank=True, null=True, verbose_name='挂载时间')),
                 ('enable', models.BooleanField(default=True, verbose_name='状态')),
                 ('remarks', models.TextField(blank=True, null=True, verbose_name='备注')),
-                ('address', models.CharField(help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0', max_length=100)),
+                ('address', models.CharField(help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0 或 /dev/sdp 本地盘', max_length=100)),
                 ('host', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pci_devices', to='compute.Host', verbose_name='宿主机')),
                 ('vm', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='device_set', to='vms.Vm', verbose_name='挂载于虚拟机')),
             ],

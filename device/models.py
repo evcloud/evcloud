@@ -11,10 +11,14 @@ class PCIDevice(models.Model):
     TYPE_UNKNOW = 0
     TYPE_GPU = 1
     TYPE_ETH = 2
+    TYPE_PHD = 3
+    TYPE_HD = 4
     CHOICES_TYPE = (
         (TYPE_UNKNOW, '未知设备'),
-        (TYPE_GPU, 'GPU'),
-        (TYPE_ETH, '网卡')
+        (TYPE_GPU, 'PCIeGPU'),
+        (TYPE_ETH, 'PCIe网卡'),
+        (TYPE_PHD, 'PCIe硬盘'),
+        (TYPE_HD, '本地硬盘')
     )
 
     id = models.AutoField(primary_key=True)
@@ -25,7 +29,7 @@ class PCIDevice(models.Model):
     enable = models.BooleanField(default=True, verbose_name='启用设备')
     remarks = models.TextField(null=True, blank=True, verbose_name='备注')
     host = models.ForeignKey(to=Host, on_delete=models.CASCADE, related_name='pci_devices', verbose_name='宿主机')
-    address = models.CharField(max_length=100, help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0')
+    address = models.CharField(max_length=100, help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0 或 /dev/sdp 本地盘')
 
     class Meta:
         ordering = ['-id']
@@ -70,7 +74,7 @@ class PCIDevice(models.Model):
         """
         设备是否需要与挂载的虚拟机在同一个宿主机上
         """
-        if self.type in [self.TYPE_GPU]:
+        if self.type in [self.TYPE_GPU, self.TYPE_HD, self.TYPE_PHD, self.TYPE_ETH]:
             return True
         return False
 
