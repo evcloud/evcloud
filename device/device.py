@@ -252,14 +252,21 @@ class HardDiskDevice(BasePCIDevice):
         return self.xml_tpl().format(dev=dev, bus=bus, dev_drive=self.dev_drive)
 
     def get_dev_drive(self):
-        """获取盘符"""
+        """
+        获取盘符
+
+        return: dev 盘符
+
+        """
         if self.vm is None:
             raise errors.VmNotExistError(msg='无效的虚拟机')
 
         xml_desc = self._vm_domain(vm=self.vm).xml_desc()
-        source_list, dev_list = self.get_vm_vdisk_dev_list(xml_desc=xml_desc)
+        source_list, dev_list, disk_dev = self.get_vm_vdisk_dev_list(xml_desc=xml_desc)
         if self.dev_drive in source_list:
-            raise errors.DeviceError(msg='不可以重复挂载同一块硬盘')
+
+            return disk_dev[self.dev_drive]
+
         dev = VmXMLBuilder().new_vdisk_dev(dev_list)
         if not dev:
             raise errors.VmTooManyVdiskMounted()
@@ -278,6 +285,7 @@ class HardDiskDevice(BasePCIDevice):
         """
         dev_list = []
         source_list = []
+        disk_dev = {}
         xml = XMLEditor()
         if not xml.set_xml(xml_desc):
             raise errors.VmError(msg='虚拟机xml文本无效')
@@ -286,11 +294,22 @@ class HardDiskDevice(BasePCIDevice):
         devices = root.getElementsByTagName('devices')[0].childNodes
         for d in devices:
             if d.nodeName == 'disk':
+                source_disk = None
+                target_dev = None
                 for disk_child in d.childNodes:
                     if disk_child.nodeName == 'source':
                         source_disk = disk_child.getAttribute('dev')
                         source_list.append(source_disk)
                     if disk_child.nodeName == 'target':
-                        dev_list.append(disk_child.getAttribute('dev'))
+                        target_dev = disk_child.getAttribute('dev')
+                        dev_list.append(target_dev)
 
-        return source_list, dev_list
+                if source_disk is None or source_disk == '':
+                    source_disk = 'system_disk'
+
+                if source_disk in disk_dev:
+                    raise errors.VdiskError(msg='重复的盘符')
+
+                disk_dev[source_disk] = target_dev
+
+        return source_list, dev_list, disk_dev

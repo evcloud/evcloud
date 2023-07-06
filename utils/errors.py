@@ -386,3 +386,9 @@ class NoHostGroupError(Error):
 class NoSuchImage(NotFoundError):
     msg = '没有此镜像'
     err_code = 'NoSuchImage'
+
+
+class LocaldiskAlreadyMounted(VdiskError):
+    code = 409
+    msg = '本地硬盘已被挂载'
+    err_code = 'LocaldiskAlreadyMounted'

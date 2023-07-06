@@ -746,6 +746,12 @@ class VmInstance:
         :raises: VmError
         """
         self._require_shutdown()
+
+        # device 已经挂载过了，不允许重复挂载
+        if device.vm:
+            raise errors.LocaldiskAlreadyMounted(msg='不能重复挂载')
+            # return device
+
         # 向虚拟机挂载
         try:
             self._pci_manager.mount_to_vm(vm=self.vm, device=device)

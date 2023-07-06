@@ -243,7 +243,7 @@ class PCIDeviceManager:
             return True
 
         host = vm.host
-        xml_desc = dev.xml_desc
+        xml_desc = dev.xml_desc()
         domain = VmDomain(host_ip=host.ipv4, vm_uuid=vm.hex_uuid)
         try:
             if not domain.detach_device(xml=xml_desc):
