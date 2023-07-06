@@ -400,8 +400,8 @@ class VmUnShelveView(View):
             error = VmError(code=400, msg='查询错误，无虚拟机')
             return error.render(request=request)
 
-        if vm.user.id != request.user.id:
-            error = VmError(code=400, msg='查询错误，无虚拟机')
+        if not vm.user_has_perms(user=request.user):
+            error = VmError(code=400, msg='当前用户没有权限访问此虚拟机。')
             return error.render(request=request)
 
         center_id = 0

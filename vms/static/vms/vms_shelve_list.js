@@ -115,7 +115,7 @@ function build_vm_unshelve_api(vm_uuid) {
     return build_absolute_url(url);
 }
 
-// 虚拟机搁置恢复api
+// 虚拟机搁置删除api
 function build_vm_delshelve_api(vm_uuid) {
     let url = 'api/v3/vms/' + vm_uuid + '/delshelve/';
     return build_absolute_url(url);
@@ -158,7 +158,7 @@ function shelve_vm_ajax(vm_uuid, before_func, success_func, complate_func) {
 }
 
 
-// 搁置虚拟机
+// 删除搁置虚拟机
 function delshelve_vm_ajax(vm_uuid, before_func, success_func, complate_func) {
     let api = build_vm_delshelve_api(vm_uuid);
     if (typeof (before_func) === "function") {
