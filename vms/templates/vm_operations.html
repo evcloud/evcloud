@@ -30,6 +30,7 @@
         <button class="dropdown-item bg-info btn-vm-snap-create" type="button" data-vm-uuid="{{ vm.hex_uuid }}">创建快照</button>
         <button class="dropdown-item bg-warning btn-vm-miss-fix" type="button" data-vm-uuid="{{ vm.hex_uuid }}">丢失恢复</button>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-sys-disk-expand' vm_uuid=vm.hex_uuid %}">系统盘扩容</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-attach-ip' vm_uuid=vm.hex_uuid %}">附加IP</a>
         <button class="dropdown-item bg-warning btn-vm-shelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">搁置</button>
         {% endif %}
     {% else %}
