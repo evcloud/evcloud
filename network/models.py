@@ -165,3 +165,16 @@ class MacIP(models.Model):
             return False
 
         return True
+
+    def xml_desc(self):
+        desc = """
+            <interface type='bridge'>
+              <mac address='{mac}'/>
+              <source bridge='{bridge}'/>
+              <model type='virtio'/>
+            </interface>
+        """.format(mac=self.mac, bridge=self.vlan.br)
+        return desc
+
+    def get_attach_ip_vm(self):
+        return self.attach_ip.vm.uuid
