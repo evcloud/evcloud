@@ -1,8 +1,9 @@
 from django.db.models import Q
-
+from django.db import transaction
 from compute.managers import CenterManager, GroupManager, ComputeError
-from .models import (Vm, VmArchive, VmLog, Flavor)
+from .models import (Vm, VmArchive, VmLog, Flavor, AttachmentsIP)
 from utils.errors import VmError
+from network.managers import MacIPManager
 
 
 class VmManager:
@@ -334,3 +335,57 @@ class FlavorManager:
         if user.is_superuser:
             return self.get_flaver_queryset()
         return self.get_public_flaver_queryset()
+
+
+class AttachmentsIPManager:
+    """
+    虚拟机附加ip管理类
+    """
+    VmError = VmError
+
+    def add_ip_to_vm(self, vm, attach_ip_obj):
+        """为vm添加附加ip 数据库层面"""
+
+        queryset = AttachmentsIP.objects.filter(sub_ip__id=attach_ip_obj.id).all()
+        if queryset:
+            raise VmError(msg='不能重复附加该ip')
+
+        # mac_ip 记录该IP的使用情况
+        use_ip = MacIPManager().apply_for_free_ip(ipv4=attach_ip_obj.ipv4)
+
+        if use_ip is None:
+            """IP设置使用失败"""
+            raise VmError(msg='IP占用失败，请重试或更换其他IP')
+
+        # 附加表添加ip信息
+        att = AttachmentsIP(vm=vm, sub_ip=attach_ip_obj)
+        try:
+            with transaction.atomic():
+                att.save()
+
+        except Exception as e:
+            use_bool = attach_ip_obj.set_free()  # 释放ip
+            if use_bool is False:
+                raise Exception(f'释放ip失败：{attach_ip_obj.ipv4}， 附加表创建附加ip时错误：{str(e)}')
+            raise e
+
+    def detach_ip_to_vm(self, attach_ip_obj):
+        """为vm添加附加ip 数据库层面"""
+
+        queryset = AttachmentsIP.objects.filter(sub_ip__id=attach_ip_obj.id).all()
+        if not queryset:
+            raise VmError(msg='附加表中没有该ip记录')
+
+        # mac_ip 释放
+        free_ip = MacIPManager().free_used_ip(ip_id=attach_ip_obj.id)
+        if free_ip is False:
+            """IP设置使用失败"""
+            raise VmError(msg='附加IP释放失败，请重试')
+
+        try:
+            with transaction.atomic():
+                att = AttachmentsIP.objects.select_for_update().filter(sub_ip=attach_ip_obj)
+                att.delete()
+        except Exception as e:
+            raise e
+

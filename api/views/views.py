@@ -1614,6 +1614,87 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=e.data(), status=e.status_code)
         return Response(data={'code': 204, 'code_text': '虚拟机已删除'}, status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        operation_summary='虚拟机附加ip',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='ip_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='mac_ip'
+            ),
+        ],
+        responses={
+            204: 'SUCCESS NO CONTENT'
+        }
+    )
+    @action(methods=['post'], url_path='attach', detail=True, url_name='vm-attach-ip')
+    def vm_attach_ip(self, request, *args, **kwargs):
+        """虚拟机附加ip"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        ip_id = request.query_params.get('ip_id', None)
+        if ip_id is not None:
+            ip_id = str_to_int_or_default(ip_id, None)
+
+        if ip_id is None:
+            exc = exceptions.BadRequestError(msg='无效的id')
+            return self.exception_response(exc)
+
+        queryset = MacIPManager().get_macip_by_id(macip_id=ip_id)
+        if not queryset or queryset.used or queryset.enable is False:
+            exc = exceptions.BadRequestError(msg='无效的id')
+            return self.exception_response(exc)
+
+        api = VmAPI()
+        try:
+            api.attach_ip(vm_uuid=vm_uuid, user=request.user, mac_ip_obj=queryset)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        return Response(data={'code': 204, 'code_text': '虚拟机添加IP成功'}, status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        operation_summary='虚拟机分离ip',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='ip_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='mac_ip'
+            ),
+        ],
+        responses={
+            204: 'SUCCESS NO CONTENT'
+        }
+    )
+    @action(methods=['post'], url_path='detach', detail=True, url_name='vm-detach-ip')
+    def vm_detach_ip(self, request, *args, **kwargs):
+        """虚拟机附加ip"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        ip_id = request.query_params.get('ip_id', None)
+        if ip_id is not None:
+            ip_id = str_to_int_or_default(ip_id, None)
+
+        if ip_id is None:
+            exc = exceptions.BadRequestError(msg='无效的id')
+            return self.exception_response(exc)
+
+        queryset = MacIPManager().get_macip_by_id(macip_id=ip_id)
+        if not queryset or queryset.enable is False:
+            exc = exceptions.BadRequestError(msg='无效的id')
+            return self.exception_response(exc)
+
+        api = VmAPI()
+        try:
+            api.detach_ip(vm_uuid=vm_uuid, user=request.user, mac_ip_obj=queryset)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+        return Response(data={'code': 204, 'code_text': '虚拟机删除附加IP成功'}, status=status.HTTP_204_NO_CONTENT)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.

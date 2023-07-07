@@ -13,7 +13,7 @@ from .xml_builder import VmXMLBuilder
 from .models import (
     Vm, VmDiskSnap, rename_sys_disk_delete, rename_image, Image
 )
-from .manager import VmArchiveManager, VmLogManager
+from .manager import VmArchiveManager, VmLogManager, AttachmentsIPManager
 from .migrate import VmMigrateManager
 from .vm_builder import VmBuilder, get_vm_domain
 
@@ -1177,4 +1177,33 @@ class VmInstance:
         # vm系统盘RBD镜像修改了已删除归档的名称
         vm_ahv.rename_sys_disk_archive()
         return True
+
+    def attach_ip_vm(self, mac_ip_obj):
+        """附加ip"""
+        attach_manage = AttachmentsIPManager()
+        attach_manage.add_ip_to_vm(vm=self.vm, attach_ip_obj=mac_ip_obj)
+
+        xml = mac_ip_obj.xml_desc()
+
+        try:
+            if self.vm_domain.attach_device(xml=xml):
+                return True
+            return False
+        except VirtError as e:
+            attach_manage.detach_ip_to_vm(attach_ip_obj=mac_ip_obj)
+            raise errors.VmError(msg=f'附加IP错误，{str(e)}')
+
+    def detach_ip_vm(self, mac_ip_obj):
+        """分离附加ip"""
+        attach_manage = AttachmentsIPManager()
+        attach_manage.detach_ip_to_vm(attach_ip_obj=mac_ip_obj)
+
+        xml = mac_ip_obj.xml_desc()
+        try:
+            if self.vm_domain.detach_device(xml=xml):
+                return True
+            return False
+        except VirtError as e:
+            attach_manage.add_ip_to_vm(vm=self.vm, attach_ip_obj=mac_ip_obj)
+            raise errors.VmError(msg=f'附加ip分离错误，{str(e)}')
 

@@ -4,7 +4,7 @@ from compute.managers import HostManager
 from utils.errors import VmError, VmNotExistError
 from utils import errors
 from utils.vm_normal_status import vm_normal_status
-from .manager import VmManager
+from .manager import VmManager, AttachmentsIPManager
 from .vminstance import VmInstance
 from .vm_builder import VmBuilder
 
@@ -580,4 +580,27 @@ class VmAPI:
                                                                                  'last_ip__vlan__group',
                                                                                  'last_ip__vlan__group__center'), flag=True)
         return VmInstance(vm).delshelve_vm()
+
+    def attach_ip(self, vm_uuid: str, user, mac_ip_obj):
+
+        if not mac_ip_obj:
+            raise errors.BadRequestError(msg='无效的ip')
+
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
+        resq = VmInstance(vm).attach_ip_vm(mac_ip_obj=mac_ip_obj)
+        if resq is False:
+            AttachmentsIPManager().detach_ip_to_vm(attach_ip_obj=mac_ip_obj)
+        return resq
+
+    def detach_ip(self, vm_uuid: str, user, mac_ip_obj):
+
+        if not mac_ip_obj:
+            raise errors.BadRequestError(msg='无效的ip')
+
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
+
+        if vm.mac_ip.id == mac_ip_obj.id:
+            raise errors.BadRequestError(msg='您不能分离主IP。')
+
+        return VmInstance(vm).detach_ip_vm(mac_ip_obj=mac_ip_obj)
 

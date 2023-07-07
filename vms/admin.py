@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib import messages
 
-from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor
+from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor, AttachmentsIP
 
 
 @admin.register(Vm)
@@ -10,7 +10,7 @@ class VmAdmin(admin.ModelAdmin):
     list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'sys_disk_size',
                     'disk_type', 'user', 'create_time', 'remarks',
                     'image_name', 'default_user', 'default_password', 'image_size', 'sys_type', 'version',
-                    'release', 'architecture', 'boot_mode', 'nvme_support', 'ceph_pool', 'image_parent', 'image_snap')
+                    'release', 'architecture', 'boot_mode',  'ceph_pool', 'image_parent', 'image_snap')
     search_fields = ['name', 'mac_ip__ipv4']
     list_filter = ['host', 'user']
     raw_id_fields = ('mac_ip', 'host', 'user', 'image')
@@ -153,3 +153,10 @@ class MigrateTaskAdmin(admin.ModelAdmin):
 class FlavorAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
     list_display = ('id', 'vcpus', 'ram', 'public', 'enable')
+
+
+@admin.register(AttachmentsIP)
+class AttachmentsIPAdmin(admin.ModelAdmin):
+    list_display_links = ('id',)
+    list_display = ('id', 'vm', 'sub_ip')
+

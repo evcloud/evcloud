@@ -11,6 +11,7 @@ from image.models import Image
 from device.manager import PCIDeviceManager, DeviceError
 from utils.paginators import NumsPaginator
 from network.managers import MacIPManager, VlanManager
+from .models import AttachmentsIP
 
 User = get_user_model()
 
@@ -426,3 +427,61 @@ class VmUnShelveView(View):
             'last_ip': vm.last_ip,
         }
         return render(request, 'vm_unshelve.html', context=context)
+
+
+class VmAttachIPView(View):
+    NUM_PER_PAGE = 20  # Show num per page
+
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+        vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('mac_ip',))
+
+        if not vm.user_has_perms(user=request.user):
+            error = VmError(code=400, msg='当前用户没有权限访问此虚拟机。')
+            return error.render(request=request)
+
+        qs = MacIPManager().get_free_ip_in_vlan(vlan_id=vm.mac_ip.vlan_id)
+
+        context = self.get_ip_list_context(request, qs, context={'vm_uuid': vm_uuid})
+        return render(request, 'vm_attach_ip_list.html', context=context)
+
+    def get_ip_list_context(self, request, queryset, context: dict):
+        # 分页显示
+        paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
+        mac_page = paginator.get_page(page_num)
+        page_nav = paginator.get_page_nav(mac_page)
+
+        context['page_nav'] = page_nav
+        context['mac_ip'] = mac_page
+        context['count'] = paginator.count
+        return context
+
+
+class VmDetachIPView(View):
+    NUM_PER_PAGE = 20  # Show num per page
+
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+        vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('mac_ip',))
+
+        if not vm.user_has_perms(user=request.user):
+            error = VmError(code=400, msg='当前用户没有权限访问此虚拟机。')
+            return error.render(request=request)
+
+        use_ip = AttachmentsIP.objects.select_related('sub_ip').filter(vm=vm).all()
+
+        context = self.get_ip_list_context(request, use_ip, context={'vm_uuid': vm_uuid})
+        return render(request, 'vm_detach_ip_list.html', context=context)
+
+    def get_ip_list_context(self, request, queryset, context: dict):
+        # 分页显示
+        paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
+        mac_page = paginator.get_page(page_num)
+        page_nav = paginator.get_page_nav(mac_page)
+
+        context['page_nav'] = page_nav
+        context['mac_ip'] = mac_page
+        context['count'] = paginator.count
+        return context
