@@ -768,3 +768,17 @@ class Flavor(models.Model):
 
     def __repr__(self):
         return f'Flavor<vcpus={self.vcpus}, ram={self.ram}>'
+
+
+class AttachmentsIP(models.Model):
+    """附加ip"""
+    id = models.AutoField(primary_key=True, verbose_name='ID')
+    vm = models.ForeignKey(to=Vm, verbose_name='虚拟机', on_delete=models.SET_NULL, null=True, blank=True, default=None,
+                           db_constraint=False, db_index=False, related_name='vm_attach')
+    sub_ip = models.OneToOneField(to=MacIP, verbose_name='附加MACIP', on_delete=models.SET_NULL, null=True, blank=True,
+                                  default=None, db_constraint=False, db_index=False, related_name='attach_ip')
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = _('虚拟机附加ip')
+        verbose_name_plural = verbose_name
