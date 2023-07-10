@@ -86,6 +86,7 @@ class MacIP(models.Model):
     desc = models.TextField(verbose_name='备注说明', default='', blank=True)
 
     class Meta:
+        ordering = ['id']
         verbose_name = 'MAC IP地址'
         verbose_name_plural = '07_MAC IP地址'
 

@@ -315,6 +315,17 @@ class Vm(VmBase):
             'image_desc', 'image_xml_tpl'
         ]
 
+    def get_attach_ip_list(self):
+        att_list = []
+        att = self.get_attach_ip()
+        for ip in att:
+            att_list.append(ip.sub_ip.ipv4)
+        return att_list
+
+    def get_attach_ip(self):
+        return self.vm_attach.all()
+
+
 
 class VmArchive(VmBase):
     """
@@ -782,3 +793,6 @@ class AttachmentsIP(models.Model):
         ordering = ['id']
         verbose_name = _('虚拟机附加ip')
         verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.vm.uuid

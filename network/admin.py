@@ -15,7 +15,7 @@ class VlanAdmin(admin.ModelAdmin):
 @admin.register(MacIP)
 class MacIPAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'ipv4',)
-    list_display = ('id', 'ip_vm', 'ipv4', 'mac', 'vlan', 'enable', 'used', 'desc')
+    list_display = ('id', 'ip_vm', 'attach_ip', 'ipv4', 'mac', 'vlan', 'enable', 'used', 'desc')
     list_filter = ('vlan', 'enable')
     search_fields = ('ipv4',)
     list_select_related = ('vlan',)

@@ -164,6 +164,7 @@
                                 </div>
                             </div>
                         </li>
+
                         <li class="list-group-item">
                             <p><strong>云硬盘</strong></p>
                         {% with vm.vdisks as vdisks %}
@@ -315,6 +316,45 @@
                                 未创建快照
                             {% endif %}
                         </li>
+                        <li class="list-group-item">
+                            <p><strong>附加IP</strong></p>
+                        {% with vm.get_attach_ip as att_ip %}
+                            {% if att_ip %}
+                                <table class="table table-default text-center table-disk-list"
+                                       style="word-wrap:break-word;word-break:break-all;">
+                                    <thead class="thead-light">
+                                    <tr>
+                                        <th>ip</th>
+                                        <th>mac</th>
+                                        <th>vlan网桥</th>
+{#                                        <th>创建时间</th>#}
+                                        <th>操作</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for att in att_ip %}
+                                        <tr id="tr_">
+                                            <td>{{ att.sub_ip.ipv4 }}</td>
+                                            <td>{{ att.sub_ip.mac }}</td>
+                                            <td>{{ att.sub_ip.vlan.br }}</td>
+{#                                            <td>{{ None | date:'Y-m-d H:i:s' }}</td>#}
+{#                                            <td>{{ disk.create_time | date:'Y-m-d H:i:s' }}</td>#}
+
+                                            <td>
+                                                  <button class="btn btn-sm btn-danger btn-vm-detach-ip"
+                                                          data-detach-ip-id="{{ att.sub_ip.id }}"
+                                                          data-vm-uuid="{{ vm.hex_uuid }}">分离</button>
+
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                未附加IP
+                            {% endif %}
+                        {% endwith %}
+                        </li>
                         <li class="list-group-item" id="id-vm-snap-content">
                             <p><strong>云主机状态</strong></p>
                             <div class="row">
@@ -345,5 +385,6 @@
     <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_detail.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_attach_ip.js' %}"></script>
 {% endblock %}
 

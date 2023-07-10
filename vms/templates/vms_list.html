@@ -90,7 +90,16 @@
                 {% for vm in vms %}
                     <tr id="tr_{{ vm.hex_uuid }}">
                         <td><input type="checkbox" class="item-checkbox" value="{{ vm.hex_uuid }}" name="select_vm"></td>
-                        <td title="{{ vm.hex_uuid }}"><a href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.mac_ip.ipv4 }}</b></a></td>
+                        <td title="{{ vm.hex_uuid }}">
+                            <a href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.mac_ip.ipv4 }}</b></a>
+
+                            {% if vm.get_attach_ip_list %}
+                                {% for i in vm.get_attach_ip_list %}
+                                <br>
+                                <b>{{ i }}</b>
+                                {% endfor %}
+                            {% endif %}
+                        </td>
                         <td>{{ vm.user }}</td>
                         <td>{{ vm.image_name }}</td>
                         <td>{{ vm.host_ipv4 }}</td>

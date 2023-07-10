@@ -21,8 +21,6 @@
 
         let mac_id = $(this).attr('data-detach-ip-id');
         let vm_uuid = $(this).attr('data-vm-uuid');
-        console.log(mac_id);
-        console.log(vm_uuid);
         vm_detach_ip(vm_uuid, mac_id)
     });
 
@@ -51,8 +49,8 @@ function vm_attach_ip(vm_uuid, mac_id) {
         url: api + '?' + qs,
         type: 'post',
         success: function (data, status_text) {
-            alert(data.toString())
-            alert(status_text)
+            alert('已成功附加到虚拟机');
+            window.location.reload();
         },
         error: function (xhr, msg, err) {
             msg = get_err_msg_or_default(xhr, '虚拟机附加IP失败;');
@@ -71,8 +69,8 @@ function vm_detach_ip(vm_uuid, mac_id) {
         url: api + '?' + qs,
         type: 'post',
         success: function (data, status_text) {
-            alert(data.toString())
-            alert(status_text)
+            alert('已成功从虚拟机分离');
+            window.location.reload();
         },
         error: function (xhr, msg, err) {
             msg = get_err_msg_or_default(xhr, '虚拟机分离IP失败;');
