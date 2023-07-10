@@ -124,6 +124,10 @@ class VmMigrateManager:
         if pci_devices:
             raise errors.VmError(msg='请先卸载主机挂载的PCI设备')
 
+        att_ip = vm.get_attach_ip()
+        if att_ip:
+            raise errors.VmError(msg='请先分离主机附加的IP')
+
         return dest_host
 
     def live_migrate_vm(self, vm: Vm, dest_host_id: int):
@@ -371,6 +375,10 @@ class VmMigrateManager:
                     device.umount()
                 except errors.DeviceError as e:
                     raise errors.VmError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
+
+        att_ip = vm.get_attach_ip()
+        if att_ip:
+            raise errors.VmError(msg='请先分离主机附加的IP')
 
         return new_host
 

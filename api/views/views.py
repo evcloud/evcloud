@@ -1695,6 +1695,27 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=e.data(), status=e.status_code)
         return Response(data={'code': 204, 'code_text': '虚拟机删除附加IP成功'}, status=status.HTTP_204_NO_CONTENT)
 
+    @action(methods=['get'], url_path='attach/list', detail=True, url_name='vm-attach-ip-list')
+    def vm_attach_ip_list(self, request, *args, **kwargs):
+        """虚拟机附加ip"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        api = VmAPI()
+        try:
+            queryset = api.attach_ip_list(vm_uuid=vm_uuid, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        queryset = self.filter_queryset(queryset)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -1713,6 +1734,8 @@ class VmsViewSet(CustomGenericViewSet):
             return serializers.VmChangePasswordSerializer
         elif self.action == 'vm_shelve_list':
             return serializers.VmShelveListSerializer
+        elif self.action == 'vm_attach_ip_list':
+            return serializers.VmAttachListSerializer
         return Serializer
 
 

@@ -389,3 +389,8 @@ class AttachmentsIPManager:
         except Exception as e:
             raise e
 
+    def get_attach_ip_list(self, vm_uuid):
+        queryset = AttachmentsIP.objects.filter(vm__uuid=vm_uuid).all()
+        return queryset
+
+

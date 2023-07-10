@@ -604,3 +604,8 @@ class VmAPI:
 
         return VmInstance(vm).detach_ip_vm(mac_ip_obj=mac_ip_obj)
 
+    def attach_ip_list(self, vm_uuid: str, user):
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
+        queryset = AttachmentsIPManager().get_attach_ip_list(vm_uuid=vm_uuid)
+        return queryset
+

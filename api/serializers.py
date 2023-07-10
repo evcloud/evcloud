@@ -2,7 +2,7 @@ import math
 
 from rest_framework import serializers
 
-from vms.models import Vm, MigrateTask
+from vms.models import Vm, MigrateTask, AttachmentsIP
 from compute.models import Center, Group, Host
 from network.models import Vlan
 from image.models import Image
@@ -565,6 +565,18 @@ class VmShelveListSerializer(serializers.ModelSerializer):
             ret['mem'] = ret['mem'] * 1024
             ret['mem_unit'] = 'MB'
         return ret
+
+
+class VmAttachListSerializer(serializers.ModelSerializer):
+    """附加IP"""
+    attach_ip = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AttachmentsIP
+        fields = ('id', 'vm', 'attach_ip')
+
+    def get_attach_ip(self, obj):
+        return obj.sub_ip.ipv4
 
 
 class VmChangePasswordSerializer(serializers.Serializer):

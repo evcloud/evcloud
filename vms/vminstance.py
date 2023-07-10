@@ -1083,6 +1083,10 @@ class VmInstance:
             except errors.DeviceError as e:
                 raise errors.VmError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
 
+        att_ip = vm.get_attach_ip()
+        if att_ip:
+            raise errors.VmError(msg='请先分离主机附加的IP')
+
         log_manager = VmLogManager()
 
         # 删除虚拟机
