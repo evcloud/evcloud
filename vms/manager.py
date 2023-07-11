@@ -343,11 +343,11 @@ class AttachmentsIPManager:
     """
     VmError = VmError
 
-    def add_ip_to_vm(self, vm, attach_ip_obj):
+    def add_ip_to_vm(self, vm, attach_ip_obj, flag=False):
         """为vm添加附加ip 数据库层面"""
 
         queryset = AttachmentsIP.objects.filter(sub_ip__id=attach_ip_obj.id).all()
-        if queryset:
+        if queryset and flag is False:
             raise VmError(msg='不能重复附加该ip')
 
         # mac_ip 记录该IP的使用情况

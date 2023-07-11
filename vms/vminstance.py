@@ -234,6 +234,12 @@ class VmInstance:
             except VirtError as e:
                 raise errors.VmRunningError(msg=f'关闭虚拟机失败，{str(e)}')
 
+        att_ip = vm.vm_attach.all()  # 需要提前删除附加的ip，否则后端MACIP表有问题
+        if att_ip:
+            raise errors.VmError(msg=f'请先卸载附加IP')
+        # for att in att_ip:
+        #     AttachmentsIPManager().detach_ip_to_vm(attach_ip_obj=att.sub_ip)
+
         # 删除系统盘快照
         try:
             snaps = vm.sys_disk_snaps.all()
@@ -871,6 +877,13 @@ class VmInstance:
                 self._pci_manager.mount_to_vm(vm=vm, device=dev)
             except errors.DeviceError as e:
                 raise errors.VmError(msg=str(e))
+
+        att_ip = vm.vm_attach.all()
+        if att_ip:
+            raise errors.VmError(msg=f'请先卸载附加IP')
+        # for att in att_ip:
+        #     self.attach_ip_vm(mac_ip_obj=att.sub_ip, flag=True)  # 数据库层面有关联，直接在虚拟机中添加
+            # AttachmentsIPManager().add_ip_to_vm(vm=vm, attach_ip_obj=att.sub_ip, flag=True)
 
         # 更新vm元数据中的xml
         self.update_xml_from_domain()
