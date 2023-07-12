@@ -14,6 +14,7 @@
         <button class="dropdown-item bg-warning btn-vm-poweroff" type="button" data-vm-uuid="{{ vm.hex_uuid }}">硬断电</button>
         <button class="dropdown-item bg-danger btn-vm-delete" type="button" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
         <button class="dropdown-item bg-danger btn-vm-delete-force" type="button" data-vm-uuid="{{ vm.hex_uuid }}">强制删除</button>
+        <button class="dropdown-item bg-warning btn-vm-shelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">搁置</button>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载云硬盘</a>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-pci' vm_uuid=vm.hex_uuid %}">挂载本地设备</a>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-attach-ip' vm_uuid=vm.hex_uuid %}">附加IP地址</a>
@@ -31,7 +32,7 @@
         <button class="dropdown-item bg-info btn-vm-snap-create" type="button" data-vm-uuid="{{ vm.hex_uuid }}">创建快照</button>
         <button class="dropdown-item bg-warning btn-vm-miss-fix" type="button" data-vm-uuid="{{ vm.hex_uuid }}">丢失恢复</button>
         <a class="dropdown-item bg-info" href="{% url 'vms:vm-sys-disk-expand' vm_uuid=vm.hex_uuid %}">系统盘扩容</a>
-        <button class="dropdown-item bg-warning btn-vm-shelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">搁置</button>
+
         {% endif %}
     {% else %}
 {#        <button class="dropdown-item bg-warning btn-vm-unshelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">恢复</button>#}
