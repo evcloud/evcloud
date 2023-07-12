@@ -1698,7 +1698,7 @@ class VmsViewSet(CustomGenericViewSet):
     @action(methods=['get'], url_path='attach/list', detail=True, url_name='vm-attach-ip-list')
     def vm_attach_ip_list(self, request, *args, **kwargs):
         """
-        虚拟机附加ip
+        虚拟机附加ip列表
         {
           "count": 2,
           "next": null,

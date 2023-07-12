@@ -101,7 +101,7 @@
             success: function (data, status_text) {
                 $("#tr_" + disk_uuid).remove();
                 alert('已成功挂载硬盘');
-                window.location.reload();
+                window.location = '/vdisk/';
             },
             error: function (xhr, msg, err) {
                 let data = xhr.responseJSON;

@@ -1197,8 +1197,8 @@ class VmInstance:
 
     def attach_ip_vm(self, mac_ip_obj):
         """附加ip"""
-        if self.vm_domain.is_running():
-            raise errors.VmRunningError(msg='请关闭虚拟机')
+        # if self.vm_domain.is_running():
+        #     raise errors.VmRunningError(msg='请关闭虚拟机')
 
         attach_manage = AttachmentsIPManager()
         attach_manage.add_ip_to_vm(vm=self.vm, attach_ip_obj=mac_ip_obj)
@@ -1216,8 +1216,8 @@ class VmInstance:
     def detach_ip_vm(self, mac_ip_obj):
         """分离附加ip"""
 
-        if self.vm_domain.is_running():
-            raise errors.VmRunningError(msg='请关闭虚拟机')
+        # if self.vm_domain.is_running():
+        #     raise errors.VmRunningError(msg='请关闭虚拟机')
 
         attach_manage = AttachmentsIPManager()
         attach_manage.detach_ip_to_vm(attach_ip_obj=mac_ip_obj)

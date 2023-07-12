@@ -442,7 +442,7 @@ class VmAttachIPView(View):
 
         qs = MacIPManager().get_free_ip_in_vlan(vlan_id=vm.mac_ip.vlan_id)
 
-        context = self.get_ip_list_context(request, qs, context={'vm_uuid': vm_uuid})
+        context = self.get_ip_list_context(request, qs, context={'vm_uuid': vm_uuid, 'vlan_id': vm.mac_ip.vlan_id, 'vm': vm})
         return render(request, 'vm_attach_ip_list.html', context=context)
 
     def get_ip_list_context(self, request, queryset, context: dict):
@@ -471,7 +471,7 @@ class VmDetachIPView(View):
 
         use_ip = AttachmentsIP.objects.select_related('sub_ip').filter(vm=vm).all()
 
-        context = self.get_ip_list_context(request, use_ip, context={'vm_uuid': vm_uuid})
+        context = self.get_ip_list_context(request, use_ip, context={'vm_uuid': vm_uuid, 'vm': vm})
         return render(request, 'vm_detach_ip_list.html', context=context)
 
     def get_ip_list_context(self, request, queryset, context: dict):
