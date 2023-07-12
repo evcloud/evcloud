@@ -1,4 +1,4 @@
-## v3.1.12b1
+## v3.1.11b1
 * 增加云主机搁置、恢复服务功能  提交人：wanghuang
 * 增加PCIe设备类型：本地硬盘、PCIE硬盘 挂载功能  提交人：wanghuang
 * 增加云主机附加和移除IP功能  提交人：wanghuang
