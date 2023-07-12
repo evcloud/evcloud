@@ -1,11 +1,19 @@
+## v3.1.12b1
+* 增加云主机搁置、恢复服务功能  提交人：wanghuang
+* 增加PCIe设备类型：本地硬盘、PCIE硬盘 挂载功能  提交人：wanghuang
+* 增加云主机附加和移除IP功能  提交人：wanghuang
+* 界面文案修改  提交人：wanghuang
+* 优化搁置云主机管理员权限  提交人：wanghuang
+
+
 ## v3.1.11
-* 虚拟机vms模型增加 vm_status、last_ip 字段， vm_status（正常、搁置）
-* 增加虚拟机搁置、恢复、删除、查询列表、删除接口
-* 调整vlan子网模型字段：网桥名，vlan_id，vlan描述
-* 增加搁置、恢复界面
-* api 相关接口增加虚拟机状态判断
-* 云硬盘后端存储池增加enable可用字段，响应内容增加dev设备名称
-* 硬盘储存池配额列表增加enable参数过滤可用的存储池
+* 虚拟机vms模型增加 vm_status、last_ip 字段， vm_status（正常、搁置） 提交人：wanghuang
+* 增加虚拟机搁置、恢复、删除、查询列表、删除接口 提交人：wanghuang
+* 调整vlan子网模型字段：网桥名，vlan_id，vlan描述 提交人：wanghuang
+* 增加搁置、恢复界面 提交人：wanghuang
+* api 相关接口增加虚拟机状态判断 提交人：wanghuang
+* 云硬盘后端存储池增加enable可用字段，响应内容增加dev设备名称 提交人：wanghuang
+* 硬盘储存池配额列表增加enable参数过滤可用的存储池 提交人：wanghuang
 
 
 ## v3.1.10   
