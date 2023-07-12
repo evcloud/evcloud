@@ -5,7 +5,7 @@
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
 {% endblock %}
-{% block title %}IP列表{% endblock %}
+{% block title %}IP地址列表{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
@@ -15,7 +15,7 @@
                 <div class="float-right">
                     <a class="btn btn-sm btn-primary"
                        href="{% url 'vms:vm-detach-ip' vm_uuid=vm_uuid %}">移除IP</a>
-                    <a class="btn btn-sm btn-info" href="{% url 'network:vlan_show' %}?vlan={{ vlan_id }}">IP列表</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'network:vlan_show' %}?vlan={{ vlan_id }}">IP地址列表</a>
                 </div>
             </div>
             <div class="card-body">
