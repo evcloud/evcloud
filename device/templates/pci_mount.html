@@ -29,7 +29,7 @@
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 {% if device.vm %}
                     <div>
-                        <p class="text-warning h3">此PCI设备已被挂载使用，挂载云主机uuid: {{ device.vm.hex_uuid }}，IP: {{ device.vm.ipv4 }}</p>
+                        <p class="text-warning h3">此PCI设备已被挂载使用，挂载云主机uuid: {{ device.vm.hex_uuid }}，IP地址: {{ device.vm.ipv4 }}</p>
                     </div>
                 {% else %}
                     <div>
@@ -41,7 +41,7 @@
                                         <label class="input-group-text" for="id-search">关键字</label>
                                     </div>
                                     <input type="text" class="form-control" id="id-search" name="search" value="{{ search }}"
-                                           placeholder="搜 IP、备注"/>
+                                           placeholder="搜 IP地址、备注"/>
                                     <span class="input-group-prepend"></span>
                                     <button type="submit" class="btn btn-primary form-control">筛选</button>
                                 </div>

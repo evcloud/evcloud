@@ -56,7 +56,7 @@
                                                 <strong>运行状态：</strong><span id="vm_status_{{ vm.hex_uuid }}"></span>
                                             <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button>
                                             {% else %}
-                                                <strong>虚拟机状态：</strong><span id="vm_status_{{ vm.vm_status }}" title="{{ vm.vm_status }}">{{ vm.get_vm_status_display }}</span>
+                                                <strong>云主机状态：</strong><span id="vm_status_{{ vm.vm_status }}" title="{{ vm.vm_status }}">{{ vm.get_vm_status_display }}</span>
                                             {% endif %}
                                         </div>
                                         <div class="col-4"><strong>创建者：</strong>{{vm.user}}</div>
@@ -73,7 +73,7 @@
                                         <div class="col-md-4"><strong>所属数据中心：</strong>{{ vm.host.group.center.name }}</div>
                                         <div class="col-md-4"><strong>所属集群：</strong>{{ vm.host.group.name }}</div>
 
-                                        <div class="col-md-4"><strong>宿主机IP：</strong>
+                                        <div class="col-md-4"><strong>宿主机IP地址：</strong>
                                             {% if vm.host %}
                                             {{ vm.host.ipv4 }}
                                             {% else%}
@@ -114,21 +114,21 @@
                                 <div class="col-md-10">
                                     <div class="row">
                                         {% if vm.mac_ip %}
-                                        <div class="col-md-4"><strong>IP：</strong>{{vm.ipv4}}</div>
-                                        <div class="col-md-4"><strong>MAC：</strong>{{ vm.mac_ip.mac }}</div>
-                                        <div class="col-md-4"><strong>子网：</strong>{{ vm.mac_ip.vlan }}</div>
-                                        <div class="col-md-4"><strong>网桥br：</strong>{{ vm.mac_ip.vlan.br }}</div>
+                                        <div class="col-md-4"><strong>IP地址：</strong>{{vm.ipv4}}</div>
+                                        <div class="col-md-4"><strong>MAC地址：</strong>{{ vm.mac_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>VLAN描述：</strong>{{ vm.mac_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>网桥名：</strong>{{ vm.mac_ip.vlan.br }}</div>
                                         {% elif vm.last_ip %}
-                                        <div class="col-md-4"><strong>原IP：</strong>{{vm.last_ip.ipv4}}</div>
-                                        <div class="col-md-4"><strong>原MAC：</strong>{{ vm.last_ip.mac }}</div>
-                                        <div class="col-md-4"><strong>原子网：</strong>{{ vm.last_ip.vlan }}</div>
-                                        <div class="col-md-4"><strong>原网桥br：</strong>{{ vm.last_ip.vlan.br }}</div>
+                                        <div class="col-md-4"><strong>原IP地址：</strong>{{vm.last_ip.ipv4}}</div>
+                                        <div class="col-md-4"><strong>原MAC地址：</strong>{{ vm.last_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>VLAN描述：</strong>{{ vm.last_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>原网桥名：</strong>{{ vm.last_ip.vlan.br }}</div>
                                         {% else %}
 
-                                        <div class="col-md-4"><strong>IP：</strong>无</div>
-                                        <div class="col-md-4"><strong>MAC：</strong>无</div>
-                                        <div class="col-md-4"><strong>子网：</strong>无</div>
-                                        <div class="col-md-4"><strong>网桥br：</strong>无</div>
+                                        <div class="col-md-4"><strong>IP地址：</strong>无</div>
+                                        <div class="col-md-4"><strong>MAC地址：</strong>无</div>
+                                        <div class="col-md-4"><strong>VLAN描述：</strong>无</div>
+                                        <div class="col-md-4"><strong>网桥名：</strong>无</div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -317,17 +317,18 @@
                             {% endif %}
                         </li>
                         <li class="list-group-item">
-                            <p><strong>附加IP</strong></p>
+                            <p><strong>附加IP地址列表</strong></p>
                         {% with vm.get_attach_ip as att_ip %}
                             {% if att_ip %}
                                 <table class="table table-default text-center table-disk-list"
                                        style="word-wrap:break-word;word-break:break-all;">
                                     <thead class="thead-light">
                                     <tr>
-                                        <th>ip</th>
-                                        <th>mac</th>
-                                        <th>vlan网桥</th>
-{#                                        <th>创建时间</th>#}
+                                        <th>IP地址</th>
+                                        <th>MAC地址</th>
+                                        <th>网桥名</th>
+                                        <th>VLAN描述</th>
+                                        <th>标签</th>
                                         <th>操作</th>
                                     </tr>
                                     </thead>
@@ -337,13 +338,13 @@
                                             <td>{{ att.sub_ip.ipv4 }}</td>
                                             <td>{{ att.sub_ip.mac }}</td>
                                             <td>{{ att.sub_ip.vlan.br }}</td>
-{#                                            <td>{{ None | date:'Y-m-d H:i:s' }}</td>#}
-{#                                            <td>{{ disk.create_time | date:'Y-m-d H:i:s' }}</td>#}
+                                            <td>{{ att.sub_ip.vlan.name }}</td>
+                                            <td>{{ att.sub_ip.vlan.get_tag_display }}</td>
 
                                             <td>
                                                   <button class="btn btn-sm btn-danger btn-vm-detach-ip"
                                                           data-detach-ip-id="{{ att.sub_ip.id }}"
-                                                          data-vm-uuid="{{ vm.hex_uuid }}">分离</button>
+                                                          data-vm-uuid="{{ vm.hex_uuid }}">移除</button>
 
                                             </td>
                                         </tr>
@@ -351,7 +352,7 @@
                                     </tbody>
                                 </table>
                             {% else %}
-                                未附加IP
+                                未附加IP地址
                             {% endif %}
                         {% endwith %}
                         </li>
