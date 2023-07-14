@@ -440,7 +440,7 @@ class VmAttachIPView(View):
             error = VmError(code=400, msg='当前用户没有权限访问此虚拟机。')
             return error.render(request=request)
 
-        qs = MacIPManager().get_free_ip_in_vlan(vlan_id=vm.mac_ip.vlan_id)
+        qs = MacIPManager().get_free_ip_in_vlan(vlan_id=vm.mac_ip.vlan_id, flag=True)
 
         context = self.get_ip_list_context(request, qs, context={'vm_uuid': vm_uuid, 'vlan_id': vm.mac_ip.vlan_id, 'vm': vm})
         return render(request, 'vm_attach_ip_list.html', context=context)

@@ -141,6 +141,11 @@ class VmManager:
                 vm_queryset = Vm.objects.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
                                                 Q(uuid__icontains=search)).all()
 
+        if not vm_queryset:
+            vm_att = AttachmentsIP.objects.select_related('vm').filter(sub_ip__ipv4=search).first()
+            if vm_att:
+                vm_queryset = Vm.objects.filter(uuid=vm_att.vm.uuid).all()
+
         return vm_queryset.select_related(*related_fields).exclude(vm_status=Vm.VmStatus.SHELVE.value).all()
 
     def filter_shelve_vm_queryset(self, user_id: int = 0, search: str = '', all_no_filters: bool = False, related_fields: tuple = ()):

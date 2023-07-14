@@ -343,17 +343,18 @@ class MacIPManager:
             return False
 
     @staticmethod
-    def get_free_ip_in_vlan(vlan_id: int):
+    def get_free_ip_in_vlan(vlan_id: int, flag=None):
         """
         获取子网中所有有可用的IP
 
         :param vlan_id: 子网id
+        :param flag: 标记不想返回None
         :return:
-            True: 有
-            False: 没有
+            qs: 查询集
+            None: 没有
         """
         qs = MacIP.get_all_free_ip_in_vlan(vlan_id)
-        if qs.count() > 0:
+        if qs.count() > 0 or flag:
             return qs
 
         return None
