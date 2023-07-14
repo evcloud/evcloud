@@ -600,7 +600,7 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
 
         if vm.mac_ip.id == mac_ip_obj.id:
-            raise errors.BadRequestError(msg='您不能分离主IP。')
+            raise errors.BadRequestError(msg='您不能移除主IP。')
 
         return VmInstance(vm).detach_ip_vm(mac_ip_obj=mac_ip_obj)
 

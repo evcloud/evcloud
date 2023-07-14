@@ -16,7 +16,7 @@
     $(".btn-vm-detach-ip").click(function (e) {
         e.preventDefault();
 
-        if (!confirm('确定为虚拟机分离此IP？'))
+        if (!confirm('确定为虚拟机移除此IP？'))
             return;
 
         let mac_id = $(this).attr('data-detach-ip-id');
@@ -69,11 +69,11 @@ function vm_detach_ip(vm_uuid, mac_id) {
         url: api + '?' + qs,
         type: 'post',
         success: function (data, status_text) {
-            alert('已成功从虚拟机分离');
+            alert('已成功从虚拟机移除');
             window.location.reload();
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '虚拟机分离IP失败;');
+            msg = get_err_msg_or_default(xhr, '虚拟机移除IP失败;');
             alert(msg);
         },
     });

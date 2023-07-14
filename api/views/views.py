@@ -1653,10 +1653,10 @@ class VmsViewSet(CustomGenericViewSet):
         except VmError as e:
             return Response(data=e.data(), status=e.status_code)
 
-        return Response(data={'code': 204, 'code_text': '虚拟机添加IP成功'}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data={'code': 204, 'code_text': '虚拟机附加IP成功'}, status=status.HTTP_204_NO_CONTENT)
 
     @swagger_auto_schema(
-        operation_summary='虚拟机分离ip',
+        operation_summary='虚拟机移除ip',
         request_body=no_body,
         manual_parameters=[
             openapi.Parameter(
@@ -1673,7 +1673,7 @@ class VmsViewSet(CustomGenericViewSet):
     )
     @action(methods=['post'], url_path='detach', detail=True, url_name='vm-detach-ip')
     def vm_detach_ip(self, request, *args, **kwargs):
-        """虚拟机附加ip"""
+        """虚拟机移除ip"""
         vm_uuid = kwargs.get(self.lookup_field, '')
         ip_id = request.query_params.get('ip_id', None)
         if ip_id is not None:
@@ -1693,7 +1693,7 @@ class VmsViewSet(CustomGenericViewSet):
             api.detach_ip(vm_uuid=vm_uuid, user=request.user, mac_ip_obj=queryset)
         except VmError as e:
             return Response(data=e.data(), status=e.status_code)
-        return Response(data={'code': 204, 'code_text': '虚拟机删除附加IP成功'}, status=status.HTTP_204_NO_CONTENT)
+        return Response(data={'code': 204, 'code_text': '虚拟机删除移除IP成功'}, status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=['get'], url_path='attach/list', detail=True, url_name='vm-attach-ip-list')
     def vm_attach_ip_list(self, request, *args, **kwargs):
