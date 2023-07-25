@@ -1,13 +1,38 @@
 from io import StringIO
 import io
+import re
 
-from ipaddress import IPv4Address, AddressValueError
+from ipaddress import IPv4Address, AddressValueError, IPv6Address
 from django.db import transaction
 from django.db.models import Subquery
 
 from .models import Vlan, MacIP
 from utils.errors import NetworkError
 from compute.managers import CenterManager, GroupManager
+
+
+def generate_mac(mac_start):
+    """
+    ipv6 生成mcip
+    """
+    mac = mac_start.replace(':', '')
+    try:
+        mac_t = int(mac, 16)
+    except Exception as e:
+        raise NetworkError(msg='无效的mac地址')
+
+    if mac_t >= 281474976710655:
+        raise NetworkError(msg='mac地址已用完')
+
+    if 219902325555200 <= mac_t <= 221001837182975:
+        # C8:00:00:00:00:00 -- C8:00:FF:FF:FF:FF 不占用
+        mac_t = 221001837182976
+
+    mac_address = "{:012X}".format(mac_t + 1)
+
+    mac_re = re.findall(".{2}", mac_address)
+    new_mac = ":".join(mac_re)
+    return new_mac
 
 
 class VlanManager:
@@ -143,6 +168,48 @@ class VlanManager:
         return l_ip_mac
 
     @staticmethod
+    def generate_subips_v6(vlan_id, from_ip, to_ip, write_database=False):
+        """
+        生成ipv6子网
+        :param vlan_id:
+        :param from_ip: 开始ip
+        :param to_ip: 结束ip
+        :param write_database: True 生成并导入到数据库 False 生成不导入数据库
+        :return:
+        """
+        try:
+            ipv6_from = IPv6Address(from_ip)
+            ipv6_to = IPv6Address(to_ip)
+        except AddressValueError as e:
+            raise NetworkError(msg=f'输入的ip地址无效, {e}')
+
+        int_from = int(ipv6_from)
+        int_to = int(ipv6_to)
+        if int_from > int_to:
+            raise NetworkError(msg='请检查输入的ip地址的范围，起始ip不能大于结束ip地址')
+
+        l_ip_mac = []
+        mac_obj = MacIP.objects.filter(ipv6type=True).order_by('-id').first()
+        mac_start = '02:00:00:00:00:00'
+        if mac_obj:
+            mac_start = mac_obj.mac
+
+        for ip in range(int_from, int_to + 1):
+            if ip & 0xffff:
+                ip_obj = IPv6Address(ip)
+                mac_start = generate_mac(mac_start=mac_start)  # 顺序生成mac
+                l_ip_mac.append((str(ip_obj), mac_start))
+
+        if write_database:
+            with transaction.atomic():
+                for subip, submac in l_ip_mac:
+                    try:
+                        MacIP.objects.create(vlan_id=vlan_id, ipv4=subip, mac=submac, ipv6type=True)
+                    except Exception as error:
+                        raise NetworkError(msg='ip写入数据库失败，部分ip数据库中已有')
+        return l_ip_mac
+
+    @staticmethod
     def get_macips_by_vlan(vlan):
         """
         获得vlan对应的所有macip记录
@@ -182,6 +249,39 @@ class VlanManager:
         for macip in macips:
             line = f"\thost v_{macip.ipv4.replace('.', '_')} " \
                    f"{{hardware ethernet {macip.mac};fixed-address {macip.ipv4};}}\n"
+            file.write(line)
+
+        file.write('}')
+        file.seek(io.SEEK_SET)      # 重置偏移量
+        return file_name, file
+
+    @staticmethod
+    def generate_config_file_v6(vlan, macips):
+        """
+        生成DHCP ipv6配置文件
+        :param vlan: vlan对象
+        :param macips: 对应vlan下的所有macip组
+        :return: str, StringIO()
+        """
+        lines = 'subnet6 %s/64 {\n' % (vlan.subnet_ip)
+        lines += '\t' + 'option routers %s;\n' % vlan.gateway
+        # lines += '\t' + 'option subnet-mask\t%s;\n' % vlan.net_mask
+        lines += '\t' + 'option dhcp6.name-servers %s;\n' % vlan.dns_server
+        lines += '\t' + vlan.dhcp_config + '\n'
+        # lines = lines + '\t' + 'option domain-name-servers\t8.8.8.8;\n'
+        # lines = lines + '\t' + 'option time-offset\t-18000; # EAstern Standard Time\n'
+        # lines = lines + '\t' + 'range dynamic-bootp 10.0.224.240 10.0.224.250;\n'
+        # lines = lines + '\t' + 'default-lease-time 21600;\n'
+        # lines = lines + '\t' + 'max-lease-time 43200;\n'
+        # lines = lines + '\t' + 'next-server 159.226.50.246;   #tftp server\n'
+        # lines = lines + '\t' + 'filename "/pxelinux.0";    #boot file\n'
+
+        file_name = f'{vlan.subnet_ip}_dhcpd.conf'
+        file = StringIO()
+        file.write(lines)
+        for macip in macips:
+            line = f"\thost v_{macip.ipv4.replace(':', '_')} " \
+                   f"{{hardware ethernet {macip.mac};fixed-address6 {macip.ipv4};}}\n"
             file.write(line)
 
         file.write('}')

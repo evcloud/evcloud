@@ -142,7 +142,7 @@ class VmManager:
                                                 Q(uuid__icontains=search)).all()
 
         if not vm_queryset:
-            vm_att = AttachmentsIP.objects.select_related('vm').filter(sub_ip__ipv4=search).first()
+            vm_att = AttachmentsIP.objects.select_related('vm').filter(sub_ip__ipv4__icontains=search).first()
             if vm_att:
                 vm_queryset = Vm.objects.filter(uuid=vm_att.vm.uuid).all()
 

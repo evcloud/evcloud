@@ -50,7 +50,7 @@ function vm_attach_ip(vm_uuid, mac_id) {
         type: 'post',
         success: function (data, status_text) {
             alert('已成功附加到虚拟机');
-            window.location.reload();
+            window.location = '/vms/';
         },
         error: function (xhr, msg, err) {
             msg = get_err_msg_or_default(xhr, '虚拟机附加IP失败;');

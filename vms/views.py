@@ -434,15 +434,27 @@ class VmAttachIPView(View):
 
     def get(self, request, *args, **kwargs):
         vm_uuid = kwargs.get('vm_uuid', '')
+        vlan_id = str_to_int_or_default(request.GET.get('vlan-select', 0), 0)
+        search = request.GET.get('search', '')
         vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('mac_ip',))
 
         if not vm.user_has_perms(user=request.user):
             error = VmError(code=400, msg='当前用户没有权限访问此虚拟机。')
             return error.render(request=request)
 
-        qs = MacIPManager().get_free_ip_in_vlan(vlan_id=vm.mac_ip.vlan_id, flag=True)
+        if vlan_id != 0:
 
-        context = self.get_ip_list_context(request, qs, context={'vm_uuid': vm_uuid, 'vlan_id': vm.mac_ip.vlan_id, 'vm': vm})
+            qs = MacIPManager().get_free_ip_in_vlan(vlan_id=vlan_id, flag=True)
+        else:
+            qs = MacIPManager().get_free_ip_in_vlan(vlan_id=vm.mac_ip.vlan_id, flag=True)
+
+        if search:
+            qs = qs.filter(ipv4__icontains=search)
+
+        vlan = VlanManager().get_vlan_queryset()
+
+        context = self.get_ip_list_context(request, qs, context={'vm_uuid': vm_uuid, 'vlan_id': vm.mac_ip.vlan_id,
+                                                                 'vm': vm, 'vlan': vlan})
         return render(request, 'vm_attach_ip_list.html', context=context)
 
     def get_ip_list_context(self, request, queryset, context: dict):

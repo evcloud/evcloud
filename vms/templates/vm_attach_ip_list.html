@@ -39,19 +39,30 @@
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 <div>
                     <div class="text-success h4 col-sm-4">可供附加的IP地址：</div>
-{#                    <div class="float-right col-sm-8">#}
-{#                        <form role="form" class="form-horizontal" method="get" action="">#}
-{#                            <div class="input-group" style="">#}
-{#                                <div class="input-group-prepend">#}
-{#                                    <label class="input-group-text" for="id-center">关键字</label>#}
-{#                                </div>#}
-{#                                <input type="text" class="form-control" name="search" value="{{ search }}"#}
-{#                                       placeholder="搜 IP"/>#}
-{#                                <span class="input-group-prepend"></span>#}
-{#                                <button type="submit" class="btn btn-primary form-control">筛选</button>#}
-{#                            </div>#}
-{#                        </form>#}
-{#                    </div>#}
+                    <div class="float-right col-sm-8">
+                        <form role="form" class="form-horizontal" method="get" action="">
+                            <div class="input-group" style="">
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text" for="id-center">VLAN网段</label>
+                                </div>
+                                <select name="vlan-select" class="custom-select" id="id-center">
+                                    <option value="">--</option>
+                                    {% for c in vlan %}
+                                        <option value="{{ c.id }}">
+                                            {{ c.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text" for="id-center">关键字</label>
+                                </div>
+                                <input type="text" class="form-control" name="search" value="{{ search }}"
+                                       placeholder="搜 IP地址"/>
+                                <span class="input-group-prepend"></span>
+                                <button type="submit" class="btn btn-primary form-control">筛选</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
                 <table class="table table-bordered table-vm-list"
                        style="word-wrap:break-word;word-break:break-all;">
