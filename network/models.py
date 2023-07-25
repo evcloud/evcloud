@@ -81,6 +81,7 @@ class MacIP(models.Model):
                              null=True, verbose_name='VLAN子网')   # IP所属的vlan局域子网
     mac = models.CharField(verbose_name='MAC地址', max_length=17, unique=True)
     ipv4 = models.GenericIPAddressField(verbose_name='IP地址', unique=True)
+    ipv6type = models.BooleanField(verbose_name='ipv6类型地址', default=False)  # 默认ipv4地址 true 为ipv6地址
     used = models.BooleanField(verbose_name='被使用', default=False, help_text='是否已分配给虚拟机使用')
     enable = models.BooleanField(verbose_name='开启使用', default=True, help_text='是否可以被分配使用')
     desc = models.TextField(verbose_name='备注说明', default='', blank=True)
