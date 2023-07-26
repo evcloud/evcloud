@@ -230,7 +230,7 @@ class VlanManager:
             with transaction.atomic():
                 for subip, submac in l_ip_mac:
                     try:
-                        MacIP.objects.create(vlan_id=vlan.id, ipv4=subip, mac=submac, ipv6type=True)
+                        MacIP.objects.create(vlan_id=vlan.id, ipv4=subip, mac=submac)
                     except Exception as error:
                         raise NetworkError(msg='ip写入数据库失败，部分ip数据库中已有')
         return l_ip_mac
@@ -289,19 +289,12 @@ class VlanManager:
         :param macips: 对应vlan下的所有macip组
         :return: str, StringIO()
         """
-        lines = 'subnet6 %s/64 {\n' % (vlan.subnet_ip)
-        lines += '\t' + 'option routers %s;\n' % vlan.gateway
-        # lines += '\t' + 'option subnet-mask\t%s;\n' % vlan.net_mask
-        lines += '\t' + 'option dhcp6.name-servers %s;\n' % vlan.dns_server
-        lines += '\t' + vlan.dhcp_config + '\n'
-        # lines = lines + '\t' + 'option domain-name-servers\t8.8.8.8;\n'
-        # lines = lines + '\t' + 'option time-offset\t-18000; # EAstern Standard Time\n'
-        # lines = lines + '\t' + 'range dynamic-bootp 10.0.224.240 10.0.224.250;\n'
-        # lines = lines + '\t' + 'default-lease-time 21600;\n'
-        # lines = lines + '\t' + 'max-lease-time 43200;\n'
-        # lines = lines + '\t' + 'next-server 159.226.50.246;   #tftp server\n'
-        # lines = lines + '\t' + 'filename "/pxelinux.0";    #boot file\n'
 
+        net_mast = vlan.net_mask.replace(':', '')
+        subnet_netm = len(net_mast) * 4
+        lines = 'subnet6 %s/%s {\n' % (vlan.subnet_ip, subnet_netm)
+        lines += '\t' + 'option dhcp6.name-servers %s;\n' % vlan.dns_server  # dns
+        lines += '\t' + vlan.dhcp_config + '\n'
         file_name = f'{vlan.subnet_ip}_dhcpd.conf'
         file = StringIO()
         file.write(lines)
