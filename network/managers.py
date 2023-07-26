@@ -2,7 +2,7 @@ from io import StringIO
 import io
 import re
 
-from ipaddress import IPv4Address, AddressValueError, IPv6Address
+from ipaddress import IPv4Address, AddressValueError, IPv6Address, IPv4Network, IPv6Network
 from django.db import transaction
 from django.db.models import Subquery
 
@@ -33,6 +33,25 @@ def generate_mac(mac_start):
     mac_re = re.findall(".{2}", mac_address)
     new_mac = ":".join(mac_re)
     return new_mac
+
+
+def check_ip_in_subnets(subnet_netm, ip_from, ip_to, flag=False):
+    """
+    检测ip 是否在子网内
+    subnet_netm: ipv4 -> 子网/掩码  ipv6 -> 子网/cidr
+    ip_from；起始地址
+    ip_to：结束地址
+    flag : false  ipv4  true  ipv6
+    """
+
+    if flag is False:
+        sub_net = IPv4Network(subnet_netm)
+    else:
+        sub_net = IPv6Network(subnet_netm)
+    if ip_from in sub_net and ip_to in sub_net:
+        return True
+    raise NetworkError(msg='输入的起始IP和结束IP不在相应的子网内')
+
 
 
 class VlanManager:
@@ -129,7 +148,7 @@ class VlanManager:
         return queryset
 
     @staticmethod
-    def generate_subips(vlan_id, from_ip, to_ip, write_database=False):
+    def generate_subips(vlan, from_ip, to_ip, write_database=False):
         """
         生成子网ip
         :param vlan_id:
@@ -149,6 +168,9 @@ class VlanManager:
         if int_from > int_to:
             raise NetworkError(msg='请检查输入的ip地址的范围，起始ip不能大于结束ip地址')
 
+        subnet_netm = f'{vlan.subnet_ip}/{vlan.net_mask}'
+        check_ip_in_subnets(subnet_netm=subnet_netm, ip_from=ipv4_from, ip_to=ipv4_to)  # 检测IP是否在子网内
+
         l_ip_mac = []
         for ip in range(int_from, int_to + 1):
             if ip & 0xff:
@@ -161,14 +183,14 @@ class VlanManager:
             with transaction.atomic():
                 for subip, submac in l_ip_mac:
                     try:
-                        MacIP.objects.create(vlan_id=vlan_id, ipv4=subip, mac=submac)
+                        MacIP.objects.create(vlan_id=vlan.id, ipv4=subip, mac=submac)
                     except Exception as error:
                         raise NetworkError(msg='ip写入数据库失败，部分ip数据库中已有')
 
         return l_ip_mac
 
     @staticmethod
-    def generate_subips_v6(vlan_id, from_ip, to_ip, write_database=False):
+    def generate_subips_v6(vlan, from_ip, to_ip, write_database=False):
         """
         生成ipv6子网
         :param vlan_id:
@@ -188,8 +210,12 @@ class VlanManager:
         if int_from > int_to:
             raise NetworkError(msg='请检查输入的ip地址的范围，起始ip不能大于结束ip地址')
 
+        net_mast = vlan.net_mask.replace(':', '')
+        subnet_netm = f'{vlan.subnet_ip}/{len(net_mast) * 4}'
+        check_ip_in_subnets(subnet_netm=subnet_netm, ip_from=ipv6_from, ip_to=ipv6_to, flag=True)  # 检测IP是否在子网内
+
         l_ip_mac = []
-        mac_obj = MacIP.objects.filter(ipv6type=True).order_by('-id').first()
+        mac_obj = MacIP.objects.filter(vlan__iptype='ipv6').order_by('-id').first()
         mac_start = '02:00:00:00:00:00'
         if mac_obj:
             mac_start = mac_obj.mac
@@ -204,7 +230,7 @@ class VlanManager:
             with transaction.atomic():
                 for subip, submac in l_ip_mac:
                     try:
-                        MacIP.objects.create(vlan_id=vlan_id, ipv4=subip, mac=submac, ipv6type=True)
+                        MacIP.objects.create(vlan_id=vlan.id, ipv4=subip, mac=submac, ipv6type=True)
                     except Exception as error:
                         raise NetworkError(msg='ip写入数据库失败，部分ip数据库中已有')
         return l_ip_mac

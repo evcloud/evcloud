@@ -2,6 +2,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from compute.models import Center, Group
+from django.utils.translation import gettext_lazy as _
 
 
 class Vlan(models.Model):
@@ -14,6 +15,10 @@ class Vlan(models.Model):
         (NET_TAG_PRIVATE, '私网'),
         (NET_TAG_PUBLIC, '公网')
     )
+
+    class IpType(models.TextChoices):
+        IPV4 = 'ipv4', _('ipv4')
+        IPV6 = 'ipv6', _('ipv6')
 
     id = models.AutoField(primary_key=True)
     br = models.CharField(verbose_name='网桥名', max_length=50)
@@ -30,6 +35,8 @@ class Vlan(models.Model):
     enable = models.BooleanField(verbose_name='启用网络', default=True)
     image_specialized = models.BooleanField(verbose_name='镜像虚拟机专用', default=False)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
+    iptype = models.CharField(verbose_name='IP类型', max_length=4, choices=IpType.choices,
+                                 default=IpType.IPV4.value)
 
     def __str__(self):
         return self.name
@@ -81,7 +88,6 @@ class MacIP(models.Model):
                              null=True, verbose_name='VLAN子网')   # IP所属的vlan局域子网
     mac = models.CharField(verbose_name='MAC地址', max_length=17, unique=True)
     ipv4 = models.GenericIPAddressField(verbose_name='IP地址', unique=True)
-    ipv6type = models.BooleanField(verbose_name='ipv6类型地址', default=False)  # 默认ipv4地址 true 为ipv6地址
     used = models.BooleanField(verbose_name='被使用', default=False, help_text='是否已分配给虚拟机使用')
     enable = models.BooleanField(verbose_name='开启使用', default=True, help_text='是否可以被分配使用')
     desc = models.TextField(verbose_name='备注说明', default='', blank=True)
