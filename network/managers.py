@@ -290,7 +290,8 @@ class VlanManager:
         :return: str, StringIO()
         """
 
-        print(vlan.net_mask_v6)
+        if not vlan.net_mask_v6:
+            raise NetworkError(msg='vlan 没有配置ipv6相关内容')
         net_mast = vlan.net_mask_v6.replace(':', '')
         subnet_netm = len(net_mast) * 4
         lines = 'subnet6 %s/%s {\n' % (vlan.subnet_ip_v6, subnet_netm)
