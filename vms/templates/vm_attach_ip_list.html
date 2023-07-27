@@ -69,6 +69,7 @@
                     <tr>
                         <th>编号</th>
                         <th>IP地址</th>
+                        <th>IPv6地址</th>
                         <th>MAC地址</th>
                         <th>网桥名</th>
                         <th>VLAN描述</th>
@@ -80,6 +81,7 @@
                         <tr id="tr_">
                             <td>{{ ip.id }}</td>
                             <td>{{ ip.ipv4 }}</td>
+                            <td>{{ ip.ipv6 | default_if_none:'' }}</td>
                             <td>{{ ip.mac }}</td>
                             <td>{{ ip.vlan.br }}</td>
                             <td>{{ ip.vlan.name }}</td>

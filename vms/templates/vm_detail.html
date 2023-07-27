@@ -117,16 +117,19 @@
                                         <div class="col-md-4"><strong>IP地址：</strong>{{vm.ipv4}}</div>
                                         <div class="col-md-4"><strong>MAC地址：</strong>{{ vm.mac_ip.mac }}</div>
                                         <div class="col-md-4"><strong>VLAN描述：</strong>{{ vm.mac_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>IPv6地址：</strong>{{ vm.mac_ip.ipv6 | default_if_none:''}}</div>
                                         <div class="col-md-4"><strong>网桥名：</strong>{{ vm.mac_ip.vlan.br }}</div>
                                         {% elif vm.last_ip %}
                                         <div class="col-md-4"><strong>原IP地址：</strong>{{vm.last_ip.ipv4}}</div>
                                         <div class="col-md-4"><strong>原MAC地址：</strong>{{ vm.last_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>原IPv6地址：</strong>{{ vm.mac_ip.ipv6 }}</div>
                                         <div class="col-md-4"><strong>VLAN描述：</strong>{{ vm.last_ip.vlan }}</div>
                                         <div class="col-md-4"><strong>原网桥名：</strong>{{ vm.last_ip.vlan.br }}</div>
                                         {% else %}
 
                                         <div class="col-md-4"><strong>IP地址：</strong>无</div>
                                         <div class="col-md-4"><strong>MAC地址：</strong>无</div>
+                                        <div class="col-md-4"><strong>原IPv6地址：</strong>无</div>
                                         <div class="col-md-4"><strong>VLAN描述：</strong>无</div>
                                         <div class="col-md-4"><strong>网桥名：</strong>无</div>
                                         {% endif %}

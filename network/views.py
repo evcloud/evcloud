@@ -30,19 +30,13 @@ def vlan_add(request):
 
         if write_database == 'false':
             try:
-                if vlan.iptype == 'ipv4':
-                    macips = VlanManager().generate_subips(vlan, from_ip, to_ip)
-                else:
-                    macips = VlanManager().generate_subips_v6(vlan, from_ip, to_ip)
+                macips = VlanManager().generate_subips(vlan, from_ip, to_ip)
                 return JsonResponse({'ok': True, 'macips': macips})
             except Exception as error:
                 return JsonResponse({'ok': False, 'msg': str(error)})
         elif write_database == 'true':
             try:
-                if vlan.iptype == 'ipv4':
-                    macips = VlanManager().generate_subips(vlan, from_ip, to_ip, write_database=True)
-                else:
-                    macips = VlanManager().generate_subips_v6(vlan, from_ip, to_ip, write_database=True)
+                macips = VlanManager().generate_subips(vlan, from_ip, to_ip, write_database=True)
                 return JsonResponse({'ok': True, 'msg': '导入成功', 'macips': macips})
             except Exception as error:
                 return JsonResponse({'ok': False, 'msg': str(error)})
@@ -54,6 +48,7 @@ def vlan_show(request):
 
     vlan = request.GET.get('vlan', None)
     vlan_id = request.GET.get('vlan_id', None)
+    iptype = request.GET.get('iptype', 'ipv4')
     if vlan:
         macips = MacIP.objects.filter(vlan=vlan)
         macips = macips.prefetch_related('ip_vm')  # 反向预查询（避免多次访问数据库）
@@ -62,7 +57,7 @@ def vlan_show(request):
         vlan = VlanManager().get_vlan_by_id(int(vlan_id))
         macips = VlanManager().get_macips_by_vlan(vlan)
         macips = macips.prefetch_related('ip_vm')  # 反向预查询（避免多次访问数据库）
-        if vlan.iptype == 'ipv4':
+        if iptype == 'ipv4':
             file_name, config_file = VlanManager().generate_config_file(vlan, macips)
         else:
             file_name, config_file = VlanManager().generate_config_file_v6(vlan, macips)

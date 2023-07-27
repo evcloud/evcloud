@@ -45,7 +45,7 @@ class VmSerializer(serializers.ModelSerializer):
             public = obj.mac_ip.vlan.tag == obj.mac_ip.vlan.NET_TAG_PUBLIC
         else:
             public = False
-        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public}
+        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public, 'ipv6': obj.mac_ip.ipv6}
 
     @staticmethod
     def get_image(obj):
@@ -191,7 +191,8 @@ class VlanSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vlan
-        fields = ('id', 'name', 'br', 'tag', 'enable', 'subnet_ip', 'net_mask', 'gateway', 'dns_server', 'remarks')
+        fields = ('id', 'name', 'br', 'tag', 'enable', 'subnet_ip', 'net_mask', 'gateway', 'dns_server', 'subnet_ip_v6',
+                  'net_mask_v6', 'gateway_v6', 'dns_server_v6', 'remarks')
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -322,7 +323,7 @@ class VdiskSerializer(serializers.ModelSerializer):
     def get_vm(obj):
         vm = obj.vm
         if vm:
-            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4, 'ipv6': vm.mac_ip.ipv6}
         return vm
 
 
@@ -346,7 +347,7 @@ class VdiskDetailSerializer(serializers.ModelSerializer):
         vm = obj.vm
         if vm:
             if vm.mac_ip:
-                return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+                return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4, 'ipv6': vm.mac_ip.ipv6}
             return {'uuid': vm.hex_uuid, 'ipv4': ''}  # 搁置的云主机没有ip
         return vm
 
@@ -411,7 +412,7 @@ class PCIDeviceSerializer(serializers.Serializer):
     def get_vm(obj):
         vm = obj.vm
         if vm:
-            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4, 'ipv6': vm.mac_ip.ipv6}
         return vm
 
     @staticmethod
@@ -433,6 +434,7 @@ class MacIPSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     mac = serializers.CharField(max_length=17, help_text='MAC地址')
     ipv4 = serializers.IPAddressField(help_text='IP地址')
+    ipv6 = serializers.IPAddressField(help_text='IPv6地址')
     used = serializers.BooleanField(help_text='是否已分配给虚拟机使用')
 
 
@@ -486,7 +488,7 @@ class VmDetailSerializer(serializers.ModelSerializer):
             public = obj.mac_ip.vlan.tag == obj.mac_ip.vlan.NET_TAG_PUBLIC
         else:
             public = False
-        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public}
+        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public, 'ipv6': obj.mac_ip.ipv6}
 
     @staticmethod
     def get_image(obj):

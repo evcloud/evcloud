@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import render
 from django.views.generic.base import View
 from django.contrib.auth import get_user_model
@@ -449,7 +450,7 @@ class VmAttachIPView(View):
             qs = MacIPManager().get_free_ip_in_vlan(vlan_id=vm.mac_ip.vlan_id, flag=True)
 
         if search:
-            qs = qs.filter(ipv4__icontains=search)
+            qs = qs.filter(Q(ipv4__icontains=search) | Q(ipv6__icontains=search))
 
         vlan = VlanManager().get_vlan_queryset()
 

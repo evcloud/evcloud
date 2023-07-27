@@ -16,10 +16,6 @@ class Vlan(models.Model):
         (NET_TAG_PUBLIC, '公网')
     )
 
-    class IpType(models.TextChoices):
-        IPV4 = 'ipv4', _('ipv4')
-        IPV6 = 'ipv6', _('ipv6')
-
     id = models.AutoField(primary_key=True)
     br = models.CharField(verbose_name='网桥名', max_length=50)
     vlan_id = models.IntegerField(verbose_name='vlan id', blank=True, null=True, default=None, validators=[MinValueValidator(0)])
@@ -31,12 +27,15 @@ class Vlan(models.Model):
     net_mask = models.GenericIPAddressField(verbose_name='子网掩码')
     gateway = models.GenericIPAddressField(verbose_name='网关')
     dns_server = models.CharField(verbose_name='DNS服务IP', max_length=255)
+    subnet_ip_v6 = models.GenericIPAddressField(verbose_name='子网IP(IPv6)', null=True, blank=True, default=None)
+    net_mask_v6 = models.GenericIPAddressField(verbose_name='子网掩码(IPv6)', null=True, blank=True, default=None)
+    gateway_v6 = models.GenericIPAddressField(verbose_name='网关(IPv6)', null=True, blank=True,  default=None)
+    dns_server_v6 = models.CharField(verbose_name='DNS服务IP(IPv6)', max_length=255, null=True, blank=True,  default=None)
     dhcp_config = models.TextField(verbose_name='DHCP部分配置信息')
+    dhcp_config_v6 = models.TextField(verbose_name='DHCP6部分配置信息', null=True, blank=True,  default=None)
     enable = models.BooleanField(verbose_name='启用网络', default=True)
     image_specialized = models.BooleanField(verbose_name='镜像虚拟机专用', default=False)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
-    iptype = models.CharField(verbose_name='IP类型', max_length=4, choices=IpType.choices,
-                                 default=IpType.IPV4.value)
 
     def __str__(self):
         return self.name
@@ -88,6 +87,7 @@ class MacIP(models.Model):
                              null=True, verbose_name='VLAN子网')   # IP所属的vlan局域子网
     mac = models.CharField(verbose_name='MAC地址', max_length=17, unique=True)
     ipv4 = models.GenericIPAddressField(verbose_name='IP地址', unique=True)
+    ipv6 = models.GenericIPAddressField(verbose_name='IPv6地址', null=True, blank=True, default='')
     used = models.BooleanField(verbose_name='被使用', default=False, help_text='是否已分配给虚拟机使用')
     enable = models.BooleanField(verbose_name='开启使用', default=True, help_text='是否可以被分配使用')
     desc = models.TextField(verbose_name='备注说明', default='', blank=True)

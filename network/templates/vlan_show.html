@@ -12,8 +12,11 @@
         <div class="card">
             <div class="card-header">
                 <span class="card-title"><strong>IP列表</strong></span>
-                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'network:vlan_show' %}?vlan_id={{ vlan_id }}">
-                    <i class="fa fa-download"></i> 导出配置文件
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'network:vlan_show' %}?vlan_id={{ vlan_id }}&iptype=ipv4">
+                    <i class="fa fa-download"></i> 导出ipv4配置文件
+                </a></span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'network:vlan_show' %}?vlan_id={{ vlan_id }}&iptype=ipv6">
+                    <i class="fa fa-download"></i> 导出ipv6配置文件
                 </a></span>
             </div>
             <div class="card-body" style="min-height: 400px;">

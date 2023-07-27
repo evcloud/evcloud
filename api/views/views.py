@@ -99,21 +99,27 @@ class VmsViewSet(CustomGenericViewSet):
           "next": null,
           "previous": null,
           "results": [
-            {
-              "uuid": "4c0cdba7fe97405bac174baa03f3d036",
-              "name": "4c0cdba7fe97405bac174baa03f3d036",
-              "vcpu": 2,
-              "mem": 2048,
-              "image": "centos8",
-              "disk": "4c0cdba7fe97405bac174baa03f3d036",
-              "sys_disk_size": 100,
-              "host": "10.100.50.121",
-              "mac_ip": "10.107.50.252",
-              "user": {
-                "id": 3,
-                "username": "test"
+               {
+              "uuid": "7ee56c2b242c41c3890b23e18dc5194b",
+              "name": "7ee56c2b242c41c3890b23e18dc5194b",
+              "vcpu": 1,
+              "mem": 1024,
+              "image": "centos7",
+              "disk": "7ee56c2b242c41c3890b23e18dc5194b",
+              "sys_disk_size": 8,
+              "host": "10.193.36.121",
+              "mac_ip": "192.168.100.3",
+              "ip": {
+                "ipv4": "192.168.100.3",
+                "public_ipv4": false,
+                "ipv6": null
               },
-              "create_time": "2020-03-06T14:46:27.149648+08:00"
+              "user": {
+                "id": 1,
+                "username": "wanghuang"
+              },
+              "create_time": "2023-07-27T15:54:25.383633+08:00",
+              "mem_unit": "MB"
             },
           ]
         }
@@ -184,7 +190,8 @@ class VmsViewSet(CustomGenericViewSet):
             "mac_ip": "10.107.50.253",
             "ip": {
               "ipv4": "10.107.50.22",
-              "public_ipv4": false
+              "public_ipv4": false,
+              "ipv6": null,
             },
             "user": {
               "id": 1,
@@ -377,22 +384,28 @@ class VmsViewSet(CustomGenericViewSet):
               "next": null,
               "previous": null,
               "results": [
-                {
-                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
-                  "name": "c6c8f333bc9c426dad04a040ddd44b47",
-                  "vcpu": 2,
+                   {
+                  "uuid": "7ee56c2b242c41c3890b23e18dc5194b",
+                  "name": "7ee56c2b242c41c3890b23e18dc5194b",
+                  "vcpu": 1,
                   "mem": 1024,
-                  "image": "centos8",
-                  "disk": "c6c8f333bc9c426dad04a040ddd44b47",
-                  "sys_disk_size": 100,
-                  "host": "10.100.50.121",
-                  "mac_ip": "10.107.50.15",
-                  "user": {
-                    "id": 4,
-                    "username": "869588058@qq.com"
+                  "image": "centos7",
+                  "disk": "7ee56c2b242c41c3890b23e18dc5194b",
+                  "sys_disk_size": 8,
+                  "host": "10.193.36.121",
+                  "mac_ip": "192.168.100.3",
+                  "ip": {
+                    "ipv4": "192.168.100.3",
+                    "public_ipv4": false,
+                    "ipv6": null
                   },
-                  "create_time": "2020-03-06T14:46:27.149648+08:00"
-                }
+                  "user": {
+                    "id": 1,
+                    "username": "wanghuang"
+                  },
+                  "create_time": "2023-07-27T15:54:25.383633+08:00",
+                  "mem_unit": "MB"
+                },
               ]
             }
         """
@@ -2032,7 +2045,11 @@ class VlanViewSet(CustomGenericViewSet):
                       "net_mask": "255.255.255.0",
                       "gateway": "10.107.50.254",
                       "dns_server": "159.226.91.150",
-                      "remarks": "测试"
+                      "subnet_ip_v6": "16a0:10:ab00:1e::",
+                      "net_mask_v6": "ffff:ffff:ffff:ffff::",
+                      "gateway_v6": "16a0:10:ab00:1e::1",
+                      "dns_server_v6": "2001:4860:4860::8888",
+                      "remarks": ""
                     }
                   ]
                 }
@@ -2096,6 +2113,10 @@ class VlanViewSet(CustomGenericViewSet):
                   "net_mask": "255.255.255.0",
                   "gateway": "10.107.50.254",
                   "dns_server": "159.226.91.150",
+                  "subnet_ip_v6": "16a0:10:ab00:1e::",
+                  "net_mask_v6": "ffff:ffff:ffff:ffff::",
+                  "gateway_v6": "16a0:10:ab00:1e::1",
+                  "dns_server_v6": "2001:4860:4860::8888",
                   "remarks": "测试"
                 }
             400:{
@@ -2665,7 +2686,8 @@ class VDiskViewSet(CustomGenericViewSet):
                   "size": 11,
                   "vm": {
                     "uuid": "c58125f6916b4028864b46c7c0b02d99",
-                    "ipv4": "10.107.50.252"
+                    "ipv4": "10.107.50.252",
+                    "ipv6": null
                   },
                   "user": {
                     "id": 1,
@@ -2748,7 +2770,8 @@ class VDiskViewSet(CustomGenericViewSet):
                   "size": 10,
                   "vm": {                                          # 已挂载于主机；未挂载时为 null
                     "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
-                    "ipv4": "10.107.50.15"
+                    "ipv4": "10.107.50.15",
+                    "ipv6": null,
                   },
                   "user": {
                     "id": 4,
@@ -3622,7 +3645,8 @@ class PCIDeviceViewSet(CustomGenericViewSet):
                   },
                   "vm": {                           # 已挂载于主机；未挂载时为 null
                     "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
-                    "ipv4": "10.107.50.15"
+                    "ipv4": "10.107.50.15",
+                    "ipv6": "16a0:10:ab00:1e::102"
                   },
                   "host": {
                     "id": 1,
@@ -3815,6 +3839,7 @@ class MacIPViewSet(CustomGenericViewSet):
                       "id": 1,
                       "mac": "C8:00:0A:6B:32:FD",
                       "ipv4": "10.107.50.253",
+                      "ipv6": "16a0:10:ab00:1e::102",
                       "used": true
                     }
                   ]
