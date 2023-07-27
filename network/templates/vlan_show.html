@@ -25,6 +25,7 @@
                     <tr>
                         <th>编号</th>
                         <th>IP地址</th>
+                        <th>IPv6地址</th>
                         <th>MAC地址</th>
                         <th>主机编号</th>
                         <th>主机编号（附加）</th>
@@ -36,6 +37,7 @@
                     <tr>
                         <th>{{ macip.id }}</th>
                         <th>{{ macip.ipv4 }}</th>
+                        <th>{{ macip.ipv6 | default_if_none:'' }}</th>
                         <th>{{ macip.mac }}</th>
                         <th>{{ macip.host_uuid }}</th>
                         <th>{{ macip.get_attach_ip_vm }}</th>
