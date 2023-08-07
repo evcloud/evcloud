@@ -570,7 +570,7 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='参数ip-type的值无效')
             return self.exception_response(exc)
 
-        mem_unit = str.upper(request.data.get('mem_unit', 'UNKNOWN'))
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
@@ -595,7 +595,7 @@ class VmsViewSet(CustomGenericViewSet):
                 return Response(data, status=exc.status_code)
             else:
                 validated_data['vcpu'] = flavor.vcpus
-                validated_data['mem'] = flavor.ram
+                validated_data['mem'] = flavor.ram  # 单位为GB
 
         api = VmAPI()
         try:
@@ -3890,7 +3890,7 @@ class FlavorViewSet(CustomGenericViewSet):
     )
     def list(self, request, *args, **kwargs):
         """
-        获取mac ip列表
+        获取虚拟机硬件配置样式列表
 
             http code 200:
                 {
