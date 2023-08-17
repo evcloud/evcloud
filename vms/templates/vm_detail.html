@@ -223,7 +223,7 @@
                         {% endwith %}
                         </li>
                         <li class="list-group-item">
-                        <p><strong>PCI设备</strong></p>
+                        <p><strong>本地资源设备</strong></p>
                         {% with vm.pci_devices as devices  %}
                             {% if devices %}
                                 <table class="table table-default text-center table-pci-list" style="word-wrap:break-word;word-break:break-all;">
@@ -265,7 +265,7 @@
                                     </tbody>
                                 </table>
                             {% else %}
-                                未挂载PCI设备
+                                未挂载本地资源设备
                             {% endif %}
                         {% endwith %}
                         </li>
