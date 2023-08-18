@@ -1,20 +1,25 @@
 from rest_framework.test import APITestCase
 
+from compute.models import Host, Group
+from pcservers.models import PcServer
 from users.models import UserProfile
 from ceph.models import CephCluster, CephPool, Center
-from image.models import VmXmlTemplate
+from image.models import VmXmlTemplate, Image
+
+from django_site.test_settings import *
 
 
 def get_or_create_user(username='test', password='password') -> UserProfile:
     user, created = UserProfile.objects.get_or_create(username=username, password=password, is_active=True)
     return user
 
+
 def get_or_create_center(name: str = 'test'):
     c = Center.objects.filter(name=name).first()
     if c is not None:
         return c
 
-    c = Center(name=name)
+    c = Center(name=name, location=name, desc=name)
     c.save(force_insert=True)
     return c
 
@@ -28,8 +33,10 @@ def get_or_create_ceph(name: str = 'test'):
     c = CephCluster(
         id=100,
         name=name, center_id=center.id, has_auth=True,
-        uuid='test', config='', config_file='',
-        keyring='', keyring_file='', hosts_xml=''
+        uuid=cephuuid, config=cephconfig,
+        config_file=config_file,
+        keyring=keyring, keyring_file=keyring_file, hosts_xml=host_xml,
+        username='admin'
     )
     c.save(force_insert=True)
     return c
@@ -56,6 +63,29 @@ def get_or_create_xml_temp(name: str = 'test'):
     )
     t.save(force_insert=True)
     return t
+
+
+def get_or_create_image(name: str = 'test_image', user=None):
+    queryset = Image.objects.filter(name=name).first()
+    if queryset is not None:
+        return queryset
+
+    pool = get_or_create_ceph_pool()
+    temp = get_or_create_xml_temp()
+    image = Image(
+        name=name,
+        sys_type=Image.SYS_TYPE_LINUX,
+        version='系统版本信息',
+        ceph_pool=pool,
+        tag=Image.TAG_USER,
+        user=user,
+        xml_tpl=temp,
+        size=10,
+        desc='系统镜像测试'
+    )
+    super(Image, image).save(force_insert=True)
+
+    return image
 
 
 class MyAPITestCase(APITestCase):
