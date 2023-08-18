@@ -2267,7 +2267,7 @@ class ImageViewSet(CustomGenericViewSet):
         center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
         tag = str_to_int_or_default(request.query_params.get('tag', 0), 0)
         sys_type = str_to_int_or_default(request.query_params.get('sys_type', 0), 0)
-        search = request.query_params.get('sys_type', '')
+        search = request.query_params.get('search', None)
 
         try:
             queryset = ImageManager().filter_image_queryset(center_id=center_id, sys_type=sys_type, tag=tag,
