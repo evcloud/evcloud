@@ -2191,7 +2191,7 @@ class ImageViewSet(CustomGenericViewSet):
             openapi.Parameter(
                 name='search', in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
-                description="关键字查询",
+                description="关键字查询(名称和描述)",
                 required=False
             )
         ]
@@ -2390,6 +2390,8 @@ class ImageViewSet(CustomGenericViewSet):
 
         try:
             image = ImageManager().get_image_by_id(image_id=image_id)
+            if not image:
+                raise exceptions.BadRequestError(msg='镜像id无效')
             image.desc = remark
             image.save()
         except exceptions.Error as exc:
