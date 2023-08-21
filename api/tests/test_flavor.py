@@ -21,6 +21,7 @@ class flavorTests(MyAPITestCase):
             ['id', 'vcpus', 'ram', 'mem_unit'], response.data['results'][0])
 
         self.assertEqual(response.data['results'][0]['ram'], self.flavor.ram * 1024)
+        self.assertEqual(response.data['results'][0]['mem_unit'], 'MB')
 
         query = parse.urlencode(query={'mem_unit': 'GB'})  # mem_unit=GB
         response = self.client.get(f'{url}?{query}')
@@ -28,6 +29,8 @@ class flavorTests(MyAPITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertKeysIn(
             ['id', 'vcpus', 'ram', 'mem_unit'], response.data['results'][0])
+        self.assertEqual(response.data['results'][0]['ram'], self.flavor.ram)
+        self.assertEqual(response.data['results'][0]['mem_unit'], 'GB')
 
         self.assertEqual(response.data['results'][0]['ram'], self.flavor.ram)
 

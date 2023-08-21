@@ -172,7 +172,7 @@ def get_or_create_group(name: str = 'test_group', center_name=None, ):
     return group
 
 
-def get_or_create_host(ipv4='127.0.0.1', real_cpu=8, real_mem=8, vm_limit=5, group_name=None,
+def get_or_create_host(ipv4: str = '127.0.0.1', real_cpu=8, real_mem=8, vm_limit=5, group_name=None,
                        pcserver_host_ipv4=None):
     queryset = Host.objects.filter(ipv4=ipv4).first()
     if queryset is not None:
