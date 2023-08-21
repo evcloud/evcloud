@@ -50,7 +50,7 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
               }
             }
         """
-        mem_unit = str.upper(request.data.get('mem_unit', 'UNKNOWN'))
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
