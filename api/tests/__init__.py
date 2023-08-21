@@ -7,6 +7,7 @@ from ceph.models import CephCluster, CephPool, Center
 from image.models import VmXmlTemplate, Image
 
 from django_site.test_settings import *
+from vms.models import Flavor
 
 
 def get_or_create_user(username='test', password='password') -> UserProfile:
@@ -202,6 +203,21 @@ def get_or_create_host(ipv4='127.0.0.1', real_cpu=8, real_mem=8, vm_limit=5, gro
     )
     host.save(force_insert=True)
     return host
+
+
+def get_or_create_flavor(public: bool = True):
+    queryset = Flavor.objects.filter(public=public).first()
+    if queryset is not None:
+        return queryset
+
+    flavor = Flavor(
+        vcpus=1,
+        ram=2,
+        public=public,
+        enable=True
+    )
+    flavor.save(force_insert=True)
+    return flavor
 
 
 class MyAPITestCase(APITestCase):
