@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 
 from compute.models import Host, Group
-from pcservers.models import PcServer
+from pcservers.models import PcServer, Room, ServerType
 from users.models import UserProfile
 from ceph.models import CephCluster, CephPool, Center
 from image.models import VmXmlTemplate, Image
@@ -86,6 +86,122 @@ def get_or_create_image(name: str = 'test_image', user=None):
     super(Image, image).save(force_insert=True)
 
     return image
+
+
+def get_or_create_room(name: str = 'test_room'):
+    queryset = Room.objects.filter(name=name).first()
+    if queryset is not None:
+        return queryset
+
+    room = Room(
+        name=name,
+        city=name,
+        desc=name
+    )
+    room.save(force_insert=True)
+    return room
+
+
+def get_or_create_servertype(name: str = 'test_servertype'):
+    queryset = ServerType.objects.filter(name=name).first()
+    if queryset is not None:
+        return queryset
+
+    servertype = ServerType(
+        name=name,
+        desc=name
+    )
+    servertype.save(force_insert=True)
+    return servertype
+
+
+def get_or_create_pcserver(host_ipv4='127.0.0.1', roon_name=None, servertype_name=None):
+    """服务器"""
+    queryset = PcServer.objects.filter(host_ipv4=host_ipv4).first()
+    if queryset is not None:
+        return queryset
+
+    user = get_or_create_user()
+    if roon_name:
+        room = get_or_create_room(name=roon_name)
+    else:
+        room = get_or_create_room()
+
+    if servertype_name:
+        servertype = get_or_create_servertype(name=servertype_name)
+    else:
+        servertype = get_or_create_servertype()
+
+    pcserver = PcServer(
+        room=room,
+        server_type=servertype,
+        status=1,
+        tag_no='testxxx',
+        location='testxxx',
+        host_ipv4=host_ipv4,
+        ipmi_ip='127.0.0.1',
+        user=user,
+
+    )
+    pcserver.save(force_insert=True)
+    return pcserver
+
+
+def get_or_create_group(name: str = 'test_group', center_name=None, ):
+    queryset = Group.objects.filter(name=name).first()
+    if queryset is not None:
+        return queryset
+
+    if center_name:
+
+        center = get_or_create_center(name=center_name)
+    else:
+        center = get_or_create_center()
+
+    user = get_or_create_user()
+
+    group = Group(
+        center=center,
+        name=name,
+        enable=True,
+        desc='',
+    )
+    group.save(force_insert=True)
+    group.users.add(user)
+    return group
+
+
+def get_or_create_host(ipv4='127.0.0.1', real_cpu=8, real_mem=8, vm_limit=5, group_name=None,
+                       pcserver_host_ipv4=None):
+    queryset = Host.objects.filter(ipv4=ipv4).first()
+    if queryset is not None:
+        return queryset
+    if group_name:
+        group = get_or_create_group(name=group_name)
+    else:
+        group = get_or_create_group()
+
+    if pcserver_host_ipv4:
+
+        pcserver = get_or_create_pcserver(host_ipv4=pcserver_host_ipv4)
+    else:
+        pcserver = get_or_create_pcserver()
+
+    host = Host(
+        group=group,
+        pcserver=pcserver,
+        ipv4=ipv4,
+        real_cpu=real_cpu,
+        real_mem=real_mem,
+        vcpu_total=16,
+        vcpu_allocated=0,
+        mem_total=16,
+        mem_allocated=0,
+        vm_limit=vm_limit,
+        vm_created=0,
+    )
+    host.save(force_insert=True)
+    return host
 
 
 class MyAPITestCase(APITestCase):
