@@ -41,18 +41,18 @@ class DefaultSum(Sum):
 
 class CenterManager:
     """
-    分中心管理器
+    数据中心管理器
     """
 
     def __init__(self):
-        # 分中心对象缓存，分中心对象数据有变化，需要清除缓存或设置覆盖缓存
+        # 数据中心对象缓存，数据中心对象数据有变化，需要清除缓存或设置覆盖缓存
         self._cache_centers = {}
 
     def _cache_center_remove(self, center_id=None):
         """
-        尝试从分中心对象缓存移除指定的分中心对象，未指定center_id，清除所有缓存
+        尝试从数据中心对象缓存移除指定的数据中心对象，未指定center_id，清除所有缓存
 
-        :param center_id: 分中心id
+        :param center_id: 数据中心id
         """
         if center_id is None:
             self._cache_centers.clear()
@@ -60,9 +60,9 @@ class CenterManager:
 
     def _cache_center_add(self, center):
         """
-        缓存一个分中心对象
+        缓存一个数据中心对象
 
-        :param center: 分中心对象
+        :param center: 数据中心对象
         """
         if not isinstance(center, Center):
             return
@@ -73,7 +73,7 @@ class CenterManager:
 
     def _cache_center_get(self, center_id):
         """
-        尝试从分中心对象缓存获取分中心对象
+        尝试从数据中心对象缓存获取数据中心对象
 
         :return:
             Center() or None
@@ -86,31 +86,31 @@ class CenterManager:
     @staticmethod
     def get_center_by_id(center_id: int):
         """
-        通过id获取分中心
+        通过id获取数据中心
 
-        :param center_id: 分中心id
+        :param center_id: 数据中心id
         :return:
             Image() # success
             None    #不存在
         :raise ComputeError
         """
         if not isinstance(center_id, int) or center_id < 0:
-            raise ComputeError(msg='分中心ID参数有误')
+            raise ComputeError(msg='数据中心ID参数有误')
 
         try:
             return Center.objects.filter(id=center_id).first()
         except Exception as e:
-            raise ComputeError(msg=f'查询分中心时错误,{str(e)}')
+            raise ComputeError(msg=f'查询数据中心时错误,{str(e)}')
 
     def enforce_center_obj(self, center_or_id):
         """
-        转换为分中心对象
+        转换为数据中心对象
 
         :param center_or_id: Center() or id
         :return:
             Center()
 
-        :raise: ComputeError    # 分中心不存在，或参数有误
+        :raise: ComputeError    # 数据中心不存在，或参数有误
         """
         if isinstance(center_or_id, Center):
             return center_or_id
@@ -128,15 +128,15 @@ class CenterManager:
                 self._cache_center_add(c)
                 return c
             else:
-                raise errors.ComputeError.from_error(errors.NotFoundError(msg='分中心不存在'))
+                raise errors.ComputeError.from_error(errors.NotFoundError(msg='数据中心不存在'))
 
         raise errors.ComputeError.from_error(errors.BadRequestError(msg='无效的center or id'))
 
     def get_group_ids_by_center(self, center_or_id):
         """
-        获取分中心下的宿主机组id list
+        获取数据中心下的宿主机组id list
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
             ids: list   # success
         :raise ComputeError
@@ -151,9 +151,9 @@ class CenterManager:
 
     def get_group_queryset_by_center(self, center_or_id):
         """
-        获取分中心下的宿主机组查询集
+        获取数据中心下的宿主机组查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
             groups: QuerySet   # success
         :raise ComputeError
@@ -194,9 +194,9 @@ class CenterManager:
 
     def get_user_group_queryset_by_center(self, center_or_id, user):
         """
-        获取分中心下的宿主机组查询集
+        获取数据中心下的宿主机组查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :param user: 用户对象
         :return:
             groups: QuerySet   # success
@@ -210,9 +210,9 @@ class CenterManager:
 
     def get_user_group_ids_by_center(self, center, user):
         """
-        获取分中心下的，用户有访问权限的宿主机组查询集
+        获取数据中心下的，用户有访问权限的宿主机组查询集
 
-        :param center: 分中心对象或ID
+        :param center: 数据中心对象或ID
         :param user: 用户对象
         :return:
             QuerySet()
@@ -226,9 +226,9 @@ class CenterManager:
 
     def get_ceph_queryset_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有ceph集群查询集
+        获取一个数据中心下的所有ceph集群查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
              QuerySet   # success
         :raise ComputeError
@@ -238,9 +238,9 @@ class CenterManager:
 
     def get_ceph_ids_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有ceph集群id list
+        获取一个数据中心下的所有ceph集群id list
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
             ids: list   # success
         :raise ComputeError
@@ -251,9 +251,9 @@ class CenterManager:
 
     def get_pool_queryset_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有ceph pool查询集
+        获取一个数据中心下的所有ceph pool查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
              QuerySet   # success
         :raise ComputeError
@@ -263,9 +263,9 @@ class CenterManager:
 
     def get_pool_ids_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有ceph pool id
+        获取一个数据中心下的所有ceph pool id
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
              QuerySet   # success
         :raise ComputeError
@@ -276,7 +276,7 @@ class CenterManager:
     @staticmethod
     def get_stat_center_queryset(filters: dict = None):
         """
-        分中心资源统计查询集
+        数据中心资源统计查询集
 
         :param filters: center的过滤条件
         :return:

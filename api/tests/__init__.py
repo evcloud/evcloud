@@ -1,13 +1,17 @@
+import datetime
+import uuid
 from rest_framework.test import APITestCase
 
 from compute.models import Host, Group
+from device.models import PCIDevice
+from network.models import MacIP, Vlan
 from pcservers.models import PcServer, Room, ServerType
 from users.models import UserProfile
 from ceph.models import CephCluster, CephPool, Center
 from image.models import VmXmlTemplate, Image
 
 from django_site.test_settings import *
-from vms.models import Flavor
+from vms.models import Flavor, Vm
 
 
 def get_or_create_user(username='test', password='password') -> UserProfile:
@@ -218,6 +222,111 @@ def get_or_create_flavor(public: bool = True):
     )
     flavor.save(force_insert=True)
     return flavor
+
+
+def get_or_create_vlan(br: str = 'test_br', tag: int = 0, group_name=None, subnet_ip: str = '192.168.1.1',
+                       gateway: str = '192.168.1.243'):
+    queryset = Vlan.objects.filter(br=br).first()
+    if queryset is not None:
+        return queryset
+
+    if group_name:
+        group = get_or_create_group(name=group_name)
+    else:
+        group = get_or_create_group()
+
+    vlan = Vlan(
+        br=br,
+        name='test',
+        group=group,
+        tag=tag,
+        subnet_ip=subnet_ip,
+        net_mask='255.255.255.0',
+        gateway=gateway,
+        dns_server='114.114.114.114',
+        dhcp_config='#'
+    )
+    vlan.save(force_insert=True)
+    return vlan
+
+
+def get_or_create_macip(ipv4: str = '127.0.0.1', mac: str = 'EC:BB:36:62:4C:46', vlan=None, used: bool = False):
+    queryset = MacIP.objects.filter(ipv4=ipv4).first()
+    if queryset is not None:
+        return queryset
+
+    if vlan is None:
+        vlan = get_or_create_vlan()
+
+    macip = MacIP(
+        vlan=vlan,
+        mac=mac,
+        ipv4=ipv4,
+        used=used,
+    )
+    macip.save(force_insert=True)
+    return macip
+
+
+def get_or_create_pci(address='/dev/sdb', type: int = 4, host=None, vm=None):
+    queryset = PCIDevice.objects.filter(type=type).first()
+    if queryset is not None:
+        return queryset
+
+    if host is None:
+        host = get_or_create_host()
+
+    attach_time = None
+    if vm is not None:
+        attach_time = datetime.datetime.now()
+
+    pci_device = PCIDevice(
+        type=type,
+        vm=vm,
+        attach_time=attach_time if attach_time else None,
+        enable=True,
+        host=host,
+        address=address,
+        remarks='test pci'
+
+    )
+
+    pci_device.save(force_insert=True)
+    return pci_device
+
+
+def get_or_create_vm(uuid, image=None, ceph_pool=None):
+    queryset = Vm.objects.filter(uuid=uuid).first()
+    if queryset is not None:
+        return queryset
+
+    user = get_or_create_user()
+
+    if image is None:
+        image = get_or_create_image()
+
+    if ceph_pool is None:
+        ceph_pool = get_or_create_ceph_pool()
+
+    # vm_uuid = uuid.uuid4()
+    vm = Vm(
+        disk_type=Vm.DiskType.CEPH_RBD,
+        sys_disk_size=10,
+        uuid=uuid,
+        name=uuid,
+        vcpu=2,
+        mem=2,
+        disk=uuid,
+        image=image,
+        user=user,
+        xml='#',
+        image_name=image.name,
+        image_parent=image.name,
+        image_size=10,
+        ceph_pool=ceph_pool,
+    )
+    vm.save(force_insert=True)
+    return vm
 
 
 class MyAPITestCase(APITestCase):
