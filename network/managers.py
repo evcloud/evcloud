@@ -85,9 +85,9 @@ class VlanManager:
 
     def get_center_vlan_queryset(self, center):
         """
-        分中心的vlan查询集
+        数据中心的vlan查询集
 
-        :param center: 分中心实例，或id
+        :param center: 数据中心实例，或id
         :return:
             QuerySet()
         """
@@ -110,7 +110,7 @@ class VlanManager:
         """
         筛选vlan查询集
 
-        :param center: 分中心id
+        :param center: 数据中心id
         :param group: 宿主机组id
         :param is_public: 公网或私网
         :param user: 用户实例，用于过滤用户有权限使用的vlan

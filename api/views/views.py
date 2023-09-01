@@ -1996,6 +1996,7 @@ class VlanViewSet(CustomGenericViewSet):
     """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
+    lookup_field = 'id'
 
     @swagger_auto_schema(
         operation_summary='获取网段列表',

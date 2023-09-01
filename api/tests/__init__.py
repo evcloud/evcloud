@@ -113,19 +113,21 @@ def get_or_create_xml_temp(name: str = 'test'):
         return t
 
     t = VmXmlTemplate(
-        name=name, xml=''
+        name=name, xml=imagexml
     )
     t.save(force_insert=True)
     return t
 
 
-def get_or_create_image(name: str = 'test_image', user=None):
+def get_or_create_image(name: str = 'test_image', user=None, pool_name=None):
     """创建 镜像"""
     queryset = Image.objects.filter(name=name).first()
     if queryset is not None:
         return queryset
-
-    pool = get_or_create_ceph_pool()
+    if pool_name:
+        pool = get_or_create_ceph_pool(name=pool_name)
+    else:
+        pool = get_or_create_ceph_pool()
     temp = get_or_create_xml_temp()
     image = Image(
         name=name,
@@ -136,7 +138,10 @@ def get_or_create_image(name: str = 'test_image', user=None):
         user=user,
         xml_tpl=temp,
         size=10,
-        desc='系统镜像测试'
+        desc='系统镜像测试',
+        base_image='centos7',
+        snap='20230714_020646'
+
     )
     super(Image, image).save(force_insert=True)
 
@@ -204,7 +209,7 @@ def get_or_create_pcserver(host_ipv4='127.0.0.1', roon_name=None, servertype_nam
     return pcserver
 
 
-def get_or_create_group(name: str = 'test_group', center_name=None, ):
+def get_or_create_group(name: str = 'test_group', center_name=None, user=None):
     """创建 宿主机组"""
     queryset = Group.objects.filter(name=name).first()
     if queryset is not None:
@@ -216,7 +221,8 @@ def get_or_create_group(name: str = 'test_group', center_name=None, ):
     else:
         center = get_or_create_center()
 
-    user = get_or_create_user()
+    if user is None:
+        user = get_or_create_user()
 
     group = Group(
         center=center,
@@ -279,16 +285,14 @@ def get_or_create_flavor(public: bool = True):
     return flavor
 
 
-def get_or_create_vlan(br: str = 'test_br', tag: int = 0, group_name=None, subnet_ip: str = '192.168.1.1',
+def get_or_create_vlan(br: str = 'test_br', tag: int = 0, group=None, subnet_ip: str = '192.168.1.1',
                        gateway: str = '192.168.1.243'):
     """创建 vlan信息"""
     queryset = Vlan.objects.filter(br=br).first()
     if queryset is not None:
         return queryset
 
-    if group_name:
-        group = get_or_create_group(name=group_name)
-    else:
+    if group is None:
         group = get_or_create_group()
 
     vlan = Vlan(

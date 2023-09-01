@@ -14,8 +14,8 @@ class vdiskTests(MyAPITestCase):
         self.vdisk_ceph_pool2 = get_or_create_ceph_pool_vdisk()
         self.uuid_str = uuid.uuid4()
         self.uuid_str2 = uuid.uuid4()
-        self.vdisk = get_or_create_vdisk(uuid=self.uuid_str, quota=self.vdisk_ceph_pool, remarks='test vdisk')
-        self.vdisk2 = get_or_create_vdisk(uuid=self.uuid_str2, quota=self.vdisk_ceph_pool2, remarks='test vdisk2')
+        self.vdisk = get_or_create_vdisk(uuid=self.uuid_str.hex, quota=self.vdisk_ceph_pool, remarks='test vdisk')
+        self.vdisk2 = get_or_create_vdisk(uuid=self.uuid_str2.hex, quota=self.vdisk_ceph_pool2, remarks='test vdisk2')
 
     def test_list_quota(self):
         self.client.force_login(self.user)
@@ -171,7 +171,7 @@ class vdiskTests(MyAPITestCase):
         self.assertKeysIn(['id', 'name'], response.data['results'][0]['group'])
 
         # search --> uuid、remarks
-        query = parse.urlencode(query={'search': self.uuid_str})
+        query = parse.urlencode(query={'search': self.uuid_str.hex})
         response = self.client.get(f'{url}?{query}')
         print(response.data)
         self.assertEqual(response.status_code, 200)
@@ -182,6 +182,12 @@ class vdiskTests(MyAPITestCase):
         self.assertKeysIn(['id', 'username'], response.data['results'][0]['user'])
         self.assertKeysIn(['id', 'name'], response.data['results'][0]['quota'])
         self.assertKeysIn(['id', 'name'], response.data['results'][0]['group'])
+
+        query = parse.urlencode(query={'search': self.uuid_str})
+        response = self.client.get(f'{url}?{query}')
+        print(response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['results'], [])
 
         query = parse.urlencode(query={'search': 'test'})
         response = self.client.get(f'{url}?{query}')
@@ -222,7 +228,7 @@ class vdiskTests(MyAPITestCase):
         vm_uuid = uuid.uuid4()
         mac_ip = get_or_create_macip(ipv4='192.168.222.2', used=True)
         host = get_or_create_host(ipv4='192.168.222.1', pcserver_host_ipv4='192.168.222.1')
-        self.vm = get_or_create_vm(uuid=vm_uuid, mac_ip=mac_ip, host=host)
+        self.vm = get_or_create_vm(uuid=vm_uuid.hex, mac_ip=mac_ip, host=host)
 
         self.vdisk.vm = self.vm
         self.vdisk.dev = 'vdb'
@@ -280,3 +286,65 @@ class vdiskTests(MyAPITestCase):
         self.assertKeysIn(['id', 'name'], response.data['vm']['quota']['ceph'])
         self.assertKeysIn(['id', 'name'], response.data['vm']['quota']['group'])
         self.assertKeysIn(['uuid', 'ipv4', 'ipv6'], response.data['vm']['vm'])
+
+    def test_list_vdisk_vm_uuid(self):
+        self.client.force_login(self.user)
+        vm_uuid = uuid.uuid4()
+        mac_ip = get_or_create_macip(ipv4='192.168.222.2', used=True)
+        host = get_or_create_host(ipv4='192.168.222.1', pcserver_host_ipv4='192.168.222.1')
+        self.vm = get_or_create_vm(uuid=vm_uuid.hex, mac_ip=mac_ip, host=host)
+
+        # 不正确的 uuid
+        url = reverse('api:vdisk-vm_can_mount', kwargs={'vm_uuid': vm_uuid})
+        response = self.client.get(url)
+        print(response.json())
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['err_code'], 'VmNotExist')
+
+        # uuid
+        url = reverse('api:vdisk-vm_can_mount', kwargs={'vm_uuid': vm_uuid.hex})
+        response = self.client.get(url)
+        print(response.json())
+        self.assertEqual(response.status_code, 200)
+        self.assertKeysIn(
+            ['uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks', 'group'],
+            response.data['results'][0])
+
+        self.assertKeysIn(['id', 'name'], response.data['results'][0]['quota'])
+        self.assertKeysIn(['id', 'username'], response.data['results'][0]['user'])
+        self.assertKeysIn(['id', 'name'], response.data['results'][0]['group'])
+
+        # 云硬盘挂载到虚拟机
+        self.vdisk.vm = self.vm
+        self.vdisk.dev = 'vdb'
+        self.vdisk.save(update_fields=['vm', 'dev'])
+
+        url = reverse('api:vdisk-vm_can_mount', kwargs={'vm_uuid': vm_uuid.hex})
+        response = self.client.get(url)
+        print(response.json())
+        self.assertEqual(response.status_code, 200)
+        self.assertKeysIn(
+            ['uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks', 'group'],
+            response.data['results'][1])
+
+        self.assertKeysIn(['id', 'name'], response.data['results'][1]['quota'])
+        self.assertKeysIn(['id', 'username'], response.data['results'][1]['user'])
+        self.assertKeysIn(['id', 'name'], response.data['results'][1]['group'])
+        self.assertKeysIn(['uuid', 'ipv4', 'ipv6'], response.data['results'][1]['vm'])
+
+    def test_list_vdisk_remark(self):
+        """vdisk 修改备注"""
+
+        self.client.force_login(self.user)
+        url = reverse('api:vdisk-disk-remark', kwargs={'uuid': self.vdisk.uuid})
+        query = parse.urlencode(query={'remark': 'test remark'})
+        response = self.client.patch(f'{url}?{query}')
+        print(response.json())
+        self.assertEqual(response.status_code, 200)
+
+        url = reverse('api:vdisk-disk-remark', kwargs={'uuid': 'bd8b8fb38bc24f27a01d83e37ca800aa'})
+        query = parse.urlencode(query={'remark': 'test remark2'})
+        response = self.client.patch(f'{url}?{query}')
+        print(response.json())
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['err_code'], 'VdiskNotExist')

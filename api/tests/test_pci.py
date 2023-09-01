@@ -1,7 +1,8 @@
+import uuid
 from urllib import parse
 from django.urls import reverse
 from . import MyAPITestCase, get_or_create_user, get_or_create_pci, get_or_create_center, get_or_create_group, \
-    get_or_create_host
+    get_or_create_host, get_or_create_macip, get_or_create_vm
 
 
 class pciTests(MyAPITestCase):
@@ -157,4 +158,30 @@ class pciTests(MyAPITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['results'], [])
 
+    def test_list_pci_vm(self):
+        self.client.force_login(self.user)
+        vm_uuid = uuid.uuid4()
+        mac_ip = get_or_create_macip(ipv4='192.168.222.2', used=True)
+        host = get_or_create_host(ipv4='192.168.222.1', pcserver_host_ipv4='192.168.222.1')
+        self.vm = get_or_create_vm(uuid=vm_uuid.hex, mac_ip=mac_ip, host=host)
 
+        url = reverse('api:pci-device-vm_can_mount', kwargs={'vm_uuid': vm_uuid})
+        response = self.client.get(url)
+        print(response.json())
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['err_code'], 'VmNotExist')
+
+        url = reverse('api:pci-device-vm_can_mount', kwargs={'vm_uuid': vm_uuid.hex})
+        response = self.client.get(url)
+        print(response.json())
+        self.assertEqual(response.status_code, 200)
+        self.assertKeysIn(
+            ['id', 'type', 'vm', 'host', 'attach_time', 'remarks'], response.data['results'][0])
+        self.assertKeysIn(
+            ['id', 'type', 'vm', 'host', 'attach_time', 'remarks'], response.data['results'][0])
+
+        self.assertKeysIn(
+            ['val', 'name'], response.data['results'][0]['type'])
+
+        self.assertKeysIn(
+            ['id', 'ipv4'], response.data['results'][0]['host'])
