@@ -122,7 +122,6 @@ class BasePCIDevice(BaseDevice):
         return self.xml_tpl % {
             'mode': 'subsystem',
             'type': 'pci',
-            'managed': 'yes',
             'domain': self.domain,
             'bus': self.bus,
             'slot': self.slot,
@@ -218,7 +217,16 @@ class GPUDevice(BasePCIDevice):
     """
     GPU设备
     """
-    pass
+
+    def xml_desc(self):
+        return self.xml_tpl % {
+            'mode': 'subsystem',
+            'type': 'pci',
+            'domain': self.domain,
+            'bus': self.bus,
+            'slot': self.slot,
+            'function': self.function
+        }
 
 
 class HardDiskDevice(BasePCIDevice):
