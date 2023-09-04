@@ -185,7 +185,7 @@ class PCIDeviceManager:
 
         :raises:  DeviceError
         """
-        if device.type == device.TYPE_GPU:
+        if device.type == device.TYPE_GPU or device.type == device.TYPE_ETH or device.type == device.TYPE_PHD:
             return GPUDevice(db=device)
 
         if device.type == device.TYPE_HD:
