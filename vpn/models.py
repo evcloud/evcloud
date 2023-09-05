@@ -73,3 +73,23 @@ class VPNConfig(models.Model):
         ordering = ['-id']
         verbose_name = 'VPN配置文件'
         verbose_name_plural = verbose_name
+
+
+class VPNLog(models.Model):
+
+    id = models.AutoField(verbose_name='ID', primary_key=True)
+    username = models.CharField(verbose_name='用户名', max_length=150)
+    timeunix = models.PositiveBigIntegerField(verbose_name='登录时间戳')
+    login_time = models.DateTimeField(verbose_name='登录时间')
+    logout_time = models.DateTimeField(verbose_name='登出时间', null=True, blank=True, default=None)
+    server_local_ip = models.GenericIPAddressField(verbose_name='服务器IP地址')
+    client_ip = models.GenericIPAddressField(verbose_name='客户端IP地址')
+    client_trusted_ip = models.GenericIPAddressField(verbose_name='客户端公网IP地址')
+    client_trusted_port = models.IntegerField(verbose_name='客户端公网端口')
+    bytes_received = models.PositiveBigIntegerField(verbose_name='上行流量', null=True, blank=True, default=None)
+    bytes_sent = models.PositiveBigIntegerField(verbose_name='下行流量', null=True, blank=True, default=None)
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'VPN日志记录'
+        verbose_name_plural = verbose_name
