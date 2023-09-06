@@ -303,7 +303,7 @@ class Vdisk(models.Model):
         if has_auth:
             return """
             <disk type='network' device='disk'>
-                  <driver name='qemu' cache='unsafe' discard='ignore'/>
+                  <driver name='qemu' cache='writethrough' discard='ignore'/>
                   <auth username='{auth_user}'>
                     <secret type='ceph' uuid='{auth_uuid}'/>
                   </auth>
