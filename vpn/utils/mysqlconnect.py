@@ -62,7 +62,7 @@ class VNCLogMysql(object):
         self.close(mysql_cur=mysql_cur, mysql_conn=mysql_conn)
 
     def select(self, mysql_cur, username):
-        sql = f'SELECT id, username, timeunix FROM {db_Table} WHERE username="{username}" ORDER BY  timeunix ASC LIMIT 1'
+        sql = f'SELECT id, username, timeunix FROM {db_Table} WHERE username="{username}" ORDER BY  timeunix DESC LIMIT 1'
 
         try:
             mysql_cur.execute(sql)

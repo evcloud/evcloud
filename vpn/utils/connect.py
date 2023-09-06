@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-sys.path.append('/home/uwsgi/evcloud/vpn')
+sys.path.insert(0, '/home/uwsgi/evcloud/vpn/utils')
 
 from mysqlconnect import VNCLogMysql
 from log import get_logger
