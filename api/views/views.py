@@ -12,6 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.utils import swagger_auto_schema, no_body
 from drf_yasg import openapi
 
+from ceph.models import GlobalConfig
 from vms.manager import VmManager, VmError, FlavorManager
 from vms.api import VmAPI
 from vms.migrate import VmMigrateManager
@@ -942,6 +943,9 @@ class VmsViewSet(CustomGenericViewSet):
         http_host = request.META['HTTP_HOST']
         http_host = http_host.split(':')[0]
         http_scheme = 'https'
+        global_config_obj = GlobalConfig().get_global_config()
+        if global_config_obj:
+            http_scheme = global_config_obj.novnchttp
         url = f'{http_scheme}://{http_host}{url}'
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
                               'vnc': {'id': vnc_id, 'url': url}})
