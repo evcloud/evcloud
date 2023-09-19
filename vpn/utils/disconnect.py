@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import datetime
 import os
 import sys
 import time
@@ -18,7 +19,10 @@ def get_environ_value():
         timeunix = os.environ['time_unix']  # 登出时间
         username = os.environ['common_name']
 
-        logout_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+        # logout_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
+        now_time = datetime.datetime.now()
+        utc_time = now_time - datetime.timedelta(hours=8)  # 减去8小时
+        logout_time = utc_time.strftime("%Y-%m-%d %H:%M:%S")
     except Exception as e:
         log.error(f'无法重vpn获取当前的参数， error:{str(e)}')
         return
@@ -38,8 +42,8 @@ def main():
 
 
 if __name__ == '__main__':
-    os.environ['common_name'] = 'wanghuang'
-    os.environ['time_unix'] = '1693882866'
-    os.environ['bytes_sent'] = '23'
-    os.environ['bytes_received'] = '234'
+    # os.environ['common_name'] = 'wanghuang'
+    # os.environ['time_unix'] = '1693882866'
+    # os.environ['bytes_sent'] = '23'
+    # os.environ['bytes_received'] = '234'
     main()
