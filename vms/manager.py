@@ -50,9 +50,9 @@ class VmManager:
     @staticmethod
     def get_vms_queryset_by_center(center_or_id):
         """
-        获取分中心下的虚拟机查询集
+        获取数据中心下的虚拟机查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
             vms: QuerySet   # success
         :raise VmError
@@ -99,7 +99,7 @@ class VmManager:
         """
         通过条件筛选虚拟机查询集
 
-        :param center_id: 分中心id,大于0有效
+        :param center_id: 数据中心id,大于0有效
         :param group_id: 宿主机组id,大于0有效
         :param host_id: 宿主机id,大于0有效
         :param user_id: 用户id,大于0有效

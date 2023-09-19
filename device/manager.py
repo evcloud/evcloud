@@ -66,7 +66,7 @@ class PCIDeviceManager:
 
     def get_pci_queryset_by_center(self, center):
         """
-        分中心下的PCI设备查询集
+        数据中心下的PCI设备查询集
 
         :param center: Center对象或id
         :return:
@@ -84,7 +84,7 @@ class PCIDeviceManager:
 
     def get_user_pci_queryset_by_center(self, center, user):
         """
-        用户有访问权限的，分中心下的PCI设备查询集
+        用户有访问权限的，数据中心下的PCI设备查询集
 
         :param center: Center对象或id
         :param user: 用户对象
@@ -264,7 +264,7 @@ class PCIDeviceManager:
         """
         通过条件筛选虚拟机查询集
 
-        :param center_id: 分中心id,大于0有效
+        :param center_id: 数据中心id,大于0有效
         :param group_id: 机组id,大于0有效
         :param host_id: 宿主机id,大于0有效
         :param type_id: 设备类型id,大于0有效

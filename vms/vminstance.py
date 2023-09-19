@@ -57,7 +57,7 @@ class VmInstance:
         :param mem: 内存大小
         :param vlan_id: 子网id
         :param user: 用户对象
-        :param center_id: 分中心id
+        :param center_id: 数据中心id
         :param group_id: 宿主机组id
         :param host_id: 宿主机id
         :param ipv4:  指定要创建的虚拟机ip
@@ -504,7 +504,7 @@ class VmInstance:
         """
         向虚拟机挂载硬盘
 
-        *虚拟机和硬盘需要在同一个分中心
+        *虚拟机和硬盘需要在同一个数据中心
 
         :param vdisk: 虚拟硬盘元数据实例
         :return:
@@ -516,7 +516,7 @@ class VmInstance:
         vdisk_uuid = vdisk.uuid
         host = vm.host
         if host.group.center_id != vdisk.quota.group.center_id:
-            raise errors.AcrossCenterConflictError(msg='虚拟机和硬盘不在同一个分中心')
+            raise errors.AcrossCenterConflictError(msg='虚拟机和硬盘不在同一个数据中心')
 
         xml_desc = self.vm_domain.xml_desc()
         disk_list, dev_list = VmXMLBuilder().get_vm_vdisk_dev_list(xml_desc=xml_desc)
@@ -831,10 +831,10 @@ class VmInstance:
         # if new_image.pk == vm.image.pk:
         #     return self.reset_sys_disk()
 
-        # vm和image是否在同一个分中心
+        # vm和image是否在同一个数据中心
         host = vm.host
         if host.group.center_id != new_image.ceph_pool.ceph.center_id:
-            raise errors.AcrossCenterConflictError(msg='虚拟机和系统镜像不在同一个分中心')
+            raise errors.AcrossCenterConflictError(msg='虚拟机和系统镜像不在同一个数据中心')
 
         self._require_shutdown()
 
@@ -1098,7 +1098,7 @@ class VmInstance:
 
         att_ip = vm.get_attach_ip()
         if att_ip:
-            raise errors.VmError(msg='请先分离主机附加的IP')
+            raise errors.VmError(msg='请先移除主机附加的IP')
 
         log_manager = VmLogManager()
 

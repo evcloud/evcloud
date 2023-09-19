@@ -6,7 +6,7 @@ from ipaddress import IPv4Address, AddressValueError, IPv6Address, IPv4Network, 
 from django.db import transaction
 from django.db.models import Subquery
 
-from .models import Vlan, MacIP
+from .models import Vlan, MacIP, ShieldVlan
 from utils.errors import NetworkError
 from compute.managers import CenterManager, GroupManager
 
@@ -61,7 +61,7 @@ class VlanManager:
     MODEL = Vlan
 
     @staticmethod
-    def get_vlan_by_id(vlan_id: int):
+    def get_vlan_by_id(vlan_id: int, user):
         """
         通过id获取镜像元数据模型对象
         :param vlan_id: 镜像id
@@ -75,7 +75,12 @@ class VlanManager:
             raise NetworkError(msg='子网ID参数有误')
 
         try:
-            return Vlan.objects.select_related('group').filter(id=vlan_id).first()
+            vlan_obj = Vlan.objects.select_related('group').filter(id=vlan_id).first()
+            shield_v = vlan_obj.check_shield_vlan(user=user)
+            if shield_v and not user.is_superuser:
+                raise NetworkError(msg=f'该 vlan 无权查询')
+            return vlan_obj
+            # return Vlan.objects.select_related('group').filter(id=vlan_id).first()
         except Exception as e:
             raise NetworkError(msg=f'查询子网时错误,{str(e)}')
 
@@ -145,7 +150,33 @@ class VlanManager:
 
             queryset = queryset.filter(group__in=group_ids).all()
         queryset = queryset.filter(image_specialized=False).all()
+        return self.shield_vlan(queryset=queryset, user=user)
+
+    def shield_vlan(self, queryset, user=None):
+        """屏蔽vlan
+
+        queryset: vlan queryset
+        user : 用户
+        """
+        if not user or user.is_superuser:
+            return queryset
+
+        vlan_obj = self.shield_vlan_obj(user=user)
+        if not vlan_obj:
+            return queryset
+
+        vlan_list = vlan_obj.get_vlan_id()
+
+        if not vlan_list:
+            return queryset
+
+        queryset = queryset.exclude(id__in=vlan_list).all()
+
         return queryset
+
+    def shield_vlan_obj(self, user):
+        obj = ShieldVlan.objects.filter(user_name=user.id).first()
+        return obj
 
     @staticmethod
     def generate_subips(vlan, from_ip, to_ip, write_database=False):

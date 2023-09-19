@@ -26,7 +26,7 @@ def vlan_add(request):
         to_ip = request.POST.get('end_ip')
         vlan_id = request.POST.get('vlan_id')
         write_database = request.POST.get('write_database')
-        vlan = VlanManager().get_vlan_by_id(int(vlan_id))
+        vlan = VlanManager().get_vlan_by_id(int(vlan_id), user=request.user)
 
         if write_database == 'false':
             try:
@@ -54,7 +54,7 @@ def vlan_show(request):
         macips = macips.prefetch_related('ip_vm')  # 反向预查询（避免多次访问数据库）
         return render(request, 'vlan_show.html', {'macips': macips, 'vlan_id': vlan})
     if vlan_id:
-        vlan = VlanManager().get_vlan_by_id(int(vlan_id))
+        vlan = VlanManager().get_vlan_by_id(int(vlan_id), user=request.user)
         macips = VlanManager().get_macips_by_vlan(vlan)
         macips = macips.prefetch_related('ip_vm')  # 反向预查询（避免多次访问数据库）
         if iptype == 'ipv4':

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Vlan, MacIP
+from .models import Vlan, MacIP, ShieldVlan
 
 
 @admin.register(Vlan)
@@ -26,3 +26,15 @@ class MacIPAdmin(admin.ModelAdmin):
             return obj.attach_ip
 
     get_attach_ip.short_description = '附加IP云主机'
+
+
+@admin.register(ShieldVlan)
+class ShieldVlanAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user_name', 'get_vlan_id')
+    list_filter = ('user_name',)
+    search_fields = ('user_name',)
+    filter_horizontal = ('vlan_id',)
+
+    def get_vlan_id(self, obj):
+        return obj.get_vlan_id()
+

@@ -571,6 +571,9 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit == 'UNKNOWN':
+            mem_unit = str.upper(request.data.get('mem_unit', 'UNKNOWN'))
+
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
@@ -2137,7 +2140,7 @@ class VlanViewSet(CustomGenericViewSet):
             return Response(exc.data(), status=exc.code)
 
         try:
-            vlan = VlanManager().get_vlan_by_id(vlan_id=v_id)
+            vlan = VlanManager().get_vlan_by_id(vlan_id=v_id, user=request.user)
         except exceptions.NetworkError as e:
             return Response(e.data(), status=e.code)
 

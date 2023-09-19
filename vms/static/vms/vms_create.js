@@ -114,7 +114,7 @@
         if(!group){
             return;
         }
-        let qs = encode_params({group_id:group});
+        let qs = encode_params({group_id:group, available: 'true'});
         let api = build_absolute_url('/api/v3/vlan/?'+ qs);
         $.ajax({
             url: api,

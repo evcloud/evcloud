@@ -62,7 +62,7 @@ class VmAPI:
         :param mem: 内存大小
         :param vlan_id: 子网id
         :param user: 用户对象
-        :param center_id: 分中心id
+        :param center_id: 数据中心id
         :param group_id: 宿主机组id
         :param host_id: 宿主机id
         :param ipv4:  指定要创建的虚拟机ip
@@ -257,7 +257,7 @@ class VmAPI:
         """
         向虚拟机挂载硬盘
 
-        *虚拟机和硬盘需要在同一个分中心
+        *虚拟机和硬盘需要在同一个数据中心
         :param vm_uuid: 虚拟机uuid
         :param vdisk_uuid: 虚拟硬盘uuid
         :param user: 用户

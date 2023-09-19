@@ -42,9 +42,9 @@ class ImageManager:
 
     def get_image_queryset_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有镜像查询集
+        获取一个数据中心下的所有镜像查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
              images: QuerySet   # success
         :raise ImageError
@@ -93,7 +93,7 @@ class ImageManager:
         """
         通过条件筛选镜像查询集
 
-        :param center_id: 分中心id,大于0有效
+        :param center_id: 数据中心id,大于0有效
         :param sys_type: 系统类型,大于0有效
         :param tag: 镜像标签,大于0有效
         :param search: 关键字筛选条件

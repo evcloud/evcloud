@@ -115,7 +115,7 @@ class VdiskCreateView(View):
             if center_id > 0:
                 groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
         except ComputeError as e:
-            error = ComputeError(msg='查询分中心列表时错误', err=e)
+            error = ComputeError(msg='查询数据中心列表时错误', err=e)
             return error.render(request=request)
 
         context = {

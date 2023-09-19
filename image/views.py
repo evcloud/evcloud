@@ -57,7 +57,7 @@ class ImageView(View):
         try:
             centers = CenterManager().get_center_queryset()
         except ComputeError as e:
-            error = ComputeError(msg='查询分中心时错误', err=e)
+            error = ComputeError(msg='查询数据中心时错误', err=e)
             return error.render(request=request)
 
         context = {

@@ -122,9 +122,9 @@ class VdiskManager:
 
     def get_vdisk_queryset_by_center(self, center):
         """
-        分中心下的硬盘查询集
+        数据中心下的硬盘查询集
 
-        :param center: 分中心对象或id
+        :param center: 数据中心对象或id
         :return:
             QuerySet()
 
@@ -164,7 +164,7 @@ class VdiskManager:
         备注：group和quota参数至少需要一个，优先使用quota参数；
                 当只有group参数时，通过group获取quota
 
-        :param center: 分中心对象或id
+        :param center: 数据中心对象或id
         :param group: 宿主机组对象或id
         :param quota: 硬盘所属的云硬盘CEPH存储池对象或id
         :param size: 硬盘的容量大小
@@ -399,7 +399,7 @@ class VdiskManager:
         """
         通过条件筛选虚拟机查询集
 
-        :param center_id: 分中心id,大于0有效
+        :param center_id: 数据中心id,大于0有效
         :param group_id: 宿主机组id,大于0有效
         :param quota_id: 硬盘存储池配额id,大于0有效
         :param user_id: 用户id,大于0有效

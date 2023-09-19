@@ -191,7 +191,7 @@ class AcrossGroupConflictError(VmError):
 class AcrossCenterConflictError(VmError):
     err_code = 'AcrossCenterConflict'
     code = 409
-    msg = '资源冲突，不属于同一个分中心。'
+    msg = '资源冲突，不属于同一个数据中心。'
 
 
 class VmTooManyVdiskMounted(VmError):

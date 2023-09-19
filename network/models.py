@@ -1,8 +1,12 @@
+from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 
 from compute.models import Center, Group
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+
+User = get_user_model()
 
 
 class Vlan(models.Model):
@@ -74,6 +78,43 @@ class Vlan(models.Model):
     @property
     def tag_display(self):
         return self.get_tag_display()
+
+    def check_shield_vlan(self, user):
+        shield_vlan = ShieldVlan.objects.filter(user_name_id=user.id, vlan_id__id=self.id).first()  # 屏蔽vlan
+        if not shield_vlan:
+            return None
+        return shield_vlan
+
+
+class ShieldVlan(models.Model):
+    """
+    对用户屏蔽vlan
+    """
+    id = models.AutoField(primary_key=True)
+    user_name = models.ForeignKey(to=User, on_delete=models.SET_NULL, related_name='user_vlan_shield', null=True,
+                                  verbose_name='用户')
+    vlan_id = models.ManyToManyField(to=Vlan, related_name='vlan_shield',
+                                     blank=True, verbose_name='vlan')
+
+    class Meta:
+        ordering = ('id',)
+        verbose_name = '对用户屏蔽vlan'
+        verbose_name_plural = '12_对用户屏蔽vlan'
+
+    def get_user_name(self):
+        return self.user_name.username
+
+    def get_vlan_id(self):
+        vlan_list = []
+        for obj in self.vlan_id.all():
+            vlan_list.append(obj.id)
+
+        return vlan_list
+
+    def clean(self):
+        q = ShieldVlan.objects.filter(user_name=self.user_name).all()
+        if len(q) >= 1:
+            raise ValidationError({'user_name': _('该用户记录已存在，不能重复添加。')})
 
 
 class MacIP(models.Model):

@@ -62,7 +62,7 @@ class VmBuilder:
 
         return image
 
-    def get_vlan(self, vlan_id: int):
+    def get_vlan(self, vlan_id: int, user):
         """
            获取子网vlan
 
@@ -73,7 +73,7 @@ class VmBuilder:
            :raise VmError
            """
         try:
-            vlan = self._vlan_manager.get_vlan_by_id(vlan_id)
+            vlan = self._vlan_manager.get_vlan_by_id(vlan_id, user=user)
         except NetworkError as e:
             raise errors.VmError(err=e)
 
@@ -195,7 +195,7 @@ class VmBuilder:
                 groups = self._center_manager.get_user_group_queryset_by_center(center_or_id=center_id, user=user)
                 groups = list(groups)
             except Exception as e:
-                raise errors.VmError(msg=f'查询指定分中心下的宿主机组错误，{str(e)}')
+                raise errors.VmError(msg=f'查询指定数据中心下的宿主机组错误，{str(e)}')
 
             return groups, None
 
@@ -274,7 +274,7 @@ class VmBuilder:
                 raise errors.VmError.from_error(errors.MacIpApplyFailed(msg='指定的IP地址不可用，不存在或已被占用'))
             vlan = macip.vlan
         elif vlan_id and vlan_id > 0:
-            vlan = self.get_vlan(vlan_id)  # 局域子网
+            vlan = self.get_vlan(vlan_id, user=user)  # 局域子网
             if not vlan.group.user_has_perms(user=user):
                 raise errors.GroupAccessDeniedError(msg='无权限使用指定的vlan资源')
 
