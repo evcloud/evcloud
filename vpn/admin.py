@@ -18,7 +18,7 @@ class VPNConfigAdmin(admin.ModelAdmin):
 
 @admin.register(VPNLog)
 class VPNLogAdmin(admin.ModelAdmin):
-    list_display = ['id', 'username', 'timeunix', 'server_local_ip', 'client_ip', 'client_trusted_ip',
+    list_display = ['id', 'username', 'timeunix', 'client_ip', 'client_trusted_ip',
                     'client_trusted_port', 'bytes_received', 'bytes_sent', 'login_time', 'logout_time', ]
 
     search_fields = ['username', 'timeunix', 'server_local_ip', 'client_ip', 'client_trusted_ip']

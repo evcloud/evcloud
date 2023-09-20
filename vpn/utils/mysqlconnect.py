@@ -20,7 +20,7 @@ class VNCLogMysql(object):
     def connect(self):
         try:
             mysql_conn = MySQLdb.connect(host=db_Ip, port=db_Port, user=db_User, password=db_Password,
-                                         database=db_DefaultDB, charset='utf8')
+                                         database=db_DefaultDB, charset='utf8mb4')
         except Exception as e:
             raise ValueError(f'连接数据库时错误，服务IP:{db_Ip}, error: {str(e)}')
         return mysql_conn
