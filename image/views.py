@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, reverse
 from django.views import View
 from rest_framework import status
 
+from ceph.models import GlobalConfig
 from compute.managers import CenterManager, ComputeError
 from novnc.manager import NovncTokenManager
 from utils.errors import NovncError, VmError, NoSuchImage
@@ -205,7 +206,15 @@ class ImageVmOperateView(View):
             vnc_manager = NovncTokenManager()
             try:
                 vnc_id, url = vnc_manager.generate_token(vmid=image.vm_uuid, hostip=image.vm_host.ipv4)
-                url = request.build_absolute_uri(url)
+                # url = request.build_absolute_uri(url)
+                http_host = request.META['HTTP_HOST']
+                # http_host = http_host.split(':')[0]
+                http_scheme = 'https'
+                global_config_obj = GlobalConfig().get_global_config()
+                if global_config_obj:
+                    http_scheme = global_config_obj.novnchttp
+
+                url = f'{http_scheme}://{http_host}{url}'
                 return JsonResponse({'code': status.HTTP_200_OK, 'vnc_url': url, 'code_text': '获取VNC地址成功'},
                                     status=status.HTTP_200_OK)
             except NovncError as e:
