@@ -14,10 +14,10 @@ log = get_logger('vpn_logout')
 
 def get_environ_value():
     try:
-        bytes_received = os.environ['bytes_received']  # 上行流量
-        bytes_sent = os.environ['bytes_sent']  # 下行流量
-        timeunix = os.environ['time_unix']  # 登出时间
-        username = os.environ['common_name']
+        bytes_received = os.environ.get('bytes_received')  # 上行流量
+        bytes_sent = os.environ.get('bytes_sent')  # 下行流量
+        timeunix = os.environ.get('time_unix')  # 登出时间
+        username = os.environ.get('common_name')
 
         # logout_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
         now_time = datetime.datetime.now()

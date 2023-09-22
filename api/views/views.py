@@ -941,7 +941,6 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(e)
 
         http_host = request.META['HTTP_HOST']
-        print(f'http {http_host}')
         # http_host = http_host.split(':')[0]
         http_scheme = 'https'
         global_config_obj = GlobalConfig().get_global_config()

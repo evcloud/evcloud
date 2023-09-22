@@ -5,8 +5,8 @@ import stat
 shutil.copy('/home/uwsgi/evcloud/vpn/utils/connect.py', '/etc/openvpn/server/connect.py')
 shutil.copy('/home/uwsgi/evcloud/vpn/utils/disconnect.py', '/etc/openvpn/server/disconnect.py')
 
-os.chmod('/etc/openvpn/server/connect.py', stat.S_IXUSR + stat.S_IWUSR + stat.S_IRUSR)
-os.chmod('/etc/openvpn/server/disconnect.py', stat.S_IXUSR + stat.S_IWUSR + stat.S_IRUSR)
+os.chmod('/etc/openvpn/server/connect.py', stat.S_IRWXU|stat.S_IRWXG|stat.S_IRWXO)
+os.chmod('/etc/openvpn/server/disconnect.py', stat.S_IRWXU|stat.S_IRWXG|stat.S_IRWXO)
 
 
 def main(file):

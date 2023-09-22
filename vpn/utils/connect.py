@@ -13,13 +13,13 @@ log = get_logger('vpn_login')
 
 def get_environ_value():
     try:
-        username = os.environ['common_name']
-        timeunix = os.environ['time_unix']  # 时间戳、登录时间
+        username = os.environ.get('common_name')
+        timeunix = os.environ.get('time_unix')  # 时间戳、登录时间
 
-        server_local_ip = os.environ['ifconfig_local']  # 服务端地址
-        client_ip = os.environ['ifconfig_pool_remote_ip']  # 客户端地址
-        client_trusted_ip = os.environ['trusted_ip']  # 客户端公网IP地址
-        client_trusted_port = os.environ['trusted_port']  # 客户端公网IP地址端口
+        server_local_ip = os.environ.get('ifconfig_local')  # 服务端地址
+        client_ip = os.environ.get('ifconfig_pool_remote_ip')  # 客户端地址
+        client_trusted_ip = os.environ.get('trusted_ip')  # 客户端公网IP地址
+        client_trusted_port = os.environ.get('trusted_port')  # 客户端公网IP地址端口
 
         # login_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
         now_time = datetime.datetime.now()
