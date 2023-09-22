@@ -1,3 +1,11 @@
+## v3.1.12b4
+2023-09-19
+* novnc url 地址连接优化  提交人：wanghuang
+* vpn 日志字段信息调整  提交人：wanghuang
+* vpn 脚本连接数据库字符集调整  提交人：wanghuang
+* vpn 配置脚本调整文件权限  提交人：wanghuang
+
+
 ## v3.1.12b3
 2023-09-19
 * 增加对用户屏蔽vlan功能  提交人：wanghuang
