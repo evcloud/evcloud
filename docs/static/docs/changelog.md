@@ -1,4 +1,4 @@
-## v3.1.12b4
+## v3.1.13
 2023-09-19
 * novnc url 地址连接优化  提交人：wanghuang
 * vpn 日志字段信息调整  提交人：wanghuang
