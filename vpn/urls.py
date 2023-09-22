@@ -14,5 +14,6 @@ urlpatterns = [
     path('add/', login_required(views.VPNAddView.as_view()), name='vpn-add'),
     path('change/<int:id>/', login_required(views.VPNChangeView.as_view()), name='vpn-change'),
     path('delete/<int:id>/', login_required(views.VPNDeleteView.as_view()), name='vpn-delete'),
+    path('vpnloginlog/', login_required(views.VPNLoginLog.as_view()), name='vpn-login-log'),
     path('', include(router2.urls)),
 ]

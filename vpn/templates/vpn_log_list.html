@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <style>
+        .mouse-hover:hover .mouse-hover-show {
+            display: inline-block;
+        }
+
+        .mouse-hover:hover .mouse-hover-no-show {
+            display: none;
+        }
+
+        .mouse-hover-no-show {
+            display: inline-block;
+        }
+
+        .mouse-hover-show {
+            display: none;
+        }
+    </style>
+{% endblock %}
+{% block title %}VPN登录日志列表{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}" class="btn btn-outline-primary">VPN列表 ({{ vpn_user_count }})</a></strong></span>
+                <span class="card-title"><strong><a href="" class="btn btn-primary">VPN登录日志列表 ({{ count }})</a></strong></span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">创建VPN</a></span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <form class="input-group">
+                            <input class="form-control" name="search" type="text" value="{{ search }}"
+                                   placeholder="用户名">
+                            <button class="btn btn-sm btn-outline-primary" type="submit">搜索</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <table class="table table-hover text-center table-vm-list"
+                   style="word-wrap:break-word;word-break:break-all;">
+                <thead class="thead-light">
+                <tr>
+                    {#                    <th></th>#}
+                    <th>用户名</th>
+                    <th>ASSIGN_ip</th>
+                    <th>客户端IP</th>
+                    <th>客户端公网端口</th>
+                    <th>上行流量</th>
+                    <th>下行流量</th>
+                    <th>登录时间</th>
+                    <th>登出时间</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in vpn_log %}
+                    <tr>
+                        <td>{{ obj.username }}</td>
+                        <td>{{ obj.client_ip }}</td>
+                        <td>{{ obj.client_trusted_ip }}</td>
+                        <td>{{ obj.client_trusted_port }}</td>
+                        <td>{{ obj.bytes_received | default_if_none:"" }}</td>
+                        <td>{{ obj.bytes_sent | default_if_none:"" }}</td>
+                        <td>{{ obj.login_time }}</td>
+                        <td>{{ obj.logout_time | default_if_none:"" }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+            {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
+                {% if page_list %}
+                    <div class="card-footer">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination" style="margin:0;">
+                                {% if previous %}
+                                    <li class="page-item"><a class="page-link" href="?{{ previous }}"
+                                                             aria-label="Previous"><span
+                                            aria-hidden="true">&laquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link"
+                                                                        aria-hidden="true">&laquo;</span></li>
+                                {% endif %}
+                                {% for disp, query, active in page_list %}
+                                    {% if active %}
+                                        <li class="page-item active"><a class="page-link"
+                                                                        href="?{{ query }}">{{ disp }}</a></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if next %}
+                                    <li class="page-item"><a class="page-link" href="?{{ next }}"
+                                                             aria-label="Next"><span
+                                            aria-hidden="true">&raquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link"
+                                                                        aria-hidden="true">&raquo;</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+{#    <script>#}
+{#        window.onload = function () {#}
+{#            $("#nav_vpn_list").addClass("active");// 激活列表导航栏#}
+{#        };#}
+{#    </script>#}
+{% endblock %}
