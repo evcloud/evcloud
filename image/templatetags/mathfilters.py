@@ -1,7 +1,5 @@
 from django import template
-from django.utils import formats
-from django.utils.html import avoid_wrapping
-from django.utils.translation import ugettext, ungettext
+
 
 register = template.Library()
 

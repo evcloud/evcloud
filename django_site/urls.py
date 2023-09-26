@@ -29,7 +29,6 @@ from drf_yasg import openapi
 
 from utils.errors import SystemRunningError
 from version import __version__, __version_git_change_set__
-from django.conf.urls import handler500
 
 from . import admin_site  # admin后台一些设置
 
