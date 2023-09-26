@@ -76,6 +76,9 @@ class VlanManager:
 
         try:
             vlan_obj = Vlan.objects.select_related('group').filter(id=vlan_id).first()
+            if vlan_obj is None:
+                return None
+
             shield_v = vlan_obj.check_shield_vlan(user=user)
             if shield_v and not user.is_superuser:
                 raise NetworkError(msg=f'该 vlan 无权查询')
