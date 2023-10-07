@@ -1,3 +1,11 @@
+## v4.0.0
+2023-10-07
+* django 版本由 3.2.13 升级到 4.2.5 提交人：wanghuang   
+* 版本字段更改：ugettext_lazy, ugettext, ungettext
+* 增加 vpn 登录信息界面  提交人：wanghuang
+* 优化 vlan 信息不存在时， 屏蔽vlan功能错误提示  提交人：wanghuang
+
+
 ## v3.1.13
 2023-09-19
 * novnc url 地址连接优化  提交人：wanghuang
