@@ -26,8 +26,8 @@
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}" class="btn btn-outline-primary">VPN列表 ({{ vpn_user_count }})</a></strong></span>
-                <span class="card-title"><strong><a href="" class="btn btn-primary">VPN登录日志列表 ({{ count }})</a></strong></span>
+                <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}" class="btn btn-outline-primary">VPN用户 ({{ vpn_user_count }})</a></strong></span>
+                <span class="card-title"><strong><a href="" class="btn btn-primary">VPN登录日志 ({{ count }})</a></strong></span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">创建VPN</a></span>
             </div>
             <div class="card-body">

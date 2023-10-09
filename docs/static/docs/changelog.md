@@ -4,6 +4,8 @@
 * 版本字段更改：ugettext_lazy, ugettext, ungettext
 * 增加 vpn 登录信息界面  提交人：wanghuang
 * 优化 vlan 信息不存在时， 屏蔽vlan功能错误提示  提交人：wanghuang
+* novnc升级到1.4.0 ,spice升级到0.3.0
+* 优化 novnc 数据库连接
 
 
 ## v3.1.13
