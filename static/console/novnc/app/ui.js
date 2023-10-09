@@ -8,7 +8,8 @@
 
 import * as Log from '../core/util/logging.js';
 import _, { l10n } from './localization.js';
-import { isTouchDevice, isSafari, hasScrollbarGutter, dragThreshold }
+import { isTouchDevice, isMac, isIOS, isAndroid, isChromeOS, isSafari,
+         hasScrollbarGutter, dragThreshold }
     from '../core/util/browser.js';
 import { setCapture, getPointerEvent } from '../core/util/events.js';
 import KeyTable from "../core/input/keysym.js";
@@ -88,7 +89,6 @@ const UI = {
 
         // Adapt the interface for touch screen devices
         if (isTouchDevice) {
-            document.documentElement.classList.add("noVNC_touch");
             // Remove the address bar
             setTimeout(() => window.scrollTo(0, 1), 100);
         }
@@ -337,8 +337,6 @@ const UI = {
             .addEventListener('click', UI.toggleClipboardPanel);
         document.getElementById("noVNC_clipboard_text")
             .addEventListener('change', UI.clipboardSend);
-        document.getElementById("noVNC_clipboard_clear_button")
-            .addEventListener('click', UI.clipboardClear);
     },
 
     // Add a call to save settings when the element changes,
@@ -591,10 +589,20 @@ const UI = {
 
         // Consider this a movement of the handle
         UI.controlbarDrag = true;
+
+        // The user has "followed" hint, let's hide it until the next drag
+        UI.showControlbarHint(false, false);
     },
 
-    showControlbarHint(show) {
+    showControlbarHint(show, animate=true) {
         const hint = document.getElementById('noVNC_control_bar_hint');
+
+        if (animate) {
+            hint.classList.remove("noVNC_notransition");
+        } else {
+            hint.classList.add("noVNC_notransition");
+        }
+
         if (show) {
             hint.classList.add("noVNC_active");
         } else {
@@ -968,11 +976,6 @@ const UI = {
         Log.Debug("<< UI.clipboardReceive");
     },
 
-    clipboardClear() {
-        document.getElementById('noVNC_clipboard_text').value = "";
-        UI.rfb.clipboardPasteFrom("");
-    },
-
     clipboardSend() {
         const text = document.getElementById('noVNC_clipboard_text').value;
         Log.Debug(">> UI.clipboardSend: " + text.substr(0, 40) + "...");
@@ -1047,6 +1050,7 @@ const UI = {
         UI.rfb.addEventListener("serververification", UI.serverVerify);
         UI.rfb.addEventListener("credentialsrequired", UI.credentials);
         UI.rfb.addEventListener("securityfailure", UI.securityFailed);
+        UI.rfb.addEventListener("clippingviewport", UI.updateViewDrag);
         UI.rfb.addEventListener("capabilities", UI.updatePowerButton);
         UI.rfb.addEventListener("clipboard", UI.clipboardReceive);
         UI.rfb.addEventListener("bell", UI.bell);
@@ -1133,7 +1137,9 @@ const UI = {
             } else {
                 UI.showStatus(_("Failed to connect to server"), 'error');
             }
-        } else if (UI.getSetting('reconnect', false) === true && !UI.inhibitReconnect) {
+        }
+        // If reconnecting is allowed process it now
+        if (UI.getSetting('reconnect', false) === true && !UI.inhibitReconnect) {
             UI.updateVisualState('reconnecting');
 
             const delay = parseInt(UI.getSetting('reconnect_delay'));
@@ -1321,13 +1327,25 @@ const UI = {
 
         const scaling = UI.getSetting('resize') === 'scale';
 
+        // Some platforms have overlay scrollbars that are difficult
+        // to use in our case, which means we have to force panning
+        // FIXME: Working scrollbars can still be annoying to use with
+        //        touch, so we should ideally be able to have both
+        //        panning and scrollbars at the same time
+
+        let brokenScrollbars = false;
+
+        if (!hasScrollbarGutter) {
+            if (isIOS() || isAndroid() || isMac() || isChromeOS()) {
+                brokenScrollbars = true;
+            }
+        }
+
         if (scaling) {
             // Can't be clipping if viewport is scaled to fit
             UI.forceSetting('view_clip', false);
             UI.rfb.clipViewport  = false;
-        } else if (!hasScrollbarGutter) {
-            // Some platforms have scrollbars that are difficult
-            // to use in our case, so we always use our own panning
+        } else if (brokenScrollbars) {
             UI.forceSetting('view_clip', true);
             UI.rfb.clipViewport = true;
         } else {
@@ -1358,7 +1376,8 @@ const UI = {
 
         const viewDragButton = document.getElementById('noVNC_view_drag_button');
 
-        if (!UI.rfb.clipViewport && UI.rfb.dragViewport) {
+        if ((!UI.rfb.clipViewport || !UI.rfb.clippingViewport) &&
+            UI.rfb.dragViewport) {
             // We are no longer clipping the viewport. Make sure
             // viewport drag isn't active when it can't be used.
             UI.rfb.dragViewport = false;
@@ -1375,6 +1394,8 @@ const UI = {
         } else {
             viewDragButton.classList.add("noVNC_hidden");
         }
+
+        viewDragButton.disabled = !UI.rfb.clippingViewport;
     },
 
 /* ------^-------
@@ -1741,7 +1762,7 @@ const UI = {
 };
 
 // Set up translations
-const LINGUAS = ["cs", "de", "el", "es", "fr", "ja", "ko", "nl", "pl", "pt_BR", "ru", "sv", "tr", "zh_CN", "zh_TW"];
+const LINGUAS = ["cs", "de", "el", "es", "fr", "it", "ja", "ko", "nl", "pl", "pt_BR", "ru", "sv", "tr", "zh_CN", "zh_TW"];
 l10n.setup(LINGUAS);
 if (l10n.language === "en" || l10n.dictionary !== undefined) {
     UI.prime();
