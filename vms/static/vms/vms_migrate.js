@@ -27,7 +27,7 @@
         }
         let vm_uuid = $("#id-vm-uuid").text();
         let api = build_absolute_url('api/v3/vms/' + vm_uuid + '/migrate/' + host_id + '/');
-        let msg = "确定迁移云主机吗？";
+        let msg = "确定迁移虚拟机吗？";
         let force = obj_data.force;
         if (force === "force"){
             msg += "您已选择强制迁移";
@@ -48,14 +48,14 @@
             success: function (data, status, xhr) {
                 loading.destroy();
                 if (xhr.status === 201){
-                    alert('云主机迁移成功');
+                    alert('虚拟机迁移成功');
                 }else{
-                    alert("云主机迁移失败！" + data.code_text);
+                    alert("虚拟机迁移失败！" + data.code_text);
                 }
             },
             error: function (xhr) {
                 loading.destroy();
-                let msg = '云主机迁移失败!';
+                let msg = '虚拟机迁移失败!';
                 try{
                     msg = xhr.responseJSON.code_text;
                 }catch (e) {}

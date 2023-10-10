@@ -461,10 +461,10 @@ class VdiskManager:
         if not disk.user_has_perms(user):
             raise errors.VdiskAccessDenied(msg='没有权限访问此硬盘')
 
-        # 搁置云主机，不允许
+        # 搁置虚拟机，不允许
         status_bool = vm_normal_status(vm=disk.vm)  # 没有挂载的云硬盘 vm 为None
         if status_bool is False:
-            return errors.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作')
+            return errors.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作')
 
         disk.remarks = remarks
         try:

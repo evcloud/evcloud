@@ -243,7 +243,7 @@
                 node_vm_task.html(VM_TASK_CN[op]);
             },
             function () {
-                alert('已成功删除云主机');
+                alert('已成功删除虚拟机');
                 let url = $("#id-vm-list-url").attr('href');
                 if (url)
                     location.href = url;
@@ -350,7 +350,7 @@
     $(".btn-vm-snap-create").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定创建云主机系统快照吗？'))
+        if(!confirm('确定创建虚拟机系统快照吗？'))
 		    return;
 
         let remarks = prompt('请输入快照备注信息：');
@@ -364,7 +364,7 @@
                 if(snap_table[0]){
                     snap_table.find("tr:first").after(html);
                 }else{
-                    html = `<p><strong>云主机快照</strong></p>
+                    html = `<p><strong>虚拟机快照</strong></p>
                             <table class="table table-vm-snap-list" style="word-wrap:break-word;word-break:break-all;">
                             <thead class="thead-light">
                             <tr>
@@ -413,7 +413,7 @@
     $("#id-vm-snap-content").on('click', '.btn-vm-snap-delete', function (e) {
         e.preventDefault();
 
-        if(!confirm('确定删除此云主机系统快照吗？'))
+        if(!confirm('确定删除此虚拟机系统快照吗？'))
 		    return;
 
         let snap_id = $(this).attr('data-snap-id');
@@ -460,7 +460,7 @@
     // 回滚虚拟机到指定快照
     $("#id-vm-snap-content").on('click', '.btn-vm-snap-rollback', function (e) {
         e.preventDefault();
-        if(!confirm('确定回滚云主机到此快照吗？请谨慎操作。'))
+        if(!confirm('确定回滚虚拟机到此快照吗？请谨慎操作。'))
 		    return;
 
         let snap_id = $(this).attr('data-snap-id');

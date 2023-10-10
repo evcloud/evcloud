@@ -4,8 +4,8 @@
 * 版本字段更改：ugettext_lazy, ugettext, ungettext
 * 增加 vpn 登录信息界面  提交人：wanghuang
 * 优化 vlan 信息不存在时， 屏蔽vlan功能错误提示  提交人：wanghuang
-* novnc升级到1.4.0 ,spice升级到0.3.0
-* 优化 novnc 数据库连接
+* novnc升级到1.4.0 ,spice升级到0.3.0  提交人：wanghuang
+* 优化 novnc 数据库连接  提交人：wanghuang
 
 
 ## v3.1.13
@@ -26,7 +26,7 @@
 * 优化镜像接口查询参数  提交人：wanghuang
 * 修复 pci 获取模板出现的问题  提交人：wanghuang
 * 修复 可用总资源配额和已用配额信息接口参数无效问题  提交人：wanghuang
-* 修复创建云主机内存单位参数无效问题  提交人：wanghuang
+* 修复创建虚拟机内存单位参数无效问题  提交人：wanghuang
 * 测试用例：mcaip接口、pci接口、资源统计信息接口、云硬盘数据接口、宿主机组接口、宿主机接口、硬件配置样式接口、系统镜像接口、  提交人：wanghuang
 
 
@@ -37,11 +37,11 @@
 
 
 ## v3.1.12b1
-* 增加云主机搁置、恢复服务功能  提交人：wanghuang
+* 增加虚拟机搁置、恢复服务功能  提交人：wanghuang
 * 增加PCIe设备类型：本地硬盘、PCIE硬盘 挂载功能  提交人：wanghuang
-* 增加云主机附加、移除、搜索IP功能  提交人：wanghuang
+* 增加虚拟机附加、移除、搜索IP功能  提交人：wanghuang
 * 界面文案修改  提交人：wanghuang
-* 优化搁置云主机管理员权限  提交人：wanghuang
+* 优化搁置虚拟机管理员权限  提交人：wanghuang
 * 优化附加IP用完后报错 提交人：wanghuang
 
 
@@ -62,11 +62,11 @@
 * 统计报表界面优化； 提交人：shun
 * 增加后台管理导航页面； 提交人：shun
 * 镜像增加标准化的字段； 提交人：shun
-* 云主机删除时卸载硬盘失败的bug修复，vm元数据对象删除后会设置主键uuid为None，而后无法正常获取到uuid;  提交人：shun
+* 虚拟机删除时卸载硬盘失败的bug修复，vm元数据对象删除后会设置主键uuid为None，而后无法正常获取到uuid;  提交人：shun
 * vm模型增加镜像相关字段，记录vm创建时的系统镜像信息，供后续vm的相关操作使用；因为image信息可能随时修改，所以不再通过外键使用最新的image信息;  提交人：shun
 * 分中心修改成数据中心； 提交人：wanghuang
 * 增加全局配置表页面title、novnchttp使用协议； 提交人：wanghuang
-* 增加增加云主机初始化用户信息； 提交人：wanghuang
+* 增加增加虚拟机初始化用户信息； 提交人：wanghuang
 * 日志格式修改;  提交人：wanghuang
 
 

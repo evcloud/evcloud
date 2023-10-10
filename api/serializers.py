@@ -348,7 +348,7 @@ class VdiskDetailSerializer(serializers.ModelSerializer):
         if vm:
             if vm.mac_ip:
                 return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4, 'ipv6': vm.mac_ip.ipv6}
-            return {'uuid': vm.hex_uuid, 'ipv4': ''}  # 搁置的云主机没有ip
+            return {'uuid': vm.hex_uuid, 'ipv4': ''}  # 搁置的虚拟机没有ip
         return vm
 
     @staticmethod

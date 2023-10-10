@@ -118,7 +118,7 @@ class PCIMountView(View):
                 queryset = vm_manager.filter_vms_queryset(host_id=host.id, search=search, user_id=user.id,
                                                           related_fields=related_fields)
         except vm_manager.VmError as e:
-            error = vm_manager.VmError (msg='查询挂载云主机列表时错误', err=e)
+            error = vm_manager.VmError (msg='查询挂载虚拟机列表时错误', err=e)
             return error.render(request=request)
 
         context = self.get_vms_list_context(request=request, queryset=queryset, context=context)

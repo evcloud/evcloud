@@ -18,16 +18,16 @@
     }
     </style>
 {% endblock %}
-{% block title %}云主机详情{% endblock %}
+{% block title %}虚拟机详情{% endblock %}
 
 {% block boby %}
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>云主机详情</strong></span>
+                <span class="card-title"><strong>虚拟机详情</strong></span>
                 <div class="float-right">
-                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建云主机</a>
-                    <a class="btn btn-sm btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">云主机列表</a>
+                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建虚拟机</a>
+                    <a class="btn btn-sm btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">虚拟机列表</a>
                 </div>
             </div>
             <div class="card-body">
@@ -56,7 +56,7 @@
                                                 <strong>运行状态：</strong><span id="vm_status_{{ vm.hex_uuid }}"></span>
                                             <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button>
                                             {% else %}
-                                                <strong>云主机状态：</strong><span id="vm_status_{{ vm.vm_status }}" title="{{ vm.vm_status }}">{{ vm.get_vm_status_display }}</span>
+                                                <strong>虚拟机状态：</strong><span id="vm_status_{{ vm.vm_status }}" title="{{ vm.vm_status }}">{{ vm.get_vm_status_display }}</span>
                                             {% endif %}
                                         </div>
                                         <div class="col-4"><strong>创建者：</strong>{{vm.user}}</div>
@@ -270,7 +270,7 @@
                         {% endwith %}
                         </li>
                         <li class="list-group-item" id="id-vm-snap-content">
-                            <p><strong>云主机快照</strong></p>
+                            <p><strong>虚拟机快照</strong></p>
                             {% if vm.sys_snaps %}
                                 <table class="table table-default text-center table-vm-snap-list"
                                        style="word-wrap:break-word;word-break:break-all;">
@@ -360,7 +360,7 @@
                         {% endwith %}
                         </li>
                         <li class="list-group-item" id="id-vm-snap-content">
-                            <p><strong>云主机状态</strong></p>
+                            <p><strong>虚拟机状态</strong></p>
                             <div class="row">
                                 <div class="col-6">
                                     <canvas id="chart-vm-cpu"></canvas>

@@ -91,8 +91,8 @@ class Host(models.Model):
     vcpu_allocated = models.IntegerField(default=0, verbose_name='已用CPU（核）')
     mem_total = models.IntegerField(default=30, verbose_name='虚拟内存(GB)')
     mem_allocated = models.IntegerField(default=0, verbose_name='已用内存(GB)')
-    vm_limit = models.IntegerField(default=10, verbose_name='本地云主机数量上限')
-    vm_created = models.IntegerField(default=0, verbose_name='本地已创建云主机数量')
+    vm_limit = models.IntegerField(default=10, verbose_name='本地虚拟机数量上限')
+    vm_created = models.IntegerField(default=0, verbose_name='本地已创建虚拟机数量')
     enable = models.BooleanField(default=True, verbose_name='启用宿主机')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
 

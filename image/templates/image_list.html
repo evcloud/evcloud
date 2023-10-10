@@ -70,13 +70,13 @@
                     <th style="width: 60px">启用</th>
                     <th style="width: 90px">系统类型</th>
                     <th style="width: 100px">镜像标签</th>
-                    <th style="width: 180px">云主机模板</th>
+                    <th style="width: 180px">虚拟机模板</th>
                     <th style="width: 220px">生效快照</th>
 
                     <th>备注</th>
                     {% if user.is_superuser %}
                         <th style="width: 150px">
-                            <span>云主机状态</span>
+                            <span>虚拟机状态</span>
                             <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i
                                     class="fa fa-sync"></i>
                             </button>
@@ -178,7 +178,7 @@
                                 {% else %}
                                     <div class="btn-group">
                                         <a class="btn btn-sm btn-primary"
-                                           href="{% url 'image:image-vm-create' image_id=image.id %}">创建云主机</a>
+                                           href="{% url 'image:image-vm-create' image_id=image.id %}">创建虚拟机</a>
                                         <a class="btn btn-sm btn-danger operation-button"
                                            href="{% url 'image:image-delete' id=image.id %}">删除镜像</a>
                                     </div>
@@ -215,13 +215,13 @@
                                     </div>
                                     {% if user.is_superuser and  image.vm_uuid %}
                                         <div class="form-group row">
-                                            <label for="name" class="col-sm-1 col-form-label">云主机ID</label>
+                                            <label for="name" class="col-sm-1 col-form-label">虚拟机ID</label>
                                             <span class="col-sm-3 form-control-plaintext"
                                                   id="name">{{ image.vm_uuid }}</span>
-                                            <label for="version" class="col-sm-1 col-form-label">云主机内存</label>
+                                            <label for="version" class="col-sm-1 col-form-label">虚拟机内存</label>
                                             <span class="col-sm-3 form-control-plaintext"
                                                   id="version">{{ image.vm_mem }}GB</span>
-                                            <label for="sys_type_display" class="col-sm-1 col-form-label">云主机CPU</label>
+                                            <label for="sys_type_display" class="col-sm-1 col-form-label">虚拟机CPU</label>
                                             <span class="col-sm-3 form-control-plaintext"
                                                   id="sys_type_display">{{ image.vm_vcpu }}核</span>
                                         </div>

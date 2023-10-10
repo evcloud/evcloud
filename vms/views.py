@@ -148,7 +148,7 @@ class VmMountDiskView(View):
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
         if not vm:
             try:
-                raise VmNotExistError(msg='【挂载硬盘时错误】【云主机不存在】')
+                raise VmNotExistError(msg='【挂载硬盘时错误】【虚拟机不存在】')
             except VmNotExistError as error:
                 return error.render(request=request)
 
@@ -197,7 +197,7 @@ class VmDetailView(View):
                                                                         'mac_ip__vlan'))
         if not vm:
             try:
-                raise VmNotExistError(msg='【挂载硬盘时错误】【云主机不存在】')
+                raise VmNotExistError(msg='【挂载硬盘时错误】【虚拟机不存在】')
             except VmNotExistError as error:
                 return error.render(request=request)
 
@@ -215,7 +215,7 @@ class VmEditView(View):
             'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
             try:
-                raise VmNotExistError(msg='云主机不存在')
+                raise VmNotExistError(msg='虚拟机不存在')
             except VmNotExistError as error:
                 return error.render(request=request)
 
@@ -237,7 +237,7 @@ class VmResetView(View):
             'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
             try:
-                raise VmNotExistError(msg='云主机不存在')
+                raise VmNotExistError(msg='虚拟机不存在')
             except VmNotExistError as error:
                 return error.render(request=request)
 
@@ -257,7 +257,7 @@ class VmMigrateView(View):
             'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
             try:
-                raise VmNotExistError(msg='云主机不存在')
+                raise VmNotExistError(msg='虚拟机不存在')
             except VmNotExistError as error:
                 return error.render(request=request)
 
@@ -277,7 +277,7 @@ class VmLiveMigrateView(View):
             'host', 'host__group', 'host__group__center', 'image', 'mac_ip'))
         if not vm:
             try:
-                raise VmNotExistError(msg='云主机不存在')
+                raise VmNotExistError(msg='虚拟机不存在')
             except VmNotExistError as error:
                 return error.render(request=request)
 
@@ -298,7 +298,7 @@ class VmMountPCIView(View):
         vm = vm_manager.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host__group', 'image'))
         if not vm:
             try:
-                raise VmNotExistError(msg='【挂载PCI设备时错误】【云主机不存在】')
+                raise VmNotExistError(msg='【挂载PCI设备时错误】【虚拟机不存在】')
             except VmNotExistError as error:
                 return error.render(request=request)
 
@@ -341,13 +341,13 @@ class VmSysDiskExpandView(View):
             'host', 'image__ceph_pool__ceph'))
         if not vm:
             try:
-                raise VmNotExistError(msg='云主机不存在')
+                raise VmNotExistError(msg='虚拟机不存在')
             except VmNotExistError as error:
                 return error.render(request=request)
 
         if not vm.user_has_perms(request.user):
             try:
-                raise VmAccessDeniedError(msg='没有此云主机的访问权限')
+                raise VmAccessDeniedError(msg='没有此虚拟机的访问权限')
             except VmAccessDeniedError as error:
                 return error.render(request=request)
 

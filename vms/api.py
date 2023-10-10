@@ -42,7 +42,7 @@ class VmAPI:
 
         status_bool = vm_normal_status(vm=vm, flag=flag)
         if status_bool is False:
-            raise errors.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作')
+            raise errors.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作')
 
         return vm
 
@@ -305,7 +305,7 @@ class VmAPI:
 
         status_bool = vm_normal_status(vm=vdisk.vm)
         if status_bool is False:
-            raise errors.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作')
+            raise errors.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作')
 
         vm = vdisk.vm
         if not vm:
@@ -418,7 +418,7 @@ class VmAPI:
 
         status_bool = vm_normal_status(vm=vm)
         if status_bool is False:
-            raise errors.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作')
+            raise errors.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作')
 
         return VmInstance(vm=vm).umount_pci_device(device=device)
 

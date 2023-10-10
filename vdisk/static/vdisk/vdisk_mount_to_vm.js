@@ -89,7 +89,7 @@
     $(".btn-disk-mount").click(function (e) {
         e.preventDefault();
 
-        if(!confirm("确定挂载到此云主机吗？"))
+        if(!confirm("确定挂载到此虚拟机吗？"))
             return;
 
         let disk_uuid = $("#id-mount-disk-uuid").text();

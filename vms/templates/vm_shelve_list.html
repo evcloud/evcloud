@@ -4,13 +4,13 @@
 
 {% block head %}
 {% endblock %}
-{% block title %}搁置云主机列表{% endblock %}
+{% block title %}搁置虚拟机列表{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:vms-list' %}">在线云主机 ({{ queryset_normal }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:vms-list' %}">在线虚拟机 ({{ queryset_normal }})</a></strong></span>
                 <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:shelve-list' %}">已搁置 ({{ count }})</a></strong></span>
             </div>
             <p></p>
@@ -50,7 +50,7 @@
                     <th>CPU/MEM</th>
                     <th>云硬盘</th>
                     <th width="180px">备注</th>
-                    <th>云主机状态</th>
+                    <th>虚拟机状态</th>
                     <th>操作</th>
                 </tr>
                 </thead>

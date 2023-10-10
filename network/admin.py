@@ -25,7 +25,7 @@ class MacIPAdmin(admin.ModelAdmin):
         if obj.attach_ip:
             return obj.attach_ip
 
-    get_attach_ip.short_description = '附加IP云主机'
+    get_attach_ip.short_description = '附加IP虚拟机'
 
 
 @admin.register(ShieldVlan)

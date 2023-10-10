@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(primary_key=True, serialize=False)),
                 ('vm_uuid', models.CharField(max_length=36, verbose_name='虚拟机UUID')),
                 ('src_host_ipv4', models.GenericIPAddressField(verbose_name='源宿主机IP')),
-                ('src_undefined', models.BooleanField(default=False, verbose_name='是否已清理源云主机')),
+                ('src_undefined', models.BooleanField(default=False, verbose_name='是否已清理源虚拟机')),
                 ('src_is_free', models.BooleanField(default=False, verbose_name='是否释放源宿主机资源')),
                 ('dst_host_ipv4', models.GenericIPAddressField(verbose_name='目标宿主机IP')),
                 ('dst_is_claim', models.BooleanField(default=False, verbose_name='是否扣除目标宿主机资源')),

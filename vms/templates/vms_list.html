@@ -5,16 +5,16 @@
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
 {% endblock %}
-{% block title %}云主机列表{% endblock %}
+{% block title %}虚拟机列表{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:vms-list' %}">在线云主机 ({{ count }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:vms-list' %}">在线虚拟机 ({{ count }})</a></strong></span>
                 <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:shelve-list' %}">已搁置 ({{ shelve_count }})</a></strong></span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vm-create' %}">
-                    创建云主机
+                    创建虚拟机
                 </a></span>
             </div>
             <div class="card-body">

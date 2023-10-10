@@ -48,7 +48,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
             {% if user.is_authenticated %}
-                <li class="nav-item" id="nav_vm_list"><a class="nav-link" href="{% url "vms:vms-list" %}">云主机</a></li>
+                <li class="nav-item" id="nav_vm_list"><a class="nav-link" href="{% url "vms:vms-list" %}">虚拟机</a></li>
                 <li class="nav-item" id="nav_vdisk_list"><a class="nav-link" href="{% url "vdisk:vdisk-list" %}">云硬盘</a></li>
                 <li class="nav-item" id="nav_pci_list"><a class="nav-link" href="{% url "device:pci-list" %}">本地资源</a></li>
                 <li class="nav-item" id="nav_image_list"><a class="nav-link" href="{% url "image:image-list" %}">镜像</a></li>

@@ -692,7 +692,7 @@ class MigrateTask(models.Model):
     src_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, null=True, blank=True,
                                  default=None, related_name='src_migrate_log_set')
     src_host_ipv4 = models.GenericIPAddressField(verbose_name='源宿主机IP')
-    src_undefined = models.BooleanField(default=False, verbose_name="是否已清理源云主机")
+    src_undefined = models.BooleanField(default=False, verbose_name="是否已清理源虚拟机")
     src_is_free = models.BooleanField(default=False, verbose_name="是否释放源宿主机资源")
 
     dst_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, null=True, blank=True,

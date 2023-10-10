@@ -109,7 +109,7 @@ class VmMigrateManager:
         if src_host.id == dest_host.id:
             raise errors.VmError(msg='不能在同一个宿主机上迁移')
         if dest_host.group_id != src_host.group_id:
-            raise errors.VmError(msg='目标宿主机和云主机宿主机不在同一个机组')
+            raise errors.VmError(msg='目标宿主机和虚拟机宿主机不在同一个机组')
 
         # 检测目标宿主机是否处于活动状态
         try:
@@ -288,7 +288,7 @@ class VmMigrateManager:
                 raise errors.VmError(msg=f'{str(e)}')
 
         ok = True
-        # 是否已清理源云主机
+        # 是否已清理源虚拟机
         if not task_log.src_undefined:
             ok = False
 
@@ -356,7 +356,7 @@ class VmMigrateManager:
         if old_host.id == new_host.id:
             raise errors.VmError(msg='不能在同一个宿主机上迁移')
         if new_host.group_id != old_host.group_id:
-            raise errors.VmError(msg='目标宿主机和云主机宿主机不在同一个机组')
+            raise errors.VmError(msg='目标宿主机和虚拟机宿主机不在同一个机组')
 
         # 检测目标宿主机是否处于活动状态
         alive = VirtHost(host_ipv4=new_host.ipv4).host_alive()

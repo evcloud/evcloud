@@ -673,7 +673,7 @@ class VmInstance:
 
         status_bool = vm_normal_status(vm=snap.vm)
         if status_bool is False:
-            raise errors.VmAccessDeniedError(msg='云主机搁置状态， 拒绝此操作')
+            raise errors.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作')
 
         return snap
 
@@ -1141,7 +1141,7 @@ class VmInstance:
         """恢复搁置的虚拟机"""
         vm = self.vm
         if vm.vm_status == vm.VmStatus.NORMAL.value:
-            raise errors.VmAccessDeniedError(msg='云主机拒绝此操作')
+            raise errors.VmAccessDeniedError(msg='虚拟机拒绝此操作')
 
         return VmBuilder().unshelve_create_vm(vm=vm, group_id=group_id, host_id=host_id,
                                               mac_ip_id=mac_ip_id, user=user)

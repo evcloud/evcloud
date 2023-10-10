@@ -1,6 +1,6 @@
 ## 关于EVCloud
 
-> EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。
+> EVCloud是一个轻量级虚拟机管理平台，追求功能实用，运行稳定，维护简单。
 主要技术栈：CEPH、MariaDB、Django、libvirt。
 
 ### 展示

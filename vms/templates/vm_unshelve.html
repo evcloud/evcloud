@@ -5,7 +5,7 @@
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
 {% endblock %}
-{% block title %}恢复云主机选项{% endblock %}
+{% block title %}恢复虚拟机选项{% endblock %}
 
 {% block boby %}
 
@@ -14,9 +14,9 @@
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title">恢复云主机</span>
+                <span class="card-title">恢复虚拟机</span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:shelve-list' %}">
-                    搁置云主机列表
+                    搁置虚拟机列表
                 </a></span>
             </div>
             <div class="card-body align-content-center">

@@ -257,7 +257,7 @@ class ImageVmOperateView(View):
         if operation == 'get-vm-status':
             if not image.vm_uuid:
                 return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '获取虚拟机状态成功',
-                                     'status': {'status_code': 11, 'status_text': '尚未创建镜像云主机'}},
+                                     'status': {'status_code': 11, 'status_text': '尚未创建镜像虚拟机'}},
                                     status=status.HTTP_200_OK)
             try:
                 vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, host=image.vm_host)
