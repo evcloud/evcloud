@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Vm',
             fields=[
-                ('uuid', models.UUIDField(primary_key=True, serialize=False, verbose_name='虚拟机UUID')),
+                ('uuid', models.CharField(max_length=36, primary_key=True, serialize=False, verbose_name='虚拟机UUID')),
                 ('name', models.CharField(max_length=200, verbose_name='名称')),
                 ('vcpu', models.IntegerField(verbose_name='CPU数')),
                 ('mem', models.IntegerField(help_text='单位MB', verbose_name='内存大小')),
