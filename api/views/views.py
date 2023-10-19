@@ -2096,6 +2096,7 @@ class VlanViewSet(CustomGenericViewSet):
             user = None
 
         queryset = VlanManager().filter_vlan_queryset(center=center_id, group=group_id, is_public=public, user=user)
+        queryset = VlanManager().shield_vlan(queryset=queryset, user=request.user)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
