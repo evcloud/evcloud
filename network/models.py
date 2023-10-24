@@ -111,11 +111,6 @@ class ShieldVlan(models.Model):
 
         return vlan_list
 
-    def clean(self):
-        q = ShieldVlan.objects.filter(user_name=self.user_name).all()
-        if len(q) >= 1:
-            raise ValidationError({'user_name': _('该用户记录已存在，不能重复添加。')})
-
 
 class MacIP(models.Model):
     """
