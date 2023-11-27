@@ -1,3 +1,11 @@
+## v4.0.1
+2023-11-27
+* 云主机全部修改成虚拟机  提交人：wanghuang   
+* tidb 4.2.1 迁移文件遇见primary_key无法修改问题  提交人：wanghuang   
+* 优化屏蔽vlan功能：不能重复添加数据、创建虚拟机管理员无法选择网络问题  提交人：wanghuang   
+* 依赖包更新  提交人：wanghuang   
+
+
 ## v4.0.0
 2023-10-07
 * django 版本由 3.2.13 升级到 4.2.5 提交人：wanghuang   
