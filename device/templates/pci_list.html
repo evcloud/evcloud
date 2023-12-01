@@ -51,7 +51,7 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-type">设备类型</label>
+                            <label class="input-group-text" for="id-type">资源类型</label>
                         </div>
                         <select name="type" class="custom-select" id="id-type">
                             <option value="">--</option>
@@ -76,7 +76,8 @@
                 <tr>
 {#                    <th></th>#}
                     <th>ID</th>
-                    <th>设备类型</th>
+                    <th>资源类型</th>
+                    <th>地址</th>
                     <th>宿主机</th>
                     <th>虚拟机</th>
                     <th>挂载时间</th>
@@ -90,6 +91,7 @@
 {#                        <td><input type="checkbox" class="item-checkbox" value="{{ dev.id }}" name="select_dev"></td>#}
                         <td>{{ dev.id }}</td>
                         <td>{{ dev.type_display }}</td>
+                        <td>{{ dev.address }}</td>
                         <td>{{ dev.host.ipv4 }}</td>
                         {% if dev.vm %}
                             <td>{{ dev.vm.ipv4 }}</td>

@@ -21,8 +21,8 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=100, unique=True, verbose_name='类型名称')),
             ],
             options={
-                'verbose_name': 'PCIe设备',
-                'verbose_name_plural': '02_PCIe设备类型',
+                'verbose_name': '本地资源',
+                'verbose_name_plural': '02_本地资源',
             },
         ),
         migrations.CreateModel(
@@ -38,8 +38,8 @@ class Migration(migrations.Migration):
                 ('vm', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='vms.Vm')),
             ],
             options={
-                'verbose_name': 'PCIe设备',
-                'verbose_name_plural': '01_PCIe设备',
+                'verbose_name': '本地资源',
+                'verbose_name_plural': '01_本地资源',
             },
         ),
     ]

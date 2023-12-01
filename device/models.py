@@ -22,7 +22,7 @@ class PCIDevice(models.Model):
     )
 
     id = models.AutoField(primary_key=True)
-    type = models.SmallIntegerField(choices=CHOICES_TYPE, default=TYPE_UNKNOW, verbose_name='设备类型')
+    type = models.SmallIntegerField(choices=CHOICES_TYPE, default=TYPE_UNKNOW, verbose_name='资源类型')
     vm = models.ForeignKey(to=Vm, null=True, blank=True, related_name='device_set', on_delete=models.SET_NULL,
                            verbose_name='挂载于虚拟机')
     attach_time = models.DateTimeField(null=True, blank=True, verbose_name='挂载时间')
@@ -33,8 +33,8 @@ class PCIDevice(models.Model):
 
     class Meta:
         ordering = ['-id']
-        verbose_name = 'PCIe设备' 
-        verbose_name_plural = 'PCIe设备'
+        verbose_name = '本地资源'
+        verbose_name_plural = '本地资源'
 
     def __str__(self):
         return self.host.ipv4 + '_' + self.address

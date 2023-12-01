@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='PCIDevice',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('type', models.SmallIntegerField(choices=[(0, '未知设备'), (1, 'GPU')], default=0, verbose_name='设备类型')),
+                ('type', models.SmallIntegerField(choices=[(0, '未知设备'), (1, 'GPU')], default=0, verbose_name='资源类型')),
                 ('attach_time', models.DateTimeField(blank=True, null=True, verbose_name='挂载时间')),
                 ('enable', models.BooleanField(default=True, verbose_name='状态')),
                 ('remarks', models.TextField(blank=True, null=True, verbose_name='备注')),
@@ -26,8 +26,8 @@ class Migration(migrations.Migration):
                 ('vm', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='device_set', to='vms.Vm', verbose_name='挂载于虚拟机')),
             ],
             options={
-                'verbose_name': 'PCIe设备',
-                'verbose_name_plural': 'PCIe设备',
+                'verbose_name': '本地资源',
+                'verbose_name_plural': '本地资源',
                 'ordering': ['-id'],
             },
         ),

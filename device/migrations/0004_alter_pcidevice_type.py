@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='pcidevice',
             name='type',
-            field=models.SmallIntegerField(choices=[(0, '未知设备'), (1, 'GPU'), (2, '网卡')], default=0, verbose_name='设备类型'),
+            field=models.SmallIntegerField(choices=[(0, '未知设备'), (1, 'GPU'), (2, '网卡')], default=0, verbose_name='资源类型'),
         ),
     ]
