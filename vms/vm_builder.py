@@ -1,6 +1,9 @@
 import uuid
 
-from ceph.managers import RadosError, ImageExistsError
+from django.utils import timezone
+from func_timeout import func_set_timeout
+
+from ceph.managers import RadosError, ImageExistsError, ImageNotExistsError
 from compute.managers import CenterManager, GroupManager, HostManager, ComputeError
 from image.managers import ImageManager, ImageError
 from image.models import Image
@@ -778,3 +781,48 @@ class VmBuilder:
         # 挂载：
         self.mount_vdisks(vm=vm)
         return vm
+
+    @func_set_timeout(1200)
+    def user_flatten_image(self, image_id, vm_uuid, new_image_name):
+        """
+            用户发布镜像操作
+        """
+
+        image = self.get_image(image_id)
+        try:
+            rbd_manager = image.get_rbd_manager()
+        except Exception as e:
+            raise errors.VmError(msg=str(e))
+
+        ceph_pool = image.ceph_pool
+        data_pool = ceph_pool.data_pool if ceph_pool.has_data_pool else None
+
+        # 检查镜像名是否存在
+
+        is_exists = rbd_manager.image_exists(image_name=new_image_name)
+        if is_exists:
+            raise errors.ImageError(msg=f'image：{new_image_name} exist.')
+
+        # 流程：当前用户快照镜像创建镜像快照 -- 将快照保护 -- 当前用户快照镜像clone -- rbd flatten 操作
+        snap_name = timezone.now().strftime("%Y%m%d_%H%M%S")
+        try:
+            rbd_manager.create_snap(image_name=vm_uuid, snap_name=snap_name, protected=True)
+
+        except RadosError as e:
+            raise errors.VmError(msg=f'create snapshot for image error, {str(e)}')
+
+        try:
+            rbd_manager.clone_image(snap_image_name=vm_uuid, snap_name=snap_name,
+                                    new_image_name=new_image_name, data_pool=data_pool)
+
+        except (RadosError, ImageExistsError) as e:
+            raise errors.VmError(msg=f'clone image error, {str(e)}')
+
+        try:
+            rbd_manager.flatten_image(image_name=new_image_name)
+        except Exception as e:   # ImageNotExistsError
+            rbd_manager.remove_image(image_name=new_image_name)
+            rbd_manager.remove_snap(image_name=vm_uuid, snap=snap_name)
+            raise errors.VmError(msg=f'flatten image error, {str(e)}')
+
+        return True

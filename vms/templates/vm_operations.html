@@ -1,43 +1,45 @@
+{% load i18n %}
 <div class="btn-group">
     {% if vm.vm_status == vm.VmStatus.NORMAL.value %}
         <button type="button" class="btn btn-sm btn-info btn-vnc-open" data-vm-uuid="{{ vm.hex_uuid }}">
         <i class="fa fa-desktop"></i></button>
     {% endif %}
     <button type="button" class="btn btn-sm btn-success dropdown-toggle" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
-        aria-expanded="false">操作
+        aria-expanded="false">{% translate '操作' %}
     </button>
     <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
     {% if vm.vm_status == vm.VmStatus.NORMAL.value %}
-        <button class="dropdown-item bg-success btn-vm-start" type="button" data-vm-uuid="{{ vm.hex_uuid }}">开机</button>
-        <button class="dropdown-item bg-warning btn-vm-shutdown" type="button" data-vm-uuid="{{ vm.hex_uuid }}">软关机</button>
-        <button class="dropdown-item bg-warning btn-vm-reboot" type="button" data-vm-uuid="{{ vm.hex_uuid }}">软重启</button>
-        <button class="dropdown-item bg-warning btn-vm-poweroff" type="button" data-vm-uuid="{{ vm.hex_uuid }}">硬断电</button>
-        <button class="dropdown-item bg-danger btn-vm-delete" type="button" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
-        <button class="dropdown-item bg-danger btn-vm-delete-force" type="button" data-vm-uuid="{{ vm.hex_uuid }}">强制删除</button>
-        <button class="dropdown-item bg-warning btn-vm-shelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">搁置</button>
-        <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">挂载云硬盘</a>
-        <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-pci' vm_uuid=vm.hex_uuid %}">挂载本地设备</a>
-        <a class="dropdown-item bg-info" href="{% url 'vms:vm-attach-ip' vm_uuid=vm.hex_uuid %}">附加IP地址</a>
-        <a class="dropdown-item bg-info" href="{% url 'vms:vm-edit' vm_uuid=vm.hex_uuid %}">修改配置</a>
-        <a class="dropdown-item bg-info" href="{% url 'vms:vm-reset' vm_uuid=vm.hex_uuid %}">重置镜像</a>
+        <button class="dropdown-item bg-success btn-vm-start" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '开机' %}</button>
+        <button class="dropdown-item bg-warning btn-vm-shutdown" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '软关机' %}</button>
+        <button class="dropdown-item bg-warning btn-vm-reboot" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '软重启' %}</button>
+        <button class="dropdown-item bg-warning btn-vm-poweroff" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '硬断电' %}</button>
+        <button class="dropdown-item bg-danger btn-vm-delete" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '删除' %}</button>
+        <button class="dropdown-item bg-danger btn-vm-delete-force" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '强制删除' %}</button>
+        <button class="dropdown-item bg-warning btn-vm-shelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '搁置' %}</button>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-disk' vm_uuid=vm.hex_uuid %}">{% translate '挂载云硬盘' %}</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-mount-pci' vm_uuid=vm.hex_uuid %}">{% translate '挂载本地设备' %}</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-attach-ip' vm_uuid=vm.hex_uuid %}">{% translate '附加IP地址' %}</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-edit' vm_uuid=vm.hex_uuid %}">{% translate '修改配置' %}</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-reset' vm_uuid=vm.hex_uuid %}">{% translate '重置镜像' %}</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-image-release' vm_uuid=vm.hex_uuid %}">{% translate '发布镜像' %}</a>
         {% if vm.is_sys_disk_local %}
-            <button class="dropdown-item bg-info disabled">关机迁移</button>
-            <button class="dropdown-item bg-info disabled">动态迁移</button>
-            <button class="dropdown-item bg-info disabled">创建快照</button>
-            <button class="dropdown-item bg-warning disabled">丢失恢复</button>
-            <button class="dropdown-item bg-info disabled">系统盘扩容</button>
+            <button class="dropdown-item bg-info disabled">{% translate '关机迁移' %}</button>
+            <button class="dropdown-item bg-info disabled">{% translate '动态迁移' %}</button>
+            <button class="dropdown-item bg-info disabled">{% translate '创建快照' %}</button>
+            <button class="dropdown-item bg-warning disabled">{% translate '丢失恢复' %}</button>
+            <button class="dropdown-item bg-info disabled">{% translate '系统盘扩容' %}</button>
         {% else %}
-        <a class="dropdown-item bg-info" href="{% url 'vms:vm-migrate' vm_uuid=vm.hex_uuid %}">关机迁移</a>
-        <a class="dropdown-item bg-info" href="{% url 'vms:vm-live-migrate' vm_uuid=vm.hex_uuid %}">动态迁移</a>
-        <button class="dropdown-item bg-info btn-vm-snap-create" type="button" data-vm-uuid="{{ vm.hex_uuid }}">创建快照</button>
-        <button class="dropdown-item bg-warning btn-vm-miss-fix" type="button" data-vm-uuid="{{ vm.hex_uuid }}">丢失恢复</button>
-        <a class="dropdown-item bg-info" href="{% url 'vms:vm-sys-disk-expand' vm_uuid=vm.hex_uuid %}">系统盘扩容</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-migrate' vm_uuid=vm.hex_uuid %}">{% translate '关机迁移' %}</a>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-live-migrate' vm_uuid=vm.hex_uuid %}">{% translate '动态迁移' %}</a>
+        <button class="dropdown-item bg-info btn-vm-snap-create" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '创建快照' %}</button>
+        <button class="dropdown-item bg-warning btn-vm-miss-fix" type="button" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '丢失恢复' %}</button>
+        <a class="dropdown-item bg-info" href="{% url 'vms:vm-sys-disk-expand' vm_uuid=vm.hex_uuid %}">{% translate '系统盘扩容' %}' %}</a>
 
         {% endif %}
     {% else %}
 {#        <button class="dropdown-item bg-warning btn-vm-unshelve" type="button" data-vm-uuid="{{ vm.hex_uuid }}">恢复</button>#}
-        <a class="dropdown-item bg-warning" href="{% url 'vms:unshelve' vm_uuid=vm.hex_uuid %}">恢复</a>
-        <button class="dropdown-item bg-danger btn-vm-delshelve" data-vm-uuid="{{ vm.hex_uuid }}">删除</button>
+        <a class="dropdown-item bg-warning" href="{% url 'vms:unshelve' vm_uuid=vm.hex_uuid %}">{% translate '恢复' %}</a>
+        <button class="dropdown-item bg-danger btn-vm-delshelve" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '删除' %}</button>
     {% endif %}
     </div>
 </div>

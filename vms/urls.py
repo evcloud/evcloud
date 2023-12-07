@@ -27,6 +27,7 @@ urlpatterns = [
     re_path(r'attach-ip/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmAttachIPView.as_view()),
             name='vm-attach-ip'),
     re_path(r'detach-ip/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmDetachIPView.as_view()),
-            name='vm-detach-ip')
+            name='vm-detach-ip'),
+    re_path('image-release/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmImageRelease.as_view()), name='vm-image-release')
 
 ]

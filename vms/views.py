@@ -1,9 +1,11 @@
 from django.db.models import Q
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.views.generic.base import View
 from django.contrib.auth import get_user_model
 
 from utils.errors import VmAccessDeniedError, VmNotExistError, Unsupported, NoMacIPError, NotFoundError
+from .api import VmAPI
 from .manager import VmManager, VmError, FlavorManager
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from vdisk.manager import VdiskManager, VdiskError
@@ -498,3 +500,83 @@ class VmDetachIPView(View):
         context['mac_ip'] = mac_page
         context['count'] = paginator.count
         return context
+
+
+class VmImageRelease(View):
+    """镜像发布"""
+
+    def get(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get('vm_uuid', '')
+        vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('image',))
+        context = {'vm_uuid': vm_uuid, 'vm': vm, 'image': vm.image}
+        return render(request, 'vm_image_release.html', context=context)
+
+    def post(self, request, *args, **kwargs):
+        """
+        1. 获取vm
+        2. 克隆一个快照 name:test1
+        3. flatten test1 这个快照
+        4. 成功后信息写入数据库 操作系统镜像
+        5. 成功返回
+        """
+        vm_uuid = kwargs.get('vm_uuid', '')
+        try:
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('image',))
+        except Exception as e:
+            error = VmError(code=400, msg=str(e))
+            return error.render(request=request)
+
+        image_name = request.POST.get('image-name')
+        image_name = '-user_' + image_name  # 新的镜像名称
+
+        vm_api = VmAPI()
+        try:
+            vm_api.vm_user_release_image(vm=vm, new_image_name=image_name)
+        except Exception as e:
+            error = VmError(code=400, msg=str(e))
+            return error.render(request=request)
+
+        # 将新数据写入数据库
+
+        image_label = request.POST.get('image-label') #镜像标签
+        image_os_type = request.POST.get('image-os-type') #系统类型
+        image_os_release = request.POST.get('image-os-release') #系统发行版本
+        image_os_version = request.POST.get('image-os-version') #系统发行编号
+        image_os_architecture = request.POST.get('image-os-architecture') #系统架构
+        image_os_boot_mode = request.POST.get('image-os-boot_mode') #系统启动方式
+        image_size = request.POST.get('image-size') #镜像大小
+        image_default_user = request.POST.get('image-default_user') #系统默认登录用户名
+        image_default_password = request.POST.get('image-default_password') #系统默认登录密码
+        image_desc = request.POST.get('image-desc') #描述
+        image_enable = request.POST.get('image-enable') #启用
+        if image_enable == 'on':
+            image_enable = True
+        else:
+            image_enable = False
+
+        user_id = request.user.id
+        try:
+            Image.objects.create(
+                name=image_name,
+                sys_type=int(image_os_type),
+                version=image_os_version,
+                release=image_os_release,
+                architecture=int(image_os_architecture),
+                boot_mode=int(image_os_boot_mode),
+                ceph_pool=vm.ceph_pool,
+                tag=int(image_label),
+                base_image=image_name,
+                enable=image_enable,
+                xml_tpl=vm.image.xml_tpl,
+                user_id=user_id,
+                desc=image_desc,
+                default_user=image_default_user,
+                default_password=image_default_password,
+                size=int(image_size)
+            )
+        except Exception as e:
+            error = ImageError(code=400, msg=f'image: {image_name} exists, the entered data cannot be saved. '
+                                             f'Please contact the administrator.')
+            return error.render(request=request)
+
+        return redirect(to=reverse('image:image-list'))

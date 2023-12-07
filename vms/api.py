@@ -1,3 +1,5 @@
+from func_timeout import FunctionTimedOut
+
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
 from compute.managers import HostManager
@@ -608,4 +610,20 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
         queryset = AttachmentsIPManager().get_attach_ip_list(vm_uuid=vm_uuid)
         return queryset
+
+    def vm_user_release_image(self, vm, new_image_name):
+        image_id = vm.image_id
+        vm_uuid = vm.get_uuid()
+
+        try:
+
+            flatten_bool = VmBuilder().user_flatten_image(image_id=image_id, vm_uuid=vm_uuid,
+                                                          new_image_name=new_image_name)
+        except FunctionTimedOut as e:
+            raise errors.VmError(msg=f'image release timeout. Please contact the administrator.')
+
+        except Exception as e:
+            raise e
+
+        return flatten_bool
 
