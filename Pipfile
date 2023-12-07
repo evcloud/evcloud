@@ -9,7 +9,7 @@ verify_ssl = true
 django = "==4.2.5"
 mysqlclient = "==2.1.0"
 djangorestframework = "==3.14.0"
-libvirt-python = "==9.3.0"
+#libvirt-python = "==9.3.0"    # 不适用于 pip 安装， 通过 dnf install python3-libvirt.x86_64
 websockify = "==0.10.0"
 djangorestframework-simplejwt = "==5.2.0"
 django-debug-toolbar = "*"
@@ -19,6 +19,7 @@ pyjwt = "==2.4.0"
 coreapi = "==2.3.3"
 requests = "==2.28.0"
 django-tidb = "==4.2.3"
+func-timeout = "==4.3.5"
 
 [requires]
 python_version = "3.9"

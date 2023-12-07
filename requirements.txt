@@ -9,6 +9,7 @@ django-tidb==4.2.3
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.0
 drf-yasg==1.21.7
+func-timeout==4.3.5
 idna==3.6
 inflection==0.5.1
 itypes==1.2.0
