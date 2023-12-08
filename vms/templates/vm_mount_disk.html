@@ -16,12 +16,12 @@
             </div>
             <div class="card-body">
                 <div class="">
-                    <div class="text-primary h4">云主机信息:</div>
+                    <div class="text-primary h4">虚拟机信息:</div>
                     <div class="">
                         <dl class="row">
-                            <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
-                            <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
-                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
+                            <dt class="col-2 text-right">虚拟机UUID:</dt> <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
+                            <dt class="col-2 text-right">虚拟机IP地址:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image_name }}</dd>
                             <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
                             <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                         </dl>

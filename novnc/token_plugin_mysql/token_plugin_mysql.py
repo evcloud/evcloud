@@ -32,7 +32,10 @@ class TokenMysql(object):
     @staticmethod
     def lookup(token):
         try:
-            mysql_conn = MySQLdb.connect(db_Ip, db_User, db_Password, db_DefaultDB, db_Port, charset='utf8')
+            # mysql_conn = MySQLdb.connect(db_Ip, db_User, db_Password, db_DefaultDB, db_Port, charset='utf8')
+            mysql_conn = MySQLdb.connect(host=db_Ip, port=db_Port, user=db_User, password=db_Password,
+                                         database=db_DefaultDB, charset='utf8mb4')
+            # mysql_conn = mysql.connector.connect(**config) # tidb
         except:
             print(f'connect to the server faild!server:{db_Ip}')
             return None

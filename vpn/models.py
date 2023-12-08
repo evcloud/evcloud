@@ -16,7 +16,8 @@ class VPNAuth(models.Model):
     password = models.CharField(verbose_name='密码', max_length=64)
     active = models.BooleanField(verbose_name='激活状态', default=True)
     create_time = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
-    modified_time = models.DateTimeField(verbose_name='创建时间', auto_now=True)
+    modified_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
+    expired_time = models.DateTimeField(verbose_name='过期时间', auto_now=False, default=None, blank=True, null=True)
     create_user = models.CharField(verbose_name='创建者', max_length=255, default='')
     modified_user = models.CharField(verbose_name='修改者', max_length=255, default='')
     remarks = models.CharField(verbose_name='备注', max_length=255, default='', blank=True)
@@ -71,4 +72,24 @@ class VPNConfig(models.Model):
     class Meta:
         ordering = ['-id']
         verbose_name = 'VPN配置文件'
+        verbose_name_plural = verbose_name
+
+
+class VPNLog(models.Model):
+
+    id = models.AutoField(verbose_name='ID', primary_key=True)
+    username = models.CharField(verbose_name='用户名', max_length=150)
+    timeunix = models.PositiveBigIntegerField(verbose_name='登录时间戳')
+    login_time = models.DateTimeField(verbose_name='登录时间')
+    logout_time = models.DateTimeField(verbose_name='登出时间', null=True, blank=True, default=None)
+    server_local_ip = models.GenericIPAddressField(verbose_name='服务器IP地址')
+    client_ip = models.GenericIPAddressField(verbose_name='ASSIGN_IP')
+    client_trusted_ip = models.GenericIPAddressField(verbose_name='客户端IP')
+    client_trusted_port = models.IntegerField(verbose_name='客户端公网端口')
+    bytes_received = models.PositiveBigIntegerField(verbose_name='上行流量', null=True, blank=True, default=None)
+    bytes_sent = models.PositiveBigIntegerField(verbose_name='下行流量', null=True, blank=True, default=None)
+
+    class Meta:
+        ordering = ['-id']
+        verbose_name = 'VPN日志记录'
         verbose_name_plural = verbose_name

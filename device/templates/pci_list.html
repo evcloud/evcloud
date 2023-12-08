@@ -12,15 +12,15 @@
         <div class="card">
             <div class="card-header">
                 <span class="card-title"><strong>PCI设备列表 ({{ count }})</strong></span>
-                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vm-create' %}">
-                    创建云主机
-                </a></span>
+{#                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vm-create' %}">#}
+{#                    创建虚拟机#}
+{#                </a></span>#}
             </div>
             <div class="card-body">
                 <form role="form" class="form-horizontal" method="get" action="">
                     <div class="input-group" style="">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-center">分中心</label>
+                            <label class="input-group-text" for="id-center">数据中心</label>
                         </div>
                         <select name="center" class="custom-select" id="id-center">
                             <option value="">--</option>
@@ -51,7 +51,7 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-type">设备类型</label>
+                            <label class="input-group-text" for="id-type">资源类型</label>
                         </div>
                         <select name="type" class="custom-select" id="id-type">
                             <option value="">--</option>
@@ -65,7 +65,7 @@
                             <label class="input-group-text">关键字</label>
                         </div>
                         <input type="text" class="form-control" name="search" value="{{ search }}"
-                               placeholder="搜 IP、备注"/>
+                               placeholder="搜 IP地址、备注"/>
                         <span class="input-group-text"></span>
                         <button type="submit" class="btn btn-primary form-control">筛选</button>
                     </div>
@@ -76,7 +76,8 @@
                 <tr>
 {#                    <th></th>#}
                     <th>ID</th>
-                    <th>设备类型</th>
+                    <th>资源类型</th>
+                    <th>地址</th>
                     <th>宿主机</th>
                     <th>虚拟机</th>
                     <th>挂载时间</th>
@@ -90,6 +91,7 @@
 {#                        <td><input type="checkbox" class="item-checkbox" value="{{ dev.id }}" name="select_dev"></td>#}
                         <td>{{ dev.id }}</td>
                         <td>{{ dev.type_display }}</td>
+                        <td>{{ dev.address }}</td>
                         <td>{{ dev.host.ipv4 }}</td>
                         {% if dev.vm %}
                             <td>{{ dev.vm.ipv4 }}</td>

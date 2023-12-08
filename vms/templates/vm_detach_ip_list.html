@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load  sizeformat %}
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
+{% endblock %}
+{% block title %}虚拟机使用的IP地址列表{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong><a class="btn btn-primary" href="">移除IP地址列表</a></strong></span>
+            </div>
+            <div class="">
+                <div class="text-primary h4">虚拟机信息:</div>
+                <div class="">
+                    <dl class="row">
+                        <dt class="col-2 text-right">虚拟机UUID:</dt>
+                        <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
+                        <dt class="col-2 text-right">虚拟机IP地址:</dt>
+                        <dd class="col-10">{{ vm.ipv4 }}</dd>
+                        <dt class="col-2 text-right">镜像:</dt>
+                        <dd class="col-10">{{ vm.image_name }}</dd>
+                        <dt class="col-2 text-right">机组:</dt>
+                        <dd class="col-10">{{ vm.host.group }}</dd>
+                        <dt class="col-2 text-right">备注:</dt>
+                        <dd class="col-10">{{ vm.remarks }}</dd>
+                    </dl>
+                </div>
+            </div>
+            <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
+            <div>
+                <div class="text-success h4 col-sm-4">可供移除的IP地址：</div>
+{#                <div class="float-right col-sm-8">#}
+{#                    <form role="form" class="form-horizontal" method="get" action="">#}
+{#                        <div class="input-group" style="">#}
+{#                            <div class="input-group-prepend">#}
+{#                                <label class="input-group-text" for="id-center">关键字</label>#}
+{#                            </div>#}
+{#                            <input type="text" class="form-control" name="search" value="{{ search }}"#}
+{#                                   placeholder="搜 UUID、IP、备注"/>#}
+{#                            <span class="input-group-prepend"></span>#}
+{#                            <button type="submit" class="btn btn-primary form-control">筛选</button>#}
+{#                        </div>#}
+{#                    </form>#}
+{#                </div>#}
+            </div>
+            <table class="table table-bordered table-vm-list"
+                   style="word-wrap:break-word;word-break:break-all;">
+                <tr>
+                    <th>编号</th>
+                    <th>IP地址</th>
+                    <th>MAC地址</th>
+                    <th>网桥名</th>
+                    <th>VLAN描述</th>
+                    <th>标签</th>
+                    <th>备注</th>
+                     <th>主机</th>
+                    <th>操作</th>
+                </tr>
+                {% for ip in mac_ip %}
+                    <tr id="tr_">
+                        <td>{{ ip.id }}</td>
+                        <td>{{ ip.sub_ip.ipv4 }}</td>
+                        <td>{{ ip.sub_ip.mac }}</td>
+                        <td>{{ ip.sub_ip.vlan.br }}</td>
+                        <td>{{ ip.sub_ip.vlan.name }}</td>
+                        <td>{{ ip.sub_ip.vlan.get_tag_display }}</td>
+                        <td>{{ ip.sub_ip.desc }}</td>
+                        <td>{{ ip.sub_ip.get_attach_ip_vm }}</td>
+
+                        <td>
+                            <button class="btn btn-primary btn-vm-detach-ip" data-detach-ip-id="{{ ip.sub_ip.id }}"
+                                    data-vm-uuid="{{ vm_uuid }}">移除IP地址
+                            </button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+            {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
+                {% if page_list %}
+                    <div class="card-footer">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination" style="margin:0;">
+                                {% if previous %}
+                                    <li class="page-item"><a class="page-link" href="?{{ previous }}"
+                                                             aria-label="Previous"><span
+                                            aria-hidden="true">&laquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link"
+                                                                        aria-hidden="true">&laquo;</span>
+                                    </li>
+                                {% endif %}
+
+                                {% for disp, query, active in page_list %}
+                                    {% if active %}
+                                        <li class="page-item active"><a class="page-link"
+                                                                        href="?{{ query }}">{{ disp }}</a></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link"
+                                                                 href="?{{ query }}">{{ disp }}</a></li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if next %}
+                                    <li class="page-item"><a class="page-link" href="?{{ next }}"
+                                                             aria-label="Next"><span
+                                            aria-hidden="true">&raquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link"
+                                                                        aria-hidden="true">&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_attach_ip.js' %}"></script>
+    {#    <script type="text/javascript" src="{% static 'vms/vms_shelve_list.js' %}"></script>#}
+{% endblock %}
+

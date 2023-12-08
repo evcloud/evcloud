@@ -4,7 +4,7 @@ from django.db.models import Q
 from utils.ev_libvirt.virt import VirtError, VmDomain
 from compute.managers import GroupManager, ComputeError, CenterManager, HostManager
 from .models import PCIDevice
-from .device import GPUDevice
+from .device import GPUDevice, HardDiskDevice
 from utils.errors import DeviceError, AcrossGroupConflictError
 
 
@@ -59,14 +59,14 @@ class PCIDeviceManager:
         """
         try:
             h_ids = GroupManager().get_user_host_ids(user=user)
-            qs = self.get_device_queryset().filter(id__in=h_ids).all()
+            qs = self.get_device_queryset().filter(host__in=h_ids).all()
         except ComputeError as e:
             raise DeviceError(msg=str(e))
         return qs
 
     def get_pci_queryset_by_center(self, center):
         """
-        分中心下的PCI设备查询集
+        数据中心下的PCI设备查询集
 
         :param center: Center对象或id
         :return:
@@ -84,7 +84,7 @@ class PCIDeviceManager:
 
     def get_user_pci_queryset_by_center(self, center, user):
         """
-        用户有访问权限的，分中心下的PCI设备查询集
+        用户有访问权限的，数据中心下的PCI设备查询集
 
         :param center: Center对象或id
         :param user: 用户对象
@@ -185,10 +185,13 @@ class PCIDeviceManager:
 
         :raises:  DeviceError
         """
-        if device.type == device.TYPE_GPU:
+        if device.type == device.TYPE_GPU or device.type == device.TYPE_ETH or device.type == device.TYPE_PHD:
             return GPUDevice(db=device)
 
-        return DeviceError(msg='未知设备')
+        if device.type == device.TYPE_HD:
+            return HardDiskDevice(db=device)
+
+        raise DeviceError(msg='未知设备')
 
     def mount_to_vm(self, device: PCIDevice, vm):
         """
@@ -212,12 +215,12 @@ class PCIDeviceManager:
         except DeviceError as e:
             raise DeviceError(msg=f'与虚拟机建立挂载关系失败, {str(e)}')
 
-        xml_desc = dev.xml_desc
         try:
+            xml_desc = dev.xml_desc()
             if VmDomain(host_ip=host.ipv4, vm_uuid=vm.hex_uuid).attach_device(xml=xml_desc):
                 return True
             raise VirtError(msg='挂载到虚拟机失败')
-        except VirtError as e:
+        except (VirtError, Exception) as e:
             try:
                 dev.umount()
             except Exception:
@@ -240,7 +243,7 @@ class PCIDeviceManager:
             return True
 
         host = vm.host
-        xml_desc = dev.xml_desc
+        xml_desc = dev.xml_desc()
         domain = VmDomain(host_ip=host.ipv4, vm_uuid=vm.hex_uuid)
         try:
             if not domain.detach_device(xml=xml_desc):
@@ -261,7 +264,7 @@ class PCIDeviceManager:
         """
         通过条件筛选虚拟机查询集
 
-        :param center_id: 分中心id,大于0有效
+        :param center_id: 数据中心id,大于0有效
         :param group_id: 机组id,大于0有效
         :param host_id: 宿主机id,大于0有效
         :param type_id: 设备类型id,大于0有效

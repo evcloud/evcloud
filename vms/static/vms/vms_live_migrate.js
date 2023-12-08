@@ -24,13 +24,16 @@
         }
         let vm_uuid = $("#id-vm-uuid").text();
         let api = build_absolute_url('api/v3/vms/' + vm_uuid + '/live-migrate/' + host_id + '/');
-        let msg = "确定迁移云主机吗？";
+        let msg = "确定迁移虚拟机吗？";
         if(!confirm(msg))
             return;
 
         let btn_submit = $(this);
         btn_submit.addClass('disabled'); //鼠标悬停时，使按钮表现为不可点击状态
         btn_submit.attr('disabled', true);//失能对应按钮
+
+        let loading = new KZ_Loading('虚拟机动态迁移中...');
+        loading.show();
         $.ajax({
             url: api,
             type: 'post',
@@ -46,18 +49,20 @@
                         get_vm_migrate_status(task_id, handle_vm_status_callback);
                     }, 2000);
                 }else{
-                    alert("云主机动态迁移请求失败！" + data['code_text']);
+                    alert("虚拟机动态迁移请求失败！" + data['code_text']);
                 }
+                loading.destroy();
             },
             error: function (xhr) {
-                let msg = '云主机动态迁移请求失败!';
+                let msg = '虚拟机动态迁移请求失败!';
                 try{
                     msg = xhr.responseJSON.code_text;
                 }catch (e) {}
                 alert(msg);
+                loading.destroy();
             },
             complete: function () {
-
+                loading.destroy();
             }
         })
     });

@@ -12,6 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.utils import swagger_auto_schema, no_body
 from drf_yasg import openapi
 
+from ceph.models import GlobalConfig
 from vms.manager import VmManager, VmError, FlavorManager
 from vms.api import VmAPI
 from vms.migrate import VmMigrateManager
@@ -27,9 +28,10 @@ from device.manager import PCIDeviceManager, DeviceError
 from vpn.manager import VPNManager, VPNError
 from api import serializers
 from utils import errors as exceptions
+from utils.vm_normal_status import vm_normal_status
 from api.paginations import MacIpLimitOffsetPagination
 from api.viewsets import CustomGenericViewSet
-
+from version import __version__
 
 VPN_USER_ACTIVE_DEFAULT = getattr(settings, 'VPN_USER_ACTIVE_DEFAULT', False)
 
@@ -80,6 +82,7 @@ class IsSuperUser(BasePermission):
     """
     Allows access only to super users.
     """
+
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_superuser)
 
@@ -97,21 +100,27 @@ class VmsViewSet(CustomGenericViewSet):
           "next": null,
           "previous": null,
           "results": [
-            {
-              "uuid": "4c0cdba7fe97405bac174baa03f3d036",
-              "name": "4c0cdba7fe97405bac174baa03f3d036",
-              "vcpu": 2,
-              "mem": 2048,
-              "image": "centos8",
-              "disk": "4c0cdba7fe97405bac174baa03f3d036",
-              "sys_disk_size": 100,
-              "host": "10.100.50.121",
-              "mac_ip": "10.107.50.252",
-              "user": {
-                "id": 3,
-                "username": "test"
+               {
+              "uuid": "7ee56c2b242c41c3890b23e18dc5194b",
+              "name": "7ee56c2b242c41c3890b23e18dc5194b",
+              "vcpu": 1,
+              "mem": 1024,
+              "image": "centos7",
+              "disk": "7ee56c2b242c41c3890b23e18dc5194b",
+              "sys_disk_size": 8,
+              "host": "10.193.36.121",
+              "mac_ip": "192.168.100.3",
+              "ip": {
+                "ipv4": "192.168.100.3",
+                "public_ipv4": false,
+                "ipv6": null
               },
-              "create_time": "2020-03-06T14:46:27.149648+08:00"
+              "user": {
+                "id": 1,
+                "username": "wanghuang"
+              },
+              "create_time": "2023-07-27T15:54:25.383633+08:00",
+              "mem_unit": "MB"
             },
           ]
         }
@@ -182,7 +191,8 @@ class VmsViewSet(CustomGenericViewSet):
             "mac_ip": "10.107.50.253",
             "ip": {
               "ipv4": "10.107.50.22",
-              "public_ipv4": false
+              "public_ipv4": false,
+              "ipv6": null,
             },
             "user": {
               "id": 1,
@@ -275,7 +285,7 @@ class VmsViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属分中心id'
+                description='所属数据中心id'
             ),
             openapi.Parameter(
                 name='group_id',
@@ -329,7 +339,7 @@ class VmsViewSet(CustomGenericViewSet):
         user = request.user
         manager = VmManager()
         try:
-            if user.is_superuser:   # 当前是超级用户，user_id查询参数有效
+            if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
                 self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
                                                             search=search, user_id=user_id, all_no_filters=True)
             else:
@@ -375,22 +385,28 @@ class VmsViewSet(CustomGenericViewSet):
               "next": null,
               "previous": null,
               "results": [
-                {
-                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
-                  "name": "c6c8f333bc9c426dad04a040ddd44b47",
-                  "vcpu": 2,
+                   {
+                  "uuid": "7ee56c2b242c41c3890b23e18dc5194b",
+                  "name": "7ee56c2b242c41c3890b23e18dc5194b",
+                  "vcpu": 1,
                   "mem": 1024,
-                  "image": "centos8",
-                  "disk": "c6c8f333bc9c426dad04a040ddd44b47",
-                  "sys_disk_size": 100,
-                  "host": "10.100.50.121",
-                  "mac_ip": "10.107.50.15",
-                  "user": {
-                    "id": 4,
-                    "username": "869588058@qq.com"
+                  "image": "centos7",
+                  "disk": "7ee56c2b242c41c3890b23e18dc5194b",
+                  "sys_disk_size": 8,
+                  "host": "10.193.36.121",
+                  "mac_ip": "192.168.100.3",
+                  "ip": {
+                    "ipv4": "192.168.100.3",
+                    "public_ipv4": false,
+                    "ipv6": null
                   },
-                  "create_time": "2020-03-06T14:46:27.149648+08:00"
-                }
+                  "user": {
+                    "id": 1,
+                    "username": "wanghuang"
+                  },
+                  "create_time": "2023-07-27T15:54:25.383633+08:00",
+                  "mem_unit": "MB"
+                },
               ]
             }
         """
@@ -555,7 +571,10 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='参数ip-type的值无效')
             return self.exception_response(exc)
 
-        mem_unit = str.upper(request.data.get('mem_unit', 'UNKNOWN'))
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit == 'UNKNOWN':
+            mem_unit = str.upper(request.data.get('mem_unit', 'UNKNOWN'))
+
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
@@ -580,7 +599,7 @@ class VmsViewSet(CustomGenericViewSet):
                 return Response(data, status=exc.status_code)
             else:
                 validated_data['vcpu'] = flavor.vcpus
-                validated_data['mem'] = flavor.ram
+                validated_data['mem'] = flavor.ram  # 单位为GB
 
         api = VmAPI()
         try:
@@ -630,6 +649,11 @@ class VmsViewSet(CustomGenericViewSet):
         if not vm.user_has_perms(user=request.user):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
+
+        # 搁置虚拟机，不允许
+        # status_bool = vm_normal_status(vm=vm)
+        # if status_bool is False:
+        #     return self.exception_response(exceptions.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作'))
 
         return Response(data={
             'code': 200,
@@ -901,6 +925,11 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
 
+        # 搁置虚拟机，不允许
+        status_bool = vm_normal_status(vm=vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作'))
+
         vm_uuid = vm.get_uuid()
         host_ipv4 = vm.host.ipv4
 
@@ -911,7 +940,13 @@ class VmsViewSet(CustomGenericViewSet):
             e.msg = f'创建虚拟机vnc失败，{str(e)}'
             return self.exception_response(e)
 
-        url = request.build_absolute_uri(url)
+        http_host = request.META['HTTP_HOST']
+        # http_host = http_host.split(':')[0]
+        http_scheme = 'https'
+        global_config_obj = GlobalConfig().get_global_config()
+        if global_config_obj:
+            http_scheme = global_config_obj.novnchttp
+        url = f'{http_scheme}://{http_host}{url}'
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
                               'vnc': {'id': vnc_id, 'url': url}})
 
@@ -1306,7 +1341,7 @@ class VmsViewSet(CustomGenericViewSet):
         data = serializer.validated_data
         username = data.get('username')
         password = data.get('password')
-        
+
         try:
             VmAPI().vm_change_password(vm_uuid=vm_uuid, user=request.user, username=username, password=password)
         except VmError as e:
@@ -1455,6 +1490,272 @@ class VmsViewSet(CustomGenericViewSet):
 
         return Response(data={'sys_disk_size': vm.get_sys_disk_size()})
 
+    @swagger_auto_schema(
+        operation_summary='虚拟机搁置',
+        request_body=no_body,
+        responses={
+            200: """"""
+        }
+    )
+    @action(methods=['post'], url_path='shelve', detail=True, url_name='vm-shelve')
+    def vm_shelve(self, request, *args, **kwargs):
+        """虚拟机搁置"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        api = VmAPI()
+        try:
+            api.vm_shelve(vm_uuid=vm_uuid, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+        return Response(data={'code': 201, 'code_text': '虚拟机已搁置'}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='搁置虚拟机恢复',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='group_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="指定宿主机组"
+            ),
+            openapi.Parameter(
+                name='host_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="指定宿主机"
+            ),
+            openapi.Parameter(
+                name='mac_ip_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description="指定ip"
+            ),
+        ],
+        responses={
+            200: """"""
+        }
+    )
+    @action(methods=['post'], url_path='unshelve', detail=True, url_name='vm-unshelve')
+    def vm_unshelve(self, request, *args, **kwargs):
+        """搁置虚拟机恢复"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        host_id = str_to_int_or_default(request.query_params.get('host_id', '0'), default=0)
+        mac_ip_id = str_to_int_or_default(request.query_params.get('mac_ip_id', '0'), default=0)
+        group_id = str_to_int_or_default(request.query_params.get('group_id', '0'), default=0)
+        api = VmAPI()
+        try:
+            vm = api.vm_unshelve(vm_uuid=vm_uuid, group_id=group_id, host_id=host_id, mac_ip_id=mac_ip_id,
+                                 user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        return Response(data={'code': 201, 'code_text': '搁置虚拟机已恢复'}, status=status.HTTP_201_CREATED)
+
+    @swagger_auto_schema(
+        operation_summary='搁置虚拟机列表',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='user_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='所属用户id，当前为超级用户时此参数有效'
+            ),
+            openapi.Parameter(
+                name='search',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='uuid - 备注 查询'
+            ),
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
+        responses={
+            200: """"""
+        }
+    )
+    @action(methods=['get'], url_path='shelve', detail=False, url_name='vm-shelve-list')
+    def vm_shelve_list(self, request, *args, **kwargs):
+        """搁置虚拟机列表"""
+
+        user_id = str_to_int_or_default(request.query_params.get('user_id', '0'), default=0)
+        search = request.query_params.get('search', '')
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
+        user = request.user
+        manager = VmManager()
+
+        try:
+            if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
+                self.queryset = manager.filter_shelve_vm_queryset(search=search, user_id=user_id, all_no_filters=True)
+            else:
+                self.queryset = manager.filter_shelve_vm_queryset(search=search, user_id=user.id)
+        except VmError as e:
+            exc = exceptions.BadRequestError(msg=f'查询虚拟机时错误, {e}')
+            return self.exception_response(exc)
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, context={'mem_unit': mem_unit}, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, context={'mem_unit': mem_unit}, many=True)
+        data = {'results': serializer.data}
+        return Response(data)
+
+    @swagger_auto_schema(
+        operation_summary='删除搁置虚拟机',
+        responses={
+            204: 'SUCCESS NO CONTENT'
+        }
+    )
+    @action(methods=['delete'], url_path='delshelve', detail=True, url_name='vm-unshelve-delete')
+    def vm_shelve_destroy(self, request, *args, **kwargs):
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        api = VmAPI()
+        try:
+            api.vm_delshelve(vm_uuid=vm_uuid, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+        return Response(data={'code': 204, 'code_text': '虚拟机已删除'}, status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        operation_summary='虚拟机附加ip',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='ip_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='mac_ip'
+            ),
+        ],
+        responses={
+            204: 'SUCCESS NO CONTENT'
+        }
+    )
+    @action(methods=['post'], url_path='attach', detail=True, url_name='vm-attach-ip')
+    def vm_attach_ip(self, request, *args, **kwargs):
+        """虚拟机附加ip"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        ip_id = request.query_params.get('ip_id', None)
+        if ip_id is not None:
+            ip_id = str_to_int_or_default(ip_id, None)
+
+        if ip_id is None:
+            exc = exceptions.BadRequestError(msg='无效的id')
+            return self.exception_response(exc)
+
+        queryset = MacIPManager().get_macip_by_id(macip_id=ip_id)
+        if not queryset or queryset.used or queryset.enable is False:
+            exc = exceptions.BadRequestError(msg='无效的id')
+            return self.exception_response(exc)
+
+        api = VmAPI()
+        try:
+            api.attach_ip(vm_uuid=vm_uuid, user=request.user, mac_ip_obj=queryset)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        return Response(data={'code': 204, 'code_text': '虚拟机附加IP成功'}, status=status.HTTP_204_NO_CONTENT)
+
+    @swagger_auto_schema(
+        operation_summary='虚拟机移除ip',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='ip_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_INTEGER,
+                required=False,
+                description='mac_ip'
+            ),
+        ],
+        responses={
+            204: 'SUCCESS NO CONTENT'
+        }
+    )
+    @action(methods=['post'], url_path='detach', detail=True, url_name='vm-detach-ip')
+    def vm_detach_ip(self, request, *args, **kwargs):
+        """虚拟机移除ip"""
+        vm_uuid = kwargs.get(self.lookup_field, '')
+        ip_id = request.query_params.get('ip_id', None)
+        if ip_id is not None:
+            ip_id = str_to_int_or_default(ip_id, None)
+
+        if ip_id is None:
+            exc = exceptions.BadRequestError(msg='无效的id')
+            return self.exception_response(exc)
+
+        queryset = MacIPManager().get_macip_by_id(macip_id=ip_id)
+        if not queryset or queryset.enable is False:
+            exc = exceptions.BadRequestError(msg='无效的id')
+            return self.exception_response(exc)
+
+        api = VmAPI()
+        try:
+            api.detach_ip(vm_uuid=vm_uuid, user=request.user, mac_ip_obj=queryset)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+        return Response(data={'code': 204, 'code_text': '虚拟机删除移除IP成功'}, status=status.HTTP_204_NO_CONTENT)
+
+    @action(methods=['get'], url_path='attach/list', detail=True, url_name='vm-attach-ip-list')
+    def vm_attach_ip_list(self, request, *args, **kwargs):
+        """
+        虚拟机附加ip列表
+        {
+          "count": 2,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "id": 30004,
+              "vm": "1134ef74c09344bc9c1178ae8e7cde7b",
+              "attach_ip": "192.168.100.11"
+            },
+            {
+              "id": 30005,
+              "vm": "1134ef74c09344bc9c1178ae8e7cde7b",
+              "attach_ip": "192.168.100.12"
+            }
+          ]
+        }
+
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        api = VmAPI()
+        try:
+            queryset = api.attach_ip_list(vm_uuid=vm_uuid, user=request.user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        queryset = self.filter_queryset(queryset)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -1471,12 +1772,16 @@ class VmsViewSet(CustomGenericViewSet):
             return serializers.VmPatchSerializer
         elif self.action == 'vm_change_password':
             return serializers.VmChangePasswordSerializer
+        elif self.action == 'vm_shelve_list':
+            return serializers.VmShelveListSerializer
+        elif self.action == 'vm_attach_ip_list':
+            return serializers.VmAttachListSerializer
         return Serializer
 
 
 class CenterViewSet(CustomGenericViewSet):
     """
-    分中心类视图
+    数据中心类视图
     """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
@@ -1484,9 +1789,9 @@ class CenterViewSet(CustomGenericViewSet):
 
     def list(self, request, *args, **kwargs):
         """
-        获取分中心列表
+        获取数据中心列表
 
-            获取分中心列表信息
+            获取数据中心列表信息
 
             http code 200:
             {
@@ -1496,7 +1801,7 @@ class CenterViewSet(CustomGenericViewSet):
               "results": [
                 {
                   "id": 1,
-                  "name": "怀柔分中心",
+                  "name": "怀柔数据中心",
                   "location": "怀柔",
                   "desc": "xxx"
                 }
@@ -1530,7 +1835,7 @@ class GroupViewSet(CustomGenericViewSet):
     """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
-    queryset = Group.objects.all()
+    queryset = Group.objects.filter(enable=True).all()
 
     @swagger_auto_schema(
         operation_summary='获取宿主机组列表',
@@ -1540,7 +1845,7 @@ class GroupViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属分中心id'
+                description='所属数据中心id'
             ),
         ]
     )
@@ -1698,6 +2003,7 @@ class VlanViewSet(CustomGenericViewSet):
     """
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
+    lookup_field = 'id'
 
     @swagger_auto_schema(
         operation_summary='获取网段列表',
@@ -1706,7 +2012,7 @@ class VlanViewSet(CustomGenericViewSet):
                 name='center_id', in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='分中心id'
+                description='数据中心id'
             ),
             openapi.Parameter(
                 name='group_id', in_=openapi.IN_QUERY,
@@ -1747,7 +2053,11 @@ class VlanViewSet(CustomGenericViewSet):
                       "net_mask": "255.255.255.0",
                       "gateway": "10.107.50.254",
                       "dns_server": "159.226.91.150",
-                      "remarks": "测试"
+                      "subnet_ip_v6": "16a0:10:ab00:1e::",
+                      "net_mask_v6": "ffff:ffff:ffff:ffff::",
+                      "gateway_v6": "16a0:10:ab00:1e::1",
+                      "dns_server_v6": "2001:4860:4860::8888",
+                      "remarks": ""
                     }
                   ]
                 }
@@ -1786,6 +2096,7 @@ class VlanViewSet(CustomGenericViewSet):
             user = None
 
         queryset = VlanManager().filter_vlan_queryset(center=center_id, group=group_id, is_public=public, user=user)
+        queryset = VlanManager().shield_vlan(queryset=queryset, user=request.user)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -1811,6 +2122,10 @@ class VlanViewSet(CustomGenericViewSet):
                   "net_mask": "255.255.255.0",
                   "gateway": "10.107.50.254",
                   "dns_server": "159.226.91.150",
+                  "subnet_ip_v6": "16a0:10:ab00:1e::",
+                  "net_mask_v6": "ffff:ffff:ffff:ffff::",
+                  "gateway_v6": "16a0:10:ab00:1e::1",
+                  "dns_server_v6": "2001:4860:4860::8888",
                   "remarks": "测试"
                 }
             400:{
@@ -1830,7 +2145,7 @@ class VlanViewSet(CustomGenericViewSet):
             return Response(exc.data(), status=exc.code)
 
         try:
-            vlan = VlanManager().get_vlan_by_id(vlan_id=v_id)
+            vlan = VlanManager().get_vlan_by_id(vlan_id=v_id, user=request.user)
         except exceptions.NetworkError as e:
             return Response(e.data(), status=e.code)
 
@@ -1868,7 +2183,7 @@ class ImageViewSet(CustomGenericViewSet):
                 name='center_id', in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属分中心id'
+                description='所属数据中心id'
             ),
             openapi.Parameter(
                 name='tag', in_=openapi.IN_QUERY,
@@ -1885,7 +2200,7 @@ class ImageViewSet(CustomGenericViewSet):
             openapi.Parameter(
                 name='search', in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
-                description="关键字查询",
+                description="关键字查询(名称和描述)",
                 required=False
             )
         ]
@@ -1906,6 +2221,21 @@ class ImageViewSet(CustomGenericViewSet):
                 [5,"Android"],
                 [6,"其他"]
             ]
+            系统发行版本: [
+                [1,"Windows Desktop"],
+                [2,"Windows Server"],
+                [3,"Ubuntu"],
+                [4,"Fedora"],
+                [5,"Centos"],
+                [6,"Unknown"]
+            ]
+            系统发行编号（64字符）：{win10,win11,2021,2019,2204,2004,36,37,7,8,9,....}
+            系统架构: [
+                [1,"x86-64"],
+                [2,"i386"],
+                [3,"arm-64"],
+                [4,"unknown"]
+            ]
 
             http code 200:
             {
@@ -1915,15 +2245,23 @@ class ImageViewSet(CustomGenericViewSet):
               "results": [
                 {
                   "id": 1,
-                  "name": "centos8",
-                  "version": "64bit",
+                  "name": "centos8-hadoop",
+                  "tag": {
+                    "id": 0,
+                    "name": "基础镜像"
+                  },
                   "sys_type": {
                     "id": 2,
                     "name": "Linux"
                   },
-                  "tag": {
-                    "id": 0,
-                    "name": "基础镜像"
+                  "release": {
+                    "id": 5,
+                    "name": "Centos"
+                  },
+                  "version": "8",
+                  "architecture": {
+                    "id": 1,
+                    "name": "x86-64"
                   },
                   "enable": true,
                   "create_time": "2020-03-06T14:46:27.149648+08:00",
@@ -1938,11 +2276,11 @@ class ImageViewSet(CustomGenericViewSet):
         center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
         tag = str_to_int_or_default(request.query_params.get('tag', 0), 0)
         sys_type = str_to_int_or_default(request.query_params.get('sys_type', 0), 0)
-        search = request.query_params.get('sys_type', '')
+        search = request.query_params.get('search', None)
 
         try:
             queryset = ImageManager().filter_image_queryset(center_id=center_id, sys_type=sys_type, tag=tag,
-                                                            search=search, all_no_filters=True)
+                                                            search=search, all_no_filters=True).filter(enable=True)
         except exceptions.ImageError as e:
             exc = exceptions.BadRequestError(msg=str(e))
             return self.exception_response(exc)
@@ -1968,15 +2306,23 @@ class ImageViewSet(CustomGenericViewSet):
             http code 200:
             {
               "id": 1,
-              "name": "centos8",
-              "version": "64bit",
+              "name": "centos8-hadoop",
+              "tag": {
+                "id": 0,
+                "name": "基础镜像"
+              },
               "sys_type": {
                 "id": 2,
                 "name": "Linux"
               },
-              "tag": {
-                "id": 0,
-                "name": "基础镜像"
+              "release": {
+                "id": 5,
+                "name": "Centos"
+              },
+              "version": "8",
+              "architecture": {
+                "id": 1,
+                "name": "x86-64"
               },
               "enable": true,
               "create_time": "2020-03-06T14:46:27.149648+08:00",
@@ -2007,6 +2353,60 @@ class ImageViewSet(CustomGenericViewSet):
 
         serializer = self.get_serializer(image)
         return Response(data=serializer.data)
+
+    @swagger_auto_schema(
+        operation_summary='修改镜像备注信息',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='remark',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='镜像备注信息'
+            )
+        ],
+        responses={
+            200: """
+                {
+                    'code': 200,
+                    'code_text': '修改镜像备注信息成功'
+                }
+                """,
+            "400, 403, 500": """
+                    {
+                        'code': xxx,
+                        'code_text': 'xxx',
+                        "err_code": "xxx"
+                    }
+                    """
+        }
+    )
+    @action(methods=['patch'], url_path='remark', detail=True, url_name='image-remark')
+    def vm_remark(self, request, *args, **kwargs):
+        """
+        修改镜像备注信息
+        """
+        remark = request.query_params.get('remark', None)
+        if remark is None:
+            exc = exceptions.BadRequestError(msg='参数有误，无效的备注信息')
+            return self.exception_response(exc)
+
+        image_id = kwargs.get(self.lookup_field)
+        image_id = str_to_int_or_default(image_id, None)
+        if image_id is None:
+            return self.exception_response(exceptions.BadRequestError(msg='镜像id无效'))
+
+        try:
+            image = ImageManager().get_image_by_id(image_id=image_id)
+            if not image:
+                raise exceptions.BadRequestError(msg='镜像id无效')
+            image.desc = remark
+            image.save()
+        except exceptions.Error as exc:
+            return self.exception_response(exc)
+
+        return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
 
     def get_serializer_class(self):
         """
@@ -2042,6 +2442,7 @@ class AuthTokenViewSet(ObtainAuthToken):
         例如Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b；
         此外，可选Path参数,“new”，?new=true用于刷新生成一个新token；
     """
+
     @staticmethod
     def get(request, *args, **kwargs):
         user = request.user
@@ -2169,6 +2570,7 @@ class JWTRefreshView(TokenRefreshView):
     """
     Refresh JWT视图
     """
+
     @swagger_auto_schema(
         operation_summary='刷新access JWT',
         responses={
@@ -2241,7 +2643,7 @@ class VDiskViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属分中心id'
+                description='所属数据中心id'
             ),
             openapi.Parameter(
                 name='group_id',
@@ -2295,7 +2697,8 @@ class VDiskViewSet(CustomGenericViewSet):
                   "size": 11,
                   "vm": {
                     "uuid": "c58125f6916b4028864b46c7c0b02d99",
-                    "ipv4": "10.107.50.252"
+                    "ipv4": "10.107.50.252",
+                    "ipv6": null
                   },
                   "user": {
                     "id": 1,
@@ -2327,7 +2730,7 @@ class VDiskViewSet(CustomGenericViewSet):
         user = request.user
         manager = VdiskManager()
         try:
-            if user.is_superuser:    # 当前是超级用户，user_id查询参数有效
+            if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
                 queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
                                                          search=search, user_id=user_id, all_no_filters=True)
             else:
@@ -2378,7 +2781,8 @@ class VDiskViewSet(CustomGenericViewSet):
                   "size": 10,
                   "vm": {                                          # 已挂载于主机；未挂载时为 null
                     "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
-                    "ipv4": "10.107.50.15"
+                    "ipv4": "10.107.50.15",
+                    "ipv6": null,
                   },
                   "user": {
                     "id": 4,
@@ -2406,12 +2810,17 @@ class VDiskViewSet(CustomGenericViewSet):
         try:
             vm = mgr.get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', 'host__group', 'image'))
         except VmError as e:
-            e.msg = f'查询云主机错误，{str(e)}'
+            e.msg = f'查询虚拟机错误，{str(e)}'
             return self.exception_response(e)
 
         if not vm:
             exc = exceptions.VmNotExistError(msg='虚拟机不存在')
             return self.exception_response(exc)
+
+        # 搁置虚拟机，不允许
+        status_bool = vm_normal_status(vm=vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作'))
 
         center_id = vm.host.group.center_id
         user = request.user
@@ -2515,6 +2924,7 @@ class VDiskViewSet(CustomGenericViewSet):
                 "uuid": "296beb3413724456911077321a4247f9",
                 "size": 1,
                 "vm": null,
+                "dev": vdb,
                 "user": {
                   "id": 1,
                   "username": "shun"
@@ -2590,6 +3000,11 @@ class VDiskViewSet(CustomGenericViewSet):
             exc = exceptions.VdiskAccessDenied(msg='没有权限访问此硬盘')
             return self.exception_response(exc)
 
+        # 搁置虚拟机，不允许
+        status_bool = vm_normal_status(vm=vdisk.vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作'))
+
         if vdisk.is_mounted:
             exc = exceptions.VdiskAlreadyMounted(msg='硬盘已被挂载使用，请先卸载后再删除')
             return self.exception_response(exc)
@@ -2599,7 +3014,7 @@ class VDiskViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         try:
-            vdisk.rename_disk_rbd_name()        # 修改ceph rbd名称为删除格式的名称
+            vdisk.rename_disk_rbd_name()  # 修改ceph rbd名称为删除格式的名称
         except exceptions.VdiskError as e:
             pass
 
@@ -2771,6 +3186,13 @@ class QuotaViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=False,
                 description='筛选条件，所属宿主机组id'
+            ),
+            openapi.Parameter(
+                name='enable',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description='True 列出可用的存储池'
             )
         ],
     )
@@ -2789,7 +3211,8 @@ class QuotaViewSet(CustomGenericViewSet):
                   "name": "group1云硬盘存储池",
                   "pool": {
                     "id": 1,
-                    "name": "vm1"
+                    "name": "vm1",
+                    "enable": true
                   },
                   "ceph": {
                     "id": 1,
@@ -2799,7 +3222,7 @@ class QuotaViewSet(CustomGenericViewSet):
                     "id": 1,
                     "name": "宿主机组1"
                   }
-                },
+                "enable": true,
                 "total": 100000,    # 总容量
                 "size_used": 30,    # 已用容量
                 "max_vdisk": 200    # 硬盘最大容量上限
@@ -2807,6 +3230,7 @@ class QuotaViewSet(CustomGenericViewSet):
             }
         """
         group_id = int(request.query_params.get('group_id', 0))
+        enable_bool = request.query_params.get('enable', 'false')  # str
         manager = VdiskManager()
 
         if group_id > 0:
@@ -2814,6 +3238,10 @@ class QuotaViewSet(CustomGenericViewSet):
         else:
             queryset = manager.get_quota_queryset()
             queryset = queryset.select_related('cephpool', 'cephpool__ceph', 'group').all()
+
+        if enable_bool == 'true':
+            queryset = queryset.filter(enable=True).all()
+
         try:
             page = self.paginate_queryset(queryset)
         except Exception as e:
@@ -2872,7 +3300,7 @@ class StatCenterViewSet(CustomGenericViewSet):
               "centers": [
                 {
                   "id": 1,
-                  "name": "怀柔分中心",
+                  "name": "怀柔数据中心",
                   "mem_total": 165536,
                   "mem_allocated": 15360,
                   "vcpu_total": 54,
@@ -2884,7 +3312,7 @@ class StatCenterViewSet(CustomGenericViewSet):
                 {
                   "id": 1,
                   "name": "宿主机组1",
-                  "center__name": "怀柔分中心",
+                  "center__name": "怀柔数据中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
                   "vcpu_total": 24,
@@ -2931,7 +3359,7 @@ class StatCenterViewSet(CustomGenericViewSet):
         return Response(data={'code': 200, 'code_text': 'get ok', 'centers': centers, 'groups': groups, 'hosts': hosts})
 
     @swagger_auto_schema(
-        operation_summary='获取一个分中心的资源统计信息',
+        operation_summary='获取一个数据中心的资源统计信息',
         manual_parameters=[
             openapi.Parameter(
                 name='mem_unit',
@@ -2948,7 +3376,7 @@ class StatCenterViewSet(CustomGenericViewSet):
     @action(methods=['get'], detail=True, url_path='center', url_name='center-stat')
     def center_stat(self, request, *args, **kwargs):
         """
-        获取一个分中心的资源统计信息列表
+        获取一个数据中心的资源统计信息列表
 
             http code 200:
             {
@@ -2956,7 +3384,7 @@ class StatCenterViewSet(CustomGenericViewSet):
               "code_text": "get ok",
               "center": {
                   "id": 1,
-                  "name": "怀柔分中心",
+                  "name": "怀柔数据中心",
                   "mem_total": 165536,
                   "mem_allocated": 15360,
                   "vcpu_total": 54,
@@ -2967,7 +3395,7 @@ class StatCenterViewSet(CustomGenericViewSet):
                 {
                   "id": 1,
                   "name": "宿主机组1",
-                  "center__name": "怀柔分中心",
+                  "center__name": "怀柔数据中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
                   "vcpu_total": 24,
@@ -2991,7 +3419,7 @@ class StatCenterViewSet(CustomGenericViewSet):
             center = None
 
         if not center:
-            exc = exceptions.NotFoundError(msg='分中心不存在')
+            exc = exceptions.NotFoundError(msg='数据中心不存在')
             return self.exception_response(exc)
 
         groups = GroupManager().get_stat_group_queryset(filters={'center': c_id}).values(
@@ -3036,7 +3464,7 @@ class StatCenterViewSet(CustomGenericViewSet):
               "group": {
                   "id": 1,
                   "name": "宿主机组1",
-                  "center__name": "怀柔分中心",
+                  "center__name": "怀柔数据中心",
                   "mem_total": 132768,
                   "mem_allocated": 15360,
                   "vcpu_total": 24,
@@ -3112,7 +3540,7 @@ class PCIDeviceViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='筛选条件，所属分中心id'
+                description='筛选条件，所属数据中心id'
             ),
             openapi.Parameter(
                 name='group_id',
@@ -3228,7 +3656,8 @@ class PCIDeviceViewSet(CustomGenericViewSet):
                   },
                   "vm": {                           # 已挂载于主机；未挂载时为 null
                     "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
-                    "ipv4": "10.107.50.15"
+                    "ipv4": "10.107.50.15",
+                    "ipv6": "16a0:10:ab00:1e::102"
                   },
                   "host": {
                     "id": 1,
@@ -3249,12 +3678,16 @@ class PCIDeviceViewSet(CustomGenericViewSet):
         vm_uuid = kwargs.get('vm_uuid', '')
 
         try:
-            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host', ))
+            vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('host',))
         except VmError as e:
             return self.exception_response(e)
 
         if not vm:
-            return self.exception_response(exceptions.VmNotExistError(msg='云主机不存在'))
+            return self.exception_response(exceptions.VmNotExistError(msg='虚拟机不存在'))
+
+        status_bool = vm_normal_status(vm=vm)
+        if status_bool is False:
+            return self.exception_response(exceptions.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作'))
 
         try:
             queryset = PCIDeviceManager().get_pci_queryset_by_host(host=vm.host)
@@ -3417,6 +3850,7 @@ class MacIPViewSet(CustomGenericViewSet):
                       "id": 1,
                       "mac": "C8:00:0A:6B:32:FD",
                       "ipv4": "10.107.50.253",
+                      "ipv6": "16a0:10:ab00:1e::102",
                       "used": true
                     }
                   ]
@@ -3467,7 +3901,7 @@ class FlavorViewSet(CustomGenericViewSet):
     )
     def list(self, request, *args, **kwargs):
         """
-        获取mac ip列表
+        获取虚拟机硬件配置样式列表
 
             http code 200:
                 {
@@ -3510,7 +3944,7 @@ class VPNViewSet(CustomGenericViewSet):
     permission_classes = [IsAuthenticated, ]
     pagination_class = LimitOffsetPagination
     lookup_field = 'username'
-    lookup_value_regex = '[^/.]+'
+    lookup_value_regex = '[^/]+'  # 匹配排除“/”的任意字符串
 
     @swagger_auto_schema(
         operation_summary='获取用户vpn信息',
@@ -3825,4 +4259,27 @@ class MigrateTaskViewSet(CustomGenericViewSet):
         if self.action == 'retrieve':
             return serializers.MigrateTaskSerializer
 
+        return Serializer
+
+
+class VersionViewSet(CustomGenericViewSet):
+    permission_classes = [IsAuthenticated, ]
+    pagination_class = LimitOffsetPagination
+
+    @swagger_auto_schema(
+        operation_summary='查询部署版本',
+        request_body=no_body
+    )
+    def list(self, request, *args, **kwargs):
+        """
+        查询当前部署EVCloud版本
+        """
+        return Response(data={'version': __version__})
+
+    def get_serializer_class(self):
+        """
+        Return the class to use for the serializer.
+        Defaults to using `self.serializer_class`.
+        Custom serializer_class
+        """
         return Serializer

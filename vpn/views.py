@@ -13,6 +13,7 @@ from drf_yasg.utils import swagger_auto_schema
 from utils.paginators import NumsPaginator
 from .manager import VPNManager, VPNError
 from .forms import VPNChangeFrom, VPNAddFrom
+from .models import VPNLog
 
 
 def change_vpn_view(request, vpn):
@@ -37,7 +38,9 @@ class VPNView(View):
         if search:
             qs = qs.filter(username__contains=search).all()
 
+        queryset = VPNLog.objects.all()
         context = self.get_list_context(request, qs, context={'search': search})
+        context['vpn_login_log_count'] = queryset.count()
         return render(request, 'vpn_list.html', context)
 
     def get_list_context(self, request, queryset, context: dict):
@@ -203,3 +206,27 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         filename = obj.filename if obj.filename else 'ca.crt'
         content = obj.content.encode(encoding='utf-8')
         return FileResponse(BytesIO(initial_bytes=content), as_attachment=True, filename=filename)
+
+
+class VPNLoginLog(View):
+    """ vpn 登录日志 """
+
+    NUM_PER_PAGE = 20
+
+    def get(self, request, *args, **kwargs):
+        search = request.GET.get('search', '')
+        queryset = VPNLog.objects.all()
+        if search:
+            queryset = queryset.filter(username__contains=search).all()
+
+        paginator = NumsPaginator(request, queryset, self.NUM_PER_PAGE)
+        page_num = request.GET.get(paginator.page_query_name, 1)  # 获取页码参数，没有参数默认为1
+        log_page = paginator.get_page(page_num)
+        page_nav = paginator.get_page_nav(log_page)
+
+        mgr = VPNManager()
+        qs = mgr.get_vpn_queryset()
+
+        context = {'page_nav': page_nav, 'vpn_log': log_page, 'count': paginator.count, 'vpn_user_count': qs.count()}
+
+        return render(request, 'vpn_log_list.html', context=context)

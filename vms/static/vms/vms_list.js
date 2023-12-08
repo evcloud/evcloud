@@ -396,7 +396,7 @@
     $(".btn-vm-snap-create").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定创建云主机系统快照吗？'))
+        if(!confirm('确定创建虚拟机系统快照吗？'))
 		    return;
 
         let remarks = prompt('请输入快照备注信息：');

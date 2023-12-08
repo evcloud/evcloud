@@ -29,8 +29,8 @@ class Migration(migrations.Migration):
             name='Vlan',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=100, verbose_name='VLAN名称')),
-                ('br', models.CharField(max_length=50, verbose_name='网桥')),
+                ('name', models.CharField(max_length=100, verbose_name='VLAN描述')),
+                ('br', models.CharField(max_length=50, verbose_name='网桥名')),
                 ('subnet_ip', models.GenericIPAddressField(verbose_name='子网IP')),
                 ('net_mask', models.GenericIPAddressField(blank=True, null=True, verbose_name='子网掩码')),
                 ('gateway', models.GenericIPAddressField(blank=True, null=True, verbose_name='网关')),

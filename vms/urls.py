@@ -20,5 +20,14 @@ urlpatterns = [
     re_path(r'^mount-pci/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmMountPCIView.as_view()),
             name='vm-mount-pci'),
     re_path(r'^disk/expand/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmSysDiskExpandView.as_view()),
-            name='vm-sys-disk-expand')
+            name='vm-sys-disk-expand'),
+    path('shelve-list', login_required(views.VmShelveView.as_view()), name='shelve-list'),
+    re_path(r'unshelve/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmUnShelveView.as_view()),
+            name='unshelve'),
+    re_path(r'attach-ip/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmAttachIPView.as_view()),
+            name='vm-attach-ip'),
+    re_path(r'detach-ip/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmDetachIPView.as_view()),
+            name='vm-detach-ip'),
+    re_path('image-release/(?P<vm_uuid>[0-9a-z-]{32,36})/$', login_required(views.VmImageRelease.as_view()), name='vm-image-release')
+
 ]

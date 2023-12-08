@@ -6,7 +6,7 @@ from .models import Vdisk, Quota
 @admin.register(Quota)
 class QuotaAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
-    list_display = ('id', 'name', 'group', 'cephpool', 'total', 'size_used', 'max_vdisk', 'get_stats_used')
+    list_display = ('id', 'name', 'group', 'cephpool', 'total', 'size_used', 'max_vdisk', 'get_stats_used', 'enable')
     search_fields = ['name']
     list_filter = ['group', 'cephpool']
 

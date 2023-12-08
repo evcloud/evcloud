@@ -27,7 +27,7 @@
         }
         let vm_uuid = $("#id-vm-uuid").text();
         let api = build_absolute_url('api/v3/vms/' + vm_uuid + '/migrate/' + host_id + '/');
-        let msg = "确定迁移云主机吗？";
+        let msg = "确定迁移虚拟机吗？";
         let force = obj_data.force;
         if (force === "force"){
             msg += "您已选择强制迁移";
@@ -39,25 +39,30 @@
         let btn_submit = $(this);
         btn_submit.addClass('disabled'); //鼠标悬停时，使按钮表现为不可点击状态
         btn_submit.attr('disabled', true);//失能对应按钮
+        let loading = new KZ_Loading('虚拟机关机迁移中...');
+        loading.show();
         $.ajax({
             url: api,
             type: 'post',
             contentType: 'application/json',
             success: function (data, status, xhr) {
+                loading.destroy();
                 if (xhr.status === 201){
-                    alert('云主机迁移成功');
+                    alert('虚拟机迁移成功');
                 }else{
-                    alert("云主机迁移失败！" + data.code_text);
+                    alert("虚拟机迁移失败！" + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '云主机迁移失败!';
+                loading.destroy();
+                let msg = '虚拟机迁移失败!';
                 try{
                     msg = xhr.responseJSON.code_text;
                 }catch (e) {}
                 alert(msg);
             },
             complete: function () {
+                loading.destroy();
                 btn_submit.removeClass('disabled');   //鼠标悬停时，使按钮表现为可点击状态
                 btn_submit.attr('disabled', false); //激活对应按钮
             }

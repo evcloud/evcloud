@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.views.generic.base import View
 from django.contrib.auth import get_user_model
 
+from utils.errors import VdiskNotExist
 from vdisk.manager import VdiskManager, VdiskError
 from compute.managers import CenterManager, GroupManager, ComputeError
 from utils.paginators import NumsPaginator
@@ -52,7 +53,8 @@ class VdiskView(View):
             queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
                                                      search=search, user_id=user_id, all_no_filters=auth.is_superuser)
         except VdiskError as e:
-            return render(request, 'error.html', {'errors': ['查询云硬盘时错误', str(e)]})
+            error = VdiskError(msg='查询云硬盘时错误', err=e)
+            return error.render(request=request)
 
         try:
             c_manager = CenterManager()
@@ -62,7 +64,8 @@ class VdiskView(View):
             else:
                 groups = GroupManager().get_group_queryset()
         except ComputeError as e:
-            return render(request, 'error.html', {'errors': ['查询机组时错误', str(e)]})
+            error = ComputeError(msg='查询机组时错误', err=e)
+            return error.render(request=request)
 
         if group_id > 0:
             quotas = manager.get_quota_queryset_by_group(group_id)
@@ -112,7 +115,8 @@ class VdiskCreateView(View):
             if center_id > 0:
                 groups = c_manager.get_user_group_queryset_by_center(center_id, user=request.user)
         except ComputeError as e:
-            return render(request, 'error.html', {'errors': ['查询分中心列表时错误', str(e)]})
+            error = ComputeError(msg='查询数据中心列表时错误', err=e)
+            return error.render(request=request)
 
         context = {
             'center_id': center_id if center_id > 0 else None,
@@ -133,7 +137,10 @@ class DiskMountToVmView(View):
         disk_manager = VdiskManager()
         disk = disk_manager.get_vdisk_by_uuid(uuid=disk_uuid, related_fields=('quota', 'quota__group', 'vm'))
         if not disk:
-            return render(request, 'error.html', {'errors': ['挂载硬盘时错误', '云硬盘不存在']})
+            try:
+                raise VdiskNotExist(msg='【挂载硬盘时错误】【云硬盘不存在】')
+            except VdiskNotExist as error:
+                return error.render(request=request)
 
         context = {'disk': disk, 'search': search}
         # 如果硬盘已被挂载
@@ -153,7 +160,8 @@ class DiskMountToVmView(View):
                 queryset = vm_manager.filter_vms_queryset(
                     group_id=group.id, search=search, user_id=user.id, related_fields=related_fields)
         except vm_manager.VmError as e:
-            return render(request, 'error.html', {'errors': ['查询挂载云主机列表时错误', str(e)]})
+            error = vm_manager.VmError(msg='查询挂载虚拟机列表时错误', err=e)
+            return error.render(request=request)
 
         context = self.get_vms_list_context(request=request, queryset=queryset, context=context)
         return render(request, 'vdisk_mount_to_vm.html', context=context)

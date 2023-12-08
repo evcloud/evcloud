@@ -5,22 +5,23 @@
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
 {% endblock %}
-{% block title %}云主机列表{% endblock %}
+{% block title %}虚拟机列表{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>云主机列表 ({{ count }})</strong></span>
+                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:vms-list' %}">在线虚拟机 ({{ count }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:shelve-list' %}">已搁置 ({{ shelve_count }})</a></strong></span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vm-create' %}">
-                    创建云主机
+                    创建虚拟机
                 </a></span>
             </div>
             <div class="card-body">
                 <form role="form" class="form-horizontal" method="get" action="">
                     <div class="input-group" style="">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-center">分中心</label>
+                            <label class="input-group-text" for="id-center">数据中心</label>
                         </div>
                         <select name="center" class="custom-select" id="id-center">
                             <option value="">--</option>
@@ -63,7 +64,7 @@
                             <label class="input-group-text">关键字</label>
                         </div>
                         <input type="text" class="form-control" name="search" value="{{ search }}"
-                               placeholder="搜 UUID、IP、备注"/>
+                               placeholder="搜 UUID、IP地址、备注"/>
                         <span class="input-group-text"></span>
                         <button type="submit" class="btn btn-primary form-control">筛选</button>
                     </div>
@@ -89,9 +90,18 @@
                 {% for vm in vms %}
                     <tr id="tr_{{ vm.hex_uuid }}">
                         <td><input type="checkbox" class="item-checkbox" value="{{ vm.hex_uuid }}" name="select_vm"></td>
-                        <td title="{{ vm.hex_uuid }}"><a href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.mac_ip.ipv4 }}</b></a></td>
+                        <td title="{{ vm.hex_uuid }}">
+                            <a href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.mac_ip.ipv4 }}</b></a>
+
+                            {% if vm.get_attach_ip_list %}
+                                {% for i in vm.get_attach_ip_list %}
+                                <br>
+                                <b>{{ i }}</b>
+                                {% endfor %}
+                            {% endif %}
+                        </td>
                         <td>{{ vm.user }}</td>
-                        <td>{{ vm.image }}</td>
+                        <td>{{ vm.image_name }}</td>
                         <td>{{ vm.host_ipv4 }}</td>
                         <td>
                             {{ vm.vcpu }} / {{ vm.mem|sizeformat:'GB' }}
@@ -183,5 +193,6 @@
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_list.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_shelve_list.js' %}"></script>
 {% endblock %}
 

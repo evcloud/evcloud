@@ -7,19 +7,19 @@
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>挂载PCI设备</strong></span>
+                <span class="card-title"><strong>挂载本地设备设备</strong></span>
                 <div class="float-right">
                     <a class="btn btn-sm btn-info" href="{% url 'device:pci-list' %}">PCI设备列表</a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="">
-                    <div class="text-primary h4">云主机信息:</div>
+                    <div class="text-primary h4">虚拟机信息:</div>
                     <div class="">
                         <dl class="row">
-                            <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
-                            <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
-                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
+                            <dt class="col-2 text-right">虚拟机UUID:</dt> <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
+                            <dt class="col-2 text-right">虚拟机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image_name }}</dd>
                             <dt class="col-2 text-right">宿主机:</dt> <dd class="col-10">{{ vm.host }}</dd>
                             <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
                             <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
@@ -37,7 +37,7 @@
                                         <label class="input-group-text" for="id-center">关键字</label>
                                     </div>
                                     <input type="text" class="form-control" name="search" value="{{ search }}"
-                                           id="id-center" placeholder="搜 IP、备注"/>
+                                           id="id-center" placeholder="搜 IP地址、备注"/>
                                     <div class="input-group-append">
                                         <button type="submit" class="btn btn-primary form-control">筛选</button>
                                     </div>

@@ -5,119 +5,138 @@
 
 {% block title %}资源统计列表{% endblock %}
 
-{% block head %}{% endblock %}
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'reports/reports.css' %}">
+{% endblock %}
 
 {% block boby %}
-    <div class="container-fluid col-lg-12">
-        <p class="h3">资源分配统计</p>
-        <div class="card border-info">
-            <div class="card-header">
-                <h3 class="card-title">分中心</h3>
-            </div>
-            <table class="table">
-                <thead class="thead-light">
-                <tr>
-                    <th>分中心</th>
-                    <th>总物理cpu(/核)</th>
-                    <th>总虚拟cpu(/核)</th>
-                    <th>已分配cpu(/核)</th>
-                    <th>cpu分配率</th>
-                    <th>总内存</th>
-                    <th>已使用内存</th>
-                    <th>内存使用率</th>
-                    <th>云主机数</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for c in centers %}
-                    <tr>
-                        <td><a href="{% url 'reports:reports-center' id=c.id %}">{{c.name}}</a></td>
-                        <td>{{c.real_cpu}}</td>
-                        <td>{{c.vcpu_total}}</td>
-                        <td>{{c.vcpu_allocated}}</td>
-                        <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
-                        <td>{{c.mem_total | sizeformat:'GB'}}</td>
-                        <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
-                        <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
-                        <td>{{c.vm_created}}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+    <div class="container-fluid d-flex flex-column h-100">
+        <div class="d-flex px-3">
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item active" aria-current="page">全部</li>
+              </ol>
+            </nav>
+{#            <p class="h5">资源分配统计</p>#}
         </div>
-        <div class="card border-danger">
-            <div class="card-header">
-                <h3 class="card-title">宿主机组</h3>
+        <div class="d-flex px-3" style="flex: 1">
+            <div style="width: 200px">
+                <ul class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+                  <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#center" aria-controls="center" aria-selected="true">数据中心</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#host_group" aria-controls="host_group" aria-selected="false">宿主机组</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#host" aria-controls="host" aria-selected="false">宿主机</a>
+                  </li>
+                </ul>
             </div>
-            <table class="table">
-                <thead class="thead-light">
-                <tr>
-                    <th>宿主机组</th>
-                    <th>分中心</th>
-                    <th>总物理cpu(/核)</th>
-                    <th>总虚拟cpu(/核)</th>
-                    <th>已分配cpu(/核)</th>
-                    <th>cpu分配率</th>
-                    <th>总内存</th>
-                    <th>已使用内存</th>
-                    <th>内存使用率</th>
-                    <th>云主机数</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for c in groups %}
-                    <tr>
-                        <td><a href="{% url 'reports:reports-group' id=c.id %}">{{c.name}}</a></td>
-                        <td>{{c.center__name}}</td>
-                        <td>{{c.real_cpu}}</td>
-                        <td>{{c.vcpu_total}}</td>
-                        <td>{{c.vcpu_allocated}}</td>
-                        <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
-                        <td>{{c.mem_total | sizeformat:'GB'}}</td>
-                        <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
-                        <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
-                        <td>{{c.vm_created}}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="card border-success">
-            <div class="card-header">
-                <h3 class="card-title">宿主机</h3>
+            <div class="pl-lg-1 flex-grow-1">
+              <div class="tab-content h-100">
+                    <div class="card tab-pane fade show active  h-100" id="center" role="tabpanel" aria-labelledby="center-tab">
+                        <table class="table">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>数据中心</th>
+                                <th>总物理cpu(/核)</th>
+                                <th>总虚拟cpu(/核)</th>
+                                <th>已分配cpu(/核)</th>
+                                <th>cpu分配率</th>
+                                <th>总内存</th>
+                                <th>已使用内存</th>
+                                <th>内存使用率</th>
+                                <th>虚拟机数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for c in centers %}
+                                <tr>
+                                    <td><a href="{% url 'reports:reports-center' id=c.id %}">{{c.name}}</a></td>
+                                    <td>{{c.real_cpu}}</td>
+                                    <td>{{c.vcpu_total}}</td>
+                                    <td>{{c.vcpu_allocated}}</td>
+                                    <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
+                                    <td>{{c.mem_total | sizeformat:'GB'}}</td>
+                                    <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
+                                    <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
+                                    <td>{{c.vm_created}}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card tab-pane fade show h-100" id="host_group" role="tabpanel" aria-labelledby="host_group-tab">
+                        <table class="table">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>宿主机组</th>
+                                <th>数据中心</th>
+                                <th>总物理cpu(/核)</th>
+                                <th>总虚拟cpu(/核)</th>
+                                <th>已分配cpu(/核)</th>
+                                <th>cpu分配率</th>
+                                <th>总内存</th>
+                                <th>已使用内存</th>
+                                <th>内存使用率</th>
+                                <th>虚拟机数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for c in groups %}
+                                <tr>
+                                    <td><a href="{% url 'reports:reports-group' id=c.id %}">{{c.name}}</a></td>
+                                    <td>{{c.center__name}}</td>
+                                    <td>{{c.real_cpu}}</td>
+                                    <td>{{c.vcpu_total}}</td>
+                                    <td>{{c.vcpu_allocated}}</td>
+                                    <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
+                                    <td>{{c.mem_total | sizeformat:'GB'}}</td>
+                                    <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
+                                    <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
+                                    <td>{{c.vm_created}}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card  tab-pane fade show h-100 " id="host" role="tabpanel" aria-labelledby="host-tab">
+                        <table class="table">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>宿主机IP地址</th>
+                                <th>机组</th>
+                                <th>物理cpu(/核)</th>
+                                <th>虚拟cpu(/核)</th>
+                                <th>已分配cpu(/核)</th>
+                                <th>cpu分配率</th>
+                                <th>总内存</th>
+                                <th>已使用内存</th>
+                                <th>内存使用率</th>
+                                <th>虚拟机数</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for c in hosts %}
+                                <tr>
+                                    <td>{{c.ipv4}}</td>
+                                    <td>{{c.group__name}}</td>
+                                    <td>{{c.real_cpu}}</td>
+                                    <td>{{c.vcpu_total}}</td>
+                                    <td>{{c.vcpu_allocated}}</td>
+                                    <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
+                                    <td>{{c.mem_total | sizeformat:'GB'}}</td>
+                                    <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
+                                    <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
+                                    <td>{{c.vm_created}}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+              </div>
             </div>
-            <table class="table">
-                <thead class="thead-light">
-                <tr>
-                    <th>宿主机IP</th>
-                    <th>机组</th>
-                    <th>物理cpu(/核)</th>
-                    <th>虚拟cpu(/核)</th>
-                    <th>已分配cpu(/核)</th>
-                    <th>cpu分配率</th>
-                    <th>总内存</th>
-                    <th>已使用内存</th>
-                    <th>内存使用率</th>
-                    <th>云主机数</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for c in hosts %}
-                    <tr>
-                        <td>{{c.ipv4}}</td>
-                        <td>{{c.group__name}}</td>
-                        <td>{{c.real_cpu}}</td>
-                        <td>{{c.vcpu_total}}</td>
-                        <td>{{c.vcpu_allocated}}</td>
-                        <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
-                        <td>{{c.mem_total | sizeformat:'GB'}}</td>
-                        <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
-                        <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
-                        <td>{{c.vm_created}}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
         </div>
     </div>
 {% endblock %}

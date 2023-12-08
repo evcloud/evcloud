@@ -89,7 +89,7 @@
     $(".btn-pci-mount").click(function (e) {
         e.preventDefault();
 
-        if(!confirm("确定挂载到此云主机吗？"))
+        if(!confirm("确定挂载到此虚拟机吗？"))
             return;
 
         let pci_id = $("#id-mount-pci-id").text();

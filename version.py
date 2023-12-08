@@ -5,7 +5,7 @@ import datetime
 from django.utils.version import get_version
 
 
-VERSION = (3, 1, 9, 'final', 0)     # 'alpha', 'beta', 'rc', 'final'
+VERSION = (4, 0, 1, 'final', 0)     # 'alpha', 'beta', 'rc', 'final'
 
 
 def get_git_changeset():
@@ -14,21 +14,34 @@ def get_git_changeset():
     if "__file__" not in globals():
         return None
     repo_dir = os.path.dirname(os.path.abspath(__file__))
+
     git_log = subprocess.run(
-        "git log --pretty=format:%ct --quiet -1 HEAD",
+        "git for-each-ref --count=3 --sort='-taggerdate' "
+        "--format='%(refname:short) || %(taggerdate:format:%s) || %(*authorname) || %(*authoremail) || %(subject)'"
+        " refs/tags/*",
         capture_output=True,
         shell=True,
         cwd=repo_dir,
         text=True,
     )
-    timestamp = git_log.stdout
-    tz = datetime.timezone.utc
+
     try:
-        timestamp = datetime.datetime.fromtimestamp(int(timestamp), tz=tz)
-    except ValueError:
+        cmd_output = git_log.stdout
+        lines = cmd_output.split('\n')[0:3]
+        tz = datetime.timezone.utc
+        tags = []
+        for line in lines:
+            tag = line.split('||')
+            if len(tag) == 5:
+                tag[1] = datetime.datetime.fromtimestamp(int(tag[1]), tz=tz)
+                tag[4] = tag[4].replace('*', '\n*')
+                tags.append(tag)
+
+
+    except Exception:
         return None
-    return timestamp.strftime("%Y/%m/%d %H:%M:%S")
+    return tags
 
 
 __version__ = get_version(VERSION)
-__version_timestamp__ = get_git_changeset()
+__version_git_change_set__ = get_git_changeset()

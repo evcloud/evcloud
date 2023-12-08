@@ -392,6 +392,18 @@ class RbdManager:
 
         return size
 
+    def flatten_image(self, image_name):
+        """
+        flatten image 快照独立成新的镜像
+        """
+        image = self.get_rbd_image(image_name=image_name)
+
+        try:
+            image.flatten()
+            return True
+        except Exception as e:
+            raise e
+
 
 class CephClusterManager:
     """

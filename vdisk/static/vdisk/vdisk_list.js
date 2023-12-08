@@ -70,6 +70,7 @@
 			type: 'patch',
             success: function (data, status_text) {
                 alert('已成功卸载硬盘');
+                window.location.reload();
             },
             error: function (xhr, msg, err) {
                 data = xhr.responseJSON;

@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import CephPool, CephCluster
+from .models import CephPool, CephCluster, GlobalConfig
 
 
 @admin.register(CephCluster)
@@ -17,3 +18,19 @@ class CephPoolAdmin(admin.ModelAdmin):
     list_display = ('id', 'pool_name', 'has_data_pool', 'data_pool', 'ceph', 'remarks')
     # list_filter = ['ceph']
     # search_fields = ['pool_name']
+
+
+@admin.register(GlobalConfig)
+class GlobalConfigTableAdmin(admin.ModelAdmin):
+    list_display_links = ('id', 'sitename')
+    list_display = ('id', 'sitename', 'poweredby', 'novnchttp')
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request):
+        is_exist = GlobalConfig.objects.first()
+        if is_exist:
+            return False
+
+        return super().has_add_permission(request=request)

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}创建云主机{% endblock %}
+{% block title %}创建虚拟机{% endblock %}
 
 {% block head %}{% endblock %}
 
@@ -9,15 +9,15 @@
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title">创建云主机</span>
+                <span class="card-title">创建虚拟机</span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vms-list' %}">
-                    云主机列表
+                    虚拟机列表
                 </a></span>
             </div>
             <div class="card-body align-content-center">
                 <form class="form-horizontal" >
                     <div class="form-group row">
-                        <label for="id-center" class="offset-sm-1 col-sm-2 text-right col-form-label">分中心</label>
+                        <label for="id-center" class="offset-sm-1 col-sm-2 text-right col-form-label">数据中心</label>
                         <div class="col-sm-7">
                             <select name="center_id" class="form-control" id="id-center">
                                 {% for c in centers %}
@@ -152,7 +152,7 @@
                     </div>
                     <div class="form-group row">
                         <div class="offset-sm-1 col-sm-2">
-                            <button type="submit" class="btn btn-primary float-right">创建</button>
+                            <button type="submit" class="btn btn-primary float-right" id="create_vm">创建</button>
                         </div>
                     </div>
                     <input name="mem_unit" type="hidden" id="mem_unit" value="GB">

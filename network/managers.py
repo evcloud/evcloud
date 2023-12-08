@@ -1,13 +1,57 @@
 from io import StringIO
 import io
+import re
 
-from ipaddress import IPv4Address, AddressValueError
+from ipaddress import IPv4Address, AddressValueError, IPv6Address, IPv4Network, IPv6Network
 from django.db import transaction
 from django.db.models import Subquery
 
-from .models import Vlan, MacIP
+from .models import Vlan, MacIP, ShieldVlan
 from utils.errors import NetworkError
 from compute.managers import CenterManager, GroupManager
+
+
+# def generate_mac(mac_start):
+#     """
+#     ipv6 生成mcip
+#     """
+#     mac = mac_start.replace(':', '')
+#     try:
+#         mac_t = int(mac, 16)
+#     except Exception as e:
+#         raise NetworkError(msg='无效的mac地址')
+#
+#     if mac_t >= 281474976710655:
+#         raise NetworkError(msg='mac地址已用完')
+#
+#     if 219902325555200 <= mac_t <= 221001837182975:
+#         # C8:00:00:00:00:00 -- C8:00:FF:FF:FF:FF 不占用
+#         mac_t = 221001837182976
+#
+#     mac_address = "{:012X}".format(mac_t + 1)
+#
+#     mac_re = re.findall(".{2}", mac_address)
+#     new_mac = ":".join(mac_re)
+#     return new_mac
+
+
+def check_ip_in_subnets(subnet_netm, ip_from, ip_to):
+    """
+    检测ip 是否在子网内
+    subnet_netm: ipv4 -> 子网/掩码  ipv6 -> 子网/cidr
+    ip_from；起始地址
+    ip_to：结束地址
+    """
+
+    # if flag is False:
+    #     sub_net = IPv4Network(subnet_netm)
+    # else:
+    #     sub_net = IPv6Network(subnet_netm)
+    sub_net = IPv4Network(subnet_netm)
+    if ip_from in sub_net and ip_to in sub_net:
+        return True
+    raise NetworkError(msg='输入的起始IP和结束IP不在相应的子网内')
+
 
 
 class VlanManager:
@@ -17,7 +61,7 @@ class VlanManager:
     MODEL = Vlan
 
     @staticmethod
-    def get_vlan_by_id(vlan_id: int):
+    def get_vlan_by_id(vlan_id: int, user):
         """
         通过id获取镜像元数据模型对象
         :param vlan_id: 镜像id
@@ -31,7 +75,15 @@ class VlanManager:
             raise NetworkError(msg='子网ID参数有误')
 
         try:
-            return Vlan.objects.select_related('group').filter(id=vlan_id).first()
+            vlan_obj = Vlan.objects.select_related('group').filter(id=vlan_id).first()
+            if vlan_obj is None:
+                return None
+
+            shield_v = vlan_obj.check_shield_vlan(user=user)
+            if shield_v and not user.is_superuser:
+                raise NetworkError(msg=f'该 vlan 无权查询')
+            return vlan_obj
+            # return Vlan.objects.select_related('group').filter(id=vlan_id).first()
         except Exception as e:
             raise NetworkError(msg=f'查询子网时错误,{str(e)}')
 
@@ -41,9 +93,9 @@ class VlanManager:
 
     def get_center_vlan_queryset(self, center):
         """
-        分中心的vlan查询集
+        数据中心的vlan查询集
 
-        :param center: 分中心实例，或id
+        :param center: 数据中心实例，或id
         :return:
             QuerySet()
         """
@@ -66,7 +118,7 @@ class VlanManager:
         """
         筛选vlan查询集
 
-        :param center: 分中心id
+        :param center: 数据中心id
         :param group: 宿主机组id
         :param is_public: 公网或私网
         :param user: 用户实例，用于过滤用户有权限使用的vlan
@@ -100,11 +152,37 @@ class VlanManager:
                 return queryset.none()
 
             queryset = queryset.filter(group__in=group_ids).all()
+        queryset = queryset.filter(image_specialized=False).all()
+        return queryset
+
+    def shield_vlan(self, queryset, user=None):
+        """屏蔽vlan
+
+        queryset: vlan queryset
+        user : 用户
+        """
+        if not user or user.is_superuser:
+            return queryset
+
+        vlan_obj = self.shield_vlan_obj(user=user)
+        if not vlan_obj:
+            return queryset
+
+        vlan_list = vlan_obj.get_vlan_id()
+
+        if not vlan_list:
+            return queryset
+
+        queryset = queryset.exclude(id__in=vlan_list).all()
 
         return queryset
 
+    def shield_vlan_obj(self, user):
+        obj = ShieldVlan.objects.filter(user_name=user.id).first()
+        return obj
+
     @staticmethod
-    def generate_subips(vlan_id, from_ip, to_ip, write_database=False):
+    def generate_subips(vlan, from_ip, to_ip, write_database=False):
         """
         生成子网ip
         :param vlan_id:
@@ -124,6 +202,9 @@ class VlanManager:
         if int_from > int_to:
             raise NetworkError(msg='请检查输入的ip地址的范围，起始ip不能大于结束ip地址')
 
+        subnet_netm = f'{vlan.subnet_ip}/{vlan.net_mask}'
+        check_ip_in_subnets(subnet_netm=subnet_netm, ip_from=ipv4_from, ip_to=ipv4_to)  # 检测IP是否在子网内
+
         l_ip_mac = []
         for ip in range(int_from, int_to + 1):
             if ip & 0xff:
@@ -136,11 +217,57 @@ class VlanManager:
             with transaction.atomic():
                 for subip, submac in l_ip_mac:
                     try:
-                        MacIP.objects.create(vlan_id=vlan_id, ipv4=subip, mac=submac)
+                        MacIP.objects.create(vlan_id=vlan.id, ipv4=subip, mac=submac)
                     except Exception as error:
                         raise NetworkError(msg='ip写入数据库失败，部分ip数据库中已有')
 
         return l_ip_mac
+
+    # @staticmethod
+    # def generate_subips_v6(vlan, from_ip, to_ip, write_database=False):
+    #     """
+    #     生成ipv6子网
+    #     :param vlan_id:
+    #     :param from_ip: 开始ip
+    #     :param to_ip: 结束ip
+    #     :param write_database: True 生成并导入到数据库 False 生成不导入数据库
+    #     :return:
+    #     """
+    #     try:
+    #         ipv6_from = IPv6Address(from_ip)
+    #         ipv6_to = IPv6Address(to_ip)
+    #     except AddressValueError as e:
+    #         raise NetworkError(msg=f'输入的ip地址无效, {e}')
+    #
+    #     int_from = int(ipv6_from)
+    #     int_to = int(ipv6_to)
+    #     if int_from > int_to:
+    #         raise NetworkError(msg='请检查输入的ip地址的范围，起始ip不能大于结束ip地址')
+    #
+    #     net_mast = vlan.net_mask_v6.replace(':', '')
+    #     subnet_netm = f'{vlan.subnet_ip_v6}/{len(net_mast) * 4}'
+    #     check_ip_in_subnets(subnet_netm=subnet_netm, ip_from=ipv6_from, ip_to=ipv6_to, flag=True)  # 检测IP是否在子网内
+    #
+    #     l_ip_mac = []
+    #     mac_obj = MacIP.objects.filter(vlan=vlan).order_by('-id').first()
+    #     mac_start = '02:00:00:00:00:00'
+    #     if mac_obj:
+    #         mac_start = mac_obj.mac
+    #
+    #     for ip in range(int_from, int_to + 1):
+    #         if ip & 0xffff:
+    #             ip_obj = IPv6Address(ip)
+    #             mac_start = generate_mac(mac_start=mac_start)  # 顺序生成mac
+    #             l_ip_mac.append((str(ip_obj), mac_start))
+    #
+    #     if write_database:
+    #         with transaction.atomic():
+    #             for subip, submac in l_ip_mac:
+    #                 try:
+    #                     MacIP.objects.create(vlan_id=vlan.id, ipv4=subip, mac=submac)
+    #                 except Exception as error:
+    #                     raise NetworkError(msg='ip写入数据库失败，部分ip数据库中已有')
+    #     return l_ip_mac
 
     @staticmethod
     def get_macips_by_vlan(vlan):
@@ -183,6 +310,35 @@ class VlanManager:
             line = f"\thost v_{macip.ipv4.replace('.', '_')} " \
                    f"{{hardware ethernet {macip.mac};fixed-address {macip.ipv4};}}\n"
             file.write(line)
+
+        file.write('}')
+        file.seek(io.SEEK_SET)      # 重置偏移量
+        return file_name, file
+
+    @staticmethod
+    def generate_config_file_v6(vlan, macips):
+        """
+        生成DHCP ipv6配置文件
+        :param vlan: vlan对象
+        :param macips: 对应vlan下的所有macip组
+        :return: str, StringIO()
+        """
+
+        if not vlan.net_mask_v6:
+            raise NetworkError(msg='vlan 没有配置ipv6相关内容')
+        net_mast = vlan.net_mask_v6.replace(':', '')
+        subnet_netm = len(net_mast) * 4
+        lines = 'subnet6 %s/%s {\n' % (vlan.subnet_ip_v6, subnet_netm)
+        lines += '\t' + 'option dhcp6.name-servers %s;\n' % vlan.dns_server_v6  # dns
+        lines += '\t' + vlan.dhcp_config_v6 + '\n'
+        file_name = f'{vlan.subnet_ip_v6}_dhcpd.conf'
+        file = StringIO()
+        file.write(lines)
+        for macip in macips:
+            if macip.ipv6:
+                line = f"\thost v_{macip.ipv6.replace(':', '_')} " \
+                       f"{{hardware ethernet {macip.mac};fixed-address6 {macip.ipv6};}}\n"
+                file.write(line)
 
         file.write('}')
         file.seek(io.SEEK_SET)      # 重置偏移量
@@ -341,3 +497,20 @@ class MacIPManager:
             return True
         except Exception as e:
             return False
+
+    @staticmethod
+    def get_free_ip_in_vlan(vlan_id: int, flag=None):
+        """
+        获取子网中所有有可用的IP
+
+        :param vlan_id: 子网id
+        :param flag: 标记不想返回None
+        :return:
+            qs: 查询集
+            None: 没有
+        """
+        qs = MacIP.get_all_free_ip_in_vlan(vlan_id)
+        if qs.count() > 0 or flag:
+            return qs
+
+        return None

@@ -1,8 +1,12 @@
+from func_timeout import FunctionTimedOut
+
 from vdisk.manager import VdiskManager, VdiskError
 from device.manager import DeviceError, PCIDeviceManager
+from compute.managers import HostManager
 from utils.errors import VmError, VmNotExistError
 from utils import errors
-from .manager import VmManager
+from utils.vm_normal_status import vm_normal_status
+from .manager import VmManager, AttachmentsIPManager
 from .vminstance import VmInstance
 from .vm_builder import VmBuilder
 
@@ -18,13 +22,14 @@ class VmAPI:
         self._vdisk_manager = VdiskManager()
         self._pci_manager = PCIDeviceManager()
 
-    def _get_user_perms_vm(self, vm_uuid: str, user, related_fields: tuple = ()):
+    def _get_user_perms_vm(self, vm_uuid: str, user, related_fields: tuple = (), flag=False):
         """
         获取用户有访问权的的虚拟机
 
         :param vm_uuid: 虚拟机uuid
         :param user: 用户
         :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
+        :param flag: 用于虚拟机在搁置的情况下，对一些情况允许
         :return:
             Vm()   # success
 
@@ -36,6 +41,10 @@ class VmAPI:
 
         if not vm.user_has_perms(user=user):
             raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
+
+        status_bool = vm_normal_status(vm=vm, flag=flag)
+        if status_bool is False:
+            raise errors.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作')
 
         return vm
 
@@ -55,7 +64,7 @@ class VmAPI:
         :param mem: 内存大小
         :param vlan_id: 子网id
         :param user: 用户对象
-        :param center_id: 分中心id
+        :param center_id: 数据中心id
         :param group_id: 宿主机组id
         :param host_id: 宿主机id
         :param ipv4:  指定要创建的虚拟机ip
@@ -75,6 +84,29 @@ class VmAPI:
         )
         return instance.vm
 
+    def create_vm_for_image(self, image_id: int, vcpu: int, mem: int, host_id=None, ipv4=None):
+        """
+        为镜像创建一个虚拟机
+
+        说明：
+            host_id不能为空，必须为127.0.0.1的宿主机，ipv4可以为镜像专用子网中的任意ip，可以重复使用；
+
+        备注：虚拟机的名称和系统盘名称同虚拟机的uuid
+
+        :param image_id: 镜像id
+        :param vcpu: cpu数
+        :param mem: 内存大小
+        :param host_id: 宿主机id
+        :param ipv4:  指定要创建的虚拟机ip
+        :return:
+            Vm()
+            raise VmError
+
+        :raise VmError
+        """
+        instance = VmInstance.create_instance_for_image(image_id=image_id, vcpu=vcpu, mem=mem, host_id=host_id, ipv4=ipv4)
+        return instance.vm
+
     def delete_vm(self, vm_uuid: str, user=None, force=False):
         """
         删除一个虚拟机
@@ -90,6 +122,21 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         return VmInstance(vm=vm).delete(force=force)
+
+    def delete_vm_for_image(self, vm=None):
+        """
+        删除一个虚拟机
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :param force:   是否强制删除， 会强制关闭正在运行的虚拟机
+        :return:
+            True
+            raise VmError
+
+        :raise VmError
+        """
+        return VmInstance(vm=vm).delete_for_image(force=True)
 
     def edit_vm_vcpu_mem(self, vm_uuid: str, vcpu: int = 0, mem: int = 0, user=None, force=False):
         """
@@ -115,6 +162,29 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         return VmInstance(vm=vm).edit_vcpu_mem(vcpu=vcpu, mem=mem, force=force)
 
+    def edit_vm_vcpu_mem_for_image(self, vm, vcpu: int = 0, mem: int = 0):
+        """
+        修改虚拟机vcpu和内存大小
+
+        :param vm_uuid: 虚拟机uuid
+        :param vcpu:要修改的vcpu数，默认0 不修改
+        :param mem: 要修改的内存大小，默认0 不修改
+        :param user: 用户
+        :param force:   是否强制修改, 会强制关闭正在运行的虚拟机
+        :return:
+            True
+            raise VmError
+
+        :raise VmError
+        """
+        if vcpu < 0 or mem < 0:
+            raise errors.VmError.from_error(errors.BadRequestError(msg='vcpu或mem不能小于0'))
+
+        if vcpu == 0 and mem == 0:
+            return True
+
+        return VmInstance(vm=vm).edit_vcpu_mem(vcpu=vcpu, mem=mem, force=True, update_vm=False)
+
     def vm_operations(self, vm_uuid: str, op: str, user):
         """
         操作虚拟机
@@ -129,6 +199,33 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
         return VmInstance(vm=vm).operations(op=op)
+
+    def vm_operations_for_image(self, vm, op: str):
+        """
+        操作虚拟机
+
+        :param vm_uuid: 虚拟机uuid
+        :param op: 操作，['start', 'reboot', 'shutdown', 'poweroff', 'delete', 'delete_force']
+        :param user: 用户
+        :return:
+            True    # success
+            False   # failed
+        :raise VmError
+        """
+        return VmInstance(vm=vm).operations(op=op)
+
+    def get_vm_status_for_image(self, vm):
+        """
+        获取虚拟机的运行状态
+
+        :param vm_uuid: 虚拟机uuid
+        :param user: 用户
+        :return:
+            (state_code:int, state_str:str)     # success
+
+        :raise VmError()
+        """
+        return VmInstance(vm=vm).status()
 
     def get_vm_status(self, vm_uuid: str, user):
         """
@@ -162,7 +259,7 @@ class VmAPI:
         """
         向虚拟机挂载硬盘
 
-        *虚拟机和硬盘需要在同一个分中心
+        *虚拟机和硬盘需要在同一个数据中心
         :param vm_uuid: 虚拟机uuid
         :param vdisk_uuid: 虚拟硬盘uuid
         :param user: 用户
@@ -207,6 +304,10 @@ class VmAPI:
 
         if not vdisk.user_has_perms(user=user):
             raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限访问此硬盘'))
+
+        status_bool = vm_normal_status(vm=vdisk.vm)
+        if status_bool is False:
+            raise errors.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作')
 
         vm = vdisk.vm
         if not vm:
@@ -317,6 +418,10 @@ class VmAPI:
         if not vm.user_has_perms(user=user):
             raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
+        status_bool = vm_normal_status(vm=vm)
+        if status_bool is False:
+            raise errors.VmAccessDeniedError(msg='虚拟机搁置状态， 拒绝此操作')
+
         return VmInstance(vm=vm).umount_pci_device(device=device)
 
     def mount_pci_device(self, vm_uuid: str, device_id: int, user):
@@ -355,7 +460,7 @@ class VmAPI:
 
     def migrate_vm(self, vm_uuid: str, host_id: int, user, force: bool = False):
         """
-        迁移虚拟机
+        迁移虚拟机，迁移后强制更新源与目标Host资源分配信息
 
         :param vm_uuid: 虚拟机uuid
         :param host_id: 宿主机id
@@ -369,22 +474,25 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
 
-        return VmInstance(vm=vm).migrate(host_id=host_id, force=force)
+        new_vm = VmInstance(vm=vm).migrate(host_id=host_id, force=force)
+        HostManager.update_host_quota(host_id=vm.host_id)
+        HostManager.update_host_quota(host_id=new_vm.host_id)
+        return new_vm
 
-    def reset_sys_disk(self, vm_uuid: str, user):
-        """
-        重置虚拟机系统盘，恢复到创建时状态
-
-        :param vm_uuid: 虚拟机uuid
-        :param user: 用户
-        :return:
-            Vm()   # success
-
-        :raises: VmError
-        """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
-            'user', 'host__group', 'image__ceph_pool__ceph'))
-        return VmInstance(vm=vm).reset_sys_disk()
+    # def reset_sys_disk(self, vm_uuid: str, user):
+    #     """
+    #     重置虚拟机系统盘，恢复到创建时状态
+    #
+    #     :param vm_uuid: 虚拟机uuid
+    #     :param user: 用户
+    #     :return:
+    #         Vm()   # success
+    #
+    #     :raises: VmError
+    #     """
+    #     vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
+    #         'user', 'host__group', 'image__ceph_pool__ceph'))
+    #     return VmInstance(vm=vm).reset_sys_disk()
 
     def vm_change_password(self, vm_uuid: str, user, username: str, password: str):
         """
@@ -419,7 +527,7 @@ class VmAPI:
 
     def live_migrate_vm(self, vm_uuid: str, dest_host_id: int, user):
         """
-        迁移虚拟机
+        迁移虚拟机，迁移后强制更新源与目标Host资源分配信息
 
         :param vm_uuid: 虚拟机uuid
         :param dest_host_id: 目标宿主机id
@@ -431,7 +539,10 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
-        return VmInstance(vm).live_migrate(dest_host_id=dest_host_id)
+        task = VmInstance(vm).live_migrate(dest_host_id=dest_host_id)
+        # HostManager.update_host_quota(host_id=vm.host_id)
+        # HostManager.update_host_quota(host_id=dest_host_id)
+        return task
 
     def get_vm_stats(self, vm_uuid: str, user):
         """
@@ -452,3 +563,83 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('image__ceph_pool__ceph',))
         return VmInstance(vm).sys_disk_expand(expand_size)
+
+    def vm_unshelve(self, vm_uuid: str, group_id, host_id, mac_ip_id, user):
+        """虚拟机搁置服务恢复"""
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'host__group', 'user'),
+                                     flag=True)
+        return VmInstance(vm).unshelve_vm(group_id=group_id, host_id=host_id, mac_ip_id=mac_ip_id, user=user)
+
+    def vm_shelve(self, vm_uuid: str, user):
+        """虚拟机搁置服务"""
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'host__group', 'user'))
+        return VmInstance(vm).shelve_vm()
+
+    def vm_delshelve(self, vm_uuid: str, user):
+        """搁置虚拟机删除"""
+
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'last_ip', 'last_ip__vlan',
+                                                                                 'last_ip__vlan__group',
+                                                                                 'last_ip__vlan__group__center'), flag=True)
+        return VmInstance(vm).delshelve_vm()
+
+    def attach_ip(self, vm_uuid: str, user, mac_ip_obj):
+
+        if not mac_ip_obj:
+            raise errors.BadRequestError(msg='无效的ip')
+
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
+        resq = VmInstance(vm).attach_ip_vm(mac_ip_obj=mac_ip_obj)
+        if resq is False:
+            AttachmentsIPManager().detach_ip_to_vm(attach_ip_obj=mac_ip_obj)
+        return resq
+
+    def detach_ip(self, vm_uuid: str, user, mac_ip_obj):
+
+        if not mac_ip_obj:
+            raise errors.BadRequestError(msg='无效的ip')
+
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
+
+        if vm.mac_ip.id == mac_ip_obj.id:
+            raise errors.BadRequestError(msg='您不能移除主IP。')
+
+        return VmInstance(vm).detach_ip_vm(mac_ip_obj=mac_ip_obj)
+
+    def attach_ip_list(self, vm_uuid: str, user):
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
+        queryset = AttachmentsIPManager().get_attach_ip_list(vm_uuid=vm_uuid)
+        return queryset
+
+    def vm_user_release_image(self, vm, new_image_name):
+        image_id = vm.image_id
+        vm_uuid = vm.get_uuid()
+
+        # clone 之前的操作
+        vm_manager = VmInstance(vm=vm)
+        if vm_manager.vm_domain.is_running():
+            raise errors.VmRunningError(msg='请关闭虚拟机。 如果有挂载设备，都需要卸载。')
+
+        vd = vm.vdisks
+        if vd:
+            raise errors.VmError(msg='请先卸载云硬盘')
+
+        pci_devs = vm.pci_devices
+        if pci_devs:
+            raise errors.VmError(msg='请先卸载本地资源(PCI)设备。')
+
+        att_ip = vm.get_attach_ip()
+        if att_ip:
+            raise errors.VmError(msg='请先移除主机附加的IP')
+
+        try:
+
+            flatten_bool = VmBuilder().user_flatten_image(image_id=image_id, vm_uuid=vm_uuid,
+                                                          new_image_name=new_image_name)
+        except FunctionTimedOut as e:
+            raise errors.VmError(msg=f'image release timeout. Please contact the administrator.')
+
+        except Exception as e:
+            raise e
+
+        return flatten_bool

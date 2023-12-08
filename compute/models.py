@@ -3,14 +3,15 @@ from django.db.models import F, Sum, Count
 from django.contrib.auth import get_user_model
 
 from pcservers.models import PcServer
+from utils.errors import ComputeError
 
-User = get_user_model()     # 获取用户模型
+User = get_user_model()  # 获取用户模型
 
 
 class Center(models.Model):
     """
-    分中心模型
-    一个分中心对应一个存储后端，存储虚拟机相关的数据，Ceph集群，虚拟机的虚拟硬盘和系统镜像使用ceph块存储
+    数中心中心模型
+    一个数据中心对应一个存储后端，存储虚拟机相关的数据，Ceph集群，虚拟机的虚拟硬盘和系统镜像使用ceph块存储
     """
     id = models.AutoField(primary_key=True)
     name = models.CharField(verbose_name='数据中心名称', max_length=100, unique=True)
@@ -19,8 +20,8 @@ class Center(models.Model):
 
     class Meta:
         ordering = ('id',)
-        verbose_name = '分中心'
-        verbose_name_plural = '01_分中心'
+        verbose_name = '数据中心'
+        verbose_name_plural = '01_数据中心'
 
     def __str__(self):
         return self.name
@@ -33,10 +34,11 @@ class Group(models.Model):
     组用于权限隔离，某一个用户创建的虚拟机只能创建在指定的组的宿主机上，无权使用其他组的宿主机
     """
     id = models.AutoField(primary_key=True)
-    center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的分中心')
+    center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的数据中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
+    enable = models.BooleanField(default=True, verbose_name='启用宿主机组')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
-    users = models.ManyToManyField(to=User, blank=True, related_name='group_set')     # 有权访问此组的用户
+    users = models.ManyToManyField(to=User, blank=True, related_name='group_set')  # 有权访问此组的用户
 
     def __str__(self):
         return self.name
@@ -58,7 +60,7 @@ class Group(models.Model):
         if not user or not user.id:
             return False
 
-        if user.is_superuser:   # 超级用户
+        if user.is_superuser:  # 超级用户
             return True
 
         return self.users.filter(id=user.id).exists()
@@ -80,17 +82,18 @@ class Host(models.Model):
     """
     id = models.AutoField(primary_key=True)
     group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set', verbose_name='宿主机所属的组')
-    pcserver = models.OneToOneField(to=PcServer, related_name='pc_server_host', blank=True, null=True, on_delete=models.CASCADE, verbose_name='物理服务器')
+    pcserver = models.OneToOneField(to=PcServer, related_name='pc_server_host', blank=True, null=True,
+                                    on_delete=models.CASCADE, verbose_name='物理服务器')
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
-    real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU总数')
-    real_mem = models.IntegerField(default=30, verbose_name='真实物理内存大小(Gb)')
-    vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU总数')
-    vcpu_allocated = models.IntegerField(default=0, verbose_name='已分配CPU总数')
-    mem_total = models.IntegerField(default=30, verbose_name='宿主机可用内存大小(Gb)')
-    mem_allocated = models.IntegerField(default=0, verbose_name='宿主机已分配内存大小(Gb)')
-    vm_limit = models.IntegerField(default=10, verbose_name='本机可创建虚拟机数量上限')
-    vm_created = models.IntegerField(default=0, verbose_name='本机已创建虚拟机数量')
-    enable = models.BooleanField(default=True, verbose_name='宿主机状态')
+    real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU(核)')
+    real_mem = models.IntegerField(default=30, verbose_name='真实物理内存(Gb)')
+    vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU(核）')
+    vcpu_allocated = models.IntegerField(default=0, verbose_name='已用CPU（核）')
+    mem_total = models.IntegerField(default=30, verbose_name='虚拟内存(GB)')
+    mem_allocated = models.IntegerField(default=0, verbose_name='已用内存(GB)')
+    vm_limit = models.IntegerField(default=10, verbose_name='本地虚拟机数量上限')
+    vm_created = models.IntegerField(default=0, verbose_name='本地已创建虚拟机数量')
+    enable = models.BooleanField(default=True, verbose_name='启用宿主机')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
 
     ipmi_host = models.CharField(max_length=100, default='', blank=True)
@@ -104,6 +107,7 @@ class Host(models.Model):
 
     def __str__(self):
         return self.ipv4
+
 
     def exceed_vm_limit(self):
         """
@@ -304,14 +308,14 @@ class Host(models.Model):
         """
         from vms.models import Vm
 
-        if hasattr(self, '_stats_now_data'):   # 缓存
+        if hasattr(self, '_stats_now_data'):  # 缓存
             return self._stats_now_data
 
         err_ret = {'vcpu': -1, 'mem': -1, 'vm_num': -1}
         if not self.id:
             return err_ret
         try:
-            a = Vm.objects.filter(host=self.id).aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('pk'))
+            a = Vm.objects.filter(host=self.id, vm_status='normal').aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('pk'))
         except Exception:
             return err_ret
 
@@ -333,5 +337,12 @@ class Host(models.Model):
     def save(self, *args, **kwargs):
         if self.pcserver:
             self.ipv4 = self.pcserver.host_ipv4
+            self.real_cpu = self.pcserver.real_cpu
+            self.real_mem = self.pcserver.real_mem
 
         super().save(*args, **kwargs)
+
+    def delete(self, using=None, keep_parents=False):
+        if self.ipv4 == '127.0.0.1':
+            raise ComputeError(msg='127.0.0.1为镜像专用宿主机，不能删除')
+        super().delete(using=using, keep_parents=keep_parents)

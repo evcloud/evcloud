@@ -18,21 +18,29 @@
     }
     </style>
 {% endblock %}
-{% block title %}云主机详情{% endblock %}
+{% block title %}虚拟机详情{% endblock %}
 
 {% block boby %}
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>云主机详情</strong></span>
+                <span class="card-title"><strong>虚拟机详情</strong></span>
                 <div class="float-right">
-                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建云主机</a>
-                    <a class="btn btn-sm btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">云主机列表</a>
+                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建虚拟机</a>
+                    <a class="btn btn-sm btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">虚拟机列表</a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="text-center h3">
-                    <span id="id-vm-uuid">{{ vm.hex_uuid }}</span>
+                    {% if vm.mac_ip %}
+                    <strong>{{ vm.ipv4 }}</strong>
+                    {% elif vm.last_ip %}
+                    <strong>{{ vm.last_ip.ipv4 }}</strong>
+                    {% else %}
+                    <strong>无ip</strong>
+                    {% endif %}
+
+                    (<span id="id-vm-uuid">{{ vm.hex_uuid }}</span>)
                     {% include 'vm_operations.html' %}
                     <span class="h5" id="vm_task_{{ vm.hex_uuid }}"></span>
                 </div>
@@ -44,8 +52,12 @@
                                 <div class="col-10">
                                     <div class="row">
                                         <div class="col-4">
-                                            <strong>运行状态：</strong><span id="vm_status_{{ vm.hex_uuid }}"></span>
+                                            {% if vm.vm_status == vm.VmStatus.NORMAL.value %}
+                                                <strong>运行状态：</strong><span id="vm_status_{{ vm.hex_uuid }}"></span>
                                             <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button>
+                                            {% else %}
+                                                <strong>虚拟机状态：</strong><span id="vm_status_{{ vm.vm_status }}" title="{{ vm.vm_status }}">{{ vm.get_vm_status_display }}</span>
+                                            {% endif %}
                                         </div>
                                         <div class="col-4"><strong>创建者：</strong>{{vm.user}}</div>
                                         <div class="col-4"><strong>创建时间：</strong>{{vm.create_time|date:'Y-m-d H:i:s'}}</div>
@@ -58,9 +70,16 @@
                                 <div class="col-md-2"><strong>位置信息</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
-                                        <div class="col-md-4"><strong>所属分中心：</strong>{{ vm.host.group.center.name }}</div>
+                                        <div class="col-md-4"><strong>所属数据中心：</strong>{{ vm.host.group.center.name }}</div>
                                         <div class="col-md-4"><strong>所属集群：</strong>{{ vm.host.group.name }}</div>
-                                        <div class="col-md-4"><strong>宿主机IP：</strong>{{ vm.host.ipv4 }}</div>
+
+                                        <div class="col-md-4"><strong>宿主机IP地址：</strong>
+                                            {% if vm.host %}
+                                            {{ vm.host.ipv4 }}
+                                            {% else%}
+                                            暂无
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -82,9 +101,9 @@
                                 <div class="col-md-2"><strong>镜像信息</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
-                                        <div class="col-md-4"><strong>系统镜像</strong>：{{ vm.image }}</div>
-                                        <div class="col-md-4"><strong>CEPH集群</strong>：{{ vm.image.ceph_pool.ceph.name }}</div>
-                                        <div class="col-md-4"><strong>Pool Name</strong>：{{ vm.image.ceph_pool.pool_name }}</div>
+                                        <div class="col-md-4"><strong>系统镜像</strong>：{{ vm.image_name }}</div>
+                                        <div class="col-md-4"><strong>CEPH集群</strong>：{{ vm.ceph_pool.ceph.name }}</div>
+                                        <div class="col-md-4"><strong>Pool Name</strong>：{{ vm.ceph_pool.pool_name }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -94,10 +113,37 @@
                                 <div class="col-md-2"><strong>网络信息</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
-                                        <div class="col-md-4"><strong>IP：</strong>{{vm.ipv4}}</div>
-                                        <div class="col-md-4"><strong>MAC：</strong>{{ vm.mac_ip.mac }}</div>
-                                        <div class="col-md-4"><strong>子网：</strong>{{ vm.mac_ip.vlan }}</div>
-                                        <div class="col-md-4"><strong>网桥br：</strong>{{ vm.mac_ip.vlan.br }}</div>
+                                        {% if vm.mac_ip %}
+                                        <div class="col-md-4"><strong>IP地址：</strong>{{vm.ipv4}}</div>
+                                        <div class="col-md-4"><strong>MAC地址：</strong>{{ vm.mac_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>VLAN描述：</strong>{{ vm.mac_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>IPv6地址：</strong>{{ vm.mac_ip.ipv6 | default_if_none:''}}</div>
+                                        <div class="col-md-4"><strong>网桥名：</strong>{{ vm.mac_ip.vlan.br }}</div>
+                                        {% elif vm.last_ip %}
+                                        <div class="col-md-4"><strong>原IP地址：</strong>{{vm.last_ip.ipv4}}</div>
+                                        <div class="col-md-4"><strong>原MAC地址：</strong>{{ vm.last_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>原IPv6地址：</strong>{{ vm.mac_ip.ipv6 }}</div>
+                                        <div class="col-md-4"><strong>VLAN描述：</strong>{{ vm.last_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>原网桥名：</strong>{{ vm.last_ip.vlan.br }}</div>
+                                        {% else %}
+
+                                        <div class="col-md-4"><strong>IP地址：</strong>无</div>
+                                        <div class="col-md-4"><strong>MAC地址：</strong>无</div>
+                                        <div class="col-md-4"><strong>原IPv6地址：</strong>无</div>
+                                        <div class="col-md-4"><strong>VLAN描述：</strong>无</div>
+                                        <div class="col-md-4"><strong>网桥名：</strong>无</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="list-group-item list-group-item-info">
+                            <div class="row">
+                                <div class="col-md-2"><strong>用户信息</strong></div>
+                                <div class="col-md-10">
+                                    <div class="row">
+                                        <div class="col-md-4"><strong>默认用户名：</strong>{{vm.default_user}}</div>
+                                        <div class="col-md-4"><strong>默认密码：</strong>{{vm.default_password}}</div>
                                     </div>
                                 </div>
                             </div>
@@ -121,6 +167,7 @@
                                 </div>
                             </div>
                         </li>
+
                         <li class="list-group-item">
                             <p><strong>云硬盘</strong></p>
                         {% with vm.vdisks as vdisks %}
@@ -176,7 +223,7 @@
                         {% endwith %}
                         </li>
                         <li class="list-group-item">
-                        <p><strong>PCI设备</strong></p>
+                        <p><strong>本地资源设备</strong></p>
                         {% with vm.pci_devices as devices  %}
                             {% if devices %}
                                 <table class="table table-default text-center table-pci-list" style="word-wrap:break-word;word-break:break-all;">
@@ -218,12 +265,12 @@
                                     </tbody>
                                 </table>
                             {% else %}
-                                未挂载PCI设备
+                                未挂载本地资源设备
                             {% endif %}
                         {% endwith %}
                         </li>
                         <li class="list-group-item" id="id-vm-snap-content">
-                            <p><strong>云主机快照</strong></p>
+                            <p><strong>虚拟机快照</strong></p>
                             {% if vm.sys_snaps %}
                                 <table class="table table-default text-center table-vm-snap-list"
                                        style="word-wrap:break-word;word-break:break-all;">
@@ -272,8 +319,48 @@
                                 未创建快照
                             {% endif %}
                         </li>
+                        <li class="list-group-item">
+                            <p><strong>附加IP地址列表</strong></p>
+                        {% with vm.get_attach_ip as att_ip %}
+                            {% if att_ip %}
+                                <table class="table table-default text-center table-disk-list"
+                                       style="word-wrap:break-word;word-break:break-all;">
+                                    <thead class="thead-light">
+                                    <tr>
+                                        <th>IP地址</th>
+                                        <th>MAC地址</th>
+                                        <th>网桥名</th>
+                                        <th>VLAN描述</th>
+                                        <th>标签</th>
+                                        <th>操作</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for att in att_ip %}
+                                        <tr id="tr_">
+                                            <td>{{ att.sub_ip.ipv4 }}</td>
+                                            <td>{{ att.sub_ip.mac }}</td>
+                                            <td>{{ att.sub_ip.vlan.br }}</td>
+                                            <td>{{ att.sub_ip.vlan.name }}</td>
+                                            <td>{{ att.sub_ip.vlan.get_tag_display }}</td>
+
+                                            <td>
+                                                  <button class="btn btn-sm btn-danger btn-vm-detach-ip"
+                                                          data-detach-ip-id="{{ att.sub_ip.id }}"
+                                                          data-vm-uuid="{{ vm.hex_uuid }}">移除</button>
+
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                未附加IP地址
+                            {% endif %}
+                        {% endwith %}
+                        </li>
                         <li class="list-group-item" id="id-vm-snap-content">
-                            <p><strong>云主机状态</strong></p>
+                            <p><strong>虚拟机状态</strong></p>
                             <div class="row">
                                 <div class="col-6">
                                     <canvas id="chart-vm-cpu"></canvas>
@@ -302,5 +389,6 @@
     <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_detail.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_attach_ip.js' %}"></script>
 {% endblock %}
 

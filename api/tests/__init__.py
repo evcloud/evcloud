@@ -1,25 +1,38 @@
+import datetime
+import uuid
 from rest_framework.test import APITestCase
 
+from compute.models import Host, Group
+from device.models import PCIDevice
+from network.models import MacIP, Vlan
+from pcservers.models import PcServer, Room, ServerType
 from users.models import UserProfile
 from ceph.models import CephCluster, CephPool, Center
-from image.models import VmXmlTemplate
+from image.models import VmXmlTemplate, Image
+
+from django_site.test_settings import *
+from vdisk.models import Quota, Vdisk
+from vms.models import Flavor, Vm
 
 
 def get_or_create_user(username='test', password='password') -> UserProfile:
     user, created = UserProfile.objects.get_or_create(username=username, password=password, is_active=True)
     return user
 
+
 def get_or_create_center(name: str = 'test'):
+    """创建 数据中心"""
     c = Center.objects.filter(name=name).first()
     if c is not None:
         return c
 
-    c = Center(name=name)
+    c = Center(name=name, location=name, desc=name)
     c.save(force_insert=True)
     return c
 
 
 def get_or_create_ceph(name: str = 'test'):
+    """创建 ceph 集群"""
     c = CephCluster.objects.filter(name=name).first()
     if c is not None:
         return c
@@ -28,14 +41,17 @@ def get_or_create_ceph(name: str = 'test'):
     c = CephCluster(
         id=100,
         name=name, center_id=center.id, has_auth=True,
-        uuid='test', config='', config_file='',
-        keyring='', keyring_file='', hosts_xml=''
+        uuid=cephuuid, config=cephconfig,
+        config_file=config_file,
+        keyring=keyring, keyring_file=keyring_file, hosts_xml=host_xml,
+        username='admin'
     )
     c.save(force_insert=True)
     return c
 
 
 def get_or_create_ceph_pool(name: str = 'test'):
+    """创建 存储池"""
     cp = CephPool.objects.filter(pool_name=name).first()
     if cp is not None:
         return cp
@@ -46,16 +62,337 @@ def get_or_create_ceph_pool(name: str = 'test'):
     return cp
 
 
+def get_or_create_ceph_pool_vdisk(name: str = 'test_vdisk_pool', group=None, cephpool=None, enable: bool = True):
+    """创建 云硬盘存储池"""
+    cp = Quota.objects.filter(name=name).first()
+    if cp is not None:
+        return cp
+
+    if group is None:
+        group = get_or_create_group()
+
+    if cephpool is None:
+        cephpool = get_or_create_ceph_pool()
+
+    cp = Quota(
+        name=name,
+        group=group,
+        cephpool=cephpool,
+        total=10,
+        enable=enable,
+    )
+    cp.save(force_insert=True)
+    return cp
+
+
+def get_or_create_vdisk(uuid, quota, size: int = 1, vm=None, dev='', enable: bool = True, remarks=None):
+    cp = Vdisk.objects.filter(uuid=uuid).first()
+    if cp is not None:
+        return cp
+
+    user = get_or_create_user()
+
+    cp = Vdisk(
+        uuid=uuid,
+        size=size,
+        vm=vm,
+        user=user,
+        quota=quota,
+        dev=dev,
+        enable=enable,
+        rbd_name=uuid,
+        remarks=remarks,
+    )
+    cp.save(force_insert=True)
+    return cp
+
+
 def get_or_create_xml_temp(name: str = 'test'):
     t = VmXmlTemplate.objects.filter(name=name).first()
     if t is not None:
         return t
 
     t = VmXmlTemplate(
-        name=name, xml=''
+        name=name, xml=imagexml
     )
     t.save(force_insert=True)
     return t
+
+
+def get_or_create_image(name: str = 'test_image', user=None, pool_name=None):
+    """创建 镜像"""
+    queryset = Image.objects.filter(name=name).first()
+    if queryset is not None:
+        return queryset
+    if pool_name:
+        pool = get_or_create_ceph_pool(name=pool_name)
+    else:
+        pool = get_or_create_ceph_pool()
+    temp = get_or_create_xml_temp()
+    image = Image(
+        name=name,
+        sys_type=Image.SYS_TYPE_LINUX,
+        version='系统版本信息',
+        ceph_pool=pool,
+        tag=Image.TAG_USER,
+        user=user,
+        xml_tpl=temp,
+        size=10,
+        desc='系统镜像测试',
+        base_image='centos7',
+        snap='20230714_020646'
+
+    )
+    super(Image, image).save(force_insert=True)
+
+    return image
+
+
+def get_or_create_room(name: str = 'test_room'):
+    """创建 机房"""
+    queryset = Room.objects.filter(name=name).first()
+    if queryset is not None:
+        return queryset
+
+    room = Room(
+        name=name,
+        city=name,
+        desc=name
+    )
+    room.save(force_insert=True)
+    return room
+
+
+def get_or_create_servertype(name: str = 'test_servertype'):
+    """创建 服务器型号"""
+    queryset = ServerType.objects.filter(name=name).first()
+    if queryset is not None:
+        return queryset
+
+    servertype = ServerType(
+        name=name,
+        desc=name
+    )
+    servertype.save(force_insert=True)
+    return servertype
+
+
+def get_or_create_pcserver(host_ipv4='127.0.0.1', roon_name=None, servertype_name=None):
+    """服务器"""
+    queryset = PcServer.objects.filter(host_ipv4=host_ipv4).first()
+    if queryset is not None:
+        return queryset
+
+    user = get_or_create_user()
+    if roon_name:
+        room = get_or_create_room(name=roon_name)
+    else:
+        room = get_or_create_room()
+
+    if servertype_name:
+        servertype = get_or_create_servertype(name=servertype_name)
+    else:
+        servertype = get_or_create_servertype()
+
+    pcserver = PcServer(
+        room=room,
+        server_type=servertype,
+        status=1,
+        tag_no='testxxx',
+        location='testxxx',
+        host_ipv4=host_ipv4,
+        ipmi_ip='127.0.0.1',
+        user=user,
+
+    )
+    pcserver.save(force_insert=True)
+    return pcserver
+
+
+def get_or_create_group(name: str = 'test_group', center_name=None, user=None):
+    """创建 宿主机组"""
+    queryset = Group.objects.filter(name=name).first()
+    if queryset is not None:
+        return queryset
+
+    if center_name:
+
+        center = get_or_create_center(name=center_name)
+    else:
+        center = get_or_create_center()
+
+    if user is None:
+        user = get_or_create_user()
+
+    group = Group(
+        center=center,
+        name=name,
+        enable=True,
+        desc='',
+    )
+    group.save(force_insert=True)
+    group.users.add(user)
+    return group
+
+
+def get_or_create_host(ipv4: str = '127.0.0.1', real_cpu=8, real_mem=8, vm_limit=5, group_name=None,
+                       pcserver_host_ipv4=None):
+    """宿主机"""
+    queryset = Host.objects.filter(ipv4=ipv4).first()
+    if queryset is not None:
+        return queryset
+    if group_name:
+        group = get_or_create_group(name=group_name)
+    else:
+        group = get_or_create_group()
+
+    if pcserver_host_ipv4:
+
+        pcserver = get_or_create_pcserver(host_ipv4=pcserver_host_ipv4)
+    else:
+        pcserver = get_or_create_pcserver()
+
+    host = Host(
+        group=group,
+        pcserver=pcserver,
+        ipv4=ipv4,
+        real_cpu=real_cpu,
+        real_mem=real_mem,
+        vcpu_total=16,
+        vcpu_allocated=0,
+        mem_total=16,
+        mem_allocated=0,
+        vm_limit=vm_limit,
+        vm_created=0,
+    )
+    host.save(force_insert=True)
+    return host
+
+
+def get_or_create_flavor(public: bool = True):
+    """虚拟机硬件配置样式"""
+    queryset = Flavor.objects.filter(public=public).first()
+    if queryset is not None:
+        return queryset
+
+    flavor = Flavor(
+        vcpus=1,
+        ram=2,
+        public=public,
+        enable=True
+    )
+    flavor.save(force_insert=True)
+    return flavor
+
+
+def get_or_create_vlan(br: str = 'test_br', tag: int = 0, group=None, subnet_ip: str = '192.168.1.1',
+                       gateway: str = '192.168.1.243'):
+    """创建 vlan信息"""
+    queryset = Vlan.objects.filter(br=br).first()
+    if queryset is not None:
+        return queryset
+
+    if group is None:
+        group = get_or_create_group()
+
+    vlan = Vlan(
+        br=br,
+        name='test',
+        group=group,
+        tag=tag,
+        subnet_ip=subnet_ip,
+        net_mask='255.255.255.0',
+        gateway=gateway,
+        dns_server='114.114.114.114',
+        dhcp_config='#'
+    )
+    vlan.save(force_insert=True)
+    return vlan
+
+
+def get_or_create_macip(ipv4: str = '127.0.0.1', mac: str = 'EC:BB:36:62:4C:46', vlan=None, used: bool = False):
+    """创建 macip"""
+    queryset = MacIP.objects.filter(ipv4=ipv4).first()
+    if queryset is not None:
+        return queryset
+
+    if vlan is None:
+        vlan = get_or_create_vlan()
+
+    macip = MacIP(
+        vlan=vlan,
+        mac=mac,
+        ipv4=ipv4,
+        used=used,
+    )
+    macip.save(force_insert=True)
+    return macip
+
+
+def get_or_create_pci(address='/dev/sdb', type: int = 4, host=None, vm=None):
+    """创建 本地资源"""
+
+    queryset = PCIDevice.objects.filter(type=type).first()
+    if queryset is not None:
+        return queryset
+
+    if host is None:
+        host = get_or_create_host()
+
+    attach_time = None
+    if vm is not None:
+        attach_time = datetime.datetime.now()
+
+    pci_device = PCIDevice(
+        type=type,
+        vm=vm,
+        attach_time=attach_time if attach_time else None,
+        enable=True,
+        host=host,
+        address=address,
+        remarks='test pci'
+
+    )
+
+    pci_device.save(force_insert=True)
+    return pci_device
+
+
+def get_or_create_vm(uuid, image=None, ceph_pool=None, mac_ip=None, host=None):
+    """创建 虚拟机信息"""
+    queryset = Vm.objects.filter(uuid=uuid).first()
+    if queryset is not None:
+        return queryset
+
+    user = get_or_create_user()
+
+    if image is None:
+        image = get_or_create_image()
+
+    if ceph_pool is None:
+        ceph_pool = get_or_create_ceph_pool()
+
+    # vm_uuid = uuid.uuid4()
+    vm = Vm(
+        disk_type=Vm.DiskType.CEPH_RBD,
+        sys_disk_size=10,
+        uuid=uuid,
+        name=uuid,
+        vcpu=2,
+        mem=2,
+        disk=uuid,
+        image=image,
+        user=user,
+        xml='#',
+        image_name=image.name,
+        image_parent=image.name,
+        image_size=10,
+        ceph_pool=ceph_pool,
+        mac_ip=mac_ip,
+        host=host,
+    )
+    vm.save(force_insert=True)
+    return vm
 
 
 class MyAPITestCase(APITestCase):

@@ -1,12 +1,14 @@
 {% load static %}
 {% load custom_tags %}
+{% load globalconfig_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<link rel="stylesheet" type="text/css" href="{% static 'bootstrap-4.4.1/css/bootstrap.min.css' %}">
 	{% block head %}{% endblock %}
-	<title>{% block title %}{% endblock %}</title>
+    {% get_global_config as global_config %}
+	<title> {% if global_config %} {{ global_config.sitename }} | {% endif %}{% block title %}{% endblock %}</title>
     <style>
         html{
             height: 100%;
@@ -37,7 +39,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand" href="/">
             <img src="{% static 'images/logo/logo.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
-            EVCloud</a>
+            {% if global_config %} {{ global_config.sitename }} {% else %} EVcloud {% endif %}</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -46,14 +48,16 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
             {% if user.is_authenticated %}
-                <li class="nav-item" id="nav_vm_list"><a class="nav-link" href="{% url "vms:vms-list" %}">云主机</a></li>
+                <li class="nav-item" id="nav_vm_list"><a class="nav-link" href="{% url "vms:vms-list" %}">虚拟机</a></li>
                 <li class="nav-item" id="nav_vdisk_list"><a class="nav-link" href="{% url "vdisk:vdisk-list" %}">云硬盘</a></li>
+                <li class="nav-item" id="nav_pci_list"><a class="nav-link" href="{% url "device:pci-list" %}">本地资源</a></li>
                 <li class="nav-item" id="nav_image_list"><a class="nav-link" href="{% url "image:image-list" %}">镜像</a></li>
-                <li class="nav-item" id="nav_pci_list"><a class="nav-link" href="{% url "device:pci-list" %}">PCI设备</a></li>
+                {% if user.is_superuser %}
+                    <li class="nav-item" id="nav_vlan_list"><a class="nav-link" href="{% url "network:vlan_list" %}">网络</a></li>
+                {% endif %}
                 <li class="nav-item" id="nav_vpn_list"><a class="nav-link" href="{% url "vpn:vpn-list" %}">VPN</a></li>
                 <li class="nav-item" id="nav_quota"><a class="nav-link" href="{% url "reports:reports-quota" %}">资源配额</a></li>
                 {% if user.is_superuser %}
-                    <li class="nav-item" id="nav_vlan_list"><a class="nav-link" href="{% url "network:vlan_list" %}">网络</a></li>
                     <li class="nav-item" id="nav_reports"><a class="nav-link" href="{% url 'reports:reports-list' %}">统计报表</a></li>
                 {% endif %}
             {% endif %}
@@ -79,9 +83,9 @@
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="{% url 'users:logout' %}?next=/">登出</a>
                             <a class="dropdown-item" href="{% url 'users:change_password' %}">修改密码</a>
-                            <div class="dropdown-divider"></div>
                             {% if user.is_superuser %}
-                                <a class="dropdown-item" href="{% url 'admin:index' %}">后台管理</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{% url 'appnav' %}">后台管理</a>
                             {% endif %}
                         </div>
                     </li>
@@ -101,7 +105,8 @@
         {% block boby %}{% endblock %}
     </div>
     <footer class="page-footer text-center bg-light p-2">
-        <p><a href="http://www.cnic.cas.cn/">中国科学院计算机网络信息中心</a> 科技云部</p>
+        <p>Powered by <a href="{% if global_config %}{{ global_config.poweredby }}
+            {% else %} https://gitee.com/cstcloud-cnic/evcloud {% endif %}"> Evcloud </a> </p>
     </footer>
     <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'bootstrap-4.4.1/js/bootstrap.bundle.min.js' %}"></script>

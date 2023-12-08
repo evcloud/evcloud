@@ -33,7 +33,7 @@
                 <form role="form" class="form-horizontal" method="get" action="">
                     <div class="input-group" style="">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-center">分中心</label>
+                            <label class="input-group-text" for="id-center">数据中心</label>
                         </div>
                         <select name="center" class="custom-select" id="id-center">
                             <option value="">--</option>
@@ -76,7 +76,7 @@
                             <label class="input-group-text">关键字</label>
                         </div>
                         <input type="text" class="form-control" name="search" value="{{ search }}"
-                               placeholder="搜 UUID、IP、备注"/>
+                               placeholder="搜 UUID、IP地址、备注"/>
                         <span class="input-group-text"></span>
                         <button type="submit" class="btn btn-primary form-control">筛选</button>
                     </div>
@@ -91,7 +91,7 @@
                         <th>容量</th>
                         <th>用户</th>
                         <th>创建时间</th>
-                        <th>挂载云主机</th>
+                        <th>挂载虚拟机</th>
                         <th>挂载时间</th>
                         <th>状态</th>
                         <th>备注</th>
@@ -109,7 +109,11 @@
                             <td>{{ disk.user }}</td>
                             <td>{{ disk.create_time|date:'Y-m-d H:i:s' }}</td>
                             {% if disk.vm %}
+                                {% if disk.vm.mac_ip %}
                                 <td>{{ disk.vm.ipv4 }}</td>
+                                {% else %}
+                                <td>无</td>
+                                {% endif %}
                                 <td>{{ disk.attach_time|date:'Y-m-d H:i:s' }}</td>
                             {% else %}
                                 <td>未挂载</td>

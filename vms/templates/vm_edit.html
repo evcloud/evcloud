@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}修改云主机{% endblock %}
+{% block title %}修改虚拟机{% endblock %}
 
 {% block head %}{% endblock %}
 
@@ -9,20 +9,20 @@
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title">修改云主机</span>
+                <span class="card-title">修改虚拟机</span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vms-list' %}">
-                    云主机列表
+                    虚拟机列表
                 </a></span>
             </div>
             <div class="card-body">
                 <div class="offset-sm-0 offset-md-1">
                     <dl class="row">
-                        <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-edit-vm-uuid">{{ vm.hex_uuid }}</dd>
-                        <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
-                        <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
-                        <dt class="col-2 text-right">分中心:</dt> <dd class="col-10">{{ vm.host.group.center }}</dd>
+                        <dt class="col-2 text-right">虚拟机UUID:</dt> <dd class="col-10" id="id-edit-vm-uuid">{{ vm.hex_uuid }}</dd>
+                        <dt class="col-2 text-right">虚拟机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                        <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image_name }}</dd>
+                        <dt class="col-2 text-right">数据中心:</dt> <dd class="col-10">{{ vm.host.group.center }}</dd>
                         <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
-                        <dt class="col-2 text-right">CPU:</dt> <dd class="col-10">{{ vm.vcpu }}</dd>
+                        <dt class="col-2 text-right">CPU:</dt> <dd class="col-10">{{ vm.vcpu }}核</dd>
                         <dt class="col-2 text-right">MEM:</dt> <dd class="col-10">{{ vm.mem }}GB</dd>
                         <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                     </dl>

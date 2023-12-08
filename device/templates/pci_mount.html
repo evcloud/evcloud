@@ -5,7 +5,7 @@
 {% block title %}PCI设备挂载{% endblock %}
 
 {% block boby %}
-    <div class="container-fluid offset-md-1 col-md-10">
+    <div class="container-fluid">
         <div class="card">
             <div class="card-header">
                 <span class="card-title"><strong>PCI设备挂载</strong></span>
@@ -29,11 +29,11 @@
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 {% if device.vm %}
                     <div>
-                        <p class="text-warning h3">此PCI设备已被挂载使用，挂载云主机uuid: {{ device.vm.hex_uuid }}，IP: {{ device.vm.ipv4 }}</p>
+                        <p class="text-warning h3">此PCI设备已被挂载使用，挂载虚拟机uuid: {{ device.vm.hex_uuid }}，IP地址: {{ device.vm.ipv4 }}</p>
                     </div>
                 {% else %}
                     <div>
-                        <div class="text-success h4 col-sm-4">可供挂载的云主机：</div>
+                        <div class="text-success h4 col-sm-4">可供挂载的虚拟机：</div>
                         <div class="float-right col-sm-8">
                             <form role="form" class="form-horizontal" method="get" action="">
                                 <div class="input-group" style="">
@@ -41,7 +41,7 @@
                                         <label class="input-group-text" for="id-search">关键字</label>
                                     </div>
                                     <input type="text" class="form-control" id="id-search" name="search" value="{{ search }}"
-                                           placeholder="搜 IP、备注"/>
+                                           placeholder="搜 IP地址、备注"/>
                                     <span class="input-group-prepend"></span>
                                     <button type="submit" class="btn btn-primary form-control">筛选</button>
                                 </div>
@@ -64,7 +64,7 @@
                                 <td><input type="checkbox" class="item-checkbox" value="{{ vm.hex_uuid }}" name="select_vm"></td>
                                 <td title="{{ vm.hex_uuid }}"><b>{{ vm.mac_ip.ipv4 }}</b></td>
                                 <td>{{ vm.user }}</td>
-                                <td>{{ vm.image }}</td>
+                                <td>{{ vm.image_name }}</td>
                                 <td>
                                     {{ vm.vcpu }} / {{ vm.mem|sizeformat:'MB' }}
                                 </td>

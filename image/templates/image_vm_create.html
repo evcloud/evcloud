@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+{% endblock %}
+{% block title %}创建镜像虚拟机{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid col-12">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong>创建镜像({{ image.name }})管理虚拟机</strong></span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'image:image-list' %}">
+                    镜像列表
+                </a></span>
+            </div>
+            <div class="card-body align-content-center">
+                <form class="form-horizontal" method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="form-group row">
+                            {% if field.is_hidden %}
+                                {{ field }}
+                            {% elif field.field.widget.input_type == "checkbox" %}
+                                <div class="offset-sm-1 col-sm-2 text-right col-form-label {% if field.field.required %}font-weight-bold{% endif %}">
+                                    {{ field }}{{ field.label_tag }}</div>
+                            {% else %}
+                                <div class="offset-sm-1 col-sm-2 text-right col-form-label {% if field.field.required %}font-weight-bold{% endif %}">{{ field.label_tag }}</div>
+                                <div class="col-sm-7">{{ field }}</div>
+                                {% if field.errors %}
+                                    <p class="text-danger">{{ field.errors.as_text }}</p>
+                                {% endif %}
+                            {% endif %}
+                            {% if field.help_text %}
+                                <div class="col-12 font-weight-lighter font-italic">{{ field.help_text|safe }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    <p id="tip_text" class="text-danger">{{ form.non_field_errors.as_text }}</p>
+                    <div class="form-group row">
+                        <div class="offset-sm-1 col-sm-2">
+                            <button type="submit" class="btn btn-primary float-right">创建</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+    <script>
+         window.onload = function() {
+            $("#nav_image_list").addClass("active");// 激活列表导航栏
+         };
+    </script>
+{% endblock %}

@@ -1,17 +1,44 @@
 {% extends 'base.html' %}
 {% block boby %}
     <div class="offset-md-2 col-md-8 col-lg-8">
-        {% if msg %}
-            <span class="text-warning">{{ msg }}</span>
-        {% else %}
-            <span class="text-warning">很抱歉，感觉自己好像出了点问题</span>
-        {% endif %}
-        {% if errors %}
-            <ul class="list-group">
-            {% for err in errors %}
-                <li class="list-group-item list-group-item-warning">{{ err }}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
+        <table class="table table-hover table-bordered">
+            <thead class="thead-light">
+                <tr>
+                    <th colspan="2" class="text-center">操作异常</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="width: 100px;text-align: center">异常编码</td>
+                    <td>{{ error_code }}</td>
+                </tr>
+                <tr>
+                    <td style="width: 100px;text-align: center">异常类型</td>
+                    <td>{{ error_type }}</td>
+                </tr>
+                <tr>
+                    <td  style="vertical-align: middle; text-align: center">提示</td>
+                    <td>
+                        {% if error_tips %}
+                            <ul class="list-group">
+                            {% for tip in error_tips %}
+                                <li class="list-group-item list-group-item-warning">{{ tip }}</li>
+                            {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if user.is_superuser %}
+                    <tr>
+                        <td  style="vertical-align: middle; text-align: center">Traceback</td>
+                        <td class="bg-light">
+                            {% if error_traceback %}
+                               <pre><code>{{ error_traceback }}</code></pre>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
     </div>
 {% endblock %}

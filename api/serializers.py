@@ -2,7 +2,7 @@ import math
 
 from rest_framework import serializers
 
-from vms.models import Vm, MigrateTask
+from vms.models import Vm, MigrateTask, AttachmentsIP
 from compute.models import Center, Group, Host
 from network.models import Vlan
 from image.models import Image
@@ -22,7 +22,9 @@ class VmSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vm
-        fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'ip', 'user', 'create_time')
+        fields = (
+            'uuid', 'name', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'ip', 'user',
+            'create_time')
         # depth = 1
 
     @staticmethod
@@ -43,12 +45,11 @@ class VmSerializer(serializers.ModelSerializer):
             public = obj.mac_ip.vlan.tag == obj.mac_ip.vlan.NET_TAG_PUBLIC
         else:
             public = False
-        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public}
+        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public, 'ipv6': obj.mac_ip.ipv6}
 
     @staticmethod
     def get_image(obj):
-        img = obj.image
-        return img.name if img else ""
+        return obj.image_name
 
     def to_representation(self, instance):
         """Convert `GB` to 'MB' depending on the requirement."""
@@ -72,8 +73,8 @@ class VmCreateSerializer(serializers.Serializer):
                                    allow_null=True, default=None, help_text='单位GB')
     vlan_id = serializers.IntegerField(label='子网id', required=False, allow_null=True,
                                        min_value=1, help_text='子网id', default=None)
-    center_id = serializers.IntegerField(label='分中心id', required=False, allow_null=True,
-                                         min_value=1, help_text='分中心id', default=None)
+    center_id = serializers.IntegerField(label='数据中心id', required=False, allow_null=True,
+                                         min_value=1, help_text='数据中心id', default=None)
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True,
                                         min_value=1, help_text='宿主机组id', default=None)
     host_id = serializers.IntegerField(label='宿主机id', required=False, allow_null=True,
@@ -82,7 +83,7 @@ class VmCreateSerializer(serializers.Serializer):
     ipv4 = serializers.CharField(label='ipv4', required=False, allow_blank=True, max_length=255, default='')
     flavor_id = serializers.IntegerField(label='配置样式id', required=False, allow_null=True,
                                          default=None, help_text='配置样式id')
-    sys_disk_size = serializers.IntegerField(label='系统盘大小', min_value=50, max_value=5*1024, required=False,
+    sys_disk_size = serializers.IntegerField(label='系统盘大小', min_value=50, max_value=5 * 1024, required=False,
                                              allow_null=True, default=None, help_text='单位GB')
 
     def validate(self, data):
@@ -109,6 +110,7 @@ class VmCreateSerializer(serializers.Serializer):
         else:
             ret['mem'] = math.ceil(ret['mem'] / 1024)
         return ret
+
 
 class VmPatchSerializer(serializers.Serializer):
     """
@@ -139,10 +141,12 @@ class VmPatchSerializer(serializers.Serializer):
             ret['mem'] = math.ceil(ret['mem'] / 1024)
         return ret
 
+
 class CenterSerializer(serializers.ModelSerializer):
     """
-    分中心序列化器
+    数据中心序列化器
     """
+
     class Meta:
         model = Center
         fields = ('id', 'name', 'location', 'desc')
@@ -152,6 +156,7 @@ class GroupSerializer(serializers.ModelSerializer):
     """
     宿主机组序列化器
     """
+
     class Meta:
         model = Group
         fields = ('id', 'name', 'center', 'desc')
@@ -161,10 +166,11 @@ class HostSerializer(serializers.ModelSerializer):
     """
     宿主机序列化器
     """
+
     class Meta:
         model = Host
         fields = ('id', 'ipv4', 'group', 'vcpu_total', 'vcpu_allocated', 'mem_total', 'mem_allocated',
-                'vm_limit', 'vm_created', 'enable', 'desc')
+                  'vm_limit', 'vm_created', 'enable', 'desc')
 
     def to_representation(self, instance):
         """Convert `GB` to 'MB' depending on the requirement."""
@@ -177,13 +183,16 @@ class HostSerializer(serializers.ModelSerializer):
             ret['mem_unit'] = 'MB'
         return ret
 
+
 class VlanSerializer(serializers.ModelSerializer):
     """
     子网网段序列化器
     """
+
     class Meta:
         model = Vlan
-        fields = ('id', 'name', 'br', 'tag', 'enable', 'subnet_ip', 'net_mask', 'gateway', 'dns_server', 'remarks')
+        fields = ('id', 'name', 'br', 'tag', 'enable', 'subnet_ip', 'net_mask', 'gateway', 'dns_server', 'subnet_ip_v6',
+                  'net_mask_v6', 'gateway_v6', 'dns_server_v6', 'remarks')
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -192,12 +201,15 @@ class ImageSerializer(serializers.ModelSerializer):
     """
     tag = serializers.SerializerMethodField()
     sys_type = serializers.SerializerMethodField()
+    release = serializers.SerializerMethodField()
+    architecture = serializers.SerializerMethodField()
     create_time = serializers.DateTimeField()
 
     class Meta:
         model = Image
-        fields = ('id', 'name', 'version', 'sys_type', 'tag', 'enable', 'create_time', 'desc',
-                  'default_user', 'default_password', 'size')
+        fields = (
+            'id', 'name', 'tag', 'sys_type', 'release', 'version', 'architecture', 'enable', 'create_time', 'desc',
+            'default_user', 'default_password', 'size')
 
     @staticmethod
     def get_tag(obj):
@@ -206,6 +218,14 @@ class ImageSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_sys_type(obj):
         return {'id': obj.sys_type, 'name': obj.sys_type_display}
+
+    @staticmethod
+    def get_release(obj):
+        return {'id': obj.release, 'name': obj.release_display}
+
+    @staticmethod
+    def get_architecture(obj):
+        return {'id': obj.architecture, 'name': obj.architecture_display}
 
 
 class AuthTokenDumpSerializer(serializers.Serializer):
@@ -232,13 +252,14 @@ class QuotaSimpleSerializer(serializers.Serializer):
     ceph = serializers.SerializerMethodField(method_name='get_ceph')
     group = serializers.SerializerMethodField(method_name='get_group')
 
+
     @staticmethod
     def get_pool(obj):
         pool = obj.cephpool
         if not pool:
             return {}
 
-        return {'id': pool.id, 'name': pool.pool_name}
+        return {'id': pool.id, 'name': pool.pool_name, 'enable': obj.enable}
 
     @staticmethod
     def get_ceph(obj):
@@ -259,11 +280,13 @@ class QuotaSimpleSerializer(serializers.Serializer):
         return {'id': group.id, 'name': group.name}
 
 
+
 class QuotaListSerializer(QuotaSimpleSerializer):
     """硬盘存储池配额列表序列化器"""
     total = serializers.IntegerField()
     size_used = serializers.IntegerField()
     max_vdisk = serializers.IntegerField()
+    enable = serializers.BooleanField()
 
 
 class VdiskSerializer(serializers.ModelSerializer):
@@ -300,7 +323,7 @@ class VdiskSerializer(serializers.ModelSerializer):
     def get_vm(obj):
         vm = obj.vm
         if vm:
-            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4, 'ipv6': vm.mac_ip.ipv6}
         return vm
 
 
@@ -316,15 +339,21 @@ class VdiskDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vdisk
-        fields = ('uuid', 'size', 'vm', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks')
+        fields = ('uuid', 'size', 'vm', 'dev', 'user', 'quota', 'create_time', 'attach_time', 'enable', 'remarks')
         depth = 1
 
     @staticmethod
     def get_vm(obj):
         vm = obj.vm
         if vm:
-            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+            if vm.mac_ip:
+                return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4, 'ipv6': vm.mac_ip.ipv6}
+            return {'uuid': vm.hex_uuid, 'ipv4': ''}  # 搁置的虚拟机没有ip
         return vm
+
+    @staticmethod
+    def get_dev(obj):
+        return {'dev': obj.dev}
 
 
 class VdiskCreateSerializer(serializers.Serializer):
@@ -336,8 +365,8 @@ class VdiskCreateSerializer(serializers.Serializer):
                                         min_value=1, help_text='宿主机组id', default=None)
     group_id = serializers.IntegerField(label='宿主机组id', required=False, allow_null=True,
                                         min_value=1, help_text='宿主机组id', default=None)
-    center_id = serializers.IntegerField(label='分中心id', required=False, allow_null=True,
-                                         min_value=1, help_text='分中心id', default=None)
+    center_id = serializers.IntegerField(label='数据中心id', required=False, allow_null=True,
+                                         min_value=1, help_text='数据中心id', default=None)
     remarks = serializers.CharField(label='备注', required=False, allow_blank=True, default='')
 
     def validate(self, data):
@@ -383,7 +412,7 @@ class PCIDeviceSerializer(serializers.Serializer):
     def get_vm(obj):
         vm = obj.vm
         if vm:
-            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4}
+            return {'uuid': vm.hex_uuid, 'ipv4': vm.mac_ip.ipv4, 'ipv6': vm.mac_ip.ipv6}
         return vm
 
     @staticmethod
@@ -405,6 +434,7 @@ class MacIPSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     mac = serializers.CharField(max_length=17, help_text='MAC地址')
     ipv4 = serializers.IPAddressField(help_text='IP地址')
+    ipv6 = serializers.IPAddressField(help_text='IPv6地址')
     used = serializers.BooleanField(help_text='是否已分配给虚拟机使用')
 
 
@@ -426,8 +456,12 @@ class VmDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vm
         fields = ('uuid', 'name', 'vcpu', 'mem', 'image', 'image_info', 'disk', 'sys_disk_size', 'host', 'mac_ip',
-                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices','host_info')
+                  'ip', 'user', 'create_time', 'vdisks', 'pci_devices', 'host_info', 'vm_status')
         # depth = 1
+
+    @staticmethod
+    def get_vm_status(obj):
+        return obj.vm_status
 
     @staticmethod
     def get_user(obj):
@@ -435,35 +469,37 @@ class VmDetailSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_host(obj):
+        if not obj.host:
+            return 'null'
         return obj.host.ipv4
 
     @staticmethod
     def get_mac_ip(obj):
+        if not obj.mac_ip:
+            return 'null'
         return obj.mac_ip.ipv4
 
     @staticmethod
     def get_ip(obj):
-        if obj.mac_ip.vlan:
+
+        if not obj.mac_ip:
+            return {'ipv4': 'null', 'public_ipv4': 'null'}
+        elif obj.mac_ip.vlan:
             public = obj.mac_ip.vlan.tag == obj.mac_ip.vlan.NET_TAG_PUBLIC
         else:
             public = False
-        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public}
+        return {'ipv4': obj.mac_ip.ipv4, 'public_ipv4': public, 'ipv6': obj.mac_ip.ipv6}
 
     @staticmethod
     def get_image(obj):
-        img = obj.image
-        return img.name if img else ""
+        return obj.image_name
 
     @staticmethod
     def get_image_info(obj):
-        img = obj.image
-        if img:
-            return {
-                'id': img.id, 'name': img.name, 'desc': img.desc,
-                'default_user': img.default_user, 'default_password': img.default_password
-            }
-
-        return None
+        return {
+            'id': obj.image_id, 'name': obj.image_name, 'desc': obj.image_desc,
+            'default_user': obj.default_user, 'default_password': obj.default_password
+        }
 
     @staticmethod
     def get_vdisks(obj):
@@ -496,6 +532,55 @@ class VmDetailSerializer(serializers.ModelSerializer):
         return ret
 
 
+class VmShelveListSerializer(serializers.ModelSerializer):
+    """
+    虚拟机搁置序列化器
+    """
+    user = serializers.SerializerMethodField()  # 自定义user字段内容
+    create_time = serializers.DateTimeField()  # format='%Y-%m-%d %H:%M:%S'
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Vm
+        fields = (
+            'uuid', 'name', 'vm_status', 'vcpu', 'mem', 'image', 'disk', 'sys_disk_size', 'host', 'mac_ip', 'user',
+            'create_time')
+
+    @staticmethod
+    def get_vm_status(obj):
+        return obj.vm_status
+
+    @staticmethod
+    def get_user(obj):
+        return {'id': obj.user.id, 'username': obj.user.username}
+
+    @staticmethod
+    def get_image(obj):
+        return obj.image_name
+
+    def to_representation(self, instance):
+        """Convert `GB` to 'MB' depending on the requirement."""
+        ret = super().to_representation(instance)
+        if 'GB' == self.context.get('mem_unit'):
+            ret['mem_unit'] = 'GB'
+        else:
+            ret['mem'] = ret['mem'] * 1024
+            ret['mem_unit'] = 'MB'
+        return ret
+
+
+class VmAttachListSerializer(serializers.ModelSerializer):
+    """附加IP"""
+    attach_ip = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AttachmentsIP
+        fields = ('id', 'vm', 'attach_ip')
+
+    def get_attach_ip(self, obj):
+        return obj.sub_ip.ipv4
+
+
 class VmChangePasswordSerializer(serializers.Serializer):
     """
     虚拟主机修改密码
@@ -518,6 +603,7 @@ class FlavorSerializer(serializers.Serializer):
             ret['ram'] = ret['ram'] * 1024
             ret['mem_unit'] = 'MB'
         return ret
+
 
 class VPNCreateSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, min_length=1, max_length=150)

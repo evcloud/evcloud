@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load  sizeformat %}
+
+{% block head %}
+{% endblock %}
+{% block title %}搁置虚拟机列表{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:vms-list' %}">在线虚拟机 ({{ queryset_normal }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:shelve-list' %}">已搁置 ({{ count }})</a></strong></span>
+            </div>
+            <p></p>
+            <div class="card-body">
+                <form role="form" class="form-horizontal" method="get" action="">
+                    <div class="input-group" style="">
+
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="id-user">创建者</label>
+                        </div>
+                        <select name="user" class="custom-select" id="id-user">
+                            <option value="">--</option>
+                            {% for u in users %}
+                                <option value="{{ u.id }}"
+                                        {% if u.id == user_id %}selected {% endif %}>{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="input-group-prepend">
+                            <label class="input-group-text">关键字</label>
+                        </div>
+                        <input type="text" class="form-control" name="search" value="{{ search }}"
+                               placeholder="搜 UUID、备注"/>
+                        <span class="input-group-text"></span>
+                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                    </div>
+                </form>
+            </div>
+            <table class="table table-hover text-center table-vm-list"
+                   style="word-wrap:break-word;word-break:break-all;">
+                <thead class="thead-light">
+                <tr>
+                    <th>编号</th>
+                    <th>原IP地址</th>
+                    <th>创建者</th>
+                    <th>镜像</th>
+                    <th>宿主机</th>
+                    <th>CPU/MEM</th>
+                    <th>云硬盘</th>
+                    <th width="180px">备注</th>
+                    <th>虚拟机状态</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for vm in vms %}
+                    <tr id="tr_{{ vm.hex_uuid }}">
+                        <td>{{ forloop.counter }}</td>
+                        {% if vm.last_ip %}
+                            <td title="{{ vm.hex_uuid }}"><a
+                                    href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.last_ip.ipv4 }}</b></a>
+                            </td>
+                        {% else %}
+                            <td>无</td>
+                        {% endif %}
+                        <td>{{ vm.user }}</td>
+                        <td>{{ vm.image_name }}</td>
+                        {% if vm.host %}
+                            <td>{{ vm.host_ipv4 }}</td>
+                        {% else %}
+                            <td>无</td>
+                        {% endif %}
+                        <td>
+                            {{ vm.vcpu }} / {{ vm.mem|sizeformat:'GB' }}
+                        </td>
+                        <td>
+                            {% with vm.vdisks as vdisks %}
+                                {% if vdisks %}
+                                    {% for v in vdisks %}
+                                        {{ v.dev }} {{ v.size }}GB <br>
+                                    {% endfor %}
+                                {% else %}
+                                    无
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="mouse-hover">
+                            {{ vm.remarks|default_if_none:'' }}
+                        </td>
+                        <td>{{ vm.get_vm_status_display }}</td>
+
+                        <td>
+                            {% include 'vm_operations.html' %}
+                        </td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+            {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
+                {% if page_list %}
+                    <div class="card-footer">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination" style="margin:0;">
+                                {% if previous %}
+                                    <li class="page-item"><a class="page-link" href="?{{ previous }}"
+                                                             aria-label="Previous"><span
+                                            aria-hidden="true">&laquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link"
+                                                                        aria-hidden="true">&laquo;</span></li>
+                                {% endif %}
+
+                                {% for disp, query, active in page_list %}
+                                    {% if active %}
+                                        <li class="page-item active"><a class="page-link"
+                                                                        href="?{{ query }}">{{ disp }}</a></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if next %}
+                                    <li class="page-item"><a class="page-link" href="?{{ next }}"
+                                                             aria-label="Next"><span
+                                            aria-hidden="true">&raquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link"
+                                                                        aria-hidden="true">&raquo;</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
+    <script type="text/javascript" src="{% static 'vms/vms_shelve_list.js' %}"></script>
+{% endblock %}
+

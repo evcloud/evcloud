@@ -7,13 +7,13 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 
 from image.models import Image
-from compute.models import Host
+from compute.models import Host, Center
 from network.models import MacIP
 from ceph.managers import get_rbd_manager, CephClusterManager, RadosError
 from ceph.models import CephPool
+from compute.managers import HostManager
 from utils.ev_libvirt.virt import VmDomain
 from utils.errors import Error
-
 
 # 获取用户模型
 User = get_user_model()
@@ -77,23 +77,55 @@ class Vm(VmBase):
     """
     虚拟机模型
     """
+    class VmStatus(models.TextChoices):
+        SHELVE = 'shelve', _('搁置')
+        NORMAL = 'normal', _('正常')
+
     uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, primary_key=True)
     name = models.CharField(verbose_name='名称', max_length=200)
     vcpu = models.IntegerField(verbose_name='CPU数')
     mem = models.IntegerField(verbose_name='内存大小', help_text='单位GB')
     disk = models.CharField(verbose_name='系统盘名称', max_length=100, unique=True,
                             help_text='vm自己的系统盘，保存于ceph中的rdb文件名称')
-    image = models.ForeignKey(to=Image, on_delete=models.CASCADE, verbose_name='源镜像',
-                              help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
+    image = models.ForeignKey(
+        to=Image, on_delete=models.SET_NULL, db_constraint=False, null=True, blank=True, default=None,
+        verbose_name='源镜像', help_text='创建此虚拟机时使用的源系统镜像，disk从image复制')
     user = models.ForeignKey(to=User, verbose_name='创建者', on_delete=models.SET_NULL,
-                             related_name='user_vms',  null=True)
+                             related_name='user_vms', null=True)
     create_time = models.DateTimeField(verbose_name='创建日期', auto_now_add=True)
     remarks = models.TextField(verbose_name='备注', default='', blank=True)
     init_password = models.CharField(max_length=20, default='', blank=True, verbose_name='root初始密码')
 
-    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机')
+    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, verbose_name='宿主机', blank=True, null=True, default=None)
     xml = models.TextField(verbose_name='虚拟机当前的XML', help_text='定义虚拟机的当前的XML内容')
-    mac_ip = models.OneToOneField(to=MacIP, on_delete=models.CASCADE, related_name='ip_vm', verbose_name='MAC IP')
+    mac_ip = models.OneToOneField(to=MacIP, on_delete=models.CASCADE, related_name='ip_vm', verbose_name='MAC IP',
+                                  blank=True, null=True, default=None)
+
+    image_name = models.CharField(verbose_name='镜像名称', max_length=100, default='')
+    image_parent = models.CharField(verbose_name='父镜像RBD名', max_length=255, default='', help_text='虚拟机系统盘镜像的父镜像')
+    image_snap = models.CharField(verbose_name='镜像快照', max_length=200, default='', blank=True, editable=True)
+    image_size = models.IntegerField(
+        verbose_name='镜像大小（Gb）', default=0, help_text='image size不是整Gb大小，要向上取整，如1.1GB向上取整为2Gb')
+    sys_type = models.SmallIntegerField(
+        verbose_name='系统类型', choices=Image.CHOICES_SYS_TYPE, default=Image.SYS_TYPE_OTHER)
+    version = models.CharField(verbose_name='系统发行编号', max_length=100, default='')
+    release = models.SmallIntegerField(
+        verbose_name='系统发行版本', choices=Image.RELEASE_CHOICES, default=Image.RELEASE_CENTOS)
+    architecture = models.SmallIntegerField(
+        verbose_name='系统架构', choices=Image.ARCHITECTURE_CHOICES, default=Image.ARCHITECTURE_X86_64)
+    boot_mode = models.SmallIntegerField(verbose_name='系统启动方式', choices=Image.BOOT_CHOICES, default=Image.BOOT_BIOS)
+    nvme_support = models.BooleanField(verbose_name='支持NVME设备', default=False)
+    ceph_pool = models.ForeignKey(
+        to=CephPool, on_delete=models.DO_NOTHING, verbose_name='CEPH存储后端',
+        null=True, db_constraint=False, db_index=False, default=None)
+    default_user = models.CharField(verbose_name='系统默认登录用户名', max_length=32, default='root')
+    default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
+    image_desc = models.TextField(verbose_name='系统镜像描述', default='', blank=True)
+    image_xml_tpl = models.TextField(verbose_name='XML模板', default='')
+    vm_status = models.CharField(verbose_name='实际运行状态', max_length=16, choices=VmStatus.choices,
+                                 default=VmStatus.NORMAL.value)
+    last_ip = models.ForeignKey(to=MacIP, verbose_name='虚拟机最后使用ip', blank=True, null=True, default=None,
+                                db_constraint=False, db_index=False, on_delete=models.SET_NULL, help_text='该字段在使用搁置服务时使用')
 
     def __str__(self):
         return self.name
@@ -129,7 +161,7 @@ class Vm(VmBase):
             True    # success
             False   # failed
         """
-        ceph_pool = self.image.ceph_pool
+        ceph_pool = self.ceph_pool
         if not ceph_pool:
             return False
         pool_name = ceph_pool.pool_name
@@ -152,7 +184,7 @@ class Vm(VmBase):
             True    # has
             False   # no
         """
-        if not isinstance(user.id, int):    # 未认证用户
+        if not isinstance(user.id, int):  # 未认证用户
             return False
 
         if user.is_superuser:
@@ -215,13 +247,84 @@ class Vm(VmBase):
 
         return self.sys_disk_size
 
+    def get_rbd_manager(self):
+        ceph_pool = self.ceph_pool
+        if not ceph_pool:
+            raise Exception('can not get ceph_pool')
+        pool_name = ceph_pool.pool_name
+        config = ceph_pool.ceph
+        if not config:
+            raise Exception('can not get ceph config')
+
+        return get_rbd_manager(ceph=config, pool_name=pool_name)
+
     def update_sys_disk_size(self):
         if self.disk_type == self.DiskType.CEPH_RBD:
-            image = self.image
-            size = image.get_size_from_ceph(image_name=self.disk)
+            try:
+                rbd_mgr = self.get_rbd_manager()
+                size = rbd_mgr.get_rbd_image_size(self.disk)
+            except (RadosError, Exception) as e:
+                raise Exception(str(e))
+
             size_gb = math.ceil(size / 1024 ** 3)
             self.sys_disk_size = size_gb
             self.save(update_fields=['sys_disk_size'])
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        删除虚拟机时强制更新Host资源分配信息
+        """
+        super().delete(using=using, keep_parents=keep_parents)
+
+    def save(self, *args, **kwargs):
+        """
+        新增虚拟机时强制更新Host资源分配信息
+        """
+        is_insert = False
+        if not self.pk:
+            is_insert = True
+        super().save(*args, **kwargs)
+        if is_insert:
+            HostManager.update_host_quota(host_id=self.host_id)
+
+    def update_image_fields(self, image: Image):
+        """
+        更新镜像有关的字段信息，只更新此对象实例 不保存到数据库
+
+        :return: 更新字段名称的列表
+        """
+        self.image = image
+        self.image_name = image.name
+        self.image_parent = image.base_image
+        self.image_snap = image.snap
+        self.image_size = image.size
+        self.sys_type = image.sys_type
+        self.version = image.version
+        self.release = image.release
+        self.architecture = image.architecture
+        self.boot_mode = image.boot_mode
+        self.nvme_support = image.nvme_support
+        self.ceph_pool_id = image.ceph_pool_id
+        self.default_user = image.default_user
+        self.default_password = image.default_password
+        self.image_desc = image.desc
+        self.image_xml_tpl = image.xml_tpl.xml
+        return [
+            'image', 'image_name', 'image_parent', 'image_snap', 'image_size', 'sys_type', 'version', 'release',
+            'architecture', 'boot_mode', 'nvme_support', 'ceph_pool_id', 'default_user', 'default_password',
+            'image_desc', 'image_xml_tpl'
+        ]
+
+    def get_attach_ip_list(self):
+        att_list = []
+        att = self.get_attach_ip()
+        for ip in att:
+            att_list.append(ip.sub_ip.ipv4)
+        return att_list
+
+    def get_attach_ip(self):
+        return self.vm_attach.all()
+
 
 
 class VmArchive(VmBase):
@@ -246,8 +349,8 @@ class VmArchive(VmBase):
     ceph_id = models.IntegerField(verbose_name='CEPH集群id')
     ceph_pool = models.CharField(verbose_name='CEPH POOL', max_length=100, blank=True, default='')
 
-    center_id = models.IntegerField(verbose_name='分中心ID', blank=True, default=0)
-    center_name = models.CharField(verbose_name='分中心', max_length=100, blank=True, default='')
+    center_id = models.IntegerField(verbose_name='数据中心ID', blank=True, default=0)
+    center_name = models.CharField(verbose_name='数据中心', max_length=100, blank=True, default='')
     group_id = models.IntegerField(verbose_name='宿主机组ID', blank=True, default=0)
     group_name = models.CharField(verbose_name='宿主机组', max_length=100, null=True, blank=True)
     host_id = models.IntegerField(verbose_name='宿主机ID', blank=True, default=0)
@@ -501,8 +604,10 @@ class VmDiskSnap(models.Model):
         """
         if self.ceph_pool:
             return self.ceph_pool
-        if self.vm and self.vm.image:
-            self.ceph_pool = self.vm.image.ceph_pool
+
+        if self.vm:
+            self.ceph_pool = self.vm.ceph_pool
+
         return self.ceph_pool
 
     def get_rbd_manager(self):
@@ -587,7 +692,7 @@ class MigrateTask(models.Model):
     src_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, null=True, blank=True,
                                  default=None, related_name='src_migrate_log_set')
     src_host_ipv4 = models.GenericIPAddressField(verbose_name='源宿主机IP')
-    src_undefined = models.BooleanField(default=False, verbose_name="是否已清理源云主机")
+    src_undefined = models.BooleanField(default=False, verbose_name="是否已清理源虚拟机")
     src_is_free = models.BooleanField(default=False, verbose_name="是否释放源宿主机资源")
 
     dst_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, null=True, blank=True,
@@ -674,3 +779,20 @@ class Flavor(models.Model):
 
     def __repr__(self):
         return f'Flavor<vcpus={self.vcpus}, ram={self.ram}>'
+
+
+class AttachmentsIP(models.Model):
+    """附加ip"""
+    id = models.AutoField(primary_key=True, verbose_name='ID')
+    vm = models.ForeignKey(to=Vm, verbose_name='虚拟机', on_delete=models.SET_NULL, null=True, blank=True, default=None,
+                           db_constraint=False, db_index=False, related_name='vm_attach')
+    sub_ip = models.OneToOneField(to=MacIP, verbose_name='附加MACIP', on_delete=models.SET_NULL, null=True, blank=True,
+                                  default=None, db_constraint=False, db_index=False, related_name='attach_ip')
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = _('虚拟机附加ip')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.vm.uuid

@@ -135,22 +135,48 @@ class VmXMLBuilder:
         disk.removeChild(auth[0])
         return root.toxml()
 
-    def build_vm_xml_desc(self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str, image, mac_ip):
+    @staticmethod
+    def xml_remove_huge_page(xml_desc: str):
+        """
+        去除vm xml中大页内存配置
+
+        :param xml_desc: 定义虚拟机的xml内容
+        :return:
+            xml: str    # success
+
+        :raise:  VmError
+        """
+        xml = XMLEditor()
+        if not xml.set_xml(xml_desc):
+            raise errors.VmError(msg='虚拟机xml文本无效')
+
+        root = xml.get_root()
+        huge_page_node = root.getElementsByTagName('memoryBacking')
+        if not huge_page_node:
+            return xml_desc
+
+        root.removeChild(huge_page_node[0])
+        return root.toxml()
+
+    def build_vm_xml_desc(
+            self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str,
+            image_xml_tpl: str, ceph_pool, mac_ip, is_image_vm=False):
         """
         构建虚拟机的xml
         :param vm_uuid:
         :param mem:
         :param vcpu:
         :param vm_disk_name: vm的系统盘镜像rbd名称
-        :param image: 系统镜像实例
+        :param image_xml_tpl: 创建虚拟机的xml模板字符串
+        :param ceph_pool: 镜像所在的ceph pool
         :param mac_ip: MacIP实例
         :return:
             xml: str
         """
-        pool = image.ceph_pool
+        pool = ceph_pool
         pool_name = pool.pool_name
         ceph = pool.ceph
-        xml_tpl = image.xml_tpl.xml  # 创建虚拟机的xml模板字符串
+        xml_tpl = image_xml_tpl  # 创建虚拟机的xml模板字符串
 
         # mem参数单位为GB，根据xml模版中的单位进行换算
         xml = XMLEditor()
@@ -169,11 +195,15 @@ class VmXMLBuilder:
                 raise errors.VmError(msg='虚拟机xml模版中的currentMemory单位必须为KiB、MiB或GiB')
         except Exception as e:
             raise errors.VmError(msg='虚拟机创建时单位换算发生错误')
+
         xml_desc = xml_tpl.format(name=vm_uuid, uuid=vm_uuid, mem=mem, vcpu=vcpu, ceph_uuid=ceph.uuid,
                                   ceph_pool=pool_name, diskname=vm_disk_name, ceph_username=ceph.username,
                                   ceph_hosts_xml=ceph.hosts_xml, mac=mac_ip.mac, bridge=mac_ip.vlan.br)
 
         if not ceph.has_auth:
             xml_desc = self.xml_remove_sys_disk_auth(xml_desc)
+
+        if is_image_vm:
+            xml_desc = self.xml_remove_huge_page(xml_desc)
 
         return xml_desc

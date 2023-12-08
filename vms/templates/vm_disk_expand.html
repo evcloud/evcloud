@@ -8,22 +8,22 @@
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>云主机系统盘扩容</strong></span>
+                <span class="card-title"><strong>虚拟机系统盘扩容</strong></span>
                 <div class="float-right">
-                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建云主机</a>
-                    <a class="btn btn-sm btn-info" href="{% url 'vms:vms-list' %}">云主机列表</a>
+                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建虚拟机</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'vms:vms-list' %}">虚拟机列表</a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="">
-                    <div class="text-primary h4">云主机信息:</div>
+                    <div class="text-primary h4">虚拟机信息:</div>
                     <div class="">
                         <dl class="row">
-                            <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-vm-uuid">{{ vm.hex_uuid }}</dd>
-                            <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                            <dt class="col-2 text-right">虚拟机UUID:</dt> <dd class="col-10" id="id-vm-uuid">{{ vm.hex_uuid }}</dd>
+                            <dt class="col-2 text-right">虚拟机IP地址:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
                             <dt class="col-2 text-right">CPU数:</dt> <dd class="col-10">{{ vm.vcpu }}</dd>
                             <dt class="col-2 text-right">内存:</dt> <dd class="col-10">{{ vm.mem }} MB</dd>
-                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
+                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image_name }}</dd>
                             <dt class="col-2 text-right">系统盘大小:</dt>
                             <dd class="col-10" id="id-vm-sys-disk-size" data-sys-disk-size="{{ vm.get_sys_disk_size }}">{{ vm.get_sys_disk_size }} Gb</dd>
                             <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
@@ -32,8 +32,9 @@
                         </dl>
                         <form id="id-form-vm">
                             <div class="form-group row">
-                                <div class="col-sm-10">
-                                    <div class="input-group mb-3">
+                                <label for="id-disk-expand" class="offset-sm-1 col-sm-2 col-form-label">输入系统盘扩容值</label>
+                                <div class="col-sm-7">
+                                    <div class="input-group mb-3" id="id-disk-expand">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">扩容大小</span>
                                         </div>
@@ -42,9 +43,9 @@
                                         <div class="input-group-append">
                                             <span class="input-group-text">GB</span>
                                         </div>
-                                        <div class="input-group-append">
-                                            <span class="input-group-text">扩容后大小为<span id="id-expand-after-size" class="text-warning"></span> GB</span>
-                                        </div>
+{#                                        <div class="input-group-append">#}
+{#                                            <span class="input-group-text">扩容后大小为<span id="id-expand-after-size" class="text-warning"></span> GB</span>#}
+{#                                        </div>#}
                                     </div>
                                 </div>
                             </div>
