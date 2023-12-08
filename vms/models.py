@@ -56,6 +56,29 @@ def rename_image(ceph, pool_name: str, image_name: str, new_name: str):
 
     return True
 
+def remove_protected_snap(ceph, pool_name: str, image_name: str):
+    """
+    删除镜像的保护快照
+
+    :return:
+    True    # success
+    raise Error()   # failed
+
+    :raises: Error
+    """
+
+    try:
+        rbd = get_rbd_manager(ceph=ceph, pool_name=pool_name)
+        list_prot_snap = rbd.list_image_snaps(name=image_name)
+        for prot_snap in list_prot_snap:
+            rbd.remove_snap(image_name=image_name, snap=prot_snap['name'])
+    except (RadosError, Exception) as e:
+        raise Error(msg=str(e))
+
+    return True
+
+
+
 
 class VmBase(models.Model):
     class DiskType(models.TextChoices):
@@ -502,6 +525,20 @@ class VmArchive(VmBase):
                 raise Error(msg=str(e))
 
         self.set_host_released()
+        return True
+
+    def rm_sys_snapshots(self):
+        """删除系统保护快照"""
+
+        pool_name = self.ceph_pool
+
+        config = self.get_ceph_cluster()
+        if not config:
+            return False
+        try:
+            remove_protected_snap(ceph=config, pool_name=pool_name, image_name=self.disk)
+        except Exception as e:
+            raise e
         return True
 
 

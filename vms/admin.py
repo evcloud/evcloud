@@ -83,8 +83,32 @@ def undefine_vm_from_host(modeladmin, request, queryset):
         modeladmin.message_user(request=request, message=msg, level=messages.SUCCESS)
 
 
+def clear_vm_sys_snapshots(modeladmin, request, queryset):
+    """清除系统快照（用户发布镜像时创建的保护快照）"""
+    exc = None
+    failed_count = 0
+    success_count = 0
+    for obj in queryset:
+        try:
+            obj.rm_sys_snapshots()
+            success_count = success_count + 1
+        except Exception as e:
+            failed_count = failed_count + 1
+            exc = e
+            continue
+            # raise Exception(f'remove rbd image protected snap error, {str(e)}')
+
+    if exc is not None:
+        msg = f'删除受保护的快照，{success_count}个成功，{failed_count}个失败，error: {exc}'
+        modeladmin.message_user(request=request, message=msg, level=messages.ERROR)
+    else:
+        msg = f'成功删除{success_count}个镜像内的所有受保护的镜像'
+        modeladmin.message_user(request=request, message=msg, level=messages.SUCCESS)
+
+
 clear_vm_sys_disk.short_description = "清除所选的虚拟机的系统盘和快照"
 undefine_vm_from_host.short_description = "释放所选虚拟机所占用宿主机的资源"
+clear_vm_sys_snapshots.short_description = '清除所选的虚拟机镜像中的保护快照'
 
 
 @admin.register(VmArchive)
@@ -95,7 +119,7 @@ class VmArchiveAdmin(admin.ModelAdmin):
     search_fields = ['uuid', 'center_name', 'remarks', 'user']
     list_filter = ['host_released', 'center_name', 'group_name', 'host_ipv4', 'user']
     list_editable = ['host_released', ]
-    actions = [clear_vm_sys_disk, undefine_vm_from_host]
+    actions = [clear_vm_sys_disk, undefine_vm_from_host, clear_vm_sys_snapshots]
 
     def delete_queryset(self, request, queryset):
         """
