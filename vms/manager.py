@@ -141,10 +141,14 @@ class VmManager:
                 vm_queryset = Vm.objects.filter(Q(remarks__icontains=search) | Q(mac_ip__ipv4__icontains=search) |
                                                 Q(uuid__icontains=search)).all()
 
-        if not vm_queryset:
-            vm_att = AttachmentsIP.objects.select_related('vm').filter(sub_ip__ipv4__icontains=search).first()
-            if vm_att:
-                vm_queryset = Vm.objects.filter(uuid=vm_att.vm.uuid).all()
+        # 删除 附加IP 的查找， 会有问题。 search 为空时会查到信息
+        # if not vm_queryset:
+        #     if not search:
+        #         return vm_queryset.select_related(*related_fields).exclude(vm_status=Vm.VmStatus.SHELVE.value).all()
+        #
+        #     vm_att = AttachmentsIP.objects.select_related('vm').filter(sub_ip__ipv4__icontains=search).first()
+        #     if vm_att:
+        #         vm_queryset = Vm.objects.filter(uuid=vm_att.vm.uuid).all()
 
         return vm_queryset.select_related(*related_fields).exclude(vm_status=Vm.VmStatus.SHELVE.value).all()
 
