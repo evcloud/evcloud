@@ -1088,13 +1088,13 @@ class VmInstance:
         pci_devs = vm.pci_devices
         pci_objs = pci_devs.exclude(type=PCIDevice.TYPE_GPU).exclude(type=PCIDevice.TYPE_ETH)
         if pci_objs:
-            raise errors.VmError(msg='请先卸载PCI设备。')
+            raise errors.VmError(msg='请先卸载本地资源设备。')
 
         for device in pci_devs:
             try:
                 device.umount()
             except errors.DeviceError as e:
-                raise errors.VmError(msg=f'卸载主机挂载的PCI设备失败, {str(e)}')
+                raise errors.VmError(msg=f'卸载主机挂载的本地资源设备失败, {str(e)}')
 
         att_ip = vm.get_attach_ip()
         if att_ip:

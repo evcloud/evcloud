@@ -615,6 +615,23 @@ class VmAPI:
         image_id = vm.image_id
         vm_uuid = vm.get_uuid()
 
+        # clone 之前的操作
+        vm_manager = VmInstance(vm=vm)
+        if vm_manager.vm_domain.is_running():
+            raise errors.VmRunningError(msg='请关闭虚拟机。 如果有挂载设备，都需要卸载。')
+
+        vd = vm.vdisks
+        if vd:
+            raise errors.VmError(msg='请先卸载云硬盘')
+
+        pci_devs = vm.pci_devices
+        if pci_devs:
+            raise errors.VmError(msg='请先卸载本地资源(PCI)设备。')
+
+        att_ip = vm.get_attach_ip()
+        if att_ip:
+            raise errors.VmError(msg='请先移除主机附加的IP')
+
         try:
 
             flatten_bool = VmBuilder().user_flatten_image(image_id=image_id, vm_uuid=vm_uuid,
@@ -626,4 +643,3 @@ class VmAPI:
             raise e
 
         return flatten_bool
-

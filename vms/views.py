@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.generic.base import View
@@ -526,30 +527,38 @@ class VmImageRelease(View):
             error = VmError(code=400, msg=str(e))
             return error.render(request=request)
 
-        image_name = request.POST.get('image-name')
+        image_name = request.POST.get('image_name')
+        if not image_name:
+            # error = VmError(code=400, msg=f'镜像名称不能为空。')
+            # return error.render(request=request)
+            JsonResponse.status_code = 400
+            return JsonResponse({'status': 400, 'msg': f'镜像名称不能为空。'}, json_dumps_params={'ensure_ascii': False})
+
         image_name = '-user_' + image_name  # 新的镜像名称
 
         vm_api = VmAPI()
         try:
             vm_api.vm_user_release_image(vm=vm, new_image_name=image_name)
         except Exception as e:
-            error = VmError(code=400, msg=str(e))
-            return error.render(request=request)
+            # error = VmError(code=400, msg=str(e))
+            # return error.render(request=request)
+            JsonResponse.status_code = 400
+            return JsonResponse({'status': 400, 'msg': str(e)}, json_dumps_params={'ensure_ascii': False})
 
         # 将新数据写入数据库
 
-        image_label = request.POST.get('image-label') #镜像标签
-        image_os_type = request.POST.get('image-os-type') #系统类型
-        image_os_release = request.POST.get('image-os-release') #系统发行版本
-        image_os_version = request.POST.get('image-os-version') #系统发行编号
-        image_os_architecture = request.POST.get('image-os-architecture') #系统架构
-        image_os_boot_mode = request.POST.get('image-os-boot_mode') #系统启动方式
-        image_size = request.POST.get('image-size') #镜像大小
-        image_default_user = request.POST.get('image-default_user') #系统默认登录用户名
-        image_default_password = request.POST.get('image-default_password') #系统默认登录密码
-        image_desc = request.POST.get('image-desc') #描述
-        image_enable = request.POST.get('image-enable') #启用
-        if image_enable == 'on':
+        image_label = request.POST.get('image_label')  # 镜像标签
+        image_os_type = request.POST.get('image_os_type')  # 系统类型
+        image_os_release = request.POST.get('image_os_release')  # 系统发行版本
+        image_os_version = request.POST.get('image_os_version')  # 系统发行编号
+        image_os_architecture = request.POST.get('image_os_architecture')  # 系统架构
+        image_os_boot_mode = request.POST.get('image_os_boot_mode')  # 系统启动方式
+        image_size = request.POST.get('image_size')  # 镜像大小
+        image_default_user = request.POST.get('image_default_user')  # 系统默认登录用户名
+        image_default_password = request.POST.get('image_default_password')  # 系统默认登录密码
+        image_desc = request.POST.get('image_desc')  # 描述
+        image_enable = request.POST.get('image_enable')  # 启用
+        if image_enable == 'true':
             image_enable = True
         else:
             image_enable = False
@@ -575,8 +584,13 @@ class VmImageRelease(View):
                 size=int(image_size)
             )
         except Exception as e:
-            error = ImageError(code=400, msg=f'image: {image_name} exists, the entered data cannot be saved. '
-                                             f'Please contact the administrator.')
-            return error.render(request=request)
+            # error = ImageError(code=400, msg=f'image: {image_name} exists, the entered data cannot be saved. '
+            #                                  f'Please contact the administrator.')
+            # return error.render(request=request)
 
-        return redirect(to=reverse('image:image-list'))
+            JsonResponse.status_code = 400
+            return JsonResponse({'status': 400,
+                                 'msg': f'image: {image_name} exists, the entered data cannot be saved.Please contact the administrator.'},
+                                json_dumps_params={'ensure_ascii': False})
+
+        return JsonResponse({'msg': f'image: {image_name} release success.', })

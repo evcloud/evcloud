@@ -17,7 +17,7 @@
             </div>
             <div class="card-body align-content-center">
 
-                <form class="form-horizontal" action="{% url 'vms:vm-image-release' vm_uuid %}" method="POST" >
+                <form class="form-horizontal">
                     {% csrf_token %}
                     <div class="form-group row">
                         <label for="id-image-name"
@@ -141,7 +141,8 @@
 
                             <input type="text" class="form-control"
                                    placeholder="{% translate '系统默认登录用户名' %}"
-                                   id="id-image-default_user" value="{{ image.default_user }}" name="image-default_user">
+                                   id="id-image-default_user" value="{{ image.default_user }}"
+                                   name="image-default_user">
                         </div>
                     </div>
                     <div class="form-group row">
@@ -151,7 +152,8 @@
 
                             <input type="text" class="form-control"
                                    placeholder="{% translate '系统默认登录密码' %}"
-                                   id="id-image-default_password" value="{{ image.default_password }}" name="image-default_password">
+                                   id="id-image-default_password" value="{{ image.default_password }}"
+                                   name="image-default_password">
                         </div>
                     </div>
                     <div class="form-group row">
@@ -159,7 +161,8 @@
                                class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '描述' %}</label>
                         <div class="col-sm-7 input-group mb-3">
 
-                            <input type="text" class="form-control" placeholder="{% translate '描述' %}" id="id-image-desc" name="image-desc">
+                            <input type="text" class="form-control" placeholder="{% translate '描述' %}"
+                                   id="id-image-desc" name="image-desc">
                         </div>
                     </div>
                     <div class="form-group row ">
@@ -167,9 +170,11 @@
                                class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '启用' %}</label>
                         <div class="col-sm-7 input-group mb-3">
                             {% if image.enable == True %}
-                                <input type="checkbox" class="form-check-input" id="id-image-enable" name="image-enable" checked>
+                                <input type="checkbox" class="form-check-input" id="id-image-enable" name="image-enable"
+                                       checked>
                             {% else %}
-                                <input type="checkbox" class="form-check-input" id="id-image-enable" name="image-enable">
+                                <input type="checkbox" class="form-check-input" id="id-image-enable"
+                                       name="image-enable">
                             {% endif %}
 
                         </div>
@@ -177,171 +182,17 @@
                     <div class="form-group row">
                         <div class="offset-sm-1 col-sm-2">
                             <button type="submit"
-                                    class="btn btn-primary float-right">{% translate '发布镜像' %}</button>
+                                    class="btn btn-primary float-right"
+                                    id="submit-id">{% translate '发布镜像' %}</button>
+
+                        </div>
+                        <div class="col-sm-7 input-group mb-3">
+                            <span id="timerSpanText" style="display:inline;"></span>
+                            <span id="timerSpan" style="display:none;">0</span>
                         </div>
                     </div>
 
                 </form>
-
-                {#                <form class="form-horizontal">#}
-                {#                    <div class="form-group row">#}
-                {#                        <label for="id-center"#}
-                {#                               class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '镜像名称' %}</label>#}
-                {#                        <div class="col-sm-7 input-group mb-3">#}
-                {#                            <span class="input-group-text" id="basic-addon1">-user</span>#}
-                {#                            <input type="text" class="form-control" placeholder="{% translate '镜像名称' %}"#}
-                {#                                   aria-describedby="basic-addon1">#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                </form>#}
-                {#                <form class="form-horizontal" id="id-form-vm-create">#}
-                {#                    <div class="form-group row">#}
-                {#                        <label for="id-group"#}
-                {#                               class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '主机组' %}</label>#}
-                {#                        <div class="col-sm-7">#}
-                {#                            <select name="group_id" class="form-control" id="id-group">#}
-                {#                                {% for g in groups %}#}
-                {#                                    <option value="{{ g.id }}"#}
-                {#                                            {% if g.id == group_id %}selected{% endif %}>{{ g.name }}</option>#}
-                {#                                {% endfor %}#}
-                {#                            </select>#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                    <div class="form-group row">#}
-                {#                        <label for="id-vlan"#}
-                {#                               class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '网段' %}</label>#}
-                {#                        <div class="col-sm-7">#}
-                {#                            <select name="vlan_id" class="form-control" id="id-vlan">#}
-                {#                                <option value="">{% translate '自动选择' %}</option>#}
-                {#                                {% for v in vlans %}#}
-                {#                                    <option value="{{ v.id }}"#}
-                {#                                            {% if v.id == vlan_id %}selected{% endif %}>{{ v.name }}</option>#}
-                {#                                {% endfor %}#}
-                {#                            </select>#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                    <div class="form-group row">#}
-                {#                        <label for="id-ipv4" class="offset-sm-1 col-sm-2 text-right col-form-label">IP</label>#}
-                {#                        <div class="col-sm-7">#}
-                {#                            <select name="ipv4" class="form-control" id="id-ipv4">#}
-                {#                                <option value="">{% translate '自动选择' %}</option>#}
-                {#                            </select>#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                    <div class="form-group row">#}
-                {#                        <label for="id-host"#}
-                {#                               class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '宿主机' %}</label>#}
-                {#                        <div class="col-sm-7">#}
-                {#                            <select name="host_id" class="form-control" id="id-host">#}
-                {#                                <option value="">{% translate '自动选择' %}</option>#}
-                {#                            </select>#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                    <div class="form-group row">#}
-                {#                        <label for="id-image"#}
-                {#                               class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '系统镜像' %}</label>#}
-                {#                        <div class="col-sm-2">#}
-                {#                            <select class="form-control" id="id-image-tag">#}
-                {#                                {% for id, tag in image_tags %}#}
-                {#                                    <option value="{{ id }}">{{ tag }}</option>#}
-                {#                                {% endfor %}#}
-                {#                            </select>#}
-                {#                        </div>#}
-                {#                        <div class="col-sm-5">#}
-                {#                            <select name="image_id" class="form-control" id="id-image" required>#}
-                {#                                <option value="">--</option>#}
-                {#                                {% for i in images %}#}
-                {#                                    <option value="{{ i.id }}" data-size="{{ i.size }}">{{ i.name }} ({{ i.size }}G)#}
-                {#                                    </option>#}
-                {#                                {% endfor %}#}
-                {#                            </select>#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                    <div class="form-group row">#}
-                {#                        <label for="id-flavor"#}
-                {#                               class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '配置' %}</label>#}
-                {#                        <div class="col-sm-7">#}
-                {#                            <div class="card">#}
-                {#                                <div class="card-body">#}
-                {#                                    <div class="input-group mb-3">#}
-                {#                                        <div class="input-group-prepend">#}
-                {#                                            <span class="input-group-text">{% translate '模板样式' %}</span>#}
-                {#                                        </div>#}
-                {#                                        <select name="flavor_id" class="form-control" id="id-flavor">#}
-                {#                                            <option value="" data-vcpu="" data-ram="">{% translate '自定义' %}</option>#}
-                {#                                            {% for f in flavors %}#}
-                {#                                                <option value="{{ f.id }}" data-vcpu="{{ f.vcpus }}"#}
-                {#                                                        data-ram="{{ f.ram }}">CPU: {{ f.vcpus }}{% translate '核' %} /#}
-                {#                                                    RAM: {{ f.ram }}GB#}
-                {#                                                </option>#}
-                {#                                            {% endfor %}#}
-                {#                                        </select>#}
-                {#                                    </div>#}
-                {#                                    <div id="custom-flavor">#}
-                {#                                        <div class="input-group mb-3">#}
-                {#                                            <div class="input-group-prepend">#}
-                {#                                                <span class="input-group-text">CPU</span>#}
-                {#                                            </div>#}
-                {#                                            <input name="vcpu" type="text" class="form-control"#}
-                {#                                                   onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')" aria-label="CPU">#}
-                {#                                            <div class="input-group-append">#}
-                {#                                                <span class="input-group-text">{% translate '核' %}</span>#}
-                {#                                            </div>#}
-                {#                                        </div>#}
-                {#                                        <div class="input-group mb-3">#}
-                {#                                            <div class="input-group-prepend">#}
-                {#                                                <span class="input-group-text">RAM</span>#}
-                {#                                            </div>#}
-                {#                                            <input name="mem" type="text" class="form-control"#}
-                {#                                                   onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')" aria-label="RAM">#}
-                {#                                            <div class="input-group-append">#}
-                {#                                                <span class="input-group-text">GB</span>#}
-                {#                                            </div>#}
-                {#                                        </div>#}
-                {#                                    </div>#}
-                {#                                    <div>#}
-                {#                                        <div class="form-group form-check">#}
-                {#                                            <input type="checkbox" class="form-check-input" id="check-sys-disk-size">#}
-                {#                                            <label class="form-check-label"#}
-                {#                                                   for="check-sys-disk-size">{% translate '配置系统盘容量' %}</label>#}
-                {#                                        </div>#}
-                {#                                        <div id="div-sys-disk-size" style="display: none">#}
-                {#                                            <div class="input-group mb-3">#}
-                {#                                                <div class="input-group-prepend">#}
-                {#                                                    <span class="input-group-text">{% translate '系统盘容量' %}</span>#}
-                {#                                                </div>#}
-                {#                                                <input name="sys_disk_size" type="text" class="form-control" value="50"#}
-                {#                                                       disabled="disabled"#}
-                {#                                                       onkeyup="value=value.replace(/^(0+)|[^\d]+/g,'')"#}
-                {#                                                       aria-label="系统盘容量">#}
-                {#                                                <div class="input-group-append">#}
-                {#                                                    <span class="input-group-text">GB</span>#}
-                {#                                                </div>#}
-                {#                                            </div>#}
-                {#                                            <div id="id-sys-disk-size-tips" class="text-secondary font-italic">#}
-                {#                                                {% translate '当前您选择的操作系统镜像，要求系统盘最小50GB' %}#}
-                {#                                            </div>#}
-                {#                                        </div>#}
-                {#                                    </div>#}
-                {#                                </div>#}
-                {#                            </div>#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                    <div class="form-group row">#}
-                {#                        <label for="id-remarks"#}
-                {#                               class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '备注' %}</label>#}
-                {#                        <div class="col-sm-7">#}
-                {#                            <input name="remarks" type="text" class="form-control" id="id-remarks">#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                    <div class="form-group row">#}
-                {#                        <div class="offset-sm-1 col-sm-2">#}
-                {#                            <button type="submit" class="btn btn-primary float-right"#}
-                {#                                    id="create_vm">{% translate '创建' %}</button>#}
-                {#                        </div>#}
-                {#                    </div>#}
-                {#                    <input name="mem_unit" type="hidden" id="mem_unit" value="GB">#}
-                {#                </form>#}
             </div>
             <div class="panel-footer">
 
@@ -354,6 +205,84 @@
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
     <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_create.js' %}"></script>
+    <script type="text/javascript">
+        let bt = document.getElementById('submit-id')
+        let tst = document.getElementById('timerSpanText')
+        {#const pN = butsub.parentNode.parentNode.parentNode; // form#}
+        bt.addEventListener('click', function (event) {
+            event.preventDefault();
+
+            bt.disabled = true;
+            tst.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 提交中, 时间较长...'
+            var timerSpan = document.getElementById("timerSpan");
+            timerSpan.style.display = "inline";
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 12030);
+
+
+            let image_name = document.getElementById('id-image-name').value
+
+            let image_label = $('#id-image-label').val() // 镜像标签
+            let image_os_type = $('#id-image-os-type').val() // 系统类型
+            let image_os_release = $('#id-image-os-release').val() // 系统发行版本
+            let image_os_version = document.getElementById('id-image-os-version').value // 系统发行编号
+            let image_os_architecture = $('#id-image-os-architecture').val() //系统架构
+            let image_os_boot_mode = $('#id-image-os-boot_mode').val() //系统启动方式
+            let image_size = document.getElementById('id-image-size').value //镜像大小
+            let image_default_user = document.getElementById('id-image-default_user').value //系统默认登录用户名
+            let image_default_password = document.getElementById('id-image-default_password').value //系统默认登录密码
+            let image_desc = document.getElementById('id-image-desc').value //描述
+            let image_enable = document.getElementById('id-image-enable').checked //启用
+
+            $.ajax({
+                type: 'POST',
+                url: '/vms/image-release/{{ vm_uuid }}/',
+                headers: {
+                    'X-CSRFToken': '{{csrf_token}}'
+                },
+                data: {
+                    'image_name': image_name,
+                    'image_label': image_label,
+                    'image_os_type': image_os_type,
+                    'image_os_release': image_os_release,
+                    'image_os_version': image_os_version,
+                    'image_os_architecture': image_os_architecture,
+                    'image_os_boot_mode': image_os_boot_mode,
+                    'image_size': image_size,
+                    'image_default_user': image_default_user,
+                    'image_default_password': image_default_password,
+                    'image_desc': image_desc,
+                    'image_enable': image_enable,
+
+                },
+                timeout: 1203000,
+                async: true,
+                success: function (data) {
+
+                    tst.innerHTML = '<span id="timerSpanText" style="display:inline;">发布镜像成功 </span>'
+                    // 在需要停止定时器的地方调用 clearInterval
+                    clearInterval(timerInterval);
+                    alert(data.msg)
+
+                },
+                error: function (data) {
+
+                    tst.innerHTML = '<span id="timerSpanText" style="display:inline;">发布镜像失败 </span>'
+                    // 在需要停止定时器的地方调用 clearInterval
+                    clearInterval(timerInterval);
+                    alert(data.responseJSON.msg)
+                    bt.disabled = false;
+                }
+            })
+
+        })
+
+        function updateTimer() {
+            let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById("timerSpan").textContent = elapsedTime + 's';
+        }
+
+    </script>
 {% endblock %}
 
 
