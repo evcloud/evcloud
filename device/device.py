@@ -313,7 +313,8 @@ class HardDiskDevice(BasePCIDevice):
                         dev_list.append(target_dev)
 
                 if source_disk is None or source_disk == '':
-                    source_disk = 'system_disk'
+                    count = len(disk_dev)  # 虚拟云盘无法提供有效信息 加参数用以区别，否则硬盘挂载出现 重复的盘符 的问题
+                    source_disk = 'system_disk' + str(count)
 
                 if source_disk in disk_dev:
                     raise errors.VdiskError(msg='重复的盘符')
