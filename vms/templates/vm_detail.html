@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load  sizeformat %}
 
@@ -18,16 +19,16 @@
     }
     </style>
 {% endblock %}
-{% block title %}虚拟机详情{% endblock %}
+{% block title %}{% translate '虚拟机详情' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>虚拟机详情</strong></span>
+                <span class="card-title"><strong>{% translate '虚拟机详情' %}</strong></span>
                 <div class="float-right">
-                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建虚拟机</a>
-                    <a class="btn btn-sm btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">虚拟机列表</a>
+                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">{% translate '创建虚拟机' %}</a>
+                    <a class="btn btn-sm btn-info" id="id-vm-list-url" href="{% url 'vms:vms-list' %}">{% translate '虚拟机列表' %}</a>
                 </div>
             </div>
             <div class="card-body">
@@ -37,7 +38,7 @@
                     {% elif vm.last_ip %}
                     <strong>{{ vm.last_ip.ipv4 }}</strong>
                     {% else %}
-                    <strong>无ip</strong>
+                    <strong>{% translate '无ip' %}</strong>
                     {% endif %}
 
                     (<span id="id-vm-uuid">{{ vm.hex_uuid }}</span>)
@@ -53,31 +54,31 @@
                                     <div class="row">
                                         <div class="col-4">
                                             {% if vm.vm_status == vm.VmStatus.NORMAL.value %}
-                                                <strong>运行状态：</strong><span id="vm_status_{{ vm.hex_uuid }}"></span>
+                                                <strong>{% translate '运行状态' %}：</strong><span id="vm_status_{{ vm.hex_uuid }}"></span>
                                             <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button>
                                             {% else %}
-                                                <strong>虚拟机状态：</strong><span id="vm_status_{{ vm.vm_status }}" title="{{ vm.vm_status }}">{{ vm.get_vm_status_display }}</span>
+                                                <strong>{% translate '虚拟机状态' %}：</strong><span id="vm_status_{{ vm.vm_status }}" title="{{ vm.vm_status }}">{{ vm.get_vm_status_display }}</span>
                                             {% endif %}
                                         </div>
-                                        <div class="col-4"><strong>创建者：</strong>{{vm.user}}</div>
-                                        <div class="col-4"><strong>创建时间：</strong>{{vm.create_time|date:'Y-m-d H:i:s'}}</div>
+                                        <div class="col-4"><strong>{% translate '创建者' %}：</strong>{{vm.user}}</div>
+                                        <div class="col-4"><strong>{% translate '创建时间' %}：</strong>{{vm.create_time|date:'Y-m-d H:i:s'}}</div>
                                     </div>
                                 </div>
                             </div>
                         </li>
                         <li class="list-group-item list-group-item-success">
                             <div class="row">
-                                <div class="col-md-2"><strong>位置信息</strong></div>
+                                <div class="col-md-2"><strong>{% translate '位置信息' %}</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
-                                        <div class="col-md-4"><strong>所属数据中心：</strong>{{ vm.host.group.center.name }}</div>
-                                        <div class="col-md-4"><strong>所属集群：</strong>{{ vm.host.group.name }}</div>
+                                        <div class="col-md-4"><strong>{% translate '所属数据中心' %}：</strong>{{ vm.host.group.center.name }}</div>
+                                        <div class="col-md-4"><strong>{% translate '所属集群' %}：</strong>{{ vm.host.group.name }}</div>
 
-                                        <div class="col-md-4"><strong>宿主机IP地址：</strong>
+                                        <div class="col-md-4"><strong>{% translate '宿主机IP地址' %}：</strong>
                                             {% if vm.host %}
                                             {{ vm.host.ipv4 }}
                                             {% else%}
-                                            暂无
+                                            {% translate '暂无' %}
                                             {% endif %}
                                         </div>
                                     </div>
@@ -86,7 +87,7 @@
                         </li>
                         <li class="list-group-item list-group-item-warning">
                             <div class="row row_style">
-                                <div class="col-md-2"><strong>配置信息</strong></div>
+                                <div class="col-md-2"><strong>{% translate '配置信息' %}</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
                                         <div class="col-md-4"><strong>CPU：</strong>{{ vm.vcpu }}</div>
@@ -98,11 +99,11 @@
                         </li>
                         <li class="list-group-item list-group-item-danger">
                             <div class="row">
-                                <div class="col-md-2"><strong>镜像信息</strong></div>
+                                <div class="col-md-2"><strong>{% translate '镜像信息' %}</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
-                                        <div class="col-md-4"><strong>系统镜像</strong>：{{ vm.image_name }}</div>
-                                        <div class="col-md-4"><strong>CEPH集群</strong>：{{ vm.ceph_pool.ceph.name }}</div>
+                                        <div class="col-md-4"><strong>{% translate '系统镜像' %}</strong>：{{ vm.image_name }}</div>
+                                        <div class="col-md-4"><strong>CEPH{% translate '集群' %}</strong>：{{ vm.ceph_pool.ceph.name }}</div>
                                         <div class="col-md-4"><strong>Pool Name</strong>：{{ vm.ceph_pool.pool_name }}</div>
                                     </div>
                                 </div>
@@ -110,28 +111,28 @@
                         </li>
                         <li class="list-group-item list-group-item-info">
                             <div class="row">
-                                <div class="col-md-2"><strong>网络信息</strong></div>
+                                <div class="col-md-2"><strong>{% translate '网络信息' %}</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
                                         {% if vm.mac_ip %}
-                                        <div class="col-md-4"><strong>IP地址：</strong>{{vm.ipv4}}</div>
-                                        <div class="col-md-4"><strong>MAC地址：</strong>{{ vm.mac_ip.mac }}</div>
-                                        <div class="col-md-4"><strong>VLAN描述：</strong>{{ vm.mac_ip.vlan }}</div>
-                                        <div class="col-md-4"><strong>IPv6地址：</strong>{{ vm.mac_ip.ipv6 | default_if_none:''}}</div>
-                                        <div class="col-md-4"><strong>网桥名：</strong>{{ vm.mac_ip.vlan.br }}</div>
+                                        <div class="col-md-4"><strong>IP{% translate '地址' %}：</strong>{{vm.ipv4}}</div>
+                                        <div class="col-md-4"><strong>MAC{% translate '地址' %}：</strong>{{ vm.mac_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>VLAN{% translate '描述' %}：</strong>{{ vm.mac_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>IPv6{% translate '地址' %}：</strong>{{ vm.mac_ip.ipv6 | default_if_none:''}}</div>
+                                        <div class="col-md-4"><strong>{% translate '网桥名' %}：</strong>{{ vm.mac_ip.vlan.br }}</div>
                                         {% elif vm.last_ip %}
-                                        <div class="col-md-4"><strong>原IP地址：</strong>{{vm.last_ip.ipv4}}</div>
-                                        <div class="col-md-4"><strong>原MAC地址：</strong>{{ vm.last_ip.mac }}</div>
-                                        <div class="col-md-4"><strong>原IPv6地址：</strong>{{ vm.mac_ip.ipv6 }}</div>
-                                        <div class="col-md-4"><strong>VLAN描述：</strong>{{ vm.last_ip.vlan }}</div>
-                                        <div class="col-md-4"><strong>原网桥名：</strong>{{ vm.last_ip.vlan.br }}</div>
+                                        <div class="col-md-4"><strong>{% translate '原IP地址' %}：</strong>{{vm.last_ip.ipv4}}</div>
+                                        <div class="col-md-4"><strong>{% translate '原MAC地址' %}：</strong>{{ vm.last_ip.mac }}</div>
+                                        <div class="col-md-4"><strong>{% translate '原IPv6地址' %}：</strong>{{ vm.mac_ip.ipv6 }}</div>
+                                        <div class="col-md-4"><strong>VLAN{% translate '描述' %}：</strong>{{ vm.last_ip.vlan }}</div>
+                                        <div class="col-md-4"><strong>{% translate '原网桥名' %}：</strong>{{ vm.last_ip.vlan.br }}</div>
                                         {% else %}
 
-                                        <div class="col-md-4"><strong>IP地址：</strong>无</div>
-                                        <div class="col-md-4"><strong>MAC地址：</strong>无</div>
-                                        <div class="col-md-4"><strong>原IPv6地址：</strong>无</div>
-                                        <div class="col-md-4"><strong>VLAN描述：</strong>无</div>
-                                        <div class="col-md-4"><strong>网桥名：</strong>无</div>
+                                        <div class="col-md-4"><strong>IP{% translate '地址' %}：</strong>无</div>
+                                        <div class="col-md-4"><strong>MAC{% translate '地址' %}：</strong>无</div>
+                                        <div class="col-md-4"><strong>{% translate '原IPv6地址' %}：</strong>无</div>
+                                        <div class="col-md-4"><strong>VLAN{% translate '描述' %}：</strong>无</div>
+                                        <div class="col-md-4"><strong>{% translate '网桥名' %}：</strong>无</div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -139,28 +140,28 @@
                         </li>
                         <li class="list-group-item list-group-item-info">
                             <div class="row">
-                                <div class="col-md-2"><strong>用户信息</strong></div>
+                                <div class="col-md-2"><strong>{% translate '用户信息' %}</strong></div>
                                 <div class="col-md-10">
                                     <div class="row">
-                                        <div class="col-md-4"><strong>默认用户名：</strong>{{vm.default_user}}</div>
-                                        <div class="col-md-4"><strong>默认密码：</strong>{{vm.default_password}}</div>
+                                        <div class="col-md-4"><strong>{% translate '默认用户名' %}：</strong>{{vm.default_user}}</div>
+                                        <div class="col-md-4"><strong>{% translate '默认密码' %}：</strong>{{vm.default_password}}</div>
                                     </div>
                                 </div>
                             </div>
                         </li>
                         <li class="list-group-item list-group-item-success">
                             <div class="row">
-                                <div class="col-md-2"><strong>备注信息</strong></div>
+                                <div class="col-md-2"><strong>{% translate '备注信息' %}</strong></div>
                                 <div class="col-md-10 mouse-hover">
                                     <div>
                                         <span>{{ vm.remarks|default_if_none:'无' }}</span>
-                                        <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.hex_uuid }}" title="修改备注">
+                                        <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.hex_uuid }}" title="{% translate '修改备注' %}">
                                             <i class="fa fa-edit"></i>
                                         </span>
                                     </div>
                                     <div id="remarks_edit" style="display:none">
                                         <textarea id="remarks">{{ vm.remarks|default_if_none:'' }}</textarea>
-                                        <span class="save_vm_remark" title="保存备注" vm_uuid="{{ vm.hex_uuid }}">
+                                        <span class="save_vm_remark" title="{% translate '保存备注' %}" vm_uuid="{{ vm.hex_uuid }}">
                                             <i class="fa fa-save"></i>
                                         </span>
                                     </div>
@@ -169,23 +170,23 @@
                         </li>
 
                         <li class="list-group-item">
-                            <p><strong>云硬盘</strong></p>
+                            <p><strong>{% translate '云硬盘' %}</strong></p>
                         {% with vm.vdisks as vdisks %}
                             {% if vdisks %}
                                 <table class="table table-default text-center table-disk-list"
                                        style="word-wrap:break-word;word-break:break-all;">
                                     <thead class="thead-light">
                                     <tr>
-                                        <th>设备</th>
+                                        <th>{% translate '设备' %}</th>
                                         <th>UUID</th>
-                                        <th>机组</th>
-                                        <th>存储池</th>
-                                        <th>容量</th>
-                                        <th>用户</th>
-                                        <th>创建时间</th>
-                                        <th>状态</th>
-                                        <th>备注</th>
-                                        <th>操作</th>
+                                        <th>{% translate '机组' %}</th>
+                                        <th>{% translate '存储池' %}</th>
+                                        <th>{% translate '容量' %}</th>
+                                        <th>{% translate '用户' %}</th>
+                                        <th>{% translate '创建时间' %}</th>
+                                        <th>{% translate '状态' %}</th>
+                                        <th>{% translate '备注' %}</th>
+                                        <th>{% translate '操作' %}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -210,7 +211,7 @@
                                             </td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-danger btn-disk-umount"
-                                                        data-disk-uuid="{{ disk.uuid }}">卸载
+                                                        data-disk-uuid="{{ disk.uuid }}">{% translate '卸载' %}
                                                 </button>
                                             </td>
                                         </tr>
@@ -218,12 +219,12 @@
                                     </tbody>
                                 </table>
                             {% else %}
-                                未挂载云硬盘
+                                {% translate '未挂载云硬盘' %}
                             {% endif %}
                         {% endwith %}
                         </li>
                         <li class="list-group-item">
-                        <p><strong>本地资源设备</strong></p>
+                        <p><strong>{% translate '本地资源设备' %}</strong></p>
                         {% with vm.pci_devices as devices  %}
                             {% if devices %}
                                 <table class="table table-default text-center table-pci-list" style="word-wrap:break-word;word-break:break-all;">
@@ -231,12 +232,12 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>类型</th>
-                                        <th>地址</th>
-                                        <th>宿主机</th>
-                                        <th>机组</th>
-                                        <th>状态</th>
-                                        <th>备注</th>
-                                        <th>操作</th>
+                                        <th>{% translate '地址' %}</th>
+                                        <th>{% translate '宿主机' %}</th>
+                                        <th>{% translate '机组' %}</th>
+                                        <th>{% translate '状态' %}</th>
+                                        <th>{% translate '备注' %}</th>
+                                        <th>{% translate '操作' %}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -257,7 +258,7 @@
                                             <td><span>{{ dev.remarks|default_if_none:'' }}</span></td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-danger btn-pci-unmount"
-                                                        data-pci-id="{{ dev.id }}">卸载
+                                                        data-pci-id="{{ dev.id }}">{% translate '卸载' %}
                                                 </button>
                                             </td>
                                         </tr>
@@ -265,22 +266,22 @@
                                     </tbody>
                                 </table>
                             {% else %}
-                                未挂载本地资源设备
+                                {% translate '未挂载本地资源设备' %}
                             {% endif %}
                         {% endwith %}
                         </li>
                         <li class="list-group-item" id="id-vm-snap-content">
-                            <p><strong>虚拟机快照</strong></p>
+                            <p><strong>{% translate '虚拟机快照' %}</strong></p>
                             {% if vm.sys_snaps %}
                                 <table class="table table-default text-center table-vm-snap-list"
                                        style="word-wrap:break-word;word-break:break-all;">
                                     <thead class="thead-light">
                                     <tr>
                                         <th>ID</th>
-                                        <th>快照</th>
-                                        <th>创建时间</th>
-                                        <th>备注</th>
-                                        <th>操作</th>
+                                        <th>{% translate '快照' %}</th>
+                                        <th>{% translate '创建时间' %}</th>
+                                        <th>{% translate '备注' %}</th>
+                                        <th>{% translate '操作' %}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -292,23 +293,23 @@
                                             <td class="mouse-hover">
                                                 <div>
                                                     <span>{{ snap.remarks|default_if_none:'' }}</span>
-                                                    <span class="mouse-hover-show edit-vm-snap-remark" title="修改备注">
+                                                    <span class="mouse-hover-show edit-vm-snap-remark" title="{% translate '修改备注' %}">
                                                         <i class="fa fa-edit"></i>
                                                     </span>
                                                 </div>
                                                 <div style="display:none">
                                                     <textarea id="remarks">{{ snap.remarks|default_if_none:'' }}</textarea>
-                                                    <span class="save-vm-snap-remark" title="保存备注" data-snap-id="{{ snap.id }}">
+                                                    <span class="save-vm-snap-remark" title="{% translate '保存备注' %}" data-snap-id="{{ snap.id }}">
                                                         <i class="fa fa-save"></i>
                                                     </span>
                                                 </div>
                                             </td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-danger btn-vm-snap-delete"
-                                                        data-snap-id="{{ snap.id }}">删除
+                                                        data-snap-id="{{ snap.id }}">{% translate '删除' %}
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-danger btn-vm-snap-rollback"
-                                                        data-snap-id="{{ snap.id }}">回滚
+                                                        data-snap-id="{{ snap.id }}">{% translate '回滚' %}
                                                 </button>
                                             </td>
                                         </tr>
@@ -316,23 +317,23 @@
                                     </tbody>
                                 </table>
                             {% else %}
-                                未创建快照
+                                {% translate '未创建快照' %}
                             {% endif %}
                         </li>
                         <li class="list-group-item">
-                            <p><strong>附加IP地址列表</strong></p>
+                            <p><strong>{% translate '附加IP地址列表' %}</strong></p>
                         {% with vm.get_attach_ip as att_ip %}
                             {% if att_ip %}
                                 <table class="table table-default text-center table-disk-list"
                                        style="word-wrap:break-word;word-break:break-all;">
                                     <thead class="thead-light">
                                     <tr>
-                                        <th>IP地址</th>
-                                        <th>MAC地址</th>
-                                        <th>网桥名</th>
-                                        <th>VLAN描述</th>
-                                        <th>标签</th>
-                                        <th>操作</th>
+                                        <th>IP{% translate '地址' %}</th>
+                                        <th>MAC{% translate '地址' %}</th>
+                                        <th>{% translate '网桥名' %}</th>
+                                        <th>VLAN{% translate '描述' %}</th>
+                                        <th>{% translate '标签' %}</th>
+                                        <th>{% translate '操作' %}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -347,7 +348,7 @@
                                             <td>
                                                   <button class="btn btn-sm btn-danger btn-vm-detach-ip"
                                                           data-detach-ip-id="{{ att.sub_ip.id }}"
-                                                          data-vm-uuid="{{ vm.hex_uuid }}">移除</button>
+                                                          data-vm-uuid="{{ vm.hex_uuid }}">{% translate '移除' %}</button>
 
                                             </td>
                                         </tr>
@@ -355,12 +356,12 @@
                                     </tbody>
                                 </table>
                             {% else %}
-                                未附加IP地址
+                                {% translate '未附加IP地址' %}
                             {% endif %}
                         {% endwith %}
                         </li>
                         <li class="list-group-item" id="id-vm-snap-content">
-                            <p><strong>虚拟机状态</strong></p>
+                            <p><strong>{% translate '虚拟机状态' %}</strong></p>
                             <div class="row">
                                 <div class="col-6">
                                     <canvas id="chart-vm-cpu"></canvas>

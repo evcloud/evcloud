@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}创建云硬盘{% endblock %}
+{% load i18n %}
+{% block title %}{% translate '创建云硬盘' %}{% endblock %}
 
 {% block head %}{% endblock %}
 
@@ -9,15 +9,15 @@
     <div class="container-fluid col-sm-12 offset-md-1 col-md-10 offset-lg-2 col-lg-8">
         <div class="card">
             <div class="card-header">
-                <span class="card-title">创建云硬盘</span>
+                <span class="card-title">{% translate '创建云硬盘' %}</span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vdisk:vdisk-list' %}">
-                    云硬盘列表
+                    {% translate '云硬盘列表' %}
                 </a></span>
             </div>
             <div class="card-body align-content-center">
                 <form class="form-horizontal" >
                     <div class="form-group row">
-                        <label for="id-center" class="offset-sm-1 col-sm-2 col-form-label">数据中心</label>
+                        <label for="id-center" class="offset-sm-1 col-sm-2 col-form-label">{% translate '数据中心' %}</label>
                         <div class="col-sm-7">
                             <select name="center_id" class="form-control" id="id-center">
                                 <option value="">--</option>
@@ -30,7 +30,7 @@
                 </form>
                 <form class="form-horizontal" id="id-form-create">
                     <div class="form-group row">
-                        <label for="id-group" class="offset-sm-1 col-sm-2 col-form-label">机组</label>
+                        <label for="id-group" class="offset-sm-1 col-sm-2 col-form-label">{% translate '机组' %}</label>
                         <div class="col-sm-7">
                             <select name="group_id" class="form-control" id="id-group">
                                 <option value="">--</option>
@@ -41,7 +41,7 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="id-quota" class="offset-sm-1 col-sm-2 col-form-label">存储池</label>
+                        <label for="id-quota" class="offset-sm-1 col-sm-2 col-form-label">{% translate '存储池' %}</label>
                         <div class="col-sm-7">
                             <select name="quota_id" class="form-control" id="id-quota">
                                 <option value="">--</option>
@@ -52,7 +52,7 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="id-size" class="offset-sm-1 col-sm-2 col-form-label">容量大小</label>
+                        <label for="id-size" class="offset-sm-1 col-sm-2 col-form-label">{% translate '容量大小' %}</label>
                         <div class="col-sm-7 form-inline">
                             {% if user.is_superuser %}
                                 <input name="size" type="text" class="form-control" id="id-size" value="100">
@@ -73,14 +73,14 @@
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="id-remarks" class="offset-sm-1 col-sm-2 col-form-label">备注</label>
+                        <label for="id-remarks" class="offset-sm-1 col-sm-2 col-form-label">{% translate '备注' %}</label>
                         <div class="col-sm-7">
                             <input name="remarks" type="text" class="form-control" id="id-remarks">
                         </div>
                     </div>
                     <div class="form-group row">
                         <div class="offset-sm-1">
-                            <button type="submit" class="btn btn-primary">创建</button>
+                            <button type="submit" class="btn btn-primary">{% translate '创建' %}</button>
                         </div>
                     </div>
                 </form>

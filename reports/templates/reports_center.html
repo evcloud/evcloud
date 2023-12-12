@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-
-{% block title %}资源统计列表{% endblock %}
+{% load i18n %}
+{% block title %}{% translate '资源统计列表' %}{% endblock %}
 
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{% static 'reports/reports.css' %}">
@@ -12,7 +12,7 @@
         <div class="d-flex px-3">
             <nav aria-label="breadcrumb">
               <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="#">全部</a></li>
+                <li class="breadcrumb-item"><a href="#">{% translate '全部' %}</a></li>
                 <li class="breadcrumb-item active" aria-current="page" id="id-current-center" data-center-id="{{ center_id }}"></li>
               </ol>
             </nav>
@@ -22,10 +22,10 @@
             <div style="width: 200px">
                 <ul class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
                   <li class="nav-item">
-                    <a class="nav-link active" data-toggle="tab" href="#host_group" aria-controls="host_group" aria-selected="false">宿主机组</a>
+                    <a class="nav-link active" data-toggle="tab" href="#host_group" aria-controls="host_group" aria-selected="false">{% translate '宿主机组' %}</a>
                   </li>
                   <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" href="#graph" aria-controls="graph" aria-selected="false">可视化图表</a>
+                    <a class="nav-link" data-toggle="tab" href="#graph" aria-controls="graph" aria-selected="false">{% translate '可视化图表' %}</a>
                   </li>
                 </ul>
             </div>
@@ -35,13 +35,13 @@
                         <table class="table" id="id-table-center">
                             <thead class="thead-light">
                             <tr>
-                                <th>总虚拟cpu(/核)</th>
-                                <th>已分配cpu(/核)</th>
-                                <th>cpu分配率</th>
-                                <th>总内存</th>
-                                <th>已使用内存</th>
-                                <th>内存使用率</th>
-                                <th>虚拟机数</th>
+                                <th>{% translate '总虚拟cpu(/核)' %}</th>
+                                <th>{% translate '已分配cpu(/核)' %}</th>
+                                <th>cpu{% translate '分配率' %}</th>
+                                <th>{% translate '总内存' %}</th>
+                                <th>{% translate '已使用内存' %}</th>
+                                <th>{% translate '内存使用率' %}</th>
+                                <th>{% translate '虚拟机数' %}</th>
                             </tr>
                             </thead>
                             <tbody></tbody>
@@ -51,14 +51,14 @@
                         <table class="table" id="id-table-group">
                             <thead class="thead-light">
                             <tr>
-                                <th>宿主机组</th>
-                                <th>总虚拟cpu(/核)</th>
-                                <th>已分配cpu(/核)</th>
-                                <th>cpu分配率</th>
-                                <th>总内存</th>
-                                <th>已使用内存</th>
-                                <th>内存使用率</th>
-                                <th>虚拟机数</th>
+                                <th>{% translate '宿主机组' %}</th>
+                                <th>{% translate '总虚拟cpu(/核)' %}</th>
+                                <th>{% translate '已分配已分配cpu(/核)' %}</th>
+                                <th>cpu{% translate '分配率' %}</th>
+                                <th>{% translate '总内存' %}</th>
+                                <th>{% translate '已使用内存' %}</th>
+                                <th>{% translate '内存使用率' %}</th>
+                                <th>{% translate '虚拟机数' %}</th>
                             </tr>
                             </thead>
                             <tbody></tbody>

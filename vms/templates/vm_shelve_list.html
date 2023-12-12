@@ -1,17 +1,18 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load  sizeformat %}
 
 {% block head %}
 {% endblock %}
-{% block title %}搁置虚拟机列表{% endblock %}
+{% block title %}{% translate '搁置虚拟机列表' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:vms-list' %}">在线虚拟机 ({{ queryset_normal }})</a></strong></span>
-                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:shelve-list' %}">已搁置 ({{ count }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:vms-list' %}">{% translate '在线虚拟机' %} ({{ queryset_normal }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:shelve-list' %}">{% translate '已搁置' %} ({{ count }})</a></strong></span>
             </div>
             <p></p>
             <div class="card-body">
@@ -19,7 +20,7 @@
                     <div class="input-group" style="">
 
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-user">创建者</label>
+                            <label class="input-group-text" for="id-user">{% translate '创建者' %}</label>
                         </div>
                         <select name="user" class="custom-select" id="id-user">
                             <option value="">--</option>
@@ -29,12 +30,12 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text">关键字</label>
+                            <label class="input-group-text">{% translate '关键字' %}</label>
                         </div>
                         <input type="text" class="form-control" name="search" value="{{ search }}"
                                placeholder="搜 UUID、备注"/>
                         <span class="input-group-text"></span>
-                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                        <button type="submit" class="btn btn-primary form-control">{% translate '筛选' %}</button>
                     </div>
                 </form>
             </div>
@@ -42,16 +43,16 @@
                    style="word-wrap:break-word;word-break:break-all;">
                 <thead class="thead-light">
                 <tr>
-                    <th>编号</th>
-                    <th>原IP地址</th>
-                    <th>创建者</th>
-                    <th>镜像</th>
-                    <th>宿主机</th>
+                    <th>{% translate '编号' %}</th>
+                    <th>{% translate '原IP地址' %}</th>
+                    <th>{% translate '创建者' %}</th>
+                    <th>{% translate '镜像' %}</th>
+                    <th>{% translate '宿主机' %}</th>
                     <th>CPU/MEM</th>
-                    <th>云硬盘</th>
-                    <th width="180px">备注</th>
-                    <th>虚拟机状态</th>
-                    <th>操作</th>
+                    <th>{% translate '云硬盘' %}</th>
+                    <th width="180px">{% translate '备注' %}</th>
+                    <th>{% translate '虚拟机状态' %}</th>
+                    <th>{% translate '操作' %}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -63,14 +64,14 @@
                                     href="{% url 'vms:vm-detail' vm_uuid=vm.hex_uuid %}"><b>{{ vm.last_ip.ipv4 }}</b></a>
                             </td>
                         {% else %}
-                            <td>无</td>
+                            <td>{% translate '无' %}</td>
                         {% endif %}
                         <td>{{ vm.user }}</td>
                         <td>{{ vm.image_name }}</td>
                         {% if vm.host %}
                             <td>{{ vm.host_ipv4 }}</td>
                         {% else %}
-                            <td>无</td>
+                            <td>{% translate '无' %}</td>
                         {% endif %}
                         <td>
                             {{ vm.vcpu }} / {{ vm.mem|sizeformat:'GB' }}
@@ -82,7 +83,7 @@
                                         {{ v.dev }} {{ v.size }}GB <br>
                                     {% endfor %}
                                 {% else %}
-                                    无
+                                    {% translate '无' %}
                                 {% endif %}
                             {% endwith %}
                         </td>

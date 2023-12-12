@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block head %}
@@ -17,27 +18,27 @@
         }
     </style>
 {% endblock %}
-{% block title %}VPN列表{% endblock %}
+{% block title %}{% translate 'VPN列表' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong><a class="btn btn-primary" href="">VPN用户 ({{ count }})</a></strong></span>
-                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vpn:vpn-login-log' %}">VPN登录日志 ({{ vpn_login_log_count }})</a></strong></span>
-                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">创建VPN</a></span>
+                <span class="card-title"><strong><a class="btn btn-primary" href="">{% translate 'VPN用户' %} ({{ count }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vpn:vpn-login-log' %}">{% translate 'VPN登录日志' %} ({{ vpn_login_log_count }})</a></strong></span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">{% translate '创建VPN' %}</a></span>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
                         <form class="input-group">
-                            <input class="form-control" name="search" type="text" value="{{ search }}" placeholder="用户名、备注">
-                            <button class="btn btn-sm btn-outline-primary" type="submit">搜索</button>
+                            <input class="form-control" name="search" type="text" value="{{ search }}" placeholder="{% translate '用户名、备注' %}">
+                            <button class="btn btn-sm btn-outline-primary" type="submit">{% translate '搜索' %}</button>
                         </form>
                     </div>
                     <div class="col-md-6">
-                        <span><a class="btn btn-sm btn-outline-success float-right m-2" href="{% url 'vpn:vpn-file-config' %}">配置文件</a></span>
-                        <span><a class="btn btn-sm btn-outline-success float-right m-2" href="{% url 'vpn:vpn-file-ca' %}">CA证书</a></span>
+                        <span><a class="btn btn-sm btn-outline-success float-right m-2" href="{% url 'vpn:vpn-file-config' %}">{% translate '配置文件' %}</a></span>
+                        <span><a class="btn btn-sm btn-outline-success float-right m-2" href="{% url 'vpn:vpn-file-ca' %}">{% translate 'CA证书' %}</a></span>
                     </div>
                 </div>
             </div>
@@ -45,14 +46,14 @@
                 <thead class="thead-light">
                 <tr>
 {#                    <th></th>#}
-                    <th>用户名</th>
-                    <th>密码</th>
-                    <th>激活状态</th>
-                    <th>创建时间</th>
-                    <th>修改时间</th>
-                    <th>过期时间</th>
-                    <th>创建人</th>
-                    <th>备注</th>
+                    <th>{% translate '用户名' %}</th>
+                    <th>{% translate '密码' %}</th>
+                    <th>{% translate '激活状态' %}</th>
+                    <th>{% translate '创建时间' %}</th>
+                    <th>{% translate '修改时间' %}</th>
+                    <th>{% translate '过期时间' %}</th>
+                    <th>{% translate '创建人' %}</th>
+                    <th>{% translate '备注' %}</th>
                 </tr>
                 </thead>
                 <tbody>

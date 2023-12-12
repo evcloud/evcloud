@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block head %}
 {% endblock %}
-{% block title %}VPN添加{% endblock %}
+{% block title %}{% translate 'VPN添加' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
@@ -13,7 +14,7 @@ class="form-control dateinput form-control"
 placeholder="Select a date" required="" id="id_date"/>
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title"><strong>添加 VPN</strong></span>
+                    <span class="card-title"><strong>{% translate '添加 VPN' %}</strong></span>
                 </div>
                 <div class="card-body">
                     {% csrf_token %}
@@ -39,9 +40,9 @@ placeholder="Select a date" required="" id="id_date"/>
                     <p id="tip_text" class="text-danger">{{ form.non_field_errors.as_text }}</p>
                 </div>
                 <div class="card-footer">
-                    <input type="submit" name="_continue" class="btn btm-sm btn-info float-right m-2" value="保存并继续编辑">
-                    <input type="submit" name="_addanother" class="btn btm-sm btn-info float-right m-2" value="保存并添加另一个">
-                    <input type="submit" name="_save" class="btn btm-sm btn-primary float-right m-2" value="保存">
+                    <input type="submit" name="_continue" class="btn btm-sm btn-info float-right m-2" value="{% translate '保存并继续编辑' %}">
+                    <input type="submit" name="_addanother" class="btn btm-sm btn-info float-right m-2" value="{% translate '保存并添加另一个' %}">
+                    <input type="submit" name="_save" class="btn btm-sm btn-primary float-right m-2" value="{% translate '保存' %}">
                 </div>
             </div>
         </form>

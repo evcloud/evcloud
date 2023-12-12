@@ -1,38 +1,39 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 {% load  sizeformat %}
 
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{% static 'network/vlan_list.css' %}">
 {% endblock %}
-{% block title %}VLAN列表{% endblock %}
+{% block title %}{% translate 'VLAN列表' %}{% endblock %}
 
 {% block boby %}
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>VLAN列表</strong></span>
+                <span class="card-title"><strong>{% translate 'VLAN列表' %}</strong></span>
             </div>
             <div class="card-body" style="min-height: 400px;">
                 <table class="table table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                      <thead class="thead-light">
                     <tr>
-                        <th>编号</th>
-                        <th>网桥名</th>
+                        <th>{% translate '编号' %}</th>
+                        <th>{% translate '网桥名' %}</th>
                         <th>VLANID</th>
-                        <th>VLAN描述</th>
-                        <th>类型</th>
-                        <th>标签</th>
-                        <th>子网IP地址</th>
-                        <th>子网掩码</th>
-                        <th>网关</th>
-                        <th>子网IP地址(IPv6)</th>
-                        <th>子网掩码(IPv6)</th>
-                        <th>网关(IPv6)</th>
-                        <th>空闲IP地址(可用/总数)</th>
-                        <th>状态</th>
-                        <th>备注</th>
-                        <th>操作选项</th>
+                        <th>{% translate 'VLAN描述' %}</th>
+                        <th>{% translate '类型' %}</th>
+                        <th>{% translate '标签' %}</th>
+                        <th>{% translate '子网IP地址' %}</th>
+                        <th>{% translate '子网掩码' %}</th>
+                        <th>{% translate '网关' %}</th>
+                        <th>{% translate '子网IP地址' %}(IPv6)</th>
+                        <th>{% translate '子网掩码' %}(IPv6)</th>
+                        <th>{% translate '网关' %}(IPv6)</th>
+                        <th>{% translate '空闲IP地址(可用/总数)' %}</th>
+                        <th>{% translate '状态' %}</th>
+                        <th>{% translate '备注' %}</th>
+                        <th>{% translate '操作选项' %}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -59,10 +60,10 @@
                         <th>{{ vlan.remarks }}</th>
                         <th>
                             <span><a class="btn btn-sm btn-primary" href="{% url 'network:vlan_add' %}?vlan={{ vlan.id }}">
-                                <i class="fa fa-plus"></i> 批量添加IP
+                                <i class="fa fa-plus"></i> {% translate '批量添加IP' %}
                             </a></span>
                             <span><a class="btn btn-sm btn-primary" href="{% url 'network:vlan_show' %}?vlan={{ vlan.id }}">
-                                <i class="fa fa-search"></i> 查看IP列表
+                                <i class="fa fa-search"></i> {% translate '查看IP列表IP' %}
                             </a></span>
                         </th>
                     </tr>

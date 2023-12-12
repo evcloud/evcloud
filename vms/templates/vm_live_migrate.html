@@ -1,57 +1,58 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load  sizeformat %}
 {% load  mathfilters %}
 
-{% block title %}动态迁移虚拟机{% endblock %}
+{% block title %}{% translate '动态迁移虚拟机' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>动态迁移虚拟机</strong></span>
+                <span class="card-title"><strong>{% translate '动态迁移虚拟机' %}</strong></span>
                 <div class="float-right">
-                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">创建虚拟机</a>
-                    <a class="btn btn-sm btn-info" href="{% url 'vms:vms-list' %}">虚拟机列表</a>
+                    <a class="btn btn-sm btn-success" href="{% url 'vms:vm-create' %}">{% translate '创建虚拟机' %}</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'vms:vms-list' %}">{% translate '虚拟机列表' %}</a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="">
-                    <div class="text-primary h4">虚拟机信息:</div>
+                    <div class="text-primary h4">{% translate '虚拟机信息' %}:</div>
                     <div class="">
                         <dl class="row">
-                            <dt class="col-2 text-right">虚拟机UUID:</dt> <dd class="col-10" id="id-vm-uuid">{{ vm.hex_uuid }}</dd>
-                            <dt class="col-2 text-right">虚拟机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
-                            <dt class="col-2 text-right">CPU数:</dt> <dd class="col-10">{{ vm.vcpu }}</dd>
-                            <dt class="col-2 text-right">内存:</dt> <dd class="col-10">{{ vm.mem }} GB</dd>
-                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image_name }}</dd>
-                            <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
-                            <dt class="col-2 text-right">宿主机:</dt> <dd class="col-10">{{ vm.host.ipv4 }}</dd>
-                            <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
+                            <dt class="col-2 text-right">{% translate '虚拟机UUID' %}:</dt> <dd class="col-10" id="id-vm-uuid">{{ vm.hex_uuid }}</dd>
+                            <dt class="col-2 text-right">{% translate '虚拟机IP' %}:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                            <dt class="col-2 text-right">CPU{% translate '数' %}:</dt> <dd class="col-10">{{ vm.vcpu }}</dd>
+                            <dt class="col-2 text-right">{% translate '内存' %}:</dt> <dd class="col-10">{{ vm.mem }} GB</dd>
+                            <dt class="col-2 text-right">{% translate '镜像' %}:</dt> <dd class="col-10">{{ vm.image_name }}</dd>
+                            <dt class="col-2 text-right">{% translate '机组' %}:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
+                            <dt class="col-2 text-right">{% translate '宿主机' %}:</dt> <dd class="col-10">{{ vm.host.ipv4 }}</dd>
+                            <dt class="col-2 text-right">{% translate '备注' %}:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                         </dl>
                         <hr>
                         <form id="id-form-vm-live-migrate">
                             <div class="form-group row">
-                                <label for="id-host" class="offset-sm-1 col-sm-2 col-form-label">选择目标宿主机</label>
+                                <label for="id-host" class="offset-sm-1 col-sm-2 col-form-label">{% translate '选择目标宿主机' %}</label>
                                 <div class="col-sm-7">
                                     <select name="host_id" class="form-control" id="id-host">
                                         <option value="">--</option>
                                         {% for h in hosts %}
                                             <option value="{{ h.id }}">
-                                             {{ h.ipv4 }}(总资源:{{ h.vcpu_total }}核/{{ h.mem_total }}GB，剩余:{{ h.vcpu_total|subtract:h.vcpu_allocated }}核/{{ h.mem_total|subtract:h.mem_allocated }}GB),
-                                                (VM上限:{{ h.vm_limit }}个/剩余:{{ h.vm_limit |subtract:h.vm_created }}个)
+                                             {{ h.ipv4 }}({% translate '总资源' %}:{{ h.vcpu_total }}{% translate '核' %}/{{ h.mem_total }}GB，{% translate '剩余' %}:{{ h.vcpu_total|subtract:h.vcpu_allocated }}{% translate '核' %}/{{ h.mem_total|subtract:h.mem_allocated }}GB),
+                                                (VM{% translate '上限' %}:{{ h.vm_limit }}个/{% translate '剩余' %}:{{ h.vm_limit |subtract:h.vm_created }}个)
                                             </option>
                                         {% endfor %}
                                     </select>
                                 </div>
                             </div>
                             <div class="">
-                                <button class="btn btn-primary" id="btn-vm-live-migrate">迁移</button>
+                                <button class="btn btn-primary" id="btn-vm-live-migrate">{% translate '迁移' %}</button>
                             </div>
                         </form>
                     <hr/>
                     <div id="id-div-migrate-status" style="display:none">
-                        <p>迁移状态：<span id="id-migrate-display-icon"></span></p>
+                        <p>{% translate '迁移状态' %}：<span id="id-migrate-display-icon"></span></p>
                         <p class="text-info" id="id-migrate-result"></p>
                     </div>
                     </div>

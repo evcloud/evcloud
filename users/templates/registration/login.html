@@ -1,53 +1,61 @@
-<!DOCTYPE html>
+{#<!DOCTYPE html>#}
+{% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 {% load custom_tags %}
 <html lang="zh-hans">
 <head>
-    <title>登录 | 虚拟机平台</title>
+    <title>{% translate '登录' %} | {% translate '虚拟机平台' %}</title>
     <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-4.4.1/css/bootstrap.min.css' %}">
 </head>
-<body>
-<div class="container-fluid">
-    <div class="d-flex align-items-center justify-content-center" style="height: 80vh;">
-        <div class="card border-info" style="min-width: 400px">
-            <div class="card-header bg-info text-center">
-                <span class="card-title h5">虚拟机平台EVCloud登录</span>
-            </div>
-            <div class="card-body">
-                {% if form.errors %}
-                    <div class="text-danger">{{ form.non_field_errors }}</div>
-                {% endif %}
-                <form method="post" action="{% url 'users:login' %}" id="login-form">
-                    {% csrf_token %}
-                    <div class="input-group form-group">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text" id="id_username" style="min-width: 80px">用户名:</label>
+{#<body>#}
+{% block boby %}
+    <div class="container-fluid">
+        <div class="d-flex align-items-center justify-content-center" style="height: 80vh;">
+            <div class="card border-info" style="min-width: 400px">
+                <div class="card-header bg-info text-center">
+                    <span class="card-title h5">{% translate '虚拟机平台EVCloud登录' %}</span>
+                </div>
+                <div class="card-body">
+                    {% if form.errors %}
+                        <div class="text-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <form method="post" action="{% url 'users:login' %}" id="login-form">
+                        {% csrf_token %}
+                        <div class="input-group form-group">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" id="id_username" style="min-width: 80px">{% translate  '用户名' %}:</label>
+                            </div>
+                            <input type="text" name="username" class="form-control" required id="id_username"
+                                   placeholder="username">
                         </div>
-                        <input type="text" name="username" class="form-control" required id="id_username" placeholder="username">
-                    </div>
-                    <div class="input-group form-group">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text" for="id_password" style="min-width: 80px">密 码:</label>
+                        <div class="input-group form-group">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="id_password" style="min-width: 80px">{% translate  '密 码' %}:</label>
+                            </div>
+                            <input class="form-control" type="password" name="password" required id="id_password"
+                                   placeholder="password">
                         </div>
-                        <input class="form-control" type="password" name="password" required id="id_password" placeholder="password">
-                    </div>
-                    <div >
-                        <input type="hidden" name="next" value="{{ request.GET.next }}">
-                        <input type="hidden" name="this_is_the_login_form" value="1"/>
-                    </div>
-                    <div class="form-group">
-                        <input class="btn btn-primary" type="submit" value="登录">
-                        <a class="btn text-warning" href="{% url 'users:forget' %}">忘记密码</a>
-                        {% use_register_user as use_register %}
-                        <a class="btn btn-info float-right" {% if use_register %}href="{% url 'users:register' %}"
-                            {% else %}onclick="alert('不允许个人注册，请联系管理员');return false;" href="#"{% endif %}>注册</a>
-                    </div>
-                </form>
+                        <div>
+                            <input type="hidden" name="next" value="{{ request.GET.next }}">
+                            <input type="hidden" name="this_is_the_login_form" value="1"/>
+                        </div>
+                        <div class="form-group">
+                            <input class="btn btn-primary" type="submit" value="{% translate '登录' %}">
+                            <a class="btn text-warning" href="{% url 'users:forget' %}">{% translate '忘记密码' %}</a>
+                            {% use_register_user as use_register %}
+                            <a class="btn btn-info float-right" {% if use_register %}href="{% url 'users:register' %}"
+                               {% else %}onclick="alert('{% translate '不允许个人注册，请联系管理员' %}');return false;"
+                               href="#"{% endif %}>{% translate '注册' %}</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
-</body>
-</html>
+{% endblock %}
+{##}
+{#</body>#}
+{#</html>#}
 

@@ -1,24 +1,24 @@
 {% extends 'base.html' %}
 {% load static %}
-
+{% load i18n %}
 {% block head %}
 {% endblock %}
-{% block title %}镜像删除{% endblock %}
+{% block title %}{% translate '镜像删除' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         {% if image %}
             <div class="from-group">
-                <div class="font-weight-bold m-2">确定想要删除镜像吗？</div>
-                <div class="m-2">镜像名称: {{ image.name }}</div>
+                <div class="font-weight-bold m-2">{% translate '确定想要删除镜像吗' %}？</div>
+                <div class="m-2">{% translate '镜像名称' %}: {{ image.name }}</div>
             </div>
             <form method="post" class="form-group m-2">
                 {% csrf_token %}
-                <button type="submit" class="btn btm-sm btn-primary btn-danger">确定删除</button>
-                <span class="btn btm-sm btn-primary btn-success" onclick="window.history.back()">取消返回</span>
+                <button type="submit" class="btn btm-sm btn-primary btn-danger">{% translate '确定删除' %}</button>
+                <span class="btn btm-sm btn-primary btn-success" onclick="window.history.back()">{% translate '取消返回' %}</span>
             </form>
         {% else %}
-            <div>镜像不存在</div>
+            <div>{% translate '镜像不存在' %}</div>
         {% endif %}
     </div>
 {% endblock %}

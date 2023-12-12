@@ -1,52 +1,53 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 {% load  sizeformat %}
 
-{% block title %}挂载云硬盘{% endblock %}
+{% block title %}{% translate '挂载云硬盘' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>挂载云硬盘</strong></span>
+                <span class="card-title"><strong>{% translate '挂载云硬盘' %}</strong></span>
                 <div class="float-right">
-                    <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-create' %}">创建云硬盘</a>
-                    <a class="btn btn-sm btn-info" href="{% url 'vdisk:vdisk-list' %}">云硬盘列表</a>
+                    <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-create' %}">{% translate '创建云硬盘' %}</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'vdisk:vdisk-list' %}">{% translate '云硬盘列表' %}</a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="">
-                    <div class="text-primary h4">云硬盘信息:</div>
+                    <div class="text-primary h4">{% translate '云硬盘信息' %}:</div>
                     <div class="">
                         <dl class="row">
-                            <dt class="col-2 text-right">云硬盘UUID:</dt> <dd class="col-10" id="id-mount-disk-uuid">{{ disk.uuid }}</dd>
-                            <dt class="col-2 text-right">云硬盘容量:</dt> <dd class="col-10">{{ disk.size|sizeformat:"GB" }}</dd>
-                            <dt class="col-2 text-right">创建时间:</dt> <dd class="col-10">{{ disk.create_time }}</dd>
-                            <dt class="col-2 text-right">存储池:</dt> <dd class="col-10">{{ disk.quota }}</dd>
-                            <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ disk.quota.group }}</dd>
-                            <dt class="col-2 text-right">用户:</dt> <dd class="col-10">{{ disk.user }}</dd>
-                            <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ disk.remarks }}</dd>
+                            <dt class="col-2 text-right">{% translate '云硬盘' %}UUID:</dt> <dd class="col-10" id="id-mount-disk-uuid">{{ disk.uuid }}</dd>
+                            <dt class="col-2 text-right">{% translate '云硬盘容量' %}:</dt> <dd class="col-10">{{ disk.size|sizeformat:"GB" }}</dd>
+                            <dt class="col-2 text-right">{% translate '创建时间' %}:</dt> <dd class="col-10">{{ disk.create_time }}</dd>
+                            <dt class="col-2 text-right">{% translate '存储池' %}:</dt> <dd class="col-10">{{ disk.quota }}</dd>
+                            <dt class="col-2 text-right">{% translate '机组' %}:</dt> <dd class="col-10">{{ disk.quota.group }}</dd>
+                            <dt class="col-2 text-right">{% translate '用户' %}:</dt> <dd class="col-10">{{ disk.user }}</dd>
+                            <dt class="col-2 text-right">{% translate '备注' %}:</dt> <dd class="col-10">{{ disk.remarks }}</dd>
                         </dl>
                     </div>
                 </div>
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 {% if disk.vm %}
                     <div>
-                        <p class="text-warning h3">此硬盘不能挂载，硬盘已被挂载使用，挂载虚拟机uuid: {{ disk.vm.hex_uuid }}，IP: <a href="{% url 'vms:vm-detail' vm_uuid=disk.vm.uuid %}">{{ disk.vm.ipv4 }}</a></p>
+                        <p class="text-warning h3">{% translate '此硬盘不能挂载，硬盘已被挂载使用，挂载虚拟机uuid' %}: {{ disk.vm.hex_uuid }}，IP: <a href="{% url 'vms:vm-detail' vm_uuid=disk.vm.uuid %}">{{ disk.vm.ipv4 }}</a></p>
                     </div>
                 {% else %}
                     <div>
-                        <div class="text-success h4 col-sm-4">可供挂载的虚拟机：</div>
+                        <div class="text-success h4 col-sm-4">{% translate '可供挂载的虚拟机' %}：</div>
                         <div class="float-right col-sm-8">
                             <form role="form" class="form-horizontal" method="get" action="">
                                 <div class="input-group" style="">
                                     <div class="input-group-prepend">
-                                        <label class="input-group-text" for="id-center">关键字</label>
+                                        <label class="input-group-text" for="id-center">{% translate '关键字' %}</label>
                                     </div>
                                     <input type="text" class="form-control" name="search" value="{{ search }}"
-                                           placeholder="搜 UUID、IP地址、备注"/>
+                                           placeholder="{% translate '搜 UUID、IP地址、备注' %}"/>
                                     <span class="input-group-prepend"></span>
-                                    <button type="submit" class="btn btn-primary form-control">筛选</button>
+                                    <button type="submit" class="btn btn-primary form-control">{% translate '筛选' %}</button>
                                 </div>
                             </form>
                         </div>
@@ -54,14 +55,14 @@
                     <table class="table table-bordered table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                         <tr>
                             <th></th>
-                            <th>IP地址</th>
-                            <th>创建者</th>
-                            <th>镜像</th>
+                            <th>{% translate 'IP地址' %}</th>
+                            <th>{% translate '创建者' %}</th>
+                            <th>{% translate '镜像' %}</th>
                             <th>CPU/MEM</th>
         {#                    <th>云硬盘</th>#}
-                            <th>备注</th>
-                            <th>状态<button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button></th>
-                            <th>操作</th>
+                            <th>{% translate '备注' %}</th>
+                            <th>{% translate '状态' %}<button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button></th>
+                            <th>{% translate '操作' %}</th>
                         </tr>
                         {% for vm in vms %}
                             <tr id="tr_{{ vm.hex_uuid }}">
@@ -86,9 +87,9 @@
                                 </td>
                                 <td><span id="vm_status_{{ vm.hex_uuid }}"></span></td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-success btn-disk-mount" data-vm-uuid="{{ vm.hex_uuid }}">挂载</button>
-                                    <button type="button" class="btn btn-sm btn-warning btn-vm-shutdown" data-vm-uuid="{{ vm.hex_uuid }}">关机</button>
-                                    <button type="button" class="btn btn-sm btn-warning btn-vm-poweroff" data-vm-uuid="{{ vm.hex_uuid }}">强制断电</button>
+                                    <button type="button" class="btn btn-sm btn-success btn-disk-mount" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '挂载' %}</button>
+                                    <button type="button" class="btn btn-sm btn-warning btn-vm-shutdown" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '关机' %}</button>
+                                    <button type="button" class="btn btn-sm btn-warning btn-vm-poweroff" data-vm-uuid="{{ vm.hex_uuid }}">{% translate '强制断电' %}</button>
                                 </td>
                             </tr>
                         {% endfor %}

@@ -1,27 +1,28 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 {% load  sizeformat %}
 
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">
 {% endblock %}
-{% block title %}虚拟机列表{% endblock %}
+{% block title %}{% translate '虚拟机列表' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:vms-list' %}">在线虚拟机 ({{ count }})</a></strong></span>
-                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:shelve-list' %}">已搁置 ({{ shelve_count }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:vms-list' %}">{% translate '在线虚拟机' %} ({{ count }})</a></strong></span>
+                <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:shelve-list' %}">{% translate '已搁置' %} ({{ shelve_count }})</a></strong></span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vm-create' %}">
-                    创建虚拟机
+                    {% translate '创建虚拟机' %}
                 </a></span>
             </div>
             <div class="card-body">
                 <form role="form" class="form-horizontal" method="get" action="">
                     <div class="input-group" style="">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-center">数据中心</label>
+                            <label class="input-group-text" for="id-center">{% translate '数据中心' %}</label>
                         </div>
                         <select name="center" class="custom-select" id="id-center">
                             <option value="">--</option>
@@ -32,7 +33,7 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-group">主机组</label>
+                            <label class="input-group-text" for="id-group">{% translate '主机组' %}</label>
                         </div>
                         <select name="group" class="custom-select" id="id-group">
                             <option value="">--</option>
@@ -42,7 +43,7 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-host">宿主机</label>
+                            <label class="input-group-text" for="id-host">{% translate '宿主机' %}</label>
                         </div>
                         <select name="host" class="custom-select" id="id-host">
                             <option value="">--</option>
@@ -52,7 +53,7 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-user">创建者</label>
+                            <label class="input-group-text" for="id-user">{% translate '创建者' %}</label>
                         </div>
                         <select name="user" class="custom-select" id="id-user">
                             <option value="">--</option>
@@ -61,12 +62,12 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text">关键字</label>
+                            <label class="input-group-text">{% translate '关键字' %}</label>
                         </div>
                         <input type="text" class="form-control" name="search" value="{{ search }}"
                                placeholder="搜 UUID、IP地址、备注"/>
                         <span class="input-group-text"></span>
-                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                        <button type="submit" class="btn btn-primary form-control">{% translate '筛选' %}</button>
                     </div>
                 </form>
             </div>
@@ -74,16 +75,16 @@
                 <thead class="thead-light">
                 <tr>
                     <th></th>
-                    <th>IP地址</th>
-                    <th>创建者</th>
-                    <th>镜像</th>
-                    <th>宿主机</th>
+                    <th>{% translate 'IP地址' %}</th>
+                    <th>{% translate '创建者' %}</th>
+                    <th>{% translate '镜像' %}</th>
+                    <th>{% translate '宿主机' %}</th>
                     <th>CPU/MEM</th>
-                    <th>云硬盘</th>
-                    <th width="180px">备注</th>
-                    <th>状态<button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button></th>
-                    <th>任务</th>
-                    <th>操作</th>
+                    <th>{% translate '云硬盘' %}</th>
+                    <th width="180px">{% translate '备注' %}</th>
+                    <th>{% translate '状态' %}<button class="btn btn-sm btn-outline-success btn-update-vm-status"><i class="fa fa-sync"></i></button></th>
+                    <th>{% translate '任务' %}</th>
+                    <th>{% translate '操作' %}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -120,13 +121,13 @@
                         <td class="mouse-hover">
                             <div>
                                 <span>{{ vm.remarks|default_if_none:'' }}</span>
-                                <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.hex_uuid }}" title="修改备注">
+                                <span class="mouse-hover-show edit_vm_remark" vm_uuid="{{ vm.hex_uuid }}" title="{% translate '修改备注' %}">
                                     <i class="fa fa-edit"></i>
                                 </span>
                             </div>
                             <div id="remarks_edit" style="display:none">
                                 <textarea id="remarks">{{ vm.remarks|default_if_none:'' }}</textarea>
-                                <span class="save_vm_remark" title="保存备注" vm_uuid="{{ vm.hex_uuid }}">
+                                <span class="save_vm_remark" title="{% translate '保存备注' %}" vm_uuid="{{ vm.hex_uuid }}">
                                     <i class="fa fa-save"></i>
                                 </span>
                             </div>
@@ -140,14 +141,14 @@
                     </tr>
                 {% endfor %}
                 {% if vms %}
-                    <tr title="批量操作">
+                    <tr title="{% translate '批量操作' %}">
                         <td><input type="checkbox" data-check-target=".item-checkbox" /></td>
                         <td class="text-left" colspan="10">
-                            <button class="btn btn-sm btn-primary" id="id-btn-batch-vm-start">开机</button>
-                            <button class="btn btn-sm btn-warning" id="id-btn-batch-vm-shutdown">正常关机</button>
-                            <button class="btn btn-sm btn-warning" id="id-btn-batch-vm-poweroff">强制断电</button>
-                            <button class="btn btn-sm btn-danger" id="id-btn-batch-vm-delete">删除</button>
-                            <button class="btn btn-sm btn-danger" id="id-btn-batch-vm-delete_force">强制删除
+                            <button class="btn btn-sm btn-primary" id="id-btn-batch-vm-start">{% translate '开机' %}</button>
+                            <button class="btn btn-sm btn-warning" id="id-btn-batch-vm-shutdown">{% translate '正常关机' %}</button>
+                            <button class="btn btn-sm btn-warning" id="id-btn-batch-vm-poweroff">{% translate '强制断电' %}</button>
+                            <button class="btn btn-sm btn-danger" id="id-btn-batch-vm-delete">{% translate '删除' %}</button>
+                            <button class="btn btn-sm btn-danger" id="id-btn-batch-vm-delete_force">{% translate '强制删除' %}
                             </button>
                         </td>
                     </tr>

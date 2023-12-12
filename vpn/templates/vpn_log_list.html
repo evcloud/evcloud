@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block head %}
@@ -20,15 +21,15 @@
         }
     </style>
 {% endblock %}
-{% block title %}VPN登录日志列表{% endblock %}
+{% block title %}VPN {% translate '登录日志列表' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}" class="btn btn-outline-primary">VPN用户 ({{ vpn_user_count }})</a></strong></span>
-                <span class="card-title"><strong><a href="" class="btn btn-primary">VPN登录日志 ({{ count }})</a></strong></span>
-                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">创建VPN</a></span>
+                <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}" class="btn btn-outline-primary">{% translate 'VPN用户' %} ({{ vpn_user_count }})</a></strong></span>
+                <span class="card-title"><strong><a href="" class="btn btn-primary">VPN{% translate 'VPN登录日志' %} ({{ count }})</a></strong></span>
+                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">{% translate '创建VPN' %}</a></span>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -36,7 +37,7 @@
                         <form class="input-group">
                             <input class="form-control" name="search" type="text" value="{{ search }}"
                                    placeholder="用户名">
-                            <button class="btn btn-sm btn-outline-primary" type="submit">搜索</button>
+                            <button class="btn btn-sm btn-outline-primary" type="submit">{% translate '搜索' %}</button>
                         </form>
                     </div>
                 </div>
@@ -46,14 +47,14 @@
                 <thead class="thead-light">
                 <tr>
                     {#                    <th></th>#}
-                    <th>用户名</th>
+                    <th>{% translate '用户名' %}</th>
                     <th>ASSIGN_ip</th>
-                    <th>客户端IP</th>
-                    <th>客户端公网端口</th>
-                    <th>上行流量</th>
-                    <th>下行流量</th>
-                    <th>登录时间</th>
-                    <th>登出时间</th>
+                    <th>{% translate '客户端IP' %}</th>
+                    <th>{% translate '客户端公网端口' %}</th>
+                    <th>{% translate '上行流量' %}</th>
+                    <th>{% translate '下行流量' %}</th>
+                    <th>{% translate '登录时间' %}</th>
+                    <th>{% translate '登出时间' %}</th>
                 </tr>
                 </thead>
                 <tbody>
