@@ -14,10 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf import settings
+from django.conf.urls.i18n import i18n_patterns
 from django.contrib import admin
 from django.urls import path, include
 
 from django.urls import include, path, re_path
+from django.views.i18n import JavaScriptCatalog
 from django.views.static import serve
 from django.contrib.auth.decorators import login_required
 
@@ -70,7 +72,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('', home, name='home'),
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
     path('users/', include('users.urls', namespace='users')),
     path('api/v3/', include('api.urls', namespace='api')),
     path('vms/', include('vms.urls', namespace='vms')),
@@ -88,7 +90,14 @@ urlpatterns = [
     path('appnav/', login_required(app_nav), name='appnav'),
     path('pcservers/', include('pcservers.urls', namespace='compute')),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    path("i18n/", include("django.conf.urls.i18n")),
+    path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
+
 ]
+
+urlpatterns += i18n_patterns(
+    path('admin/', admin.site.urls),
+)
 
 if settings.DEBUG:
     import debug_toolbar
