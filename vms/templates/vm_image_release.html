@@ -23,7 +23,7 @@
                         <label for="id-image-name"
                                class="offset-sm-1 col-sm-2 text-right col-form-label">{% translate '镜像名称' %}</label>
                         <div class="col-sm-7 input-group mb-3">
-                            <span class="input-group-text" id="basic-addon1">-user</span>
+                            <span class="input-group-text" id="basic-addon1">-user_</span>
                             <input type="text" class="form-control" placeholder="{% translate '镜像名称' %}"
                                    aria-describedby="basic-addon1" id="id-image-name" name="image-name">
                         </div>
@@ -204,7 +204,7 @@
 {% block script %}
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
     <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
-    <script type="text/javascript" src="{% static 'vms/vms_create.js' %}"></script>
+{#    <script type="text/javascript" src="{% static 'vms/vms_create.js' %}"></script>#}
     <script type="text/javascript">
         let bt = document.getElementById('submit-id')
         let tst = document.getElementById('timerSpanText')

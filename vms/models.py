@@ -535,6 +535,10 @@ class VmArchive(VmBase):
         config = self.get_ceph_cluster()
         if not config:
             return False
+
+        if not self.disk:
+            raise Error(msg=f'没有受保护的镜像快照')
+
         try:
             remove_protected_snap(ceph=config, pool_name=pool_name, image_name=self.disk)
         except Exception as e:

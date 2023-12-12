@@ -538,7 +538,8 @@ class VmImageRelease(View):
 
         vm_api = VmAPI()
         try:
-            vm_api.vm_user_release_image(vm=vm, new_image_name=image_name)
+            user = request.user.username
+            vm_api.vm_user_release_image(vm=vm, new_image_name=image_name, user=user)
         except Exception as e:
             # error = VmError(code=400, msg=str(e))
             # return error.render(request=request)
