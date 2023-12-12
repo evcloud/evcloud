@@ -6,7 +6,7 @@ from compute.managers import HostManager
 from utils.errors import VmError, VmNotExistError
 from utils import errors
 from utils.vm_normal_status import vm_normal_status
-from .manager import VmManager, AttachmentsIPManager, VmLogManager
+from .manager import VmManager, AttachmentsIPManager
 from .vminstance import VmInstance
 from .vm_builder import VmBuilder
 
@@ -611,7 +611,7 @@ class VmAPI:
         queryset = AttachmentsIPManager().get_attach_ip_list(vm_uuid=vm_uuid)
         return queryset
 
-    def vm_user_release_image(self, vm, new_image_name, user):
+    def vm_user_release_image(self, vm, new_image_name, user, log_manager):
         image_id = vm.image_id
         vm_uuid = vm.get_uuid()
 
@@ -632,19 +632,18 @@ class VmAPI:
         if att_ip:
             raise errors.VmError(msg='请先移除主机附加的IP')
 
-        log_manager = VmLogManager()
         try:
 
             flatten_bool = VmBuilder().user_flatten_image(image_id=image_id, vm_uuid=vm_uuid,
                                                           new_image_name=new_image_name)
         except FunctionTimedOut as e:
             msg = f'发布镜像失败，详细情况 ==》 用户：{user} 镜像名称：{new_image_name} 失败原因：{str(e)}'
-            log_manager.add_log(title='发布镜像失败', about=log_manager.about.ABOUT_NORMAL, text=msg)
+            log_manager.add_log(title=f'发布镜像失败:{new_image_name}', about=log_manager.about.ABOUT_NORMAL, text=msg)
             raise errors.VmError(msg=f'image release timeout. Please contact the administrator.')
 
         except Exception as e:
             msg = f'发布镜像失败，详细情况 ==》 用户：{user} 镜像名称：{new_image_name} 失败原因：{str(e)}'
-            log_manager.add_log(title='发布镜像失败', about=log_manager.about.ABOUT_NORMAL, text=msg)
+            log_manager.add_log(title=f'发布镜像失败:{new_image_name}', about=log_manager.about.ABOUT_NORMAL, text=msg)
             raise e
 
         return flatten_bool

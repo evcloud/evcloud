@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 
 from utils.errors import VmAccessDeniedError, VmNotExistError, Unsupported, NoMacIPError, NotFoundError
 from .api import VmAPI
-from .manager import VmManager, VmError, FlavorManager
+from .manager import VmManager, VmError, FlavorManager, VmLogManager
 from compute.managers import CenterManager, HostManager, GroupManager, ComputeError
 from vdisk.manager import VdiskManager, VdiskError
 from image.managers import ImageManager, ImageError
@@ -537,9 +537,12 @@ class VmImageRelease(View):
         image_name = '-user_' + image_name  # 新的镜像名称
 
         vm_api = VmAPI()
+        log_manager = VmLogManager()
+
+        user = request.user.username
         try:
-            user = request.user.username
-            vm_api.vm_user_release_image(vm=vm, new_image_name=image_name, user=user)
+
+            vm_api.vm_user_release_image(vm=vm, new_image_name=image_name, user=user, log_manager=log_manager)
         except Exception as e:
             # error = VmError(code=400, msg=str(e))
             # return error.render(request=request)
@@ -588,6 +591,9 @@ class VmImageRelease(View):
             # error = ImageError(code=400, msg=f'image: {image_name} exists, the entered data cannot be saved. '
             #                                  f'Please contact the administrator.')
             # return error.render(request=request)
+
+            msg = f'发布镜像数据保存失败，详细情况 ==》 用户：{user} 镜像名称：{image_name} 失败原因：{str(e)}'
+            log_manager.add_log(title=f'发布镜像失败：{image_name}', about=log_manager.about.ABOUT_NORMAL, text=msg)
 
             JsonResponse.status_code = 400
             return JsonResponse({'status': 400,
