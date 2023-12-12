@@ -1,3 +1,13 @@
+## v4.0.2
+2023-12-12
+* 增加镜像发布功能  提交人：wanghuang  
+* 增加镜像错误日志记录  提交人：wanghuang  
+* 增加保护快照删除功能  提交人：wanghuang  
+* 优化ipv6配置文件导出报错   提交人：wanghuang  
+* 修复本地硬盘挂载出现同名错误   提交人：wanghuang  
+* 本地资源描述信息更新：增加 address 列表   提交人：wanghuang  
+
+
 ## v4.0.1
 2023-11-27
 * 云主机全部修改成虚拟机  提交人：wanghuang   

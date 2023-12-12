@@ -1,4 +1,4 @@
-### v4.0.0   v4.0.1
+### v4.0.0 v4.0.1 v4.0.2
 1. 停止服务 
 ```shell
   systemctl stop evcloud.service
