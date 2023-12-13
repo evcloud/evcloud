@@ -46,7 +46,9 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
                 "vm_created": 3,
                 "vm_limit": 41,
                 "ips_total": 5,
-                "ips_used": 2
+                "ips_used": 2,
+                "ips_private":2,
+                "ips_public":3,
               }
             }
         """

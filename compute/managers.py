@@ -556,7 +556,9 @@ class GroupManager:
             )
             ip_data = MacIP.objects.filter(enable=True, vlan__enable=True).aggregate(
                 ips_total=Count('id'),
-                ips_used=Count('id', filter=Q(used=True))
+                ips_used=Count('id', filter=Q(used=True)),
+                ips_private=Count('id', filter=Q(vlan__tag=0)),
+                ips_public=Count('id', filter=Q(vlan__tag=1))
             )
             quota.update(ip_data)
             return quota
@@ -573,7 +575,9 @@ class GroupManager:
         g_ids = user.group_set.all().values_list('id', flat=True)
         ip_data = Vlan.objects.filter(group__in=g_ids, enable=True).aggregate(
             ips_total=Count('macips', filter=Q(macips__enable=True)),
-            ips_used=Count('macips', filter=Q(macips__enable=True) & Q(macips__used=True))
+            ips_used=Count('macips', filter=Q(macips__enable=True) & Q(macips__used=True)),
+            ips_private=Count('macips', filter=Q(tag=0)),
+            ips_public=Count('macips', filter=Q(tag=1))
         )
         quota.update(ip_data)
         return quota
