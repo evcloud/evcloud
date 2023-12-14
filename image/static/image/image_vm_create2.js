@@ -78,7 +78,7 @@
     let render_group_select_items = template.compile(`
         <option value="">自动选择</option>
         {{ each results }}
-            <option value="{{ $value.center }}">{{ $value.name }}</option>
+            <option value="{{ $value.id }}">{{ $value.name }}</option>
         {{/each}}
     `);
 
