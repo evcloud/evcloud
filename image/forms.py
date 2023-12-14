@@ -16,7 +16,7 @@ class ImageVmCreateFrom(forms.Form):
 
     host_image = forms.CharField(label='宿主机', required=True,
                            widget=forms.Select(attrs={'class': 'form-control', 'readOnly': 'true'}))
-    vlan_id = forms.CharField(label='vlan', required=True, widget=forms.Select(attrs={'class': 'form-control'}))
+    vlan_image = forms.CharField(label='vlan', required=True, widget=forms.Select(attrs={'class': 'form-control'}))
     mac_ip = forms.CharField(label='IP地址', required=True, widget=forms.Select(attrs={'class': 'form-control'}))
     vcpu = forms.IntegerField(label='CPU核数', initial=1, required=True,
                               widget=forms.NumberInput(attrs={'class': 'form-control'}))
