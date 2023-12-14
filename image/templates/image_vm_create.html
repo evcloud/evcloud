@@ -50,9 +50,13 @@
 {% endblock %}
 
 {% block script %}
+
+    <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
+    <script type="text/javascript" src="{% static 'art-template/template-web.js' %}"></script>
+    <script type="text/javascript" src="{% static 'image/image_vm_create.js' %}"></script>
     <script>
-         window.onload = function() {
+        window.onload = function () {
             $("#nav_image_list").addClass("active");// 激活列表导航栏
-         };
+        };
     </script>
 {% endblock %}

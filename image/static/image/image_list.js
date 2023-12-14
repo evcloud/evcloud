@@ -2,18 +2,18 @@
 (function () {
 
     var VM_STATUS_CN = {
-        0: '故障0', //无状态
-        1: '运行',
-        2: '阻塞',
-        3: '暂停',
-        4: '关机',
-        5: '关机',
-        6: '崩溃',
-        7: '暂停',
-        8: '故障',  //libvirt预留状态码
-        9: '无法访问宿主机',  //宿主机连接失败
-        10: '未找到',  //虚拟机丢失
-        11: '虚拟机不存在'
+        0: gettext('故障0'), //无状态
+        1: gettext('运行'),
+        2: gettext('阻塞'),
+        3: gettext('暂停'),
+        4: gettext('关机'),
+        5: gettext('关机'),
+        6: gettext('崩溃'),
+        7: gettext('暂停'),
+        8: gettext('故障'),  //libvirt预留状态码
+        9: gettext('无法访问宿主机'),  //宿主机连接失败
+        10: gettext('未找到'),  //虚拟机丢失
+        11: gettext('虚拟机不存在')
     };
 
     var VM_STATUS_LABEL = {
@@ -54,7 +54,7 @@
                 div_show.children("span:first").text(remark);
             },
             error: function (e) {
-                alert('修改失败');
+                alert(gettext('修改失败'));
             },
             complete: function () {
                 div_show.show();
@@ -141,11 +141,11 @@
                 if (xhr.status === 200) {
                     window.open(data.vnc_url, '_blank');
                 } else {
-                    alert("打开vnc失败！" + data.code_text);
+                    alert(gettext("打开vnc失败！" )+ data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '打开vnc失败!';
+                let msg = gettext('打开vnc失败!');
                 try {
                     msg = msg + xhr.responseJSON.code_text;
                 } catch (e) {
@@ -181,11 +181,11 @@
                     //     window.location = '/image/';
                     // }
                 } else {
-                    alert("镜像更新失败！" + data.code_text);
+                    alert(gettext("镜像更新失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '镜像更新失败!';
+                let msg = gettext('镜像更新失败!');
                 try {
                     msg = msg + xhr.responseJSON.code_text;
                 } catch (e) {
@@ -220,11 +220,11 @@
                     checkbox_enable.prop("checked",!state);
                     checkbox_enable.prop('disabled', false);
                 } else {
-                    alert("镜像启用失败！" + data.code_text);
+                    alert(gettext("镜像启用失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '镜像启用失败!';
+                let msg = gettext('镜像启用失败!');
                 try {
                     msg = msg + xhr.responseJSON.code_text;
                 } catch (e) {
@@ -243,7 +243,7 @@
         let image_id = $(this).attr('data-image-id');
         let api = build_absolute_url('image/image-vm-operate/');
         let node_status = $("#vm_status_" + image_id);
-        node_status.html(`开机中`);
+        node_status.html(gettext(`开机中`));
         $.ajax({
             url: api,
             type: 'post',
@@ -253,11 +253,11 @@
                 if (xhr.status === 200) {
                     get_vm_status(image_id)
                 } else {
-                    alert("虚拟机启动失败！" + data.code_text);
+                    alert(gettext("虚拟机启动失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '开机操作失败!';
+                let msg = gettext('开机操作失败!');
                 try {
                     msg = msg + xhr.responseJSON.code_text;
                 } catch (e) {
@@ -273,12 +273,12 @@
      // 删除虚拟机点击事件
     $(".btn-vm-delete").click(function (e) {
         e.preventDefault();
-        if(!confirm('确定删除镜像虚拟机（删除虚拟机不会删除镜像）？'))
+        if(!confirm(gettext('确定删除镜像虚拟机（删除虚拟机不会删除镜像）？')))
 		    return;
         let image_id = $(this).attr('data-image-id');
         let api = build_absolute_url('image/image-vm-operate/');
         let node_status = $("#vm_status_" + image_id);
-        node_status.html(`删除中`);
+        node_status.html(gettext(`删除中`));
         $.ajax({
             url: api,
             type: 'post',
@@ -288,12 +288,12 @@
                 if (xhr.status === 200) {
                     get_vm_status(image_id)
                 } else {
-                    alert("虚拟机启动失败！" + data.code_text);
+                    alert(gettext("虚拟机启动失败！") + data.code_text);
                 }
                 window.location = '/image/';
             },
             error: function (xhr) {
-                let msg = '删除虚拟机操作失败!';
+                let msg = gettext('删除虚拟机操作失败!');
                 try {
                     msg = msg + xhr.responseJSON.code_text;
                 } catch (e) {
@@ -313,7 +313,7 @@
         let image_id = $(this).attr('data-image-id');
         let api = build_absolute_url('image/image-vm-operate/');
         let node_status = $("#vm_status_" + image_id);
-        node_status.html(`关机中`);
+        node_status.html(gettext(`关机中`));
         $.ajax({
             url: api,
             type: 'post',
@@ -323,11 +323,11 @@
                 if (xhr.status === 200) {
                     get_vm_status(image_id)
                 } else {
-                    alert("虚拟机启动失败！" + data.code_text);
+                    alert(gettext("虚拟机启动失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '关机操作失败!';
+                let msg = gettext('关机操作失败!');
                 try {
                     msg = msg + xhr.responseJSON.code_text;
                 } catch (e) {
@@ -347,7 +347,7 @@
         let image_id = $(this).attr('data-image-id');
         let api = build_absolute_url('image/image-vm-operate/');
         let node_status = $("#vm_status_" + image_id);
-        node_status.html(`强制断电中`);
+        node_status.html(gettext(`强制断电中`));
         $.ajax({
             url: api,
             type: 'post',
@@ -357,11 +357,11 @@
                 if (xhr.status === 200) {
                     get_vm_status(image_id)
                 } else {
-                    alert("虚拟机启动失败！" + data.code_text);
+                    alert(gettext("虚拟机启动失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '镜像更新失败!';
+                let msg = gettext('镜像更新失败!');
                 try {
                     msg = msg + xhr.responseJSON.code_text;
                 } catch (e) {

@@ -10,6 +10,7 @@ from novnc.manager import NovncTokenManager
 from utils.errors import NovncError, VmError, NoSuchImage
 from utils.paginators import NumsPaginator
 from vms.api import VmAPI
+from vms.manager import FlavorManager
 from vms.models import Vm
 from .forms import ImageVmCreateFrom
 from .managers import ImageManager, ImageError
@@ -85,15 +86,18 @@ class ImageView(View):
             if operation == 'snap_update':
                 target_image.create_snap()
                 target_image.save()
-                return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '更新镜像成功', 'snap': target_image.snap},
-                                    status=status.HTTP_200_OK)
+                return JsonResponse(
+                    {'code': status.HTTP_200_OK, 'code_text': '更新镜像成功', 'snap': target_image.snap},
+                    status=status.HTTP_200_OK)
             elif operation == 'enable_update':
                 target_image.enable = not target_image.enable
                 target_image.save()
-                return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '镜像启用成功'}, status=status.HTTP_200_OK)
+                return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '镜像启用成功'},
+                                    status=status.HTTP_200_OK)
         except Exception as e:
-            return JsonResponse({'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'更新镜像操作失败，{str(e)}'},
-                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JsonResponse(
+                {'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'更新镜像操作失败，{str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_page_context(self, request, vms_queryset, context: dict):
         # 分页显示
@@ -135,6 +139,7 @@ class ImageVmCreateView(View):
     """
 
     def get(self, request, *args, **kwargs):
+
         image_id = str_to_int_or_default(kwargs.get('image_id', 0), 0)
         try:
             form = ImageVmCreateFrom(initial={'image_id': image_id})
@@ -154,6 +159,15 @@ class ImageVmCreateView(View):
         """
         post = request.POST
         image_id = str_to_int_or_default(kwargs.get('image_id', 0), 0)
+
+        data_center = post.get('data_center')
+        group_image = post.get('group_image')
+        host_image = post.get('host_image')
+        vlan_id = post.get('vlan_id')
+        mac_ip = post.get('mac_ip')
+        vcpu = post.get('vcpu')
+        mem = post.get('mem')
+
         try:
             api = ImageManager()
             image = api.get_image_by_id(image_id)
@@ -172,10 +186,13 @@ class ImageVmCreateView(View):
         api = VmAPI()
         cleaned_data = form.cleaned_data
         validated_data = {'image_id': cleaned_data['image_id'], 'vcpu': cleaned_data['vcpu'],
-                          'mem': cleaned_data['mem'], 'host_id': cleaned_data['host'].id,
-                          'ipv4': cleaned_data['mac_ip'].ipv4}
-        api.create_vm_for_image(**validated_data)
-
+                          'mem': cleaned_data['mem'], 'host_id': int(host_image),
+                          'ipv4': mac_ip}
+        try:
+            api.create_vm_for_image(**validated_data)
+        except Exception as e:
+            error = ImageError(msg='创建镜像时错误', err=e)
+            return error.render(request=request)
         return redirect(to=reverse('image:image-list'))
 
 
@@ -224,12 +241,14 @@ class ImageVmOperateView(View):
 
         if operation == 'start-vm':
             try:
-                vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, host=image.vm_host)
+                vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem,
+                        host=image.vm_host)
                 api = VmAPI()
                 api.vm_operations_for_image(vm=vm, op='start')
             except Exception as e:
-                return JsonResponse({'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'虚拟机操作失败，{str(e)}'},
-                                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return JsonResponse(
+                    {'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'虚拟机操作失败，{str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '虚拟机启动成功'}, status=status.HTTP_200_OK)
 
         if operation == 'shutdown-vm':
@@ -260,7 +279,8 @@ class ImageVmOperateView(View):
                                      'status': {'status_code': 11, 'status_text': '尚未创建镜像虚拟机'}},
                                     status=status.HTTP_200_OK)
             try:
-                vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem, host=image.vm_host)
+                vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem,
+                        host=image.vm_host)
                 api = VmAPI()
                 code, msg = api.get_vm_status_for_image(vm=vm)
                 return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '获取虚拟机状态成功',
