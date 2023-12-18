@@ -1,3 +1,14 @@
+## v4.0.3
+2023-12-18
+* 系统镜像基于宿主机创建，可选择宿主机IP  提交人：wanghuang
+* 国际化支持  提交人：wanghuang
+* 获取可用总资源配额和已用配额信息接口增加公网私网数据统计  提交人：wanghuang
+* vpn 删除ca证书  提交人：wanghuang
+* vpn 列表 配置文件按钮和创建VPN按钮位置更新  提交人：wanghuang
+* 系统资源不统计127.0.0.1 cpu和内存  提交人：wanghuang
+* 后端vlan显示镜像专用标签  提交人：wanghuang
+
+
 ## v4.0.2
 2023-12-12
 * 增加镜像发布功能  提交人：wanghuang  
