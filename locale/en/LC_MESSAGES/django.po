@@ -1,0 +1,1715 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-12-12 16:31+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ceph/models.py:162
+msgid "novnc http协议配置有误。"    
+msgstr "The HTTP protocol configuration of Novnc is incorrect."
+
+#: device/templates/pci_list.html:9 device/templates/pci_list.html:15
+msgid "本地资源设备列表"    
+msgstr "Local device list"
+
+#: device/templates/pci_list.html:24 image/templates/image_list.html:27
+#: reports/templates/reports_list.html:27
+#: reports/templates/reports_list.html:43
+#: reports/templates/reports_list.html:76 templates/app_nav.html:52
+#: vdisk/templates/vdisk_create.html:20 vdisk/templates/vdisk_list.html:37
+#: vms/templates/vm_edit.html:24 vms/templates/vm_unshelve.html:26
+#: vms/templates/vms_create.html:21 vms/templates/vms_list.html:25
+msgid "数据中心"
+msgstr "Data center"
+
+#: device/templates/pci_list.html:35 vdisk/templates/vdisk_list.html:48
+#: vms/templates/vm_unshelve.html:39 vms/templates/vms_create.html:33
+#: vms/templates/vms_list.html:36
+msgid "主机组"
+msgstr "Host group"
+
+#: device/templates/pci_list.html:45 device/templates/pci_list.html:82
+#: device/templates/pci_mount.html:24 reports/templates/reports_group.html:27
+#: templates/app_nav.html:44 vms/templates/vm_detail.html:236
+#: vms/templates/vm_disk_expand.html:31 vms/templates/vm_live_migrate.html:30
+#: vms/templates/vm_migrate.html:36 vms/templates/vm_mount_pci.html:24
+#: vms/templates/vm_mount_pci.html:57 vms/templates/vm_reset.html:29
+#: vms/templates/vm_shelve_list.html:50 vms/templates/vm_unshelve.html:74
+#: vms/templates/vms_create.html:62 vms/templates/vms_list.html:46
+#: vms/templates/vms_list.html:81
+msgid "宿主机"
+msgstr "Hosts"
+
+#: device/templates/pci_list.html:55 device/templates/pci_list.html:80
+msgid "资源类型"
+msgstr "Resource type"
+
+#: device/templates/pci_list.html:66 device/templates/pci_mount.html:43
+#: image/templates/image_list.html:58 vdisk/templates/vdisk_list.html:77
+#: vdisk/templates/vdisk_mount_to_vm.html:45
+#: vms/templates/vm_attach_ip_list.html:58 vms/templates/vm_mount_disk.html:39
+#: vms/templates/vm_mount_pci.html:38 vms/templates/vm_shelve_list.html:33
+#: vms/templates/vms_list.html:65
+msgid "关键字"
+msgstr "Key words"
+
+#: device/templates/pci_list.html:69 device/templates/pci_mount.html:46
+#: vms/templates/vm_mount_pci.html:41
+msgid "搜 IP地址、备注"
+msgstr "Search for IP addresses and notes"
+
+#: device/templates/pci_list.html:71 device/templates/pci_mount.html:48
+#: image/templates/image_list.html:62 vdisk/templates/vdisk_list.html:82
+#: vdisk/templates/vdisk_mount_to_vm.html:50
+#: vms/templates/vm_attach_ip_list.html:63 vms/templates/vm_mount_disk.html:44
+#: vms/templates/vm_mount_pci.html:43 vms/templates/vm_shelve_list.html:38
+#: vms/templates/vms_list.html:70
+msgid "筛选"
+msgstr "Filter"
+
+#: device/templates/pci_list.html:81 network/templates/vlan_show.html:28
+#: network/templates/vlan_show.html:29 network/templates/vlan_show.html:30
+#: vms/templates/vm_attach_ip_list.html:72
+#: vms/templates/vm_attach_ip_list.html:73
+#: vms/templates/vm_attach_ip_list.html:74 vms/templates/vm_detail.html:118
+#: vms/templates/vm_detail.html:119 vms/templates/vm_detail.html:121
+#: vms/templates/vm_detail.html:131 vms/templates/vm_detail.html:132
+#: vms/templates/vm_detail.html:235 vms/templates/vm_detail.html:331
+#: vms/templates/vm_detail.html:332
+msgid "地址"
+msgstr "Address"
+
+#: device/templates/pci_list.html:83 templates/app_nav.html:82
+#: templates/base.html:55
+msgid "虚拟机"
+msgstr "Virtual server"
+
+#: device/templates/pci_list.html:84 vdisk/templates/vdisk_list.html:96
+msgid "挂载时间"
+msgstr "Mount time"
+
+#: device/templates/pci_list.html:85 device/templates/pci_mount.html:27
+#: device/templates/pci_mount.html:60 network/templates/vlan_list.html:35
+#: vdisk/templates/vdisk_create.html:76 vdisk/templates/vdisk_list.html:98
+#: vdisk/templates/vdisk_mount_to_vm.html:29
+#: vdisk/templates/vdisk_mount_to_vm.html:63
+#: vms/templates/vm_attach_ip_list.html:35
+#: vms/templates/vm_attach_ip_list.html:78
+#: vms/templates/vm_detach_ip_list.html:29
+#: vms/templates/vm_detach_ip_list.html:60 vms/templates/vm_detail.html:188
+#: vms/templates/vm_detail.html:239 vms/templates/vm_detail.html:283
+#: vms/templates/vm_disk_expand.html:32 vms/templates/vm_edit.html:28
+#: vms/templates/vm_live_migrate.html:31 vms/templates/vm_migrate.html:38
+#: vms/templates/vm_mount_disk.html:27 vms/templates/vm_mount_disk.html:62
+#: vms/templates/vm_mount_pci.html:26 vms/templates/vm_mount_pci.html:59
+#: vms/templates/vm_reset.html:30 vms/templates/vm_shelve_list.html:53
+#: vms/templates/vms_create.html:149 vms/templates/vms_list.html:84
+#: vpn/templates/vpn_list.html:56
+msgid "备注"
+msgstr "Notes"
+
+#: device/templates/pci_list.html:101 vdisk/templates/vdisk_list.html:120
+msgid "未挂载"
+msgstr "Unmounted"
+
+#: device/templates/pci_list.html:102 vdisk/templates/vdisk_list.html:116
+#: vdisk/templates/vdisk_list.html:121 vms/templates/vm_shelve_list.html:67
+#: vms/templates/vm_shelve_list.html:74 vms/templates/vm_shelve_list.html:86
+msgid "无"
+msgstr "None"
+
+#: device/templates/pci_list.html:107 vdisk/templates/vdisk_list.html:146
+#: vms/templates/vm_detail.html:214 vms/templates/vm_detail.html:261
+msgid "卸载"
+msgstr "Unmount"
+
+#: device/templates/pci_list.html:109 device/templates/pci_mount.html:78
+#: vdisk/templates/vdisk_list.html:148
+#: vdisk/templates/vdisk_mount_to_vm.html:90
+#: vms/templates/vm_mount_disk.html:86
+msgid "挂载"
+msgstr "Mount"
+
+#: device/templates/pci_mount.html:6 device/templates/pci_mount.html:12
+msgid "本地设备挂载"
+msgstr "Local device mount"
+
+#: device/templates/pci_mount.html:14
+msgid "本地设备列表"
+msgstr "Local device list"
+
+#: device/templates/pci_mount.html:19
+msgid "本地设备信息"
+msgstr "Local device details"
+
+#: device/templates/pci_mount.html:23 network/templates/vlan_list.html:25
+#: vms/templates/vm_mount_pci.html:55
+msgid "类型"
+msgstr "Type"
+
+#: device/templates/pci_mount.html:25 reports/templates/reports_list.html:110
+#: vdisk/templates/vdisk_create.html:33 vdisk/templates/vdisk_list.html:90
+#: vdisk/templates/vdisk_mount_to_vm.html:27
+#: vms/templates/vm_attach_ip_list.html:33
+#: vms/templates/vm_detach_ip_list.html:27 vms/templates/vm_detail.html:182
+#: vms/templates/vm_detail.html:237 vms/templates/vm_disk_expand.html:30
+#: vms/templates/vm_edit.html:25 vms/templates/vm_live_migrate.html:29
+#: vms/templates/vm_migrate.html:34 vms/templates/vm_mount_disk.html:26
+#: vms/templates/vm_mount_disk.html:56 vms/templates/vm_mount_pci.html:25
+#: vms/templates/vm_mount_pci.html:56 vms/templates/vm_reset.html:28
+msgid "机组"
+msgstr "Host unit"
+
+#: device/templates/pci_mount.html:34
+msgid "此本地设备已被挂载使用，挂载虚拟机uuid: "
+msgstr "The local device has been mounted. The mounted virtual server uuid is "
+
+#: device/templates/pci_mount.html:34
+msgid "IP地址: "
+msgstr "IP address:"
+
+#: device/templates/pci_mount.html:38 vdisk/templates/vdisk_mount_to_vm.html:40
+msgid "可供挂载的虚拟机"
+msgstr "Available virtual servers"
+
+#: device/templates/pci_mount.html:56 network/templates/vlan_add.html:72
+#: templates/app_nav.html:152 vdisk/templates/vdisk_mount_to_vm.html:58
+#: vms/templates/vm_detach_ip_list.html:55 vms/templates/vm_unshelve.html:62
+#: vms/templates/vms_list.html:78
+msgid "IP地址"
+msgstr "IP address"
+
+#: device/templates/pci_mount.html:57 vdisk/templates/vdisk_list.html:68
+#: vdisk/templates/vdisk_mount_to_vm.html:59 vms/templates/vm_detail.html:63
+#: vms/templates/vm_shelve_list.html:23 vms/templates/vm_shelve_list.html:48
+#: vms/templates/vms_list.html:56 vms/templates/vms_list.html:79
+msgid "创建者"
+msgstr "Creator"
+
+#: device/templates/pci_mount.html:58 templates/base.html:58
+#: vdisk/templates/vdisk_mount_to_vm.html:60
+#: vms/templates/vm_attach_ip_list.html:31
+#: vms/templates/vm_detach_ip_list.html:25 vms/templates/vm_disk_expand.html:27
+#: vms/templates/vm_edit.html:23 vms/templates/vm_live_migrate.html:28
+#: vms/templates/vm_migrate.html:32 vms/templates/vm_mount_disk.html:25
+#: vms/templates/vm_mount_pci.html:23 vms/templates/vm_reset.html:27
+#: vms/templates/vm_shelve_list.html:49 vms/templates/vms_list.html:80
+msgid "镜像"
+msgstr "Image"
+
+#: device/templates/pci_mount.html:61 network/templates/vlan_list.html:34
+#: network/templates/vlan_show.html:33 vdisk/templates/vdisk_list.html:97
+#: vdisk/templates/vdisk_mount_to_vm.html:64 vms/templates/vm_detail.html:187
+#: vms/templates/vm_detail.html:238 vms/templates/vm_mount_disk.html:61
+#: vms/templates/vm_mount_pci.html:58 vms/templates/vms_list.html:85
+msgid "状态"
+msgstr "Status"
+
+#: device/templates/pci_mount.html:62 image/templates/image_list.html:85
+#: vdisk/templates/vdisk_list.html:99 vdisk/templates/vdisk_mount_to_vm.html:65
+#: vms/templates/vm_attach_ip_list.html:79
+#: vms/templates/vm_detach_ip_list.html:62 vms/templates/vm_detail.html:189
+#: vms/templates/vm_detail.html:240 vms/templates/vm_detail.html:284
+#: vms/templates/vm_detail.html:336 vms/templates/vm_mount_disk.html:63
+#: vms/templates/vm_mount_pci.html:60 vms/templates/vm_operations.html:8
+#: vms/templates/vm_shelve_list.html:55 vms/templates/vms_list.html:87
+msgid "操作"
+msgstr "Operation"
+
+#: device/templates/pci_mount.html:79 vdisk/templates/vdisk_mount_to_vm.html:91
+msgid "关机"
+msgstr "shutdown"
+
+#: device/templates/pci_mount.html:80 vdisk/templates/vdisk_mount_to_vm.html:92
+#: vms/templates/vms_list.html:149
+msgid "强制断电"
+msgstr "Power off"
+
+#: image/templates/image_delete.html:6
+msgid "镜像删除"
+msgstr "Delete image"
+
+#: image/templates/image_delete.html:12
+msgid "确定想要删除镜像吗？"
+msgstr "Are you sure to delete the image?"
+
+#: image/templates/image_delete.html:13 vms/templates/vm_image_release.html:24
+#: vms/templates/vm_image_release.html:27
+msgid "镜像名称"
+msgstr "Image Name"
+
+#: image/templates/image_delete.html:17 vpn/templates/delete.html:18
+msgid "确定删除"
+msgstr "Confirm"
+
+#: image/templates/image_delete.html:18 vpn/templates/delete.html:19
+msgid "取消返回"
+msgstr "Cancel"
+
+#: image/templates/image_delete.html:21
+msgid "镜像不存在"
+msgstr "The image does not exist."
+
+#: image/templates/image_list.html:9 image/templates/image_list.html:15
+#: image/templates/image_vm_create.html:14
+msgid "镜像列表"
+msgstr "Image list"
+
+#: image/templates/image_list.html:19
+msgid "新增镜像"
+msgstr "Create image"
+
+#: image/templates/image_list.html:38 network/templates/vlan_list.html:26
+#: vms/templates/vm_attach_ip_list.html:77
+#: vms/templates/vm_detach_ip_list.html:59 vms/templates/vm_detail.html:335
+msgid "标签"
+msgstr "Tags"
+
+#: image/templates/image_list.html:48 image/templates/image_list.html:72
+#: vms/templates/vm_image_release.html:52
+msgid "系统类型"
+msgstr "System Type"
+
+#: image/templates/image_list.html:61
+msgid "搜 名称、备注"
+msgstr "Search for names and notes"
+
+#: image/templates/image_list.html:70 network/templates/vlan_add.html:21
+msgid "名称"
+msgstr "Name"
+
+#: image/templates/image_list.html:71 vms/templates/vm_image_release.html:170
+msgid "启用"
+msgstr "Enable"
+
+#: image/templates/image_list.html:73 vms/templates/vm_image_release.html:34
+msgid "镜像标签"
+msgstr "Image Tag"
+
+#: image/templates/image_list.html:74
+msgid "虚拟机模板"
+msgstr "Virtual server template"
+
+#: image/templates/image_list.html:75
+msgid "生效快照"
+msgstr "Effective snapshot"
+
+#: image/templates/image_list.html:80 vms/templates/vm_detail.html:60
+#: vms/templates/vm_detail.html:364 vms/templates/vm_shelve_list.html:54
+msgid "虚拟机状态"
+msgstr "Virtual server status"
+
+#: image/templates/image_list.html:116
+msgid "是"
+msgstr "Confirm"
+
+#: image/templates/image_list.html:126
+msgid "更新"
+msgstr "Update"
+
+#: image/templates/image_list.html:135 vdisk/templates/vdisk_list.html:133
+#: vms/templates/vm_detail.html:158 vms/templates/vm_detail.html:296
+#: vms/templates/vms_list.html:124
+msgid "修改备注"
+msgstr "Edit notes"
+
+#: image/templates/image_list.html:142 vdisk/templates/vdisk_list.html:139
+#: vms/templates/vm_detail.html:164 vms/templates/vm_detail.html:302
+#: vms/templates/vms_list.html:130
+msgid "保存备注"
+msgstr "Save notes"
+
+#: image/templates/image_list.html:163 vms/templates/vm_operations.html:12
+#: vms/templates/vms_list.html:147
+msgid "开机"
+msgstr "Start"
+
+#: image/templates/image_list.html:166 vms/templates/vm_operations.html:13
+msgid "软关机"
+msgstr "Soft shutdown"
+
+#: image/templates/image_list.html:169 vms/templates/vm_operations.html:15
+msgid "硬断电"
+msgstr "Hard power off"
+
+#: image/templates/image_list.html:172
+msgid "强制删除VM"
+msgstr "Force delete"
+
+#: image/templates/image_list.html:176 image/templates/image_list.html:184
+msgid "删除镜像"
+msgstr "Delete image"
+
+#: image/templates/image_list.html:182 vms/templates/vm_detail.html:30
+#: vms/templates/vm_disk_expand.html:14 vms/templates/vm_live_migrate.html:15
+#: vms/templates/vm_migrate.html:15 vms/templates/vm_reset.html:14
+#: vms/templates/vms_create.html:5 vms/templates/vms_create.html:13
+#: vms/templates/vms_list.html:18
+msgid "创建虚拟机"
+msgstr "Create server"
+
+#: image/templates/image_list.html:196 vms/templates/vm_detail.html:146
+msgid "默认用户名"
+msgstr "Default username"
+
+#: image/templates/image_list.html:199 vms/templates/vm_detail.html:147
+msgid "默认密码"
+msgstr "Default password"
+
+#: image/templates/image_list.html:202 vms/templates/vm_image_release.html:130
+#: vms/templates/vm_image_release.html:133
+msgid "镜像大小"
+msgstr "Image size"
+
+#: image/templates/image_list.html:207 vdisk/templates/vdisk_list.html:94
+#: vdisk/templates/vdisk_mount_to_vm.html:25 vms/templates/vm_detail.html:64
+#: vms/templates/vm_detail.html:186 vms/templates/vm_detail.html:282
+#: vms/templates/vm_mount_disk.html:60 vpn/templates/vpn_list.html:52
+msgid "创建时间"
+msgstr "Create Time"
+
+#: image/templates/image_list.html:210
+msgid "更新时间"
+msgstr "Update Time"
+
+#: image/templates/image_list.html:213 vpn/templates/vpn_list.html:55
+msgid "创建人"
+msgstr "Creator"
+
+#: image/templates/image_list.html:219
+msgid "虚拟机ID"
+msgstr "Server ID"
+
+#: image/templates/image_list.html:222
+msgid "虚拟机内存"
+msgstr "Server Memory"
+
+#: image/templates/image_list.html:225
+msgid "虚拟机CPU"
+msgstr "Server CPU"
+
+#: image/templates/image_list.html:227 vms/templates/vm_edit.html:26
+#: vms/templates/vm_edit.html:45 vms/templates/vm_live_migrate.html:42
+#: vms/templates/vm_migrate.html:51 vms/templates/vms_create.html:99
+#: vms/templates/vms_create.html:110
+msgid "核"
+msgstr "Core"
+
+#: image/templates/image_vm_create.html:6
+msgid "创建镜像虚拟机"
+msgstr "Create image template server"
+
+#: image/templates/image_vm_create.html:12
+msgid "创建镜像"
+msgstr "Create image"
+
+#: image/templates/image_vm_create.html:12
+msgid "管理虚拟机"
+msgstr "Manage severs"
+
+#: image/templates/image_vm_create.html:42 vdisk/templates/vdisk_create.html:83
+#: vms/templates/vms_create.html:156
+msgid "创建"
+msgstr "Create"
+
+#: network/templates/vlan_add.html:9 network/templates/vlan_add.html:15
+msgid "VLAN信息"
+msgstr "VLAN details"
+
+#: network/templates/vlan_add.html:22 network/templates/vlan_add.html:25
+#: network/templates/vlan_list.html:27 network/templates/vlan_list.html:30
+msgid "子网IP地址"
+msgstr "Subnet ip address"
+
+#: network/templates/vlan_add.html:23 network/templates/vlan_add.html:26
+#: network/templates/vlan_list.html:28 network/templates/vlan_list.html:31
+msgid "子网掩码"
+msgstr "Netmask"
+
+#: network/templates/vlan_add.html:24 network/templates/vlan_add.html:27
+#: network/templates/vlan_list.html:29 network/templates/vlan_list.html:32
+msgid "网关"
+msgstr "Gateway"
+
+#: network/templates/vlan_add.html:44
+msgid "生成子网主机IP地址列表"
+msgstr "Subnet host ip address list"
+
+#: network/templates/vlan_add.html:62
+msgid "生成"
+msgstr "Generate"
+
+#: network/templates/vlan_add.html:64
+msgid "全部导入"
+msgstr "Import all"
+
+#: network/templates/vlan_add.html:71
+msgid "主机名称"
+msgstr "Hostname"
+
+#: network/templates/vlan_add.html:73 vms/templates/vm_detach_ip_list.html:56
+msgid "MAC地址"
+msgstr "MAC address"
+
+#: network/templates/vlan_list.html:9 network/templates/vlan_list.html:15
+msgid "VLAN列表"
+msgstr "VLAN list"
+
+#: network/templates/vlan_list.html:21 network/templates/vlan_show.html:27
+#: vms/templates/vm_attach_ip_list.html:71
+#: vms/templates/vm_detach_ip_list.html:54 vms/templates/vm_shelve_list.html:46
+msgid "编号"
+msgstr "Number"
+
+#: network/templates/vlan_list.html:22 vms/templates/vm_attach_ip_list.html:75
+#: vms/templates/vm_detach_ip_list.html:57 vms/templates/vm_detail.html:122
+#: vms/templates/vm_detail.html:135 vms/templates/vm_detail.html:333
+msgid "网桥名"
+msgstr "Bridge name"
+
+#: network/templates/vlan_list.html:24 vms/templates/vm_detach_ip_list.html:58
+msgid "VLAN描述"
+msgstr "VLAN details"
+
+#: network/templates/vlan_list.html:33
+msgid "空闲IP地址(可用/总数)"
+msgstr "Idle ip address (available/total)"
+
+#: network/templates/vlan_list.html:36
+msgid "操作选项"
+msgstr "Operation options"
+
+#: network/templates/vlan_list.html:63
+msgid "批量添加IP"
+msgstr "Batch add ip"
+
+#: network/templates/vlan_list.html:66
+msgid "查看IP列表IP"
+msgstr "View ip list"
+
+#: network/templates/vlan_show.html:9 network/templates/vlan_show.html:15
+msgid "IP列表"
+msgstr "Ip list"
+
+#: network/templates/vlan_show.html:17
+msgid "导出ipv4配置文件"
+msgstr "Export config file for ipv4"
+
+#: network/templates/vlan_show.html:20
+msgid "导出ipv6配置文件"
+msgstr "Export config file for ipv6"
+
+#: network/templates/vlan_show.html:31 network/templates/vlan_show.html:32
+msgid "主机编号"
+msgstr "Host number"
+
+#: network/templates/vlan_show.html:32
+msgid "附加"
+msgstr "Attach"
+
+#: reports/templates/quota.html:5 reports/templates/quota.html:12
+msgid "资源配额概况"
+msgstr "Overview of resource quotas"
+
+#: reports/templates/quota.html:73 vms/models.py:809
+#: vms/templates/vm_disk_expand.html:26 vms/templates/vm_live_migrate.html:27
+#: vms/templates/vm_migrate.html:30 vms/templates/vm_reset.html:26
+msgid "内存"
+msgstr "Memory"
+
+#: reports/templates/quota.html:74 reports/templates/quota.html:75
+#: reports/templates/quota.html:76 reports/templates/quota.html:77
+msgid "已使用"
+msgstr "Used"
+
+#: reports/templates/quota.html:84
+msgid "VCPU数"
+msgstr "vCPU cores"
+
+#: reports/templates/quota.html:86
+msgid "IP地址数"
+msgstr "Number of ip addresses"
+
+#: reports/templates/quota.html:87 reports/templates/reports_center.html:44
+#: reports/templates/reports_center.html:61
+#: reports/templates/reports_group.html:46
+#: reports/templates/reports_group.html:64
+#: reports/templates/reports_list.html:51
+#: reports/templates/reports_list.html:84
+#: reports/templates/reports_list.html:118
+msgid "虚拟机数"
+msgstr "Number of servers"
+
+#: reports/templates/reports_center.html:4
+#: reports/templates/reports_group.html:5 reports/templates/reports_list.html:7
+msgid "资源统计列表"
+msgstr "Resource Statistics List"
+
+#: reports/templates/reports_center.html:15
+#: reports/templates/reports_group.html:16
+#: reports/templates/reports_list.html:18
+msgid "全部"
+msgstr "Total"
+
+#: reports/templates/reports_center.html:25
+#: reports/templates/reports_center.html:54
+#: reports/templates/reports_group.html:57
+#: reports/templates/reports_list.html:30
+#: reports/templates/reports_list.html:75 templates/app_nav.html:56
+msgid "宿主机组"
+msgstr "Host unit"
+
+#: reports/templates/reports_center.html:28
+#: reports/templates/reports_group.html:30
+msgid "可视化图表"
+msgstr "Visual charts"
+
+#: reports/templates/reports_center.html:38
+#: reports/templates/reports_center.html:55
+#: reports/templates/reports_list.html:45
+#: reports/templates/reports_list.html:78
+msgid "总虚拟cpu(/核)"
+msgstr "Total vCPU (/Core)"
+
+#: reports/templates/reports_center.html:39
+#: reports/templates/reports_list.html:46
+#: reports/templates/reports_list.html:79
+#: reports/templates/reports_list.html:113
+msgid "已分配cpu(/核)"
+msgstr "Allocated vCPU (/Core)"
+
+#: reports/templates/reports_center.html:40
+#: reports/templates/reports_center.html:57
+#: reports/templates/reports_group.html:42
+#: reports/templates/reports_group.html:60
+#: reports/templates/reports_list.html:47
+#: reports/templates/reports_list.html:80
+#: reports/templates/reports_list.html:114
+msgid "分配率"
+msgstr "Allocation rate"
+
+#: reports/templates/reports_center.html:41
+#: reports/templates/reports_center.html:58
+#: reports/templates/reports_group.html:43
+#: reports/templates/reports_group.html:61
+#: reports/templates/reports_list.html:48
+#: reports/templates/reports_list.html:81
+#: reports/templates/reports_list.html:115
+msgid "总内存"
+msgstr "Total memory"
+
+#: reports/templates/reports_center.html:42
+#: reports/templates/reports_center.html:59
+#: reports/templates/reports_group.html:44
+#: reports/templates/reports_group.html:62
+#: reports/templates/reports_list.html:49
+#: reports/templates/reports_list.html:82
+#: reports/templates/reports_list.html:116
+msgid "已使用内存"
+msgstr "Used memory"
+
+#: reports/templates/reports_center.html:43
+#: reports/templates/reports_center.html:60
+#: reports/templates/reports_group.html:45
+#: reports/templates/reports_group.html:63
+#: reports/templates/reports_list.html:50
+#: reports/templates/reports_list.html:83
+#: reports/templates/reports_list.html:117
+msgid "内存使用率"
+msgstr "Memory usage rate"
+
+#: reports/templates/reports_center.html:56
+msgid "已分配已分配cpu(/核)"
+msgstr "Allocated CPU (/Core)"
+
+#: reports/templates/reports_group.html:40
+#: reports/templates/reports_group.html:58
+msgid "总cpu(/核)"
+msgstr "Total CPU (/Core)"
+
+#: reports/templates/reports_group.html:41
+#: reports/templates/reports_group.html:59
+msgid "已分配(/核)"
+msgstr "Allocated (/Core)"
+
+#: reports/templates/reports_list.html:44
+#: reports/templates/reports_list.html:77
+msgid "总物理cpu(/核)"
+msgstr "Total physical CPU (/Core)"
+
+#: reports/templates/reports_list.html:109 vms/templates/vm_detail.html:77
+msgid "宿主机IP地址"
+msgstr "Host ip address"
+
+#: reports/templates/reports_list.html:111
+msgid "物理cpu(/核)"
+msgstr "Physical CPU (/Core)"
+
+#: reports/templates/reports_list.html:112
+msgid "虚拟cpu(/核)"
+msgstr "vCPU (/Core)"
+
+#: templates/about.html:3 templates/base.html:92
+msgid "关于"
+msgstr "About"
+
+#: templates/about.html:10
+msgid "关于EVCloud"
+msgstr "About EVCloud"
+
+#: templates/about.html:12
+msgid "版本变更"
+msgstr "Version changes"
+
+#: templates/about.html:13
+msgid "EVCloud是一个轻量级虚拟机管理平台，追求功能实用，运行稳定，维护简单。"
+msgstr "EVCloud is a lightweight virtual server management platform that pursues practical functionality, stable operation, and simple maintenance."
+
+#: templates/about.html:16
+msgid "研发团队"
+msgstr "R&D Team"
+
+#: templates/about.html:17
+msgid "中国科学院计算机网络信息中心，科技云部。"
+msgstr "Science and Technology Cloud Operation and Development Department, Computer Network Information Center, Chinese Academy of Sciences"
+
+#: templates/about.html:22
+msgid "当前版本"
+msgstr "Current version"
+
+#: templates/about.html:26 templates/about.html:39
+msgid "发布时间"
+msgstr "Release time"
+
+#: templates/about.html:28 templates/about.html:41
+msgid "发布人"
+msgstr "Publisher"
+
+#: templates/about.html:34
+msgid "历史版本"
+msgstr "History version"
+
+#: templates/about.html:50
+msgid "无法获取版本日志， 详情请查看"
+msgstr "Unable to obtain version log, please check for details."
+
+#: templates/about.html:52
+msgid "变更日志"
+msgstr "Change log"
+
+#: templates/app_nav.html:3
+msgid "后台管理导航"
+msgstr "Backend management navigation"
+
+#: templates/app_nav.html:19
+msgid "计算资源配置与管理"
+msgstr "Computing resource configuration and management"
+
+#: templates/app_nav.html:21
+msgid "服务器信息维护"
+msgstr "Host info maintenance"
+
+#: templates/app_nav.html:24
+msgid "服务器设备"
+msgstr "Hosts"
+
+#: templates/app_nav.html:28
+msgid "部门"
+msgstr "Department"
+
+#: templates/app_nav.html:32
+msgid "机房"
+msgstr "Computer room"
+
+#: templates/app_nav.html:36
+msgid "型号"
+msgstr "Model"
+
+#: templates/app_nav.html:41
+msgid "宿主机配置"
+msgstr "Host config"
+
+#: templates/app_nav.html:48
+msgid "本地设备"
+msgstr "Local device"
+
+#: templates/app_nav.html:62
+msgid "虚拟机模板配置"
+msgstr "Virtual sever template config"
+
+#: templates/app_nav.html:65 vms/templates/vm_detail.html:105
+#: vms/templates/vms_create.html:70
+msgid "系统镜像"
+msgstr "System image"
+
+#: templates/app_nav.html:69
+msgid "XML模板"
+msgstr "XML template"
+
+#: templates/app_nav.html:73
+msgid "硬件样式模板"
+msgstr "Hardware style template"
+
+#: templates/app_nav.html:79
+msgid "虚拟机信息管理"
+msgstr "Virtual server info management"
+
+#: templates/app_nav.html:86
+msgid "虚拟机归档表"
+msgstr "Virtual server files"
+
+#: templates/app_nav.html:90 vms/templates/vm_detail.html:274
+msgid "虚拟机快照"
+msgstr "Virtual server snapshot"
+
+#: templates/app_nav.html:94
+msgid "虚拟机迁移记录"
+msgstr "Virtual server migration record"
+
+#: templates/app_nav.html:98
+msgid "NOVNC客户端TOKENS"
+msgstr "Novnc client tokens"
+
+#: templates/app_nav.html:105
+msgid "存储资源配置与管理"
+msgstr "Storage resource configuration and management"
+
+#: templates/app_nav.html:107
+msgid "CEPH配置"
+msgstr "Ceph config"
+
+#: templates/app_nav.html:110
+msgid "CEPH集群"
+msgstr "Ceph cluster"
+
+#: templates/app_nav.html:114
+msgid "CEPH池"
+msgstr "Ceph pool"
+
+#: templates/app_nav.html:118
+msgid "云硬盘池"
+msgstr "vdisk pool"
+
+#: templates/app_nav.html:123
+msgid "云硬盘信息管理"
+msgstr "vdisk info management"
+
+#: templates/app_nav.html:126 templates/base.html:56
+#: vdisk/templates/vdisk_mount_to_vm.html:23 vms/templates/vm_detail.html:173
+#: vms/templates/vm_shelve_list.html:52 vms/templates/vms_list.html:83
+msgid "云硬盘"
+msgstr "vdisk"
+
+#: templates/app_nav.html:135
+msgid "网络资源配置与管理"
+msgstr "Network resource configuration and management"
+
+#: templates/app_nav.html:137
+msgid "网络配置"
+msgstr "Network config"
+
+#: templates/app_nav.html:140
+msgid "VLAN子网"
+msgstr "VLAN subnet"
+
+#: templates/app_nav.html:144
+msgid "VPN配置文件"
+msgstr "VPN config file"
+
+#: templates/app_nav.html:149
+msgid "网络信息管理"
+msgstr "Network info management"
+
+#: templates/app_nav.html:156
+msgid "VPN用户信息"
+msgstr "VPN user info"
+
+#: templates/app_nav.html:165
+msgid "系统信息管理"
+msgstr "System info management"
+
+#: templates/app_nav.html:167
+msgid "用户信息管理"
+msgstr "User management"
+
+#: templates/app_nav.html:170 vdisk/templates/vdisk_list.html:93
+#: vdisk/templates/vdisk_mount_to_vm.html:28 vms/templates/vm_detail.html:185
+#: vms/templates/vm_mount_disk.html:59
+msgid "用户"
+msgstr "User"
+
+#: templates/app_nav.html:174
+msgid "用户分组"
+msgstr "User group"
+
+#: templates/app_nav.html:179
+msgid "认证信息管理"
+msgstr "Certification info management"
+
+#: templates/app_nav.html:182
+msgid "身份认证TOKENS"
+msgstr "Identity authentication tokens"
+
+#: templates/app_nav.html:187
+msgid "日志信息管理"
+msgstr "Log management"
+
+#: templates/app_nav.html:190
+msgid "操作日志"
+msgstr "Operation log"
+
+#: templates/base.html:57
+msgid "本地资源"
+msgstr "Local Resource"
+
+#: templates/base.html:60
+msgid "网络"
+msgstr "Network"
+
+#: templates/base.html:63
+msgid "资源配额"
+msgstr "Resource quota"
+
+#: templates/base.html:65
+msgid "统计报表"
+msgstr "Statistics report"
+
+#: templates/base.html:77
+msgid "语言"
+msgstr "Language"
+
+#: templates/base.html:86
+msgid "帮助&文档"
+msgstr "Help & docs"
+
+#: templates/base.html:88
+msgid "API交互文档"
+msgstr "API interactive docs"
+
+#: templates/base.html:89
+msgid "API文档"
+msgstr "API docs"
+
+#: templates/base.html:90
+msgid "文档"
+msgstr "Docs"
+
+#: templates/base.html:102
+msgid "登出"
+msgstr "Logout"
+
+#: templates/base.html:103
+msgid "修改密码"
+msgstr "Change password"
+
+#: templates/base.html:106
+msgid "后台管理"
+msgstr "Backend management"
+
+#: templates/base.html:111 users/templates/registration/login.html:8
+#: users/templates/registration/login.html:45
+msgid "登录"
+msgstr "Login"
+
+#: templates/base.html:115 users/templates/registration/login.html:49
+msgid "不允许个人注册，请联系管理员"
+msgstr "Individual registration is not allowed. Please contact the administrator."
+
+#: templates/base.html:115 users/templates/registration/login.html:50
+msgid "注册"
+msgstr "Register"
+
+#: templates/error.html:8
+msgid "操作异常"
+msgstr "Abnormal operation"
+
+#: templates/error.html:13
+msgid "异常编码"
+msgstr "Abnormal Code"
+
+#: templates/error.html:17
+msgid "异常类型"
+msgstr "Abnormal type"
+
+#: templates/error.html:21
+msgid "提示"
+msgstr "Hint"
+
+#: users/admin.py:17
+msgid "Personal info"
+msgstr "Personal info"
+
+#: users/admin.py:18
+msgid "Permissions"
+msgstr "Permissions"
+
+#: users/admin.py:19
+msgid "Important dates"
+msgstr "Important dates"
+
+#: users/templates/message.html:4
+msgid "提示信息"
+msgstr "Notification"
+
+#: users/templates/registration/login.html:8
+msgid "虚拟机平台"
+msgstr "Virtual server platform"
+
+#: users/templates/registration/login.html:18
+msgid "虚拟机平台EVCloud登录"
+msgstr "EVCloud login"
+
+#: users/templates/registration/login.html:28 vpn/templates/delete.html:14
+#: vpn/templates/vpn_list.html:49 vpn/templates/vpn_log_list.html:50
+msgid "用户名"
+msgstr "Username"
+
+#: users/templates/registration/login.html:35
+msgid "密 码"
+msgstr "Password"
+
+#: users/templates/registration/login.html:46
+msgid "忘记密码"
+msgstr "Forgot password"
+
+#: vdisk/templates/vdisk_create.html:4 vdisk/templates/vdisk_create.html:12
+#: vdisk/templates/vdisk_list.html:30 vdisk/templates/vdisk_mount_to_vm.html:14
+#: vms/templates/vm_mount_disk.html:14
+msgid "创建云硬盘"
+msgstr "Create vdisk"
+
+#: vdisk/templates/vdisk_create.html:14 vdisk/templates/vdisk_list.html:22
+#: vdisk/templates/vdisk_list.html:28 vdisk/templates/vdisk_mount_to_vm.html:15
+#: vms/templates/vm_mount_disk.html:15
+msgid "云硬盘列表"
+msgstr "vdisk list"
+
+#: vdisk/templates/vdisk_create.html:44 vdisk/templates/vdisk_list.html:58
+#: vdisk/templates/vdisk_list.html:91 vdisk/templates/vdisk_mount_to_vm.html:26
+#: vms/templates/vm_detail.html:183 vms/templates/vm_mount_disk.html:57
+msgid "存储池"
+msgstr "Storage pool"
+
+#: vdisk/templates/vdisk_create.html:55
+msgid "容量大小"
+msgstr "Storage capacity"
+
+#: vdisk/templates/vdisk_list.html:80 vdisk/templates/vdisk_mount_to_vm.html:48
+msgid "搜 UUID、IP地址、备注"
+msgstr "Search for UUID, IP address and notes"
+
+#: vdisk/templates/vdisk_list.html:92 vms/templates/vm_detail.html:184
+#: vms/templates/vm_mount_disk.html:58
+msgid "容量"
+msgstr "Capacity"
+
+#: vdisk/templates/vdisk_list.html:95
+msgid "挂载虚拟机"
+msgstr "Mount"
+
+#: vdisk/templates/vdisk_list.html:150 vms/templates/vm_detail.html:309
+#: vms/templates/vm_operations.html:16 vms/templates/vm_operations.html:44
+#: vms/templates/vms_list.html:150 vpn/templates/change.html:41
+msgid "删除"
+msgstr "Delete"
+
+#: vdisk/templates/vdisk_mount_to_vm.html:6
+#: vdisk/templates/vdisk_mount_to_vm.html:12 vms/templates/vm_mount_disk.html:6
+#: vms/templates/vm_mount_disk.html:12 vms/templates/vm_operations.html:18
+msgid "挂载云硬盘"
+msgstr "Mount"
+
+#: vdisk/templates/vdisk_mount_to_vm.html:20
+msgid "云硬盘信息"
+msgstr "vdisk info"
+
+#: vdisk/templates/vdisk_mount_to_vm.html:24
+msgid "云硬盘容量"
+msgstr "vdisk capacity"
+
+#: vdisk/templates/vdisk_mount_to_vm.html:36
+msgid "此硬盘不能挂载，硬盘已被挂载使用，挂载虚拟机uuid"
+msgstr "The vdisk has already been mounted. Mounted virtual server uuid is "
+
+#: vms/models.py:104 vms/templates/vm_operations.html:33
+msgid "搁置"
+msgstr "Hibernate"
+
+#: vms/models.py:105
+msgid "正常"
+msgstr "Normal"
+
+#: vms/models.py:718 vms/templates/vm_operations.html:25
+#: vms/templates/vm_operations.html:31
+msgid "动态迁移"
+msgstr "Dynamic migrate"
+
+#: vms/models.py:719
+msgid "静态迁移"
+msgstr "Static migrate"
+
+#: vms/models.py:722
+msgid "等待迁移"
+msgstr "Waiting for migrate"
+
+#: vms/models.py:723
+msgid "迁移失败"
+msgstr "Migrate failed"
+
+#: vms/models.py:724
+msgid "正在迁移"
+msgstr "Migrating"
+
+#: vms/models.py:725
+msgid "迁移完成，有些需要善后的工作"
+msgstr "Migrate completed. Some tasks require manual completion."
+
+#: vms/models.py:726
+msgid "迁移完成"
+msgstr "Migrate completed"
+
+#: vms/models.py:808
+msgid "虚拟CPU数"
+msgstr "vCPU cores"
+
+#: vms/models.py:809
+msgid "单位GB"
+msgstr "GB"
+
+#: vms/models.py:810
+msgid "是否公开"
+msgstr "Public?"
+
+#: vms/models.py:810
+msgid "非公开的普通用户不可见，超级用户可见"
+msgstr "Non-public ordinary user doesn't have permissions, super user does."
+
+#: vms/models.py:811
+msgid "是否可用"
+msgstr "Available?"
+
+#: vms/models.py:815
+msgid "虚拟机硬件配置样式"
+msgstr "Virtual server hardware config style"
+
+#: vms/models.py:835
+msgid "虚拟机附加ip"
+msgstr "Attach ip"
+
+#: vms/templates/vm_attach_ip_list.html:9
+#: vms/templates/vm_attach_ip_list.html:19
+msgid "IP地址列表"
+msgstr "IP address list"
+
+#: vms/templates/vm_attach_ip_list.html:24
+#: vms/templates/vm_detach_ip_list.html:18 vms/templates/vm_disk_expand.html:20
+#: vms/templates/vm_live_migrate.html:21 vms/templates/vm_migrate.html:21
+#: vms/templates/vm_mount_disk.html:20 vms/templates/vm_mount_pci.html:18
+#: vms/templates/vm_reset.html:20
+msgid "虚拟机信息"
+msgstr "Virtual server details"
+
+#: vms/templates/vm_attach_ip_list.html:27
+#: vms/templates/vm_detach_ip_list.html:21 vms/templates/vm_disk_expand.html:23
+#: vms/templates/vm_edit.html:21 vms/templates/vm_live_migrate.html:24
+#: vms/templates/vm_migrate.html:24 vms/templates/vm_mount_disk.html:23
+#: vms/templates/vm_mount_pci.html:21 vms/templates/vm_reset.html:23
+msgid "虚拟机UUID"
+msgstr "Virtual server uuid"
+
+#: vms/templates/vm_attach_ip_list.html:29
+#: vms/templates/vm_detach_ip_list.html:23 vms/templates/vm_disk_expand.html:24
+#: vms/templates/vm_mount_disk.html:24
+msgid "虚拟机IP地址"
+msgstr "Virtual server ip address"
+
+#: vms/templates/vm_attach_ip_list.html:42
+msgid "可供附加的IP地址"
+msgstr "Available IP addresses"
+
+#: vms/templates/vm_attach_ip_list.html:47 vms/templates/vm_unshelve.html:50
+#: vms/templates/vms_create.html:43
+msgid "网段"
+msgstr "Network segment"
+
+#: vms/templates/vm_attach_ip_list.html:61
+msgid "搜 IP地址"
+msgstr "Search for ip address"
+
+#: vms/templates/vm_attach_ip_list.html:76 vms/templates/vm_detail.html:120
+#: vms/templates/vm_detail.html:127 vms/templates/vm_detail.html:134
+#: vms/templates/vm_detail.html:334 vms/templates/vm_image_release.html:161
+#: vms/templates/vm_image_release.html:164
+msgid "描述"
+msgstr "Description"
+
+#: vms/templates/vm_attach_ip_list.html:94 vms/templates/vm_operations.html:20
+msgid "附加IP地址"
+msgstr "Attach ip address"
+
+#: vms/templates/vm_detach_ip_list.html:9
+msgid "虚拟机使用的IP地址列表"
+msgstr "Used ip address list"
+
+#: vms/templates/vm_detach_ip_list.html:15
+msgid "移除IP地址列表"
+msgstr "Remove ip address list"
+
+#: vms/templates/vm_detach_ip_list.html:36
+msgid "可供移除的IP地址"
+msgstr "Available IP addresses"
+
+#: vms/templates/vm_detach_ip_list.html:61
+msgid "主机"
+msgstr "Host"
+
+#: vms/templates/vm_detach_ip_list.html:77
+msgid "移除IP地址"
+msgstr "Remove ip address"
+
+#: vms/templates/vm_detail.html:22 vms/templates/vm_detail.html:28
+msgid "虚拟机详情"
+msgstr "Virtual server details"
+
+#: vms/templates/vm_detail.html:31 vms/templates/vm_disk_expand.html:15
+#: vms/templates/vm_image_release.html:15 vms/templates/vm_live_migrate.html:16
+#: vms/templates/vm_migrate.html:16 vms/templates/vm_reset.html:15
+#: vms/templates/vms_create.html:15 vms/templates/vms_list.html:9
+msgid "虚拟机列表"
+msgstr "Virtual server list"
+
+#: vms/templates/vm_detail.html:41
+msgid "无ip"
+msgstr "No ip"
+
+#: vms/templates/vm_detail.html:57
+msgid "运行状态"
+msgstr "Running"
+
+#: vms/templates/vm_detail.html:71
+msgid "位置信息"
+msgstr "Location info"
+
+#: vms/templates/vm_detail.html:74
+msgid "所属数据中心"
+msgstr "Data center"
+
+#: vms/templates/vm_detail.html:75
+msgid "所属集群"
+msgstr "Cluster"
+
+#: vms/templates/vm_detail.html:81
+msgid "暂无"
+msgstr "None"
+
+#: vms/templates/vm_detail.html:90
+msgid "配置信息"
+msgstr "Config info"
+
+#: vms/templates/vm_detail.html:102
+msgid "镜像信息"
+msgstr "Image info"
+
+#: vms/templates/vm_detail.html:106
+msgid "集群"
+msgstr "Cluster"
+
+#: vms/templates/vm_detail.html:114
+msgid "网络信息"
+msgstr "Network info"
+
+#: vms/templates/vm_detail.html:124 vms/templates/vm_shelve_list.html:47
+msgid "源IP地址"
+msgstr "Source ip address"
+
+#: vms/templates/vm_detail.html:125
+msgid "源MAC地址"
+msgstr "Source MAC address"
+
+#: vms/templates/vm_detail.html:126 vms/templates/vm_detail.html:133
+msgid "源IPv6地址"
+msgstr "Source IPv6 address"
+
+#: vms/templates/vm_detail.html:128
+msgid "源网桥名"
+msgstr "Source bridge"
+
+#: vms/templates/vm_detail.html:143
+msgid "用户信息"
+msgstr "User info"
+
+#: vms/templates/vm_detail.html:154
+msgid "备注信息"
+msgstr "Notes"
+
+#: vms/templates/vm_detail.html:180
+msgid "设备"
+msgstr "Device"
+
+#: vms/templates/vm_detail.html:222
+msgid "未挂载云硬盘"
+msgstr "Unmounted vdisk"
+
+#: vms/templates/vm_detail.html:227
+msgid "本地资源设备"
+msgstr "Local device"
+
+#: vms/templates/vm_detail.html:269
+msgid "未挂载本地资源设备"
+msgstr "Unmounted local device"
+
+#: vms/templates/vm_detail.html:281
+msgid "快照"
+msgstr "Snapshot"
+
+#: vms/templates/vm_detail.html:312
+msgid "回滚"
+msgstr "Rollback"
+
+#: vms/templates/vm_detail.html:320
+msgid "未创建快照"
+msgstr "Uncreated snapshot"
+
+#: vms/templates/vm_detail.html:324
+msgid "附加IP地址列表"
+msgstr "Attach ip address list"
+
+#: vms/templates/vm_detail.html:351
+msgid "移除"
+msgstr "Remove"
+
+#: vms/templates/vm_detail.html:359
+msgid "未附加IP地址"
+msgstr "Unattached ip address"
+
+#: vms/templates/vm_disk_expand.html:6 vms/templates/vm_operations.html:28
+#: vms/templates/vm_operations.html:36
+msgid "系统盘扩容"
+msgstr "System disk expansion"
+
+#: vms/templates/vm_disk_expand.html:12
+msgid "虚拟机系统盘扩容"
+msgstr "System disk expansion"
+
+#: vms/templates/vm_disk_expand.html:25 vms/templates/vm_migrate.html:28
+#: vms/templates/vm_reset.html:25
+msgid "CPU数"
+msgstr "CPU cores"
+
+#: vms/templates/vm_disk_expand.html:28
+msgid "系统盘大小"
+msgstr "System disk capacity"
+
+#: vms/templates/vm_disk_expand.html:36
+msgid "输入系统盘扩容值"
+msgstr "Enter the expansion value"
+
+#: vms/templates/vm_disk_expand.html:40
+msgid "扩容大小"
+msgstr "Expansion size"
+
+#: vms/templates/vm_disk_expand.html:54
+msgid "确定"
+msgstr "Confirm"
+
+#: vms/templates/vm_edit.html:5 vms/templates/vm_edit.html:13
+msgid "修改虚拟机"
+msgstr "Edit virtual server"
+
+#: vms/templates/vm_edit.html:22 vms/templates/vm_live_migrate.html:25
+#: vms/templates/vm_migrate.html:26 vms/templates/vm_mount_pci.html:22
+#: vms/templates/vm_reset.html:24
+msgid "虚拟机IP"
+msgstr "Virtual server ip"
+
+#: vms/templates/vm_edit.html:34
+msgid "新的配置"
+msgstr "New config"
+
+#: vms/templates/vm_edit.html:40 vms/templates/vms_create.html:94
+msgid "模板样式"
+msgstr "Template style"
+
+#: vms/templates/vm_edit.html:43 vms/templates/vms_create.html:97
+msgid "自定义"
+msgstr "User-defined"
+
+#: vms/templates/vm_edit.html:75
+msgid "修改"
+msgstr "Edit"
+
+#: vms/templates/vm_image_release.html:5 vms/templates/vm_image_release.html:13
+msgid "镜像发布"
+msgstr "Issue Image"
+
+#: vms/templates/vm_image_release.html:69
+msgid "系统发行版本"
+msgstr "Release version"
+
+#: vms/templates/vm_image_release.html:86
+#: vms/templates/vm_image_release.html:89
+msgid "系统发行编号"
+msgstr "Release number"
+
+#: vms/templates/vm_image_release.html:95
+msgid "系统架构"
+msgstr "Architecture"
+
+#: vms/templates/vm_image_release.html:112
+msgid "系统启动方式"
+msgstr "Start mode"
+
+#: vms/templates/vm_image_release.html:139
+#: vms/templates/vm_image_release.html:143
+msgid "系统默认登录用户名"
+msgstr "Default username"
+
+#: vms/templates/vm_image_release.html:150
+#: vms/templates/vm_image_release.html:154
+msgid "系统默认登录密码"
+msgstr "Default password"
+
+#: vms/templates/vm_image_release.html:186 vms/templates/vm_operations.html:37
+msgid "发布镜像"
+msgstr "Issue image"
+
+#: vms/templates/vm_live_migrate.html:7 vms/templates/vm_live_migrate.html:13
+msgid "动态迁移虚拟机"
+msgstr "Dynamic Migrate"
+
+#: vms/templates/vm_live_migrate.html:26
+msgid "数"
+msgstr "Number"
+
+#: vms/templates/vm_live_migrate.html:36 vms/templates/vm_migrate.html:45
+msgid "选择目标宿主机"
+msgstr "Select destination host"
+
+#: vms/templates/vm_live_migrate.html:42 vms/templates/vm_migrate.html:51
+msgid "总资源"
+msgstr "Total resource"
+
+#: vms/templates/vm_live_migrate.html:42 vms/templates/vm_live_migrate.html:43
+#: vms/templates/vm_migrate.html:51 vms/templates/vm_migrate.html:52
+msgid "剩余"
+msgstr "Surplus"
+
+#: vms/templates/vm_live_migrate.html:43 vms/templates/vm_migrate.html:52
+msgid "上限"
+msgstr "Upper limit"
+
+#: vms/templates/vm_live_migrate.html:50
+msgid "迁移"
+msgstr "Migrate"
+
+#: vms/templates/vm_live_migrate.html:55
+msgid "迁移状态"
+msgstr "Migrate status"
+
+#: vms/templates/vm_migrate.html:7 vms/templates/vm_migrate.html:13
+msgid "关机静态迁移虚拟机"
+msgstr "Stop and static migrate server"
+
+#: vms/templates/vm_migrate.html:62
+msgid "强制迁移"
+msgstr "Force migrate"
+
+#: vms/templates/vm_migrate.html:63
+msgid ""
+"请慎重勾选，源宿主机节点上的源虚拟主机可能无法清理，导致与迁移的新虚拟主机网"
+"络冲突；请在确认宿主机损毁、宕机移除、重装系统等情况导致虚拟主机丢失不可恢复"
+"不可用的情况下选择。"
+msgstr "Attention: source virtual server on the source host may not be able to be cleaned up, resulting in network conflicts with the new server; "
+       "Select this option when the virtual server is lost, irreparable or unavailable due to damage, downtime, removal or system reinstallation of the hosts."
+
+#: vms/templates/vm_mount_disk.html:34
+msgid "可供挂载的云硬盘"
+msgstr "Available vdisks"
+
+#: vms/templates/vm_mount_disk.html:42
+msgid "搜 UUID、备注"
+msgstr "Search for uuid and notes"
+
+#: vms/templates/vm_mount_pci.html:5 vms/templates/vm_mount_pci.html:11
+msgid "挂载本地设备设备"
+msgstr "mount local device"
+
+#: vms/templates/vm_mount_pci.html:13
+msgid "本地设备设备列表"
+msgstr "Local device list"
+
+#: vms/templates/vm_mount_pci.html:33
+msgid "可供挂载的设备"
+msgstr "Available device"
+
+#: vms/templates/vm_mount_pci.html:79
+msgid "已被挂载"
+msgstr "Mounted"
+
+#: vms/templates/vm_operations.html:14
+msgid "软重启"
+msgstr "Soft restart"
+
+#: vms/templates/vm_operations.html:17 vms/templates/vms_list.html:151
+msgid "强制删除"
+msgstr "Force delete"
+
+#: vms/templates/vm_operations.html:19
+msgid "挂载本地设备"
+msgstr "Mount local device"
+
+#: vms/templates/vm_operations.html:21
+msgid "修改配置"
+msgstr "Edit config"
+
+#: vms/templates/vm_operations.html:22
+msgid "重置镜像"
+msgstr "Reset image"
+
+#: vms/templates/vm_operations.html:24 vms/templates/vm_operations.html:30
+msgid "关机迁移"
+msgstr "Stop and migrate"
+
+#: vms/templates/vm_operations.html:26 vms/templates/vm_operations.html:32
+msgid "创建快照"
+msgstr "Create image"
+
+#: vms/templates/vm_operations.html:27 vms/templates/vm_operations.html:35
+msgid "丢失恢复"
+msgstr "Restore after being lost"
+
+#: vms/templates/vm_operations.html:43 vms/templates/vm_unshelve.html:84
+msgid "恢复"
+msgstr "Restore"
+
+#: vms/templates/vm_reset.html:6
+msgid "重置系统镜像"
+msgstr "Reset system image"
+
+#: vms/templates/vm_reset.html:12
+msgid "重置虚拟机系统镜像"
+msgstr "Reset server system image"
+
+#: vms/templates/vm_reset.html:34
+msgid "选择系统镜像"
+msgstr "Select system image"
+
+#: vms/templates/vm_reset.html:45
+msgid "重置"
+msgstr "Reset"
+
+#: vms/templates/vm_shelve_list.html:8 vms/templates/vm_unshelve.html:20
+msgid "搁置虚拟机列表"
+msgstr "Hibernated server list"
+
+#: vms/templates/vm_shelve_list.html:14 vms/templates/vms_list.html:15
+msgid "在线虚拟机"
+msgstr "Online server"
+
+#: vms/templates/vm_shelve_list.html:15 vms/templates/vms_list.html:16
+msgid "已搁置"
+msgstr "Hibernated"
+
+#: vms/templates/vm_unshelve.html:9
+msgid "恢复虚拟机选项"
+msgstr "Restore server option"
+
+#: vms/templates/vm_unshelve.html:18
+msgid "恢复虚拟机"
+msgstr "Restore server"
+
+#: vms/templates/vm_unshelve.html:53 vms/templates/vm_unshelve.html:68
+#: vms/templates/vm_unshelve.html:77 vms/templates/vms_create.html:46
+#: vms/templates/vms_create.html:57 vms/templates/vms_create.html:65
+msgid "自动选择"
+msgstr "Auto select"
+
+#: vms/templates/vms_create.html:88
+msgid "配置"
+msgstr "config"
+
+#: vms/templates/vms_create.html:126
+msgid "配置系统盘容量"
+msgstr "config system disk capacity"
+
+#: vms/templates/vms_create.html:131
+msgid "系统盘容量"
+msgstr "system disk capacity"
+
+#: vms/templates/vms_create.html:140
+msgid "当前您选择的操作系统镜像，要求系统盘最小50GB"
+msgstr "The operating system image you have selected currently requires a minimum system disk size of 50GB."
+
+#: vms/templates/vms_list.html:86
+msgid "任务"
+msgstr "Task"
+
+#: vms/templates/vms_list.html:144
+msgid "批量操作"
+msgstr "Batch operation"
+
+#: vms/templates/vms_list.html:148
+msgid "正常关机"
+msgstr "Normal stop"
+
+#: vms/templatetags/sizeformat.py:24 vms/templatetags/sizeformat.py:42
+#, python-format
+msgid "%(size)d byte"
+msgid_plural "%(size)d byte_len"
+msgstr[0] "%(size)d byte"
+msgstr[1] "%(size)d byte_len"
+
+#: vms/templatetags/sizeformat.py:44
+#, python-format
+msgid "%s KB"
+msgstr "%s KB"
+
+#: vms/templatetags/sizeformat.py:46
+#, python-format
+msgid "%s MB"
+msgstr "%s MB"
+
+#: vms/templatetags/sizeformat.py:48
+#, python-format
+msgid "%s GB"
+msgstr "%s GB"
+
+#: vms/templatetags/sizeformat.py:50
+#, python-format
+msgid "%s TB"
+msgstr "%s TB"
+
+#: vms/templatetags/sizeformat.py:52
+#, python-format
+msgid "%s PB"
+msgstr "%s PB"
+
+#: vpn/templates/add.html:7
+msgid "VPN添加"
+msgstr "Add VPN"
+
+#: vpn/templates/add.html:17
+msgid "添加 VPN"
+msgstr "Add VPN"
+
+#: vpn/templates/add.html:43 vpn/templates/change.html:43
+msgid "保存并继续编辑"
+msgstr "Save and continue editing"
+
+#: vpn/templates/add.html:44 vpn/templates/change.html:44
+msgid "保存并添加另一个"
+msgstr "Save and add another"
+
+#: vpn/templates/add.html:45 vpn/templates/change.html:45
+msgid "保存"
+msgstr "Save"
+
+#: vpn/templates/change.html:7
+msgid "VPN修改"
+msgstr "Edit VPN"
+
+#: vpn/templates/change.html:14
+msgid "修改 VPN"
+msgstr "Edit VPN"
+
+#: vpn/templates/delete.html:7
+msgid "VPN删除"
+msgstr "Delete VPN"
+
+#: vpn/templates/delete.html:13
+msgid "确定想要删除VPN吗"
+msgstr "Are you sure to delete the VPN?"
+
+#: vpn/templates/delete.html:22
+msgid "不存在"
+msgstr "Absent"
+
+#: vpn/templates/vpn_list.html:21
+msgid "VPN列表"
+msgstr "VPN list"
+
+#: vpn/templates/vpn_list.html:27 vpn/templates/vpn_log_list.html:30
+msgid "VPN用户"
+msgstr "VPN user"
+
+#: vpn/templates/vpn_list.html:28 vpn/templates/vpn_log_list.html:31
+msgid "VPN登录日志"
+msgstr "VPN login logs"
+
+#: vpn/templates/vpn_list.html:29 vpn/templates/vpn_log_list.html:32
+msgid "创建VPN"
+msgstr "Create VPN"
+
+#: vpn/templates/vpn_list.html:35
+msgid "用户名、备注"
+msgstr "Username, notes"
+
+#: vpn/templates/vpn_list.html:36 vpn/templates/vpn_log_list.html:40
+msgid "搜索"
+msgstr "Search"
+
+#: vpn/templates/vpn_list.html:40
+msgid "配置文件"
+msgstr "Config file"
+
+#: vpn/templates/vpn_list.html:41
+msgid "CA证书"
+msgstr "CA certificate"
+
+#: vpn/templates/vpn_list.html:50
+msgid "密码"
+msgstr "Password"
+
+#: vpn/templates/vpn_list.html:51
+msgid "激活状态"
+msgstr "Active"
+
+#: vpn/templates/vpn_list.html:53
+msgid "修改时间"
+msgstr "Modification time"
+
+#: vpn/templates/vpn_list.html:54
+msgid "过期时间"
+msgstr "Expiration time"
+
+#: vpn/templates/vpn_log_list.html:24
+msgid "登录日志列表"
+msgstr "Login log list"
+
+#: vpn/templates/vpn_log_list.html:52
+msgid "客户端IP"
+msgstr "Client IP"
+
+#: vpn/templates/vpn_log_list.html:53
+msgid "客户端公网端口"
+msgstr "Client public network port"
+
+#: vpn/templates/vpn_log_list.html:54
+msgid "上行流量"
+msgstr "Upstream traffic"
+
+#: vpn/templates/vpn_log_list.html:55
+msgid "下行流量"
+msgstr "Downstream traffic"
+
+#: vpn/templates/vpn_log_list.html:56
+msgid "登录时间"
+msgstr "Login time"
+
+#: vpn/templates/vpn_log_list.html:57
+msgid "登出时间"
+msgstr "Logout time"

@@ -32,7 +32,7 @@
     $(".btn-pci-unmount").click(function (e) {
         e.preventDefault();
 
-        if(!confirm("确定卸载设备？"))
+        if(!confirm(gettext("确定卸载设备？")))
             return;
 
         let pci_id = $(this).attr("data-pci-id");
@@ -41,11 +41,11 @@
             url: api,
             type: 'post',
             success: function (data, status_text) {
-                alert('已成功卸载设备');
+                alert(gettext('已成功卸载设备'));
             },
             error: function (xhr, msg, err) {
                 let data = xhr.responseJSON;
-                msg = '卸载设备失败';
+                msg = gettext('卸载设备失败');
                 if (data && data.hasOwnProperty('code_text')){
                     msg = data.code_text;
                 }

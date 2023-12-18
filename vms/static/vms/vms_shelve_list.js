@@ -3,7 +3,7 @@
     $(".btn-vm-shelve").click(function (e) {
         e.preventDefault();
 
-        if (!confirm('确定搁置虚拟机？'))
+        if (!confirm(gettext('确定搁置虚拟机？')))
             return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -20,7 +20,7 @@
     $(".btn-vm-delshelve").click(function (e) {
         e.preventDefault();
 
-        if (!confirm('确定删除搁置虚拟机？'))
+        if (!confirm(gettext('确定删除搁置虚拟机？')))
             return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -35,7 +35,7 @@
     // 校验创建虚拟机参数
     function valid_vm_unshelve_data(obj) {
         if ((obj.group_id <= 0) && (obj.host_id <= 0)) {
-            alert('机组和宿主机至少选择其一');
+            alert(gettext('机组和宿主机至少选择其一'));
             return false;
         }
         if ((obj.group_id <= 0)) {
@@ -60,7 +60,7 @@
         if (!valid_vm_unshelve_data(obj_data)) {
             return;
         }
-        if (!confirm('确定恢复虚拟机？'))
+        if (!confirm(gettext('确定恢复虚拟机？')))
             return;
 
         let api = build_vm_unshelve_api(vm_uuid);
@@ -80,15 +80,15 @@
             contentType: 'application/json',
             success: function (data, status, xhr) {
                 if (xhr.status === 201) {
-                    if (confirm('恢复成功,是否去主机列表看看？')) {
+                    if (confirm(gettext('恢复成功,是否去主机列表看看？'))) {
                         window.location = '/vms/';
                     }
                 } else {
-                    alert("恢复失败！" + data.code_text);
+                    alert(gettext("恢复失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '恢复主机失败!';
+                let msg = gettext('恢复主机失败!');
                 try {
                     msg = msg + xhr.responseJSON.code_text;
                 } catch (e) {
@@ -146,7 +146,7 @@ function shelve_vm_ajax(vm_uuid, before_func, success_func, complate_func) {
             }
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '虚拟机搁置失败;');
+            msg = get_err_msg_or_default(xhr, gettext('虚拟机搁置失败;'));
             alert(msg);
         },
         complete: function (xhr, ts) {
@@ -173,7 +173,7 @@ function delshelve_vm_ajax(vm_uuid, before_func, success_func, complate_func) {
             }
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '搁置虚拟机删除失败;');
+            msg = get_err_msg_or_default(xhr, gettext('搁置虚拟机删除失败;'));
             alert(msg);
         },
         complete: function (xhr, ts) {

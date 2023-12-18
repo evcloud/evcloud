@@ -176,7 +176,7 @@
             success: function (data, status, xhr) {
                 if (xhr.status === 200) {
                     snap_element.html(data.snap + `<span class="badge badge-secondary">new</span>`)
-                    current_button.html(`更新`);
+                    current_button.html(gettext("更新"));
                     // if (confirm('镜像更新成功,刷新查看？')) {
                     //     window.location = '/image/';
                     // }

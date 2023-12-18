@@ -33,7 +33,7 @@
 			    div_show.children("span:first").text(remark);
 			},
             error: function(e){
-			    alert('修改失败');
+			    alert(gettext('修改失败'));
             },
 			complete:function() {
 				div_show.show();
@@ -118,7 +118,7 @@
                 node_status.html('<span class="badge  badge-' + VM_STATUS_LABEL[data.status.status_code] + '">' + VM_STATUS_CN[data.status.status_code] + "</span>");
             },
             error: function (xhr) {
-                node_status.html('<span class="badge  badge-danger">查询失败</span>');
+                node_status.html('<span class="badge  badge-danger">gettext("查询失败")</span>');
             }
         });
     }
@@ -180,7 +180,7 @@
     // 重启虚拟机点击事件
     $(".btn-vm-reboot").click(function (e) {
         e.preventDefault();
-        if(!confirm('确定重启虚拟机？'))
+        if(!confirm(gettext('确定重启虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -201,7 +201,7 @@
     $(".btn-vm-shutdown").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定关闭虚拟机？'))
+        if(!confirm(gettext('确定关闭虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -222,7 +222,7 @@
     $(".btn-vm-poweroff").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定强制断电虚拟机？'))
+        if(!confirm(gettext('确定强制断电虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -249,7 +249,7 @@
     $(".btn-vm-delete").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定删除虚拟机？'))
+        if(!confirm(gettext('确定删除虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -260,7 +260,7 @@
     $(".btn-vm-delete-force").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定强制删除虚拟机？'))
+        if(!confirm(gettext('确定强制删除虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -292,7 +292,7 @@
         e.preventDefault();
         if(!is_exists_checked())
             return;
-        if(!confirm('确定启动所有选中的虚拟机？'))
+        if(!confirm(gettext('确定启动所有选中的虚拟机？')))
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
@@ -306,7 +306,7 @@
         e.preventDefault();
         if(!is_exists_checked())
             return;
-        if(!confirm('确定关闭所有选中的虚拟机？'))
+        if(!confirm(gettext('确定关闭所有选中的虚拟机？')))
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
@@ -320,7 +320,7 @@
         e.preventDefault();
         if(!is_exists_checked())
             return;
-        if(!confirm('确定强制断电所有选中的虚拟机？'))
+        if(!confirm(gettext('确定强制断电所有选中的虚拟机？')))
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
@@ -334,7 +334,7 @@
         e.preventDefault();
         if(!is_exists_checked())
             return;
-        if(!confirm('确定删除所有选中的虚拟机？'))
+        if(!confirm(gettext('确定删除所有选中的虚拟机？')))
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
@@ -348,7 +348,7 @@
         e.preventDefault();
         if(!is_exists_checked())
             return;
-        if(!confirm('确定强制删除所有选中的虚拟机？'))
+        if(!confirm(gettext('确定强制删除所有选中的虚拟机？')))
 		    return;
 
         let vm_uuids = get_checked_vm_uuid_array();
@@ -368,11 +368,11 @@
                 window.open(vnc, '_blank');
             },
             error: function (xhr, msg, err) {
-                msg = '打开vnc失败';
+                msg = gettext('打开vnc失败');
                 try {
                     let data = xhr.responseJSON;
                     if (data.hasOwnProperty('code_text')) {
-                        msg = '打开vnc失败,' + data.code_text;
+                        msg = gettext('打开vnc失败,') + data.code_text;
                     }
                 }catch (e) {}
                 alert(msg);
@@ -396,16 +396,16 @@
     $(".btn-vm-snap-create").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定创建虚拟机系统快照吗？'))
+        if(!confirm(gettext('确定创建虚拟机系统快照吗？')))
 		    return;
 
-        let remarks = prompt('请输入快照备注信息：');
+        let remarks = prompt(gettext('请输入快照备注信息：'));
         if (remarks === null)
             return;
         let vm_uuid = $(this).attr('data-vm-uuid');
         create_snap_vm_ajax(vm_uuid, remarks, null,
             function (data) {
-                alert("创建快照成功");
+                alert(gettext("创建快照成功"));
             }
         ,null);
     });
@@ -414,7 +414,7 @@
     $(".btn-vm-miss-fix").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定尝试恢复丢失的虚拟机？请确认虚拟主机处于丢失状态'))
+        if(!confirm(gettext('确定尝试恢复丢失的虚拟机？请确认虚拟主机处于丢失状态')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -426,7 +426,7 @@
                 node_vm_task.html(VM_TASK_CN['miss_fix']);
             },
             function () {
-                alert("已成功恢复丢失的虚拟主机");
+                alert(gettext("已成功恢复丢失的虚拟主机"));
             },
             function () {
                 node_vm_task.html("");

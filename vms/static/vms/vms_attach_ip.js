@@ -3,7 +3,7 @@
     $(".btn-vm-attach-ip").click(function (e) {
         e.preventDefault();
 
-        if (!confirm('确定为虚拟机附加此IP？'))
+        if (!confirm(gettext('确定为虚拟机附加此IP？')))
             return;
 
         let mac_id = $(this).attr('data-attach-ip-id');
@@ -16,7 +16,7 @@
     $(".btn-vm-detach-ip").click(function (e) {
         e.preventDefault();
 
-        if (!confirm('确定为虚拟机移除此IP？'))
+        if (!confirm(gettext('确定为虚拟机移除此IP？')))
             return;
 
         let mac_id = $(this).attr('data-detach-ip-id');
@@ -49,11 +49,11 @@ function vm_attach_ip(vm_uuid, mac_id) {
         url: api + '?' + qs,
         type: 'post',
         success: function (data, status_text) {
-            alert('已成功附加到虚拟机');
+            alert(gettext('已成功附加到虚拟机'));
             window.location = '/vms/';
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '虚拟机附加IP失败;');
+            msg = get_err_msg_or_default(xhr, gettext('虚拟机附加IP失败;'));
             alert(msg);
         },
     });
@@ -69,11 +69,11 @@ function vm_detach_ip(vm_uuid, mac_id) {
         url: api + '?' + qs,
         type: 'post',
         success: function (data, status_text) {
-            alert('已成功从虚拟机移除');
+            alert(gettext('已成功从虚拟机移除'));
             window.location.reload();
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '虚拟机移除IP失败;');
+            msg = get_err_msg_or_default(xhr, gettext('虚拟机移除IP失败;'));
             alert(msg);
         },
     });

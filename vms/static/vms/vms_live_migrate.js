@@ -19,12 +19,12 @@
         let obj_data = getForm2Obj(form);
         let host_id = obj_data['host_id'];
         if(!host_id || host_id <= 0){
-            alert('请选择迁移的目标宿主机');
+            alert(gettext('请选择迁移的目标宿主机'));
             return;
         }
         let vm_uuid = $("#id-vm-uuid").text();
         let api = build_absolute_url('api/v3/vms/' + vm_uuid + '/live-migrate/' + host_id + '/');
-        let msg = "确定迁移虚拟机吗？";
+        let msg = gettext("确定迁移虚拟机吗？");
         if(!confirm(msg))
             return;
 
@@ -32,7 +32,7 @@
         btn_submit.addClass('disabled'); //鼠标悬停时，使按钮表现为不可点击状态
         btn_submit.attr('disabled', true);//失能对应按钮
 
-        let loading = new KZ_Loading('虚拟机动态迁移中...');
+        let loading = new KZ_Loading(gettext('虚拟机动态迁移中...'));
         loading.show();
         $.ajax({
             url: api,
@@ -43,18 +43,18 @@
                     $("#id-div-migrate-status").show();
                     display_icon(true);
                     display_icon();
-                    $("#id-migrate-result").text('等待迁移');
+                    $("#id-migrate-result").text(gettext('等待迁移'));
                     let task_id = data['migrate_task'];
                     window.migrate_status_timer_number = window.setInterval(function () {
                         get_vm_migrate_status(task_id, handle_vm_status_callback);
                     }, 2000);
                 }else{
-                    alert("虚拟机动态迁移请求失败！" + data['code_text']);
+                    alert(gettext("虚拟机动态迁移请求失败！") + data['code_text']);
                 }
                 loading.destroy();
             },
             error: function (xhr) {
-                let msg = '虚拟机动态迁移请求失败!';
+                let msg = gettext('虚拟机动态迁移请求失败!');
                 try{
                     msg = xhr.responseJSON.code_text;
                 }catch (e) {}
@@ -91,22 +91,22 @@
         let status_display = ''
         if (status === 'failed'){
             text_class = 'text-danger';
-            status_display = '迁移失败;' + data['content'];
+            status_display = gettext('迁移失败;') + data['content'];
             migrate_complete_do();
         }else if (status === 'in-process'){
             text_class = 'text-info';
-            status_display = '正在迁移';
+            status_display = gettext('正在迁移');
             display_icon();
         }else if (status === 'some-todo'){
             text_class = 'text-warning';
-            status_display = '迁移完成，有些需要手动善后的工作;' + data['content'];
+            status_display = gettext('迁移完成，有些需要手动善后的工作;') + data['content'];
             migrate_complete_do();
         }else if (status === 'complete'){
             text_class = 'text-success';
-            status_display = '迁移完成';
+            status_display = gettext('迁移完成');
             migrate_complete_do();
         }else if (status === 'wait'){
-            status_display = '等待迁移';
+            status_display = gettext('等待迁移');
         }
 
         dom_result.removeClass();

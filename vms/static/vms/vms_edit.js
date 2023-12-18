@@ -10,12 +10,12 @@
         if(!obj.flavor_id ||obj.flavor_id <= 0){
             delete obj.flavor_id;
             if(!(obj.vcpu || obj.mem)){
-                alert('自定义CPU或RAM请至少编辑其中一个');
+                alert(gettext('自定义CPU或RAM请至少编辑其中一个'));
                 return false;
             }
             if(obj.vcpu){
                 if(isNaN(obj.vcpu) || obj.vcpu <= 0) {
-                    alert('配置CPU输入不是有效正整数');
+                    alert(gettext('配置CPU输入不是有效正整数'));
                     return false;
                 }
             }else{
@@ -24,7 +24,7 @@
 
             if (obj.mem) {
                 if (isNaN(obj.mem) || obj.mem <= 0) {
-                    alert('配置RAM输入不是有效正整数');
+                    alert(gettext('配置RAM输入不是有效正整数'));
                     return false;
                 }
             }else{
@@ -46,7 +46,7 @@
         if (!valid_vm_edit_data(obj_data)){
             return;
         }
-        if(!confirm('确定修改虚拟机？'))
+        if(!confirm(gettext('确定修改虚拟机？')))
             return;
 
         let vm_uuid = $('#id-edit-vm-uuid').text();
@@ -62,14 +62,14 @@
             contentType: 'application/json',
             success: function (data, status, xhr) {
                 if (xhr.status === 200){
-                    alert('修改成功');
+                    alert(gettext('修改成功'));
                     location.reload();
                 }else{
-                    alert("创建失败！" + data.code_text);
+                    alert(gettext("创建失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '修改主机失败!';
+                let msg = gettext('修改主机失败!');
                 try{
                     msg = msg + xhr.responseJSON.code_text;
                 }catch (e) {}

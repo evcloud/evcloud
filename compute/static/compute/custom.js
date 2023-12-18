@@ -11,7 +11,7 @@ $(document).ready(function(jQuery) {
                     $('.field-pc_server_resource .readonly').text(data.real_cpu+'核/'+data.real_mem+'GB')
                 },
                 error: function (xhr) {
-                    alert('加载宿主机下拉框选项失败');
+                    alert(gettext('加载宿主机下拉框选项失败'));
                 }
           })
         });

@@ -20,10 +20,10 @@
         let obj_data = getForm2Obj(form);
         let expand_size = obj_data.expand_size;
         if(isNaN(expand_size) || !(/(^[1-9]\d*$)/.test(expand_size))){
-            alert('请输入一个大于0的整数');
+            alert(gettext('请输入一个大于0的整数'));
             return;
         }
-        if(!confirm('确定扩容虚拟机系统盘吗？'))
+        if(!confirm(gettext('确定扩容虚拟机系统盘吗？')))
             return;
 
         let vm_uuid = $("#id-vm-uuid").text();
@@ -38,13 +38,13 @@
             contentType: 'application/json',
             success: function (data, status, xhr) {
                 if (xhr.status === 200){
-                    alert('扩容虚拟机系统盘成功');
+                    alert(gettext('扩容虚拟机系统盘成功'));
                 }else{
-                    alert("扩容虚拟机系统盘失败！" + data.code_text);
+                    alert(gettext("扩容虚拟机系统盘失败！" )+ data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '扩容虚拟机系统盘失败!';
+                let msg = gettext('扩容虚拟机系统盘失败!');
                 try{
                     msg = xhr.responseJSON.code_text;
                 }catch (e) {}

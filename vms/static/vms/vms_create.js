@@ -95,7 +95,7 @@
                 host.append(html);
             },
             error: function (xhr) {
-                alert('加载宿主机下拉框选项失败');
+                alert(gettext('加载宿主机下拉框选项失败'));
             }
         })
     }
@@ -165,7 +165,7 @@
                 ipv4.append(html);
             },
             error: function (xhr) {
-                alert('加载IP下拉框选项失败');
+                alert(gettext('加载IP下拉框选项失败'));
             }
         })
     }
@@ -173,7 +173,7 @@
     // 校验创建虚拟机参数
     function valid_vm_create_data(obj){
         if((obj.group_id <= 0) && (obj.host_id <= 0)){
-            alert('机组和宿主机至少选择其一');
+            alert(gettext('机组和宿主机至少选择其一'));
             return false;
         }
         if ((obj.group_id <= 0)){
@@ -186,16 +186,16 @@
             delete obj.vlan_id;
         }
         if(!obj.image_id || obj.image_id <= 0){
-            alert('请选择一个系统镜像');
+            alert(gettext('请选择一个系统镜像'));
             return false;
         }
         if(!obj.flavor_id ||obj.flavor_id <= 0){
             if (isNaN(obj.vcpu) || obj.vcpu <= 0){
-                alert('配置CPU输入不是有效正整数');
+                alert(gettext('配置CPU输入不是有效正整数'));
                 return false;
             }
             if (isNaN(obj.mem) || obj.mem <= 0){
-                alert('配置RAM输入不是有效正整数');
+                alert(gettext('配置RAM输入不是有效正整数'));
                 return false;
             }
 
@@ -216,7 +216,7 @@
         if (!valid_vm_create_data(obj_data)){
             return;
         }
-        if(!confirm('确定创建虚拟机？'))
+        if(!confirm(gettext('确定创建虚拟机？')))
             return;
 
         let api = build_absolute_url('api/v3/vms/');
@@ -231,15 +231,15 @@
             contentType: 'application/json',
             success: function (data, status, xhr) {
                 if (xhr.status === 201){
-                    if(confirm('创建成功,是否去主机列表看看？')){
+                    if(confirm(gettext('创建成功,是否去主机列表看看？'))){
                         window.location = '/vms/';
                     }
                 }else{
-                    alert("创建失败！" + data.code_text);
+                    alert(gettext("创建失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '创建主机失败!';
+                let msg = gettext('创建主机失败!');
                 try{
                     msg = msg + xhr.responseJSON.code_text;
                 }catch (e) {}
@@ -284,7 +284,7 @@
                 set_image_to_cache(tag, html);
             },
             error: function (xhr) {
-                let msg = '获取镜像数据失败!';
+                let msg = gettext('获取镜像数据失败!');
                 try{
                     msg = msg + xhr.responseJSON.code_text;
                 }catch (e) {}
@@ -329,7 +329,7 @@
             size = 50;
         }
         $("input[name=sys_disk_size]").val(size);
-        $("#id-sys-disk-size-tips").text("当前您选择的操作系统镜像，要求系统盘最小" + size + 'GB');
+        $("#id-sys-disk-size-tips").text(gettext("当前您选择的操作系统镜像，要求系统盘最小") + size + 'GB');
     });
 
     $("input[name=sys_disk_size]").blur(function (e) {

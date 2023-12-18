@@ -27,7 +27,7 @@
 
     $(".btn-pci-mount").click(function (e) {
         e.preventDefault();
-        if(!confirm("确定挂载此设备吗？"))
+        if(!confirm(gettext("确定挂载此设备吗？")))
             return;
 
         let vm_uuid = $("#id-mount-vm-uuid").text();
@@ -38,11 +38,11 @@
             type: 'post',
             success: function (data, status_text) {
                 $("#tr_" + pci_id).remove();
-                alert('已成功挂载设备');
+                alert(gettext('已成功挂载设备'));
             },
             error: function (xhr, msg, err) {
                 let data = xhr.responseJSON;
-                msg = '挂载设备失败';
+                msg = gettext('挂载设备失败');
                 if (data && data.hasOwnProperty('code_text')){
                     msg = data.code_text;
                 }

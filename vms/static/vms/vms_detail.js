@@ -93,11 +93,11 @@
                 window.open(vnc, '_blank');
             },
             error: function (xhr, msg, err) {
-                msg = '打开vnc失败';
+                msg = gettext('打开vnc失败');
                 try{
                     let data = xhr.responseJSON;
                     if (data.hasOwnProperty('code_text')){
-                        msg = '打开vnc失败,' + data.code_text;
+                        msg = gettext('打开vnc失败,') + data.code_text;
                     }
                 }catch (e) {}
                 alert(msg);
@@ -121,7 +121,7 @@
     //卸载硬盘
     $('.btn-disk-umount').click(function (e) {
         e.preventDefault();
-        if(!confirm("确定要卸载此硬盘吗？")){
+        if(!confirm(gettext("确定要卸载此硬盘吗？"))){
             return
         }
         let disk_uuid = $(this).attr('data-disk-uuid');
@@ -130,10 +130,10 @@
 			type: 'patch',
             success: function (data, status_text) {
 			    $("#tr_" + disk_uuid).remove();
-                alert('已成功卸载硬盘');
+                alert(gettext('已成功卸载硬盘'));
             },
             error: function (xhr, msg, err) {
-			    msg = '卸载硬盘失败' + msg;
+			    msg = gettext('卸载硬盘失败') + msg;
 			    try {
                     let data = xhr.responseJSON;
                     if (data.hasOwnProperty('code_text')) {
@@ -148,7 +148,7 @@
     //卸载PCI设备
     $('.btn-pci-unmount').click(function (e) {
         e.preventDefault();
-        if(!confirm("确定要卸载此设备吗？")){
+        if(!confirm(gettext("确定要卸载此设备吗？"))){
             return
         }
         let pci_id = $(this).attr('data-pci-id');
@@ -157,10 +157,10 @@
 			type: 'post',
             success: function (data, status_text) {
 			    $("#tr_" + pci_id).remove();
-                alert('已成功卸载设备');
+                alert(gettext('已成功卸载设备'));
             },
             error: function (xhr, msg, err) {
-			    msg = '卸载设备失败' + msg;
+			    msg = gettext('卸载设备失败') + msg;
 			    try {
                     let data = xhr.responseJSON;
                     if (data.hasOwnProperty('code_text')) {
@@ -189,7 +189,7 @@
     // 重启虚拟机点击事件
     $(".btn-vm-reboot").click(function (e) {
         e.preventDefault();
-        if(!confirm('确定重启虚拟机？'))
+        if(!confirm(gettext('确定重启虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -206,7 +206,7 @@
     $(".btn-vm-shutdown").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定关闭虚拟机？'))
+        if(!confirm(gettext('确定关闭虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -223,7 +223,7 @@
     $(".btn-vm-poweroff").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定强制断电虚拟机？'))
+        if(!confirm(gettext('确定强制断电虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -243,7 +243,7 @@
                 node_vm_task.html(VM_TASK_CN[op]);
             },
             function () {
-                alert('已成功删除虚拟机');
+                alert(gettext('已成功删除虚拟机'));
                 let url = $("#id-vm-list-url").attr('href');
                 if (url)
                     location.href = url;
@@ -259,7 +259,7 @@
     $(".btn-vm-delete").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定删除虚拟机？'))
+        if(!confirm(gettext('确定删除虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -270,7 +270,7 @@
     $(".btn-vm-delete-force").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定强制删除虚拟机？'))
+        if(!confirm(gettext('确定强制删除虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -301,7 +301,7 @@
 			    div_show.children("span:first").text(remark);
 			},
             error: function(e){
-			    alert('修改失败');
+			    alert(gettext('修改失败'));
             },
 			complete:function() {
 				div_show.show();
@@ -350,10 +350,10 @@
     $(".btn-vm-snap-create").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定创建虚拟机系统快照吗？'))
+        if(!confirm(gettext('确定创建虚拟机系统快照吗？')))
 		    return;
 
-        let remarks = prompt('请输入快照备注信息：');
+        let remarks = prompt(gettext('请输入快照备注信息：'));
         if (remarks === null)
             return;
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -395,14 +395,14 @@
                         success_func();
                     }
                 }else{
-                    alert('删除快照失败');
+                    alert(gettext('删除快照失败'));
                 }
             },
             error: function (xhr, msg, err) {
                 let data = xhr.responseJSON;
-                msg = '删除快照失败';
+                msg = gettext('删除快照失败');
                 if (data.hasOwnProperty('code_text')){
-                    msg = '删除快照失败,' + data.code_text;
+                    msg = gettext('删除快照失败,') + data.code_text;
                 }
                 alert(msg);
             },
@@ -413,14 +413,14 @@
     $("#id-vm-snap-content").on('click', '.btn-vm-snap-delete', function (e) {
         e.preventDefault();
 
-        if(!confirm('确定删除此虚拟机系统快照吗？'))
+        if(!confirm(gettext('确定删除此虚拟机系统快照吗？')))
 		    return;
 
         let snap_id = $(this).attr('data-snap-id');
         let tr = $(this).parents('tr');
         delete_vm_snap_ajax(snap_id, function () {
             tr.remove();
-            alert('已成功删除');
+            alert(gettext('已成功删除'));
         });
     });
 
@@ -460,7 +460,7 @@
     // 回滚虚拟机到指定快照
     $("#id-vm-snap-content").on('click', '.btn-vm-snap-rollback', function (e) {
         e.preventDefault();
-        if(!confirm('确定回滚虚拟机到此快照吗？请谨慎操作。'))
+        if(!confirm(gettext('确定回滚虚拟机到此快照吗？请谨慎操作。')))
 		    return;
 
         let snap_id = $(this).attr('data-snap-id');
@@ -471,16 +471,16 @@
 			type: 'post',
 			success: function (data, status_text, xhr) {
                 if (xhr.status === 201){
-                    alert('回滚主机成功');
+                    alert(gettext('回滚主机成功'));
                 }else{
-                    alert('回滚主机失败');
+                    alert(gettext('回滚主机失败'));
                 }
             },
             error: function(xhr, msg, err){
 			    let data = xhr.responseJSON;
-                msg = '回滚主机失败';
+                msg = gettext('回滚主机失败');
                 if (data.hasOwnProperty('code_text')){
-                    msg = '回滚主机失败,' + data.code_text;
+                    msg = gettext('回滚主机失败,') + data.code_text;
                 }
                 alert(msg);
             }

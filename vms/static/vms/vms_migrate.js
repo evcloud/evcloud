@@ -22,15 +22,15 @@
         let obj_data = getForm2Obj(form);
         let host_id = obj_data.host_id;
         if(!host_id || host_id <= 0){
-            alert('请选择迁移的目标宿主机');
+            alert(gettext('请选择迁移的目标宿主机'));
             return;
         }
         let vm_uuid = $("#id-vm-uuid").text();
         let api = build_absolute_url('api/v3/vms/' + vm_uuid + '/migrate/' + host_id + '/');
-        let msg = "确定迁移虚拟机吗？";
+        let msg = gettext("确定迁移虚拟机吗？");
         let force = obj_data.force;
         if (force === "force"){
-            msg += "您已选择强制迁移";
+            msg += gettext("您已选择强制迁移");
             api += '?force=true'
         }
         if(!confirm(msg))
@@ -39,7 +39,7 @@
         let btn_submit = $(this);
         btn_submit.addClass('disabled'); //鼠标悬停时，使按钮表现为不可点击状态
         btn_submit.attr('disabled', true);//失能对应按钮
-        let loading = new KZ_Loading('虚拟机关机迁移中...');
+        let loading = new KZ_Loading(gettext('虚拟机关机迁移中...'));
         loading.show();
         $.ajax({
             url: api,
@@ -48,14 +48,14 @@
             success: function (data, status, xhr) {
                 loading.destroy();
                 if (xhr.status === 201){
-                    alert('虚拟机迁移成功');
+                    alert(gettext('虚拟机迁移成功'));
                 }else{
-                    alert("虚拟机迁移失败！" + data.code_text);
+                    alert(gettext("虚拟机迁移失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
                 loading.destroy();
-                let msg = '虚拟机迁移失败!';
+                let msg = gettext('虚拟机迁移失败!');
                 try{
                     msg = xhr.responseJSON.code_text;
                 }catch (e) {}

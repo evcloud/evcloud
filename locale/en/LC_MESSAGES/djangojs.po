@@ -1,0 +1,661 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-12-12 16:32+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: compute/static/compute/custom.js:14 image/static/image/image_create.js:100
+#: image/static/image/image_vm_create.js:101 vms/static/vms/vms_create.js:98
+msgid "加载宿主机下拉框选项失败"
+msgstr "Failed to load host dropdown menu options."
+
+#: device/static/device/pci_list.js:35
+msgid "确定卸载设备？"
+msgstr "Are you sure to unmount the device?"
+
+#: device/static/device/pci_list.js:44 vms/static/vms/vms_detail.js:160
+msgid "已成功卸载设备"
+msgstr "Unmount device successfully."
+
+#: device/static/device/pci_list.js:48 vms/static/vms/vms_detail.js:163
+msgid "卸载设备失败"
+msgstr "Failed to unmount the device."
+
+#: device/static/device/pci_mount_to_vm.js:63
+#: vdisk/static/vdisk/vdisk_mount_to_vm.js:63 vms/static/vms/vms_detail.js:209
+#: vms/static/vms/vms_list.js:204
+msgid "确定关闭虚拟机？"
+msgstr "Are you sure to stop the virtual server?"
+
+#: device/static/device/pci_mount_to_vm.js:78
+#: vdisk/static/vdisk/vdisk_mount_to_vm.js:78 vms/static/vms/vms_detail.js:226
+#: vms/static/vms/vms_list.js:225
+msgid "确定强制断电虚拟机？"
+msgstr "Are you sure to forcibly power off the virtual server?"
+
+#: device/static/device/pci_mount_to_vm.js:92
+#: vdisk/static/vdisk/vdisk_mount_to_vm.js:92
+msgid "确定挂载到此虚拟机吗？"
+msgstr "Are you sure to mount to this virtual server?"
+
+#: device/static/device/pci_mount_to_vm.js:102
+#: vms/static/vms/vms_mount_pci.js:41
+msgid "已成功挂载设备"
+msgstr "Mount device successfully."
+
+#: device/static/device/pci_mount_to_vm.js:106
+#: vms/static/vms/vms_mount_pci.js:45
+msgid "挂载设备失败"
+msgstr "Failed to mount the device."
+
+#: docs/static/docs/js/docsify.min.js:1
+msgid "style"
+msgstr "style"
+
+#: docs/static/docs/js/docsify.min.js:1
+msgid "div"
+msgstr "div"
+
+#: image/static/image/image_create.js:132
+#: image/static/image/image_vm_create.js:133
+msgid "加载子网vlan下拉框选项失败"
+msgstr "Failed to load subnet VLAN dropdown menu options."
+
+#: image/static/image/image_create.js:170
+#: image/static/image/image_vm_create.js:171 vms/static/vms/vms_create.js:168
+msgid "加载IP下拉框选项失败"
+msgstr "Failed to load IP dropdown menu options."
+
+#: image/static/image/image_create.js:178
+#: image/static/image/image_vm_create.js:179 vms/static/vms/vms_create.js:176
+#: vms/static/vms/vms_shelve_list.js:38
+msgid "机组和宿主机至少选择其一"
+msgstr "Select at least one of the host unit and host."
+
+#: image/static/image/image_create.js:192
+#: image/static/image/image_vm_create.js:193 vms/static/vms/vms_create.js:194
+#: vms/static/vms/vms_edit.js:18
+msgid "配置CPU输入不是有效正整数"
+msgstr "Please enter a valid positive integer."
+
+#: image/static/image/image_create.js:196
+#: image/static/image/image_vm_create.js:197 vms/static/vms/vms_create.js:198
+#: vms/static/vms/vms_edit.js:27
+msgid "配置RAM输入不是有效正整数"
+msgstr "Please enter a valid positive integer."
+
+#: image/static/image/image_create.js:216
+#: image/static/image/image_vm_create.js:217 vms/static/vms/vms_create.js:219
+msgid "确定创建虚拟机？"
+msgstr "Are you sure to create a new virtual server?"
+
+#: image/static/image/image_create.js:247 vms/static/vms/vms_create.js:234
+msgid "创建成功,是否去主机列表看看？"
+msgstr "Successfully! Would you like to check the server list?"
+
+#: image/static/image/image_create.js:251
+#: image/static/image/image_vm_create.js:237
+#: vdisk/static/vdisk/vdisk_create.js:126 vms/static/vms/vms_create.js:238
+#: vms/static/vms/vms_edit.js:68
+msgid "创建失败！"
+msgstr "Failed!"
+
+#: image/static/image/image_create.js:255
+#: image/static/image/image_vm_create.js:241 vms/static/vms/vms_create.js:242
+msgid "创建主机失败!"
+msgstr "Failed to create server."
+
+#: image/static/image/image_create.js:299
+#: image/static/image/image_vm_create.js:287 vms/static/vms/vms_create.js:287
+msgid "获取镜像数据失败!"
+msgstr "Failed to obtain image data."
+
+#: image/static/image/image_create.js:344
+#: image/static/image/image_vm_create.js:333 vms/static/vms/vms_create.js:332
+msgid "当前您选择的操作系统镜像，要求系统盘最小"
+msgstr "The operating system image you have selected currently requires a minimum system disk size."
+
+#: image/static/image/image_list.js:5 vms/static/vms/vms_operations.js:14
+msgid "故障0"
+msgstr "error"
+
+#: image/static/image/image_list.js:6 vms/static/vms/vms_operations.js:15
+msgid "运行"
+msgstr "running"
+
+#: image/static/image/image_list.js:7 vms/static/vms/vms_operations.js:16
+msgid "阻塞"
+msgstr "blocking"
+
+#: image/static/image/image_list.js:8 image/static/image/image_list.js:12
+#: vms/static/vms/vms_operations.js:17 vms/static/vms/vms_operations.js:21
+msgid "暂停"
+msgstr "pause"
+
+#: image/static/image/image_list.js:9 image/static/image/image_list.js:10
+#: vms/static/vms/vms_operations.js:18 vms/static/vms/vms_operations.js:19
+msgid "关机"
+msgstr "closed"
+
+#: image/static/image/image_list.js:11 vms/static/vms/vms_operations.js:20
+msgid "崩溃"
+msgstr "breakdown"
+
+#: image/static/image/image_list.js:13 vms/static/vms/vms_operations.js:22
+msgid "故障"
+msgstr "error"
+
+#: image/static/image/image_list.js:14 vms/static/vms/vms_operations.js:23
+msgid "无法访问宿主机"
+msgstr "unable to access host"
+
+#: image/static/image/image_list.js:15 vms/static/vms/vms_operations.js:24
+msgid "未找到"
+msgstr "not found"
+
+#: image/static/image/image_list.js:16
+msgid "虚拟机不存在"
+msgstr "Virtual server does not exist"
+
+#: image/static/image/image_list.js:57 vdisk/static/vdisk/vdisk_list.js:52
+#: vms/static/vms/vms_detail.js:304 vms/static/vms/vms_list.js:36
+msgid "修改失败"
+msgstr "Failed to edit."
+
+#: image/static/image/image_list.js:144
+msgid "打开vnc失败！"
+msgstr "Failed to open vnc."
+
+#: image/static/image/image_list.js:148
+msgid "打开vnc失败!"
+msgstr "Failed to open vnc."
+
+#: image/static/image/image_list.js:184
+msgid "镜像更新失败！"
+msgstr "Failed to update image."
+
+#: image/static/image/image_list.js:188 image/static/image/image_list.js:364
+msgid "镜像更新失败!"
+msgstr "Failed to update image."
+
+#: image/static/image/image_list.js:223
+msgid "镜像启用失败！"
+msgstr "Failed to enable image."
+
+#: image/static/image/image_list.js:179
+msgid "更新"
+msgstr "Update"
+
+#: image/static/image/image_list.js:227
+msgid "镜像启用失败!"
+msgstr "Failed to enable image."
+
+#: image/static/image/image_list.js:246
+msgid "开机中"
+msgstr "starting"
+
+#: image/static/image/image_list.js:256 image/static/image/image_list.js:291
+#: image/static/image/image_list.js:326 image/static/image/image_list.js:360
+msgid "虚拟机启动失败！"
+msgstr "Failed to start virtual server."
+
+#: image/static/image/image_list.js:260
+msgid "开机操作失败!"
+msgstr "Failed to start."
+
+#: image/static/image/image_list.js:276
+msgid "确定删除镜像虚拟机（删除虚拟机不会删除镜像）？"
+msgstr "Are you sure to delete the image virtual server? Image will not be deleted."
+
+#: image/static/image/image_list.js:281
+msgid "删除中"
+msgstr "deleting"
+
+#: image/static/image/image_list.js:296
+msgid "删除虚拟机操作失败!"
+msgstr "Failed to delete virtual server."
+
+#: image/static/image/image_list.js:316
+msgid "关机中"
+msgstr "stopping"
+
+#: image/static/image/image_list.js:330
+msgid "关机操作失败!"
+msgstr "Failed to stop virtual server."
+
+#: image/static/image/image_list.js:350
+msgid "强制断电中"
+msgstr "force power off"
+
+#: image/static/image/image_vm_create.js:233
+msgid "创建成功,是否去镜像列表看看？"
+msgstr "Successfully! Would you like to check the image list?"
+
+#: vdisk/static/vdisk/vdisk_create.js:72
+msgid "加载硬盘存储池配额下拉框选项失败"
+msgstr "Failed to load disk storage pool quota dropdown menu options."
+
+#: vdisk/static/vdisk/vdisk_create.js:80
+msgid "机组和硬盘存储池至少选择其一"
+msgstr "Select at least one of the host unit and disk storage pool."
+
+#: vdisk/static/vdisk/vdisk_create.js:90
+msgid "请选择或输入有效的容量大小"
+msgstr "Please select or enter a valid capacity size."
+
+#: vdisk/static/vdisk/vdisk_create.js:107
+msgid "确定创建硬盘吗？"
+msgstr "Are you sure to create a new disk?"
+
+#: vdisk/static/vdisk/vdisk_create.js:122
+msgid "创建成功,是否去硬盘列表看看？"
+msgstr "Successfully! Would you like to check the disk list?"
+
+#: vdisk/static/vdisk/vdisk_create.js:130
+msgid "创建硬盘失败!"
+msgstr "Failed to create a new disk."
+
+#: vdisk/static/vdisk/vdisk_list.js:64 vms/static/vms/vms_detail.js:124
+msgid "确定要卸载此硬盘吗？"
+msgstr "Are you sure to unmount the disk?"
+
+#: vdisk/static/vdisk/vdisk_list.js:72 vms/static/vms/vms_detail.js:133
+msgid "已成功卸载硬盘"
+msgstr "Unmount disk successfully."
+
+#: vdisk/static/vdisk/vdisk_list.js:77 vms/static/vms/vms_detail.js:136
+msgid "卸载硬盘失败"
+msgstr "Failed to unmount disk."
+
+#: vdisk/static/vdisk/vdisk_list.js:89
+msgid "确定要删除此硬盘吗？"
+msgstr "Are you sure to delete the disk?"
+
+#: vdisk/static/vdisk/vdisk_list.js:98
+msgid "已成功删除硬盘"
+msgstr "Delete disk successfully."
+
+#: vdisk/static/vdisk/vdisk_list.js:102
+msgid "删除硬盘"
+msgstr "Delete disk"
+
+#: vdisk/static/vdisk/vdisk_mount_to_vm.js:103
+#: vms/static/vms/vms_mount_disk.js:41
+msgid "已成功挂载硬盘"
+msgstr "Mount disk successfully."
+
+#: vdisk/static/vdisk/vdisk_mount_to_vm.js:108
+#: vms/static/vms/vms_mount_disk.js:46
+msgid "挂载硬盘失败"
+msgstr "Failed to mount disk."
+
+#: vms/static/vms/vms_attach_ip.js:6
+msgid "确定为虚拟机附加此IP？"
+msgstr "Are you sure to attach this ip to the server?"
+
+#: vms/static/vms/vms_attach_ip.js:19
+msgid "确定为虚拟机移除此IP？"
+msgstr "Are you sure to remove this ip from the server?"
+
+#: vms/static/vms/vms_attach_ip.js:52
+msgid "已成功附加到虚拟机"
+msgstr "Attach ip successfully."
+
+#: vms/static/vms/vms_attach_ip.js:56
+msgid "虚拟机附加IP失败;"
+msgstr "Failed to attach ip."
+
+#: vms/static/vms/vms_attach_ip.js:72
+msgid "已成功从虚拟机移除"
+msgstr "Remove ip from server successfully."
+
+#: vms/static/vms/vms_attach_ip.js:76
+msgid "虚拟机移除IP失败;"
+msgstr "Failed to remove ip from server."
+
+#: vms/static/vms/vms_create.js:189 vms/static/vms/vms_reset.js:25
+msgid "请选择一个系统镜像"
+msgstr "Please select a system image."
+
+#: vms/static/vms/vms_detail.js:96 vms/static/vms/vms_list.js:371
+msgid "打开vnc失败"
+msgstr "Failed to open vnc."
+
+#: vms/static/vms/vms_detail.js:100 vms/static/vms/vms_list.js:375
+msgid "打开vnc失败,"
+msgstr "Failed to open vnc."
+
+#: vms/static/vms/vms_detail.js:151
+msgid "确定要卸载此设备吗？"
+msgstr "Are you sure to unmount the device?"
+
+#: vms/static/vms/vms_detail.js:192 vms/static/vms/vms_list.js:183
+msgid "确定重启虚拟机？"
+msgstr "Are you sure to restart the server?"
+
+#: vms/static/vms/vms_detail.js:246
+msgid "已成功删除虚拟机"
+msgstr "Delete server successfully."
+
+#: vms/static/vms/vms_detail.js:262 vms/static/vms/vms_list.js:252
+msgid "确定删除虚拟机？"
+msgstr "Are you sure to delete the server?"
+
+#: vms/static/vms/vms_detail.js:273 vms/static/vms/vms_list.js:263
+msgid "确定强制删除虚拟机？"
+msgstr "Are you sure to forcibly delete the server?"
+
+#: vms/static/vms/vms_detail.js:353 vms/static/vms/vms_list.js:399
+msgid "确定创建虚拟机系统快照吗？"
+msgstr "Are you sure to create a virtual server system snapshot?"
+
+#: vms/static/vms/vms_detail.js:356 vms/static/vms/vms_list.js:402
+msgid "请输入快照备注信息："
+msgstr "Please enter the snapshot note information:"
+
+#: vms/static/vms/vms_detail.js:398 vms/static/vms/vms_detail.js:403
+msgid "删除快照失败"
+msgstr "Failed to delete snapshot."
+
+#: vms/static/vms/vms_detail.js:405
+msgid "删除快照失败,"
+msgstr "Failed to delete snapshot."
+
+#: vms/static/vms/vms_detail.js:416
+msgid "确定删除此虚拟机系统快照吗？"
+msgstr "Are you sure to delete the virtual server system snapshot?"
+
+#: vms/static/vms/vms_detail.js:423
+msgid "已成功删除"
+msgstr "Successfully!"
+
+#: vms/static/vms/vms_detail.js:463
+msgid "确定回滚虚拟机到此快照吗？请谨慎操作。"
+msgstr "Are you sure to roll back the virtual server to this snapshot? Please operate with caution."
+
+#: vms/static/vms/vms_detail.js:474
+msgid "回滚主机成功"
+msgstr "Roll back successfully!"
+
+#: vms/static/vms/vms_detail.js:476 vms/static/vms/vms_detail.js:481
+msgid "回滚主机失败"
+msgstr "Failed to roll back."
+
+#: vms/static/vms/vms_detail.js:483
+msgid "回滚主机失败,"
+msgstr "Failed to roll back."
+
+#: vms/static/vms/vms_disk_expand.js:23
+msgid "请输入一个大于0的整数"
+msgstr "Please enter an integer greater than 0."
+
+#: vms/static/vms/vms_disk_expand.js:26
+msgid "确定扩容虚拟机系统盘吗？"
+msgstr "Are you sure to expand the virtual server system disk?"
+
+#: vms/static/vms/vms_disk_expand.js:41
+msgid "扩容虚拟机系统盘成功"
+msgstr "Expand system disk successfully!"
+
+#: vms/static/vms/vms_disk_expand.js:43
+msgid "扩容虚拟机系统盘失败！"
+msgstr "Failed to expand system disk."
+
+#: vms/static/vms/vms_disk_expand.js:47
+msgid "扩容虚拟机系统盘失败!"
+msgstr "Failed to expand system disk."
+
+#: vms/static/vms/vms_edit.js:13
+msgid "自定义CPU或RAM请至少编辑其中一个"
+msgstr "CPU or RAM, please edit at least one of them."
+
+#: vms/static/vms/vms_edit.js:49
+msgid "确定修改虚拟机？"
+msgstr "Are you sure to edit the server?"
+
+#: vms/static/vms/vms_edit.js:65
+msgid "修改成功"
+msgstr "Edit successfully!"
+
+#: vms/static/vms/vms_edit.js:72
+msgid "修改主机失败!"
+msgstr "Failed to edit."
+
+#: vms/static/vms/vms_list.js:295
+msgid "确定启动所有选中的虚拟机？"
+msgstr "Are you sure to start all selected virtual servers?"
+
+#: vms/static/vms/vms_list.js:309
+msgid "确定关闭所有选中的虚拟机？"
+msgstr "Are you sure to stop all selected virtual servers?"
+
+#: vms/static/vms/vms_list.js:323
+msgid "确定强制断电所有选中的虚拟机？"
+msgstr "Are you sure to forcibly power off all selected virtual servers?"
+
+#: vms/static/vms/vms_list.js:337
+msgid "确定删除所有选中的虚拟机？"
+msgstr "Are you sure to delete all selected virtual servers?"
+
+#: vms/static/vms/vms_list.js:351
+msgid "确定强制删除所有选中的虚拟机？"
+msgstr "Are you sure to forcibly delete all selected virtual servers?"
+
+#: vms/static/vms/vms_list.js:408
+msgid "创建快照成功"
+msgstr "Create successfully!"
+
+#: vms/static/vms/vms_list.js:417
+msgid "确定尝试恢复丢失的虚拟机？请确认虚拟主机处于丢失状态"
+msgstr "Are you sure to recover the lost virtual server? Please confirm that the virtual server is in a lost state."
+
+#: vms/static/vms/vms_list.js:429
+msgid "已成功恢复丢失的虚拟主机"
+msgstr "Recover the lost virtual server successfully!"
+
+#: vms/static/vms/vms_live_migrate.js:22 vms/static/vms/vms_migrate.js:25
+msgid "请选择迁移的目标宿主机"
+msgstr "Please select the destination host for migration."
+
+#: vms/static/vms/vms_live_migrate.js:27 vms/static/vms/vms_migrate.js:30
+msgid "确定迁移虚拟机吗？"
+msgstr "Are you sure to migrate the server?"
+
+#: vms/static/vms/vms_live_migrate.js:35
+msgid "虚拟机动态迁移中..."
+msgstr "Dynamic migration in progress"
+
+#: vms/static/vms/vms_live_migrate.js:46 vms/static/vms/vms_live_migrate.js:109
+msgid "等待迁移"
+msgstr "Waiting for migration"
+
+#: vms/static/vms/vms_live_migrate.js:52
+msgid "虚拟机动态迁移请求失败！"
+msgstr "Failed to dynamic migrate."
+
+#: vms/static/vms/vms_live_migrate.js:57
+msgid "虚拟机动态迁移请求失败!"
+msgstr "Failed to dynamic migrate."
+
+#: vms/static/vms/vms_live_migrate.js:94
+msgid "迁移失败;"
+msgstr "Failed to migrate."
+
+#: vms/static/vms/vms_live_migrate.js:98
+msgid "正在迁移"
+msgstr "migrating"
+
+#: vms/static/vms/vms_live_migrate.js:102
+msgid "迁移完成，有些需要手动善后的工作;"
+msgstr "Completed. Some tasks require manual completion."
+
+#: vms/static/vms/vms_live_migrate.js:106
+msgid "迁移完成"
+msgstr "completed"
+
+#: vms/static/vms/vms_migrate.js:33
+msgid "您已选择强制迁移"
+msgstr "You have chosen to force migration."
+
+#: vms/static/vms/vms_migrate.js:42
+msgid "虚拟机关机迁移中..."
+msgstr "Shutdown migration in progress"
+
+#: vms/static/vms/vms_migrate.js:51
+msgid "虚拟机迁移成功"
+msgstr "Migrate successfully!"
+
+#: vms/static/vms/vms_migrate.js:53
+msgid "虚拟机迁移失败！"
+msgstr "Failed to migrate the server."
+
+#: vms/static/vms/vms_migrate.js:58
+msgid "虚拟机迁移失败!"
+msgstr "Failed to migrate the server."
+
+#: vms/static/vms/vms_mount_disk.js:30
+msgid "确定挂载此硬盘吗？"
+msgstr "Are you sure to mount the disk?"
+
+#: vms/static/vms/vms_mount_pci.js:30
+msgid "确定挂载此设备吗？"
+msgstr "Are you sure to mount the device?"
+
+#: vms/static/vms/vms_operations.js:3
+msgid "启动"
+msgstr "start"
+
+#: vms/static/vms/vms_operations.js:4
+msgid "重启"
+msgstr "restart"
+
+#: vms/static/vms/vms_operations.js:5
+msgid "关闭"
+msgstr "shutdown"
+
+#: vms/static/vms/vms_operations.js:6
+msgid "关闭电源"
+msgstr "power off"
+
+#: vms/static/vms/vms_operations.js:7
+msgid "删除"
+msgstr "delete"
+
+#: vms/static/vms/vms_operations.js:8
+msgid "重置"
+msgstr "reset"
+
+#: vms/static/vms/vms_operations.js:9
+msgid "强制删除"
+msgstr "force delete"
+
+#: vms/static/vms/vms_operations.js:10
+msgid "丢失恢复"
+msgstr "restore after being lost"
+
+#: vms/static/vms/vms_operations.js:81
+msgid "启动虚拟机失败;"
+msgstr "Failed to start the server."
+
+#: vms/static/vms/vms_operations.js:107
+msgid "重启虚拟机失败;"
+msgstr "Failed to restart the server."
+
+#: vms/static/vms/vms_operations.js:133
+msgid "虚拟机关机失败;"
+msgstr "Failed to shutdown the server."
+
+#: vms/static/vms/vms_operations.js:159
+msgid "强制断电失败;"
+msgstr "Failed to forcibly power off the server."
+
+#: vms/static/vms/vms_operations.js:188
+msgid "删除虚拟机失败;"
+msgstr "Failed to delete the server."
+
+#: vms/static/vms/vms_operations.js:213
+msgid "创建主机快照失败;"
+msgstr "Failed to create a snapshot."
+
+#: vms/static/vms/vms_operations.js:244
+msgid "此虚拟主机不存在，无法恢复，请刷新网页后重试。"
+msgstr "The virtual server does not exist and cannot be restored. Please refresh the webpage and try again."
+
+#: vms/static/vms/vms_operations.js:246
+msgid "此虚拟主机的系统盘镜像已丢失，无法恢复。"
+msgstr "The system disk image of this virtual server has been lost and cannot be restored."
+
+#: vms/static/vms/vms_operations.js:248
+msgid ""
+"宿主机可能宕机或网络问题，无法访问宿主机，可以选择等待宿主机恢复；也可以尝试"
+"迁移此虚拟主机到其他宿主机。"
+msgstr "This host may be down, having network problems or inaccessible. You can choose to wait for the host to recover or try migrating this virtual server to another host."
+
+#: vms/static/vms/vms_operations.js:250
+msgid "此虚拟主机未丢失，无需恢复。"
+msgstr "This virtual server is not lost and does not require recovery."
+
+#: vms/static/vms/vms_operations.js:252 vms/static/vms/vms_operations.js:255
+msgid "尝试恢复丢失的虚拟主机失败;"
+msgstr "Failed to recover the lost virtual server."
+
+#: vms/static/vms/vms_reset.js:28
+msgid "确定重置虚拟机系统？"
+msgstr "Are you sure to reset the server image?"
+
+#: vms/static/vms/vms_reset.js:42
+msgid "重置系统镜像成功"
+msgstr "Reset successfully!"
+
+#: vms/static/vms/vms_reset.js:44
+msgid "创重置系统镜像失败！"
+msgstr "Faied to reset the server image."
+
+#: vms/static/vms/vms_reset.js:48
+msgid "创重置系统镜像失败!"
+msgstr "Faied to reset the server image."
+
+#: vms/static/vms/vms_shelve_list.js:6
+msgid "确定搁置虚拟机？"
+msgstr "Are you sure to hibernate the server?"
+
+#: vms/static/vms/vms_shelve_list.js:23
+msgid "确定删除搁置虚拟机？"
+msgstr "Are you sure to delete the hibernated server?"
+
+#: vms/static/vms/vms_shelve_list.js:63
+msgid "确定恢复虚拟机？"
+msgstr "Are you sure to recover server?"
+
+#: vms/static/vms/vms_shelve_list.js:83
+msgid "恢复成功,是否去主机列表看看？"
+msgstr "Successfully! Would you like to check the server list?"
+
+#: vms/static/vms/vms_shelve_list.js:87
+msgid "恢复失败！"
+msgstr "Faile to recover."
+
+#: vms/static/vms/vms_shelve_list.js:91
+msgid "恢复主机失败!"
+msgstr "Faile to recover."
+
+#: vms/static/vms/vms_shelve_list.js:149
+msgid "虚拟机搁置失败;"
+msgstr "Faile to hibernate."
+
+#: vms/static/vms/vms_shelve_list.js:176
+msgid "搁置虚拟机删除失败;"
+msgstr "Failed to delete the hibernated server."
