@@ -569,6 +569,7 @@ class VmImageRelease(View):
 
         user_id = request.user.id
         try:
+            # 镜像创建虚拟机不占用服务器 cpu 和 mem , 使用系统，不使用大业内存
             Image.objects.create(
                 name=image_name,
                 sys_type=int(image_os_type),

@@ -343,6 +343,6 @@ class Host(models.Model):
         super().save(*args, **kwargs)
 
     def delete(self, using=None, keep_parents=False):
-        if self.ipv4 == '127.0.0.1':
-            raise ComputeError(msg='127.0.0.1为镜像专用宿主机，不能删除')
+        # if self.ipv4 == '127.0.0.1':
+        #     raise ComputeError(msg='127.0.0.1为镜像专用宿主机，不能删除')
         super().delete(using=using, keep_parents=keep_parents)

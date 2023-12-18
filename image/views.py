@@ -144,7 +144,7 @@ class ImageVmCreateView(View):
         try:
             form = ImageVmCreateFrom(initial={'image_id': image_id})
         except Exception as e:
-            error = NoSuchImage(msg='【创建镜像虚拟机错误】请确认已创建127.0.0.1宿主机与镜像专用vlan', err=e)
+            error = NoSuchImage(msg=f'创建镜像虚拟机错误: {str(e)}', err=e)
             return error.render(request=request)
 
         context = {
@@ -163,7 +163,7 @@ class ImageVmCreateView(View):
         data_center = post.get('data_center')
         group_image = post.get('group_image')
         host_image = post.get('host_image')
-        vlan_id = post.get('vlan_id')
+        vlan_id = post.get('vlan_image')
         mac_ip = post.get('mac_ip')
         vcpu = post.get('vcpu')
         mem = post.get('mem')
@@ -175,7 +175,7 @@ class ImageVmCreateView(View):
             error = ImageError(msg='查询镜像时错误', err=e)
             return error.render(request=request)
 
-        form = ImageVmCreateFrom(data=post)
+        form = ImageVmCreateFrom(data=post, initial={'image_id': image_id})
         if not form.is_valid():
             context = {
                 'form': form,

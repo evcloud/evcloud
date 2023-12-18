@@ -251,8 +251,6 @@ class Image(models.Model):
             if self.vm_uuid:
                 from vms.api import VmAPI
                 from vms.models import Vm
-                if not self.vm_host:
-                    self.vm_host = Host({'ipv4': '127.0.0.1'})
                 vm = Vm(uuid=self.vm_uuid, name=self.vm_uuid, vcpu=self.vm_vcpu, mem=self.vm_mem, host=self.vm_host)
                 api = VmAPI()
                 api.delete_vm_for_image(vm)
@@ -296,3 +294,7 @@ class Image(models.Model):
         size_gb = math.ceil(size / 1024 ** 3)
         self.size = size_gb
         self.save(update_fields=['size'])
+
+    def get_center(self):
+        """获取数据中心"""
+        return self.ceph_pool.ceph.center

@@ -74,18 +74,18 @@ class HostAdmin(admin.ModelAdmin):
         failed_hosts = []
         for host in queryset:
             try:
-                if host.ipv4 == '127.0.0.1':
-                    s = Image.objects.filter(vm_uuid__isnull=False).aggregate(vcpu_now=Sum('vm_vcpu'),
-                                                                              mem_now=Sum('vm_mem'),
-                                                                              count=Count('pk'))
-                    vcpu_allocated = s.get('vcpu_now')
-                    mem_allocated = s.get('mem_now')
-                    vm_num = s.get('count')
-                else:
-                    s = host.stats_vcpu_mem_vms_now()
-                    vcpu_allocated = s.get('vcpu')
-                    mem_allocated = s.get('mem')
-                    vm_num = s.get('vm_num')
+                # if host.ipv4 == '127.0.0.1':
+                #     s = Image.objects.filter(vm_uuid__isnull=False).aggregate(vcpu_now=Sum('vm_vcpu'),
+                #                                                               mem_now=Sum('vm_mem'),
+                #                                                               count=Count('pk'))
+                #     vcpu_allocated = s.get('vcpu_now')
+                #     mem_allocated = s.get('mem_now')
+                #     vm_num = s.get('count')
+                # else:
+                s = host.stats_vcpu_mem_vms_now()
+                vcpu_allocated = s.get('vcpu')
+                mem_allocated = s.get('mem')
+                vm_num = s.get('vm_num')
                 host.vcpu_allocated = vcpu_allocated
                 host.mem_allocated = mem_allocated
                 host.vm_created = vm_num

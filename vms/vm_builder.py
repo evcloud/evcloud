@@ -347,7 +347,7 @@ class VmBuilder:
         创建一个镜像虚拟机
 
         说明：
-            host_id不能为空，必须为127.0.0.1的宿主机，ipv4可以为镜像专用子网中的任意ip，可以重复使用；
+            host_id不能为空，同一宿主机组的宿主机，ipv4可以为镜像专用子网中的任意ip，可以重复使用；
 
         备注：虚拟机的名称和系统盘名称同虚拟机的uuid
 
@@ -415,8 +415,8 @@ class VmBuilder:
                 image.save()
                 raise errors.VmError(msg=str(e))
         except Exception as e:
-            if macip:
-                self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
+            # if macip:   #  上面没有设置占用该IP
+            #     self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
             if host:
                 self._host_manager.free_to_host(host_id=host.id, vcpu=vcpu, mem=mem)  # 释放已申请的宿主机资源
             raise errors.VmError(msg=str(e))
