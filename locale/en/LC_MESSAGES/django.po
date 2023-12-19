@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-12-12 16:31+0800\n"
+"POT-Creation-Date: 2023-12-18 17:01+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,14 +19,15 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ceph/models.py:162
-msgid "novnc http协议配置有误。"    
+msgid "novnc http协议配置有误。"
 msgstr "The HTTP protocol configuration of Novnc is incorrect."
 
 #: device/templates/pci_list.html:9 device/templates/pci_list.html:15
-msgid "本地资源设备列表"    
+msgid "本地资源设备列表"
 msgstr "Local device list"
 
-#: device/templates/pci_list.html:24 image/templates/image_list.html:27
+#: device/templates/pci_list.html:24 image/forms.py:13
+#: image/templates/image_list.html:27 image/templates/image_vm_create2.html:21
 #: reports/templates/reports_list.html:27
 #: reports/templates/reports_list.html:43
 #: reports/templates/reports_list.html:76 templates/app_nav.html:52
@@ -36,21 +37,22 @@ msgstr "Local device list"
 msgid "数据中心"
 msgstr "Data center"
 
-#: device/templates/pci_list.html:35 vdisk/templates/vdisk_list.html:48
-#: vms/templates/vm_unshelve.html:39 vms/templates/vms_create.html:33
-#: vms/templates/vms_list.html:36
+#: device/templates/pci_list.html:35 image/templates/image_vm_create2.html:35
+#: vdisk/templates/vdisk_list.html:48 vms/templates/vm_unshelve.html:39
+#: vms/templates/vms_create.html:33 vms/templates/vms_list.html:36
 msgid "主机组"
 msgstr "Host group"
 
 #: device/templates/pci_list.html:45 device/templates/pci_list.html:82
-#: device/templates/pci_mount.html:24 reports/templates/reports_group.html:27
-#: templates/app_nav.html:44 vms/templates/vm_detail.html:236
-#: vms/templates/vm_disk_expand.html:31 vms/templates/vm_live_migrate.html:30
-#: vms/templates/vm_migrate.html:36 vms/templates/vm_mount_pci.html:24
-#: vms/templates/vm_mount_pci.html:57 vms/templates/vm_reset.html:29
-#: vms/templates/vm_shelve_list.html:50 vms/templates/vm_unshelve.html:74
-#: vms/templates/vms_create.html:62 vms/templates/vms_list.html:46
-#: vms/templates/vms_list.html:81
+#: device/templates/pci_mount.html:24 image/templates/image_vm_create2.html:68
+#: reports/templates/reports_group.html:27
+#: reports/templates/reports_list.html:33 templates/app_nav.html:44
+#: vms/templates/vm_detail.html:236 vms/templates/vm_disk_expand.html:31
+#: vms/templates/vm_live_migrate.html:30 vms/templates/vm_migrate.html:36
+#: vms/templates/vm_mount_pci.html:24 vms/templates/vm_mount_pci.html:57
+#: vms/templates/vm_reset.html:29 vms/templates/vm_shelve_list.html:50
+#: vms/templates/vm_unshelve.html:74 vms/templates/vms_create.html:62
+#: vms/templates/vms_list.html:46 vms/templates/vms_list.html:81
 msgid "宿主机"
 msgstr "Hosts"
 
@@ -103,9 +105,9 @@ msgid "挂载时间"
 msgstr "Mount time"
 
 #: device/templates/pci_list.html:85 device/templates/pci_mount.html:27
-#: device/templates/pci_mount.html:60 network/templates/vlan_list.html:35
-#: vdisk/templates/vdisk_create.html:76 vdisk/templates/vdisk_list.html:98
-#: vdisk/templates/vdisk_mount_to_vm.html:29
+#: device/templates/pci_mount.html:60 image/templates/image_vm_create2.html:167
+#: network/templates/vlan_list.html:35 vdisk/templates/vdisk_create.html:76
+#: vdisk/templates/vdisk_list.html:98 vdisk/templates/vdisk_mount_to_vm.html:29
 #: vdisk/templates/vdisk_mount_to_vm.html:63
 #: vms/templates/vm_attach_ip_list.html:35
 #: vms/templates/vm_attach_ip_list.html:78
@@ -118,7 +120,7 @@ msgstr "Mount time"
 #: vms/templates/vm_mount_pci.html:26 vms/templates/vm_mount_pci.html:59
 #: vms/templates/vm_reset.html:30 vms/templates/vm_shelve_list.html:53
 #: vms/templates/vms_create.html:149 vms/templates/vms_list.html:84
-#: vpn/templates/vpn_list.html:56
+#: vpn/templates/vpn_list.html:57
 msgid "备注"
 msgstr "Notes"
 
@@ -238,6 +240,18 @@ msgstr "shutdown"
 #: vms/templates/vms_list.html:149
 msgid "强制断电"
 msgstr "Power off"
+
+#: django_site/settings.py:146
+msgid "English"
+msgstr ""
+
+#: django_site/settings.py:147
+msgid "中文简体"
+msgstr ""
+
+#: image/forms.py:15
+msgid "宿组机组"
+msgstr ""
 
 #: image/templates/image_delete.html:6
 msgid "镜像删除"
@@ -378,7 +392,7 @@ msgstr "Image size"
 #: image/templates/image_list.html:207 vdisk/templates/vdisk_list.html:94
 #: vdisk/templates/vdisk_mount_to_vm.html:25 vms/templates/vm_detail.html:64
 #: vms/templates/vm_detail.html:186 vms/templates/vm_detail.html:282
-#: vms/templates/vm_mount_disk.html:60 vpn/templates/vpn_list.html:52
+#: vms/templates/vm_mount_disk.html:60 vpn/templates/vpn_list.html:53
 msgid "创建时间"
 msgstr "Create Time"
 
@@ -386,7 +400,7 @@ msgstr "Create Time"
 msgid "更新时间"
 msgstr "Update Time"
 
-#: image/templates/image_list.html:213 vpn/templates/vpn_list.html:55
+#: image/templates/image_list.html:213 vpn/templates/vpn_list.html:56
 msgid "创建人"
 msgstr "Creator"
 
@@ -402,7 +416,9 @@ msgstr "Server Memory"
 msgid "虚拟机CPU"
 msgstr "Server CPU"
 
-#: image/templates/image_list.html:227 vms/templates/vm_edit.html:26
+#: image/templates/image_list.html:227
+#: image/templates/image_vm_create2.html:109
+#: image/templates/image_vm_create2.html:123 vms/templates/vm_edit.html:26
 #: vms/templates/vm_edit.html:45 vms/templates/vm_live_migrate.html:42
 #: vms/templates/vm_migrate.html:51 vms/templates/vms_create.html:99
 #: vms/templates/vms_create.html:110
@@ -410,6 +426,9 @@ msgid "核"
 msgstr "Core"
 
 #: image/templates/image_vm_create.html:6
+#: image/templates/image_vm_create2.html:6
+#: image/templates/image_vm_create2.html:12
+#: image/templates/image_vm_create2.html:14
 msgid "创建镜像虚拟机"
 msgstr "Create image template server"
 
@@ -421,10 +440,59 @@ msgstr "Create image"
 msgid "管理虚拟机"
 msgstr "Manage severs"
 
-#: image/templates/image_vm_create.html:42 vdisk/templates/vdisk_create.html:83
-#: vms/templates/vms_create.html:156
+#: image/templates/image_vm_create.html:42
+#: image/templates/image_vm_create2.html:175
+#: vdisk/templates/vdisk_create.html:83 vms/templates/vms_create.html:156
 msgid "创建"
 msgstr "Create"
+
+#: image/templates/image_vm_create2.html:47
+#: vms/templates/vm_attach_ip_list.html:47 vms/templates/vm_unshelve.html:50
+#: vms/templates/vms_create.html:43
+msgid "网段"
+msgstr "Network segment"
+
+#: image/templates/image_vm_create2.html:50
+#: image/templates/image_vm_create2.html:62
+#: image/templates/image_vm_create2.html:71 vms/templates/vm_unshelve.html:53
+#: vms/templates/vm_unshelve.html:68 vms/templates/vm_unshelve.html:77
+#: vms/templates/vms_create.html:46 vms/templates/vms_create.html:57
+#: vms/templates/vms_create.html:65
+msgid "自动选择"
+msgstr "Auto select"
+
+#: image/templates/image_vm_create2.html:77 templates/app_nav.html:65
+#: vms/templates/vm_detail.html:105 vms/templates/vms_create.html:70
+msgid "系统镜像"
+msgstr "System image"
+
+#: image/templates/image_vm_create2.html:97 vms/templates/vms_create.html:88
+msgid "配置"
+msgstr "config"
+
+#: image/templates/image_vm_create2.html:103 vms/templates/vm_edit.html:40
+#: vms/templates/vms_create.html:94
+msgid "模板样式"
+msgstr "Template style"
+
+#: image/templates/image_vm_create2.html:106 vms/templates/vm_edit.html:43
+#: vms/templates/vms_create.html:97
+msgid "自定义"
+msgstr "User-defined"
+
+#: image/templates/image_vm_create2.html:141 vms/templates/vms_create.html:126
+msgid "配置系统盘容量"
+msgstr "config system disk capacity"
+
+#: image/templates/image_vm_create2.html:146 vms/templates/vms_create.html:131
+msgid "系统盘容量"
+msgstr "system disk capacity"
+
+#: image/templates/image_vm_create2.html:157 vms/templates/vms_create.html:140
+msgid "当前您选择的操作系统镜像，要求系统盘最小50GB"
+msgstr ""
+"The operating system image you have selected currently requires a minimum "
+"system disk size of 50GB."
 
 #: network/templates/vlan_add.html:9 network/templates/vlan_add.html:15
 msgid "VLAN信息"
@@ -677,7 +745,9 @@ msgstr "Version changes"
 
 #: templates/about.html:13
 msgid "EVCloud是一个轻量级虚拟机管理平台，追求功能实用，运行稳定，维护简单。"
-msgstr "EVCloud is a lightweight virtual server management platform that pursues practical functionality, stable operation, and simple maintenance."
+msgstr ""
+"EVCloud is a lightweight virtual server management platform that pursues "
+"practical functionality, stable operation, and simple maintenance."
 
 #: templates/about.html:16
 msgid "研发团队"
@@ -685,7 +755,9 @@ msgstr "R&D Team"
 
 #: templates/about.html:17
 msgid "中国科学院计算机网络信息中心，科技云部。"
-msgstr "Science and Technology Cloud Operation and Development Department, Computer Network Information Center, Chinese Academy of Sciences"
+msgstr ""
+"Science and Technology Cloud Operation and Development Department, Computer "
+"Network Information Center, Chinese Academy of Sciences"
 
 #: templates/about.html:22
 msgid "当前版本"
@@ -750,11 +822,6 @@ msgstr "Local device"
 #: templates/app_nav.html:62
 msgid "虚拟机模板配置"
 msgstr "Virtual sever template config"
-
-#: templates/app_nav.html:65 vms/templates/vm_detail.html:105
-#: vms/templates/vms_create.html:70
-msgid "系统镜像"
-msgstr "System image"
 
 #: templates/app_nav.html:69
 msgid "XML模板"
@@ -927,7 +994,8 @@ msgstr "Login"
 
 #: templates/base.html:115 users/templates/registration/login.html:49
 msgid "不允许个人注册，请联系管理员"
-msgstr "Individual registration is not allowed. Please contact the administrator."
+msgstr ""
+"Individual registration is not allowed. Please contact the administrator."
 
 #: templates/base.html:115 users/templates/registration/login.html:50
 msgid "注册"
@@ -974,7 +1042,7 @@ msgid "虚拟机平台EVCloud登录"
 msgstr "EVCloud login"
 
 #: users/templates/registration/login.html:28 vpn/templates/delete.html:14
-#: vpn/templates/vpn_list.html:49 vpn/templates/vpn_log_list.html:50
+#: vpn/templates/vpn_list.html:50 vpn/templates/vpn_log_list.html:50
 msgid "用户名"
 msgstr "Username"
 
@@ -1009,6 +1077,7 @@ msgid "容量大小"
 msgstr "Storage capacity"
 
 #: vdisk/templates/vdisk_list.html:80 vdisk/templates/vdisk_mount_to_vm.html:48
+#: vms/templates/vms_list.html:68
 msgid "搜 UUID、IP地址、备注"
 msgstr "Search for UUID, IP address and notes"
 
@@ -1141,11 +1210,6 @@ msgstr "Virtual server ip address"
 msgid "可供附加的IP地址"
 msgstr "Available IP addresses"
 
-#: vms/templates/vm_attach_ip_list.html:47 vms/templates/vm_unshelve.html:50
-#: vms/templates/vms_create.html:43
-msgid "网段"
-msgstr "Network segment"
-
 #: vms/templates/vm_attach_ip_list.html:61
 msgid "搜 IP地址"
 msgstr "Search for ip address"
@@ -1233,20 +1297,20 @@ msgid "网络信息"
 msgstr "Network info"
 
 #: vms/templates/vm_detail.html:124 vms/templates/vm_shelve_list.html:47
-msgid "源IP地址"
-msgstr "Source ip address"
+msgid "原IP地址"
+msgstr "original iP address"
 
 #: vms/templates/vm_detail.html:125
-msgid "源MAC地址"
-msgstr "Source MAC address"
+msgid "原MAC地址"
+msgstr "original MAC address"
 
 #: vms/templates/vm_detail.html:126 vms/templates/vm_detail.html:133
-msgid "源IPv6地址"
-msgstr "Source IPv6 address"
+msgid "原IPv6地址"
+msgstr "original IPv6 address"
 
 #: vms/templates/vm_detail.html:128
-msgid "源网桥名"
-msgstr "Source bridge"
+msgid "原网桥名"
+msgstr "original bridge name"
 
 #: vms/templates/vm_detail.html:143
 msgid "用户信息"
@@ -1340,14 +1404,6 @@ msgstr "Virtual server ip"
 msgid "新的配置"
 msgstr "New config"
 
-#: vms/templates/vm_edit.html:40 vms/templates/vms_create.html:94
-msgid "模板样式"
-msgstr "Template style"
-
-#: vms/templates/vm_edit.html:43 vms/templates/vms_create.html:97
-msgid "自定义"
-msgstr "User-defined"
-
 #: vms/templates/vm_edit.html:75
 msgid "修改"
 msgstr "Edit"
@@ -1433,8 +1489,11 @@ msgid ""
 "请慎重勾选，源宿主机节点上的源虚拟主机可能无法清理，导致与迁移的新虚拟主机网"
 "络冲突；请在确认宿主机损毁、宕机移除、重装系统等情况导致虚拟主机丢失不可恢复"
 "不可用的情况下选择。"
-msgstr "Attention: source virtual server on the source host may not be able to be cleaned up, resulting in network conflicts with the new server; "
-       "Select this option when the virtual server is lost, irreparable or unavailable due to damage, downtime, removal or system reinstallation of the hosts."
+msgstr ""
+"Attention: source virtual server on the source host may not be able to be "
+"cleaned up, resulting in network conflicts with the new server; Select this "
+"option when the virtual server is lost, irreparable or unavailable due to "
+"damage, downtime, removal or system reinstallation of the hosts."
 
 #: vms/templates/vm_mount_disk.html:34
 msgid "可供挂载的云硬盘"
@@ -1531,28 +1590,6 @@ msgstr "Restore server option"
 #: vms/templates/vm_unshelve.html:18
 msgid "恢复虚拟机"
 msgstr "Restore server"
-
-#: vms/templates/vm_unshelve.html:53 vms/templates/vm_unshelve.html:68
-#: vms/templates/vm_unshelve.html:77 vms/templates/vms_create.html:46
-#: vms/templates/vms_create.html:57 vms/templates/vms_create.html:65
-msgid "自动选择"
-msgstr "Auto select"
-
-#: vms/templates/vms_create.html:88
-msgid "配置"
-msgstr "config"
-
-#: vms/templates/vms_create.html:126
-msgid "配置系统盘容量"
-msgstr "config system disk capacity"
-
-#: vms/templates/vms_create.html:131
-msgid "系统盘容量"
-msgstr "system disk capacity"
-
-#: vms/templates/vms_create.html:140
-msgid "当前您选择的操作系统镜像，要求系统盘最小50GB"
-msgstr "The operating system image you have selected currently requires a minimum system disk size of 50GB."
 
 #: vms/templates/vms_list.html:86
 msgid "任务"
@@ -1654,35 +1691,31 @@ msgstr "VPN login logs"
 msgid "创建VPN"
 msgstr "Create VPN"
 
-#: vpn/templates/vpn_list.html:35
-msgid "用户名、备注"
-msgstr "Username, notes"
-
-#: vpn/templates/vpn_list.html:36 vpn/templates/vpn_log_list.html:40
-msgid "搜索"
-msgstr "Search"
-
-#: vpn/templates/vpn_list.html:40
+#: vpn/templates/vpn_list.html:30
 msgid "配置文件"
 msgstr "Config file"
 
-#: vpn/templates/vpn_list.html:41
-msgid "CA证书"
-msgstr "CA certificate"
+#: vpn/templates/vpn_list.html:36
+msgid "用户名、备注"
+msgstr "Username, notes"
 
-#: vpn/templates/vpn_list.html:50
+#: vpn/templates/vpn_list.html:37 vpn/templates/vpn_log_list.html:40
+msgid "搜索"
+msgstr "Search"
+
+#: vpn/templates/vpn_list.html:51
 msgid "密码"
 msgstr "Password"
 
-#: vpn/templates/vpn_list.html:51
+#: vpn/templates/vpn_list.html:52
 msgid "激活状态"
 msgstr "Active"
 
-#: vpn/templates/vpn_list.html:53
+#: vpn/templates/vpn_list.html:54
 msgid "修改时间"
 msgstr "Modification time"
 
-#: vpn/templates/vpn_list.html:54
+#: vpn/templates/vpn_list.html:55
 msgid "过期时间"
 msgstr "Expiration time"
 
@@ -1713,3 +1746,15 @@ msgstr "Login time"
 #: vpn/templates/vpn_log_list.html:57
 msgid "登出时间"
 msgstr "Logout time"
+
+#~ msgid "源IP地址"
+#~ msgstr "Source ip address"
+
+#~ msgid "源MAC地址"
+#~ msgstr "Source MAC address"
+
+#~ msgid "源网桥名"
+#~ msgstr "Source bridge"
+
+#~ msgid "CA证书"
+#~ msgstr "CA certificate"

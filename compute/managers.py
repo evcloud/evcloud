@@ -582,6 +582,33 @@ class GroupManager:
         quota.update(ip_data)
         return quota
 
+    def center_compute_quota(self, center_id):
+        """计算数据中心资源"""
+
+        center_obj = Center.objects.filter(id=center_id).first()
+        group_list = Group.objects.filter(center_id=center_obj.id).all()
+        group_id_list = []
+        for l in group_list:
+            group_id_list.append(l.id)
+
+        quota = Host.objects.filter(enable=True, group_id__in=group_id_list).aggregate(
+            mem_total=DefaultSum('mem_total'),
+            mem_allocated=DefaultSum('mem_allocated'),
+            vcpu_total=DefaultSum('vcpu_total'),
+            vcpu_allocated=DefaultSum('vcpu_allocated'),
+            real_cpu=DefaultSum('real_cpu'),
+            vm_created=DefaultSum('vm_created'),
+            vm_limit=DefaultSum('vm_limit')
+        )
+        ip_data = MacIP.objects.filter(enable=True, vlan__enable=True).aggregate(
+            ips_total=Count('id'),
+            ips_used=Count('id', filter=Q(used=True)),
+            ips_private=Count('id', filter=Q(vlan__tag=0)),
+            ips_public=Count('id', filter=Q(vlan__tag=1))
+        )
+        quota.update(ip_data)
+        return quota
+
 
 class HostManager:
     """

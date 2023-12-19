@@ -25,6 +25,13 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='内存计算单位（默认MB，可选GB）'
+            ),
+            openapi.Parameter(
+                name='center_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='数据中心'
             )
         ],
         responses={
@@ -57,7 +64,17 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
 
-        quota = GroupManager().compute_quota(user=request.user)
+        center_id = request.query_params.get('center_id', None)
+        quota = None
+        if center_id:
+            quota = GroupManager().center_compute_quota(center_id=center_id)
+        else:
+            quota = GroupManager().compute_quota(user=request.user)
+
+        if quota is None:
+            exc = exceptions.BadRequestError(msg='没有找到相关数据，请检查具体配置信息。')
+            return self.exception_response(exc)
+
         if 'GB' == mem_unit:
             quota['mem_unit'] = 'GB'
         else:
