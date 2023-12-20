@@ -19,6 +19,7 @@ class DefaultSum(Sum):
 
     def __init__(self, *expressions, distinct=False, filter=None, return_if_none=0, **extra):
         self.return_if_none = return_if_none
+        self.empty_result_set_value = return_if_none
         super().__init__(*expressions, distinct=distinct, filter=filter, **extra)
 
     @cached_property
@@ -588,7 +589,7 @@ class GroupManager:
 
         g_ids = list(group_qs.values_list('id', flat=True))
         if g_ids:
-            ip_qs = Vlan.objects.filter(group__in=g_ids, enable=True)
+            ip_qs = Vlan.objects.filter(group__in=g_ids, enable=True, image_specialized=False).exclude(vlan_shield__user_name_id=user.id) # 镜像专用valn过滤
         else:
             ip_qs = Vlan.objects.none()
 
