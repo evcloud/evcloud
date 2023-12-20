@@ -540,12 +540,21 @@ class GroupManager:
             vcpu_total=DefaultSum('hosts_set__vcpu_total'), vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
             real_cpu=DefaultSum('hosts_set__real_cpu'), vm_created=DefaultSum('hosts_set__vm_created')).all()
 
-    def compute_quota(self, user):
+    @staticmethod
+    def compute_quota(user, center_id=None):
         """
         用户可用总资源配额，已用配额，和其他用户共用配额
         """
         if user.is_superuser:
-            quota = Host.objects.filter(enable=True).aggregate(
+            quota_qs = Host.objects.filter(enable=True)
+            if center_id:
+                group_ids = list(Group.objects.filter(center_id=center_id).values_list('id', flat=True))
+                if group_ids:
+                    quota_qs = quota_qs.filter(group_id__in=group_ids)
+                else:
+                    quota_qs = quota_qs.none()
+
+            quota = quota_qs.aggregate(
                 mem_total=DefaultSum('mem_total'),
                 mem_allocated=DefaultSum('mem_allocated'),
                 vcpu_total=DefaultSum('vcpu_total'),
@@ -563,7 +572,11 @@ class GroupManager:
             quota.update(ip_data)
             return quota
 
-        quota = user.group_set.all().aggregate(
+        group_qs = user.group_set.all()
+        if center_id:
+            group_qs = group_qs.filter(center_id=center_id)
+
+        quota = group_qs.aggregate(
             mem_total=DefaultSum('hosts_set__mem_total', filter=Q(hosts_set__enable=True)),
             mem_allocated=DefaultSum('hosts_set__mem_allocated'),
             vcpu_total=DefaultSum('hosts_set__vcpu_total'),
@@ -572,39 +585,18 @@ class GroupManager:
             vm_created=DefaultSum('hosts_set__vm_created'),
             vm_limit=DefaultSum('hosts_set__vm_limit')
         )
-        g_ids = user.group_set.all().values_list('id', flat=True)
-        ip_data = Vlan.objects.filter(group__in=g_ids, enable=True).aggregate(
+
+        g_ids = list(group_qs.values_list('id', flat=True))
+        if g_ids:
+            ip_qs = Vlan.objects.filter(group__in=g_ids, enable=True)
+        else:
+            ip_qs = Vlan.objects.none()
+
+        ip_data = ip_qs.aggregate(
             ips_total=Count('macips', filter=Q(macips__enable=True)),
             ips_used=Count('macips', filter=Q(macips__enable=True) & Q(macips__used=True)),
             ips_private=Count('macips', filter=Q(tag=0)),
             ips_public=Count('macips', filter=Q(tag=1))
-        )
-        quota.update(ip_data)
-        return quota
-
-    def center_compute_quota(self, center_id):
-        """计算数据中心资源"""
-
-        center_obj = Center.objects.filter(id=center_id).first()
-        group_list = Group.objects.filter(center_id=center_obj.id).all()
-        group_id_list = []
-        for l in group_list:
-            group_id_list.append(l.id)
-
-        quota = Host.objects.filter(enable=True, group_id__in=group_id_list).aggregate(
-            mem_total=DefaultSum('mem_total'),
-            mem_allocated=DefaultSum('mem_allocated'),
-            vcpu_total=DefaultSum('vcpu_total'),
-            vcpu_allocated=DefaultSum('vcpu_allocated'),
-            real_cpu=DefaultSum('real_cpu'),
-            vm_created=DefaultSum('vm_created'),
-            vm_limit=DefaultSum('vm_limit')
-        )
-        ip_data = MacIP.objects.filter(enable=True, vlan__enable=True).aggregate(
-            ips_total=Count('id'),
-            ips_used=Count('id', filter=Q(used=True)),
-            ips_private=Count('id', filter=Q(vlan__tag=0)),
-            ips_public=Count('id', filter=Q(vlan__tag=1))
         )
         quota.update(ip_data)
         return quota

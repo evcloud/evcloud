@@ -60,20 +60,19 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
             }
         """
         mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        center_id = request.query_params.get('center_id', None)
+
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
 
-        center_id = request.query_params.get('center_id', None)
-        quota = None
-        if center_id:
-            quota = GroupManager().center_compute_quota(center_id=center_id)
-        else:
-            quota = GroupManager().compute_quota(user=request.user)
+        try:
+            center_id = int(center_id)
+        except ValueError:
+            return self.exception_response(
+                exceptions.BadRequestError(msg='无效的数据中心id，值需要是一个正整数'))
 
-        if quota is None:
-            exc = exceptions.BadRequestError(msg='没有找到相关数据，请检查具体配置信息。')
-            return self.exception_response(exc)
+        quota = GroupManager().compute_quota(user=request.user, center_id=center_id)
 
         if 'GB' == mem_unit:
             quota['mem_unit'] = 'GB'
