@@ -67,7 +67,7 @@ schema_view = get_schema_view(
     ),
     public=False,
     generator_class=BothHttpAndHttpsSchemaGenerator,
-    permission_classes=(permissions.AllowAny,),
+    permission_classes=[permissions.IsAuthenticated]
 )
 
 urlpatterns = [
