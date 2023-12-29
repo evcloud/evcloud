@@ -61,12 +61,14 @@ class Image(models.Model):
     RELEASE_FEDORA = 4
     RELEASE_CENTOS = 5
     RELEASE_UNKNOWN = 6
+    RELEASE_ROCKY = 7
     RELEASE_CHOICES = (
         (RELEASE_WINDOWS_DESKTOP, 'Windows Desktop'),
         (RELEASE_WINDOWS_SERVER, 'Windows Server'),
         (RELEASE_UBUNTU, 'Ubuntu'),
         (RELEASE_FEDORA, 'Fedora'),
         (RELEASE_CENTOS, 'Centos'),
+        (RELEASE_ROCKY, 'Rocky'),
         (RELEASE_UNKNOWN, 'Unknown'),
     )
 

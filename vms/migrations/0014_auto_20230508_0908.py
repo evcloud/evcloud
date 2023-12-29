@@ -66,7 +66,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='vm',
             name='release',
-            field=models.SmallIntegerField(choices=[(1, 'Windows Desktop'), (2, 'Windows Server'), (3, 'Ubuntu'), (4, 'Fedora'), (5, 'Centos'), (6, 'Unknown')], default=5, verbose_name='系统发行版本'),
+            field=models.SmallIntegerField(choices=[(1, 'Windows Desktop'), (2, 'Windows Server'), (3, 'Ubuntu'), (4, 'Fedora'), (5, 'Centos'), (7, 'Rocky'), (6, 'Unknown')], default=5, verbose_name='系统发行版本'),
         ),
         migrations.AddField(
             model_name='vm',
