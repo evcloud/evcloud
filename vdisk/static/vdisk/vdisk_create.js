@@ -56,7 +56,7 @@
         if(!group){
             return;
         }
-        let qs = encode_params({group_id:group});
+        let qs = encode_params({group_id:group, enable:true});
         let api = build_absolute_url('/api/v3/quota/?'+ qs);
         $.ajax({
             url: api,
@@ -69,7 +69,7 @@
                 host.append(html);
             },
             error: function (xhr) {
-                alert('加载硬盘存储池配额下拉框选项失败');
+                alert(gettext('加载硬盘存储池配额下拉框选项失败'));
             }
         })
     }
@@ -77,7 +77,7 @@
     // 校验创建硬盘参数
     function valid_disk_create_data(obj){
         if((obj.group_id <= 0) && (obj.quota_id <= 0)){
-            alert('机组和硬盘存储池至少选择其一');
+            alert(gettext('机组和硬盘存储池至少选择其一'));
             return false;
         }
         if ((obj.group_id <= 0)){
@@ -87,7 +87,7 @@
             delete obj.quota_id;
         }
         if(obj.mem <= 0){
-            alert('请选择或输入有效的容量大小');
+            alert(gettext('请选择或输入有效的容量大小'));
             return false;
         }
         return true;
@@ -104,7 +104,7 @@
         if (!valid_disk_create_data(obj_data)){
             return;
         }
-        if(!confirm('确定创建硬盘吗？'))
+        if(!confirm(gettext('确定创建硬盘吗？')))
             return;
 
         let api = build_absolute_url('api/v3/vdisk/');
@@ -119,15 +119,15 @@
             contentType: 'application/json',
             success: function (data, status, xhr) {
                 if (xhr.status === 201){
-                    if(confirm('创建成功,是否去硬盘列表看看？')){
+                    if(confirm(gettext('创建成功,是否去硬盘列表看看？'))){
                         window.location = '/vdisk/';
                     }
                 }else{
-                    alert("创建失败！" + data.code_text);
+                    alert(gettext("创建失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '创建硬盘失败!';
+                let msg = gettext('创建硬盘失败!');
                 try{
                     msg = msg + xhr.responseJSON.code_text;
                 }catch (e) {}

@@ -22,10 +22,10 @@
         let obj_data = getForm2Obj(form);
         let image_id = obj_data.image_id;
         if(!image_id || image_id <= 0){
-            alert('请选择一个系统镜像');
+            alert(gettext('请选择一个系统镜像'));
             return;
         }
-        if(!confirm('确定重置虚拟机系统？'))
+        if(!confirm(gettext('确定重置虚拟机系统？')))
             return;
 
         let vm_uuid = $("#id-vm-uuid").text();
@@ -39,13 +39,13 @@
             contentType: 'application/json',
             success: function (data, status, xhr) {
                 if (xhr.status === 201){
-                    alert('重置系统镜像成功');
+                    alert(gettext('重置系统镜像成功'));
                 }else{
-                    alert("创重置系统镜像失败！" + data.code_text);
+                    alert(gettext("创重置系统镜像失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
-                let msg = '创重置系统镜像失败!';
+                let msg = gettext('创重置系统镜像失败!');
                 try{
                     msg = xhr.responseJSON.code_text;
                 }catch (e) {}

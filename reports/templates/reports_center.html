@@ -1,54 +1,77 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
+{% block title %}{% translate '资源统计列表' %}{% endblock %}
 
-{% block title %}资源统计列表{% endblock %}
-
-{% block head %}{% endblock %}
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'reports/reports.css' %}">
+{% endblock %}
 
 {% block boby %}
-    <div class="container-fluid col-lg-12">
-        <p class="h4">分中心资源统计:<strong id="id-current-center" data-center-id="{{ center_id }}"></strong></p>
-        <div class="card border-info">
-            <table class="table" id="id-table-center">
-                <thead class="thead-light">
-                <tr>
-                    <th>总虚拟cpu(/核)</th>
-                    <th>已分配cpu(/核)</th>
-                    <th>cpu分配率</th>
-                    <th>总内存</th>
-                    <th>已使用内存</th>
-                    <th>内存使用率</th>
-                    <th>云主机数</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="card border-success">
-                <div class="card-header">
-                    <b class="card-title">宿主机组</b>
-                </div>
-                <table class="table" id="id-table-group">
-                    <thead class="thead-light">
-                    <tr>
-                        <th>宿主机组</th>
-                        <th>总虚拟cpu(/核)</th>
-                        <th>已分配cpu(/核)</th>
-                        <th>cpu分配率</th>
-                        <th>总内存</th>
-                        <th>已使用内存</th>
-                        <th>内存使用率</th>
-                        <th>云主机数</th>
-                    </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+    <div class="container-fluid d-flex flex-column h-100">
+        <div class="d-flex px-3">
+            <nav aria-label="breadcrumb">
+              <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="#">{% translate '全部' %}</a></li>
+                <li class="breadcrumb-item active" aria-current="page" id="id-current-center" data-center-id="{{ center_id }}"></li>
+              </ol>
+            </nav>
+{#            <p class="h5">分中心资源统计:<strong id="id-current-center" data-center-id="{{ center_id }}"></strong></p>#}
+        </div>
+        <div class="d-flex px-3" style="flex: 1">
+            <div style="width: 200px">
+                <ul class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+                  <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#host_group" aria-controls="host_group" aria-selected="false">{% translate '宿主机组' %}</a>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#graph" aria-controls="graph" aria-selected="false">{% translate '可视化图表' %}</a>
+                  </li>
+                </ul>
             </div>
-            <div class="card-body">
-                <canvas id="id-chart-vm" height="100"></canvas>
-                <hr/>
-                <canvas id="id-chart-cpu" height="100"></canvas>
-                <hr/>
-                <canvas id="id-chart-mem" height="100"></canvas>
+            <div class="pl-lg-1 flex-grow-1">
+                <div class="tab-content d-flex flex-column h-100">
+                     <div class="card border-info">
+                        <table class="table" id="id-table-center">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>{% translate '总虚拟cpu(/核)' %}</th>
+                                <th>{% translate '已分配cpu(/核)' %}</th>
+                                <th>cpu{% translate '分配率' %}</th>
+                                <th>{% translate '总内存' %}</th>
+                                <th>{% translate '已使用内存' %}</th>
+                                <th>{% translate '内存使用率' %}</th>
+                                <th>{% translate '虚拟机数' %}</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                     </div>
+                     <div class="card tab-pane fade show active"  style="flex: 1" id="host_group" role="tabpanel" aria-labelledby="host_group-tab">
+                        <table class="table" id="id-table-group">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>{% translate '宿主机组' %}</th>
+                                <th>{% translate '总虚拟cpu(/核)' %}</th>
+                                <th>{% translate '已分配已分配cpu(/核)' %}</th>
+                                <th>cpu{% translate '分配率' %}</th>
+                                <th>{% translate '总内存' %}</th>
+                                <th>{% translate '已使用内存' %}</th>
+                                <th>{% translate '内存使用率' %}</th>
+                                <th>{% translate '虚拟机数' %}</th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="card  tab-pane fade show p-2" id="graph" role="tabpanel" aria-labelledby="graph-tab">
+                        <canvas id="id-chart-vm" height="100"></canvas>
+                        <hr/>
+                        <canvas id="id-chart-cpu" height="100"></canvas>
+                        <hr/>
+                        <canvas id="id-chart-mem" height="100"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

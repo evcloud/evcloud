@@ -10,9 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='vm',
-            name='uuid',
-            field=models.CharField(max_length=36, primary_key=True, serialize=False, verbose_name='虚拟机UUID'),
-        ),
+        # migrations.AlterField(
+        #     model_name='vm',
+        #     name='uuid',
+        #     field=models.CharField(max_length=36, primary_key=True, serialize=False, verbose_name='虚拟机UUID'),
+        # ),
     ]

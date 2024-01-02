@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('migrate_time', models.DateTimeField(auto_now_add=True, verbose_name='迁移时间')),
                 ('result', models.BooleanField(verbose_name='迁移结果(无错误)')),
                 ('content', models.TextField(blank=True, null=True, verbose_name='文字记录')),
-                ('src_undefined', models.BooleanField(default=False, verbose_name='已清理源云主机')),
+                ('src_undefined', models.BooleanField(default=False, verbose_name='已清理源虚拟机')),
             ],
             options={
                 'verbose_name': '虚拟机迁移记录',

@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='group',
             name='center',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='group_set', to='compute.Center', verbose_name='组所属的分中心'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='group_set', to='compute.Center', verbose_name='组所属的数据中心'),
         ),
         migrations.AlterField(
             model_name='host',

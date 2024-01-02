@@ -1,4 +1,6 @@
 * [首页](/)
-* [指南](/guide)
+* [功能指南](/guide)
+* [环境搭建](/build_environment)
+* [版本更新流程](/versionupdate)
 * [安全凭证](/security)
 * [更新日志](/changelog)

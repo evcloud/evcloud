@@ -37,7 +37,16 @@ class NovncTokenManager(object):
         start_time = now - timezone.timedelta(days=365)     # print(start_time);
         end_time = now - timezone.timedelta(days=3)         # print(end_time);
         Token.objects.filter(updatetime__range=(start_time, end_time)).filter(expiretime__lt=now).delete()
-        return token, f"/novnc/?vncid={token}&type={protocol_type}"
+
+        # 原url: 返回的（url_alise） -> 指向（url_source） 目录在 novnc 板块中
+        # ip/novnc/?vncid=xxtype=vnc -> ip/novnc_nginx/novnc/vnc_lite.html?path=websockify/?token=xx
+        # 现在修改成 ip/novnc_nginx/novnc/vnc_lite.html?path=websockify/?token=xx 剥去 url 的皮
+        if protocol_type == 'spice':
+            url = f'/novnc_nginx/spice/spice_auto.html?path=websockify/?token={token}'
+        else:
+            url = f'/novnc_nginx/novnc/vnc_lite.html?path=websockify/?token={token}'
+
+        return token, url
 
     @staticmethod
     def del_token(vncid):

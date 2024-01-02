@@ -1,29 +1,62 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% block title %}{% translate '关于' %}{% endblock %}
 
 {% block boby %}
     <div class="d-flex justify-content-center align-items-center h-100 bg-light">
         <div class="card border-0 col-md-8 col-lg-6">
             <div class="card-body">
                 <div class="p-2">
-                    <h5 class="card-title">{% trans '关于EVCloud' %}</h5>
-                    <p>{% trans 'EVCloud是一个轻量级云主机管理平台，追求功能实用，运行稳定，维护简单。' %}</p>
+                    <h5 class="card-title">{% trans '关于EVCloud' %} <a href="{% url 'docs:docs' %}#/changelog"
+                                                                      target="view_window">
+                        {% trans '版本变更' %}</a></h5>
+                    <p>{% trans 'EVCloud是一个轻量级虚拟机管理平台，追求功能实用，运行稳定，维护简单。' %}</p>
                 </div>
                 <div class="p-2">
-                    <h5>{% trans '版本' %}</h5>
-                    <p><span>{{ version }}</span>&emsp;
-                        {% if version_timestamp %}
-                            <span>{{ version_timestamp }}</span>&emsp;
-                        {% endif %}
-                        <span><a href="{% url 'docs:docs' %}#/changelog" target="view_window">
-                            {% trans '变更日志' %}</a>
-                        </span>
-                    </p>
-                </div>
-                <div class="p-2">
-                    <h5>{% trans '关于我们' %}</h5>
+                    <h5>{% trans '研发团队' %}</h5>
                     <p>{% trans '中国科学院计算机网络信息中心，科技云部。' %}</p>
                 </div>
+                <div class="p-2">
+
+                    {% if version_git_change_set %}
+                        <h5>{% trans '当前版本' %}</h5>
+                        <p>
+                            <span class="p-2 bd-highlight" style="color: #0d6efd">{{ version_git_change_set.0.0 }} </span>
+
+                            <span class="p-2 bd-highlight">{% translate '发布时间' %}：{{ version_git_change_set.0.1 | date:'Y-m-d H:i:s' }}</span>
+
+                            <span class="p-2 bd-highlight">{% translate '发布人' %}：{{ version_git_change_set.0.2 }}</span>
+                        </p>
+
+                        <pre style="white-space: pre-wrap;word-wrap: break-word; font-size: 1rem">{{ version_git_change_set.0.4 }}</pre>
+                        <br>
+
+                        <h5>{% trans '历史版本' %}</h5>
+                        {% for tag in version_git_change_set|slice:"1:" %}
+                            <p>
+                                <span class="p-2 bd-highlight" style="color: #0d6efd">{{ tag.0 }} </span>
+
+                                <span class="p-2 bd-highlight">{% translate '发布时间' %}：{{ tag.1 | date:'Y-m-d H:i:s' }}</span>
+
+                                <span class="p-2 bd-highlight">{% translate '发布人' %}：{{ tag.2 }}</span>
+                            </p>
+                            <pre style="white-space: pre-wrap;word-wrap: break-word; font-size: 1rem">{{ tag.4 }}</pre>
+                            <br>
+
+                        {% endfor %}
+
+                    {% else %}
+                        <p>
+                            {% translate '无法获取版本日志， 详情请查看' %}：
+                            <span><a href="{% url 'docs:docs' %}#/changelog" target="view_window">
+                                    {% trans '变更日志' %}</a>
+                            </span>
+                        </p>
+
+                    {% endif %}
+
+                </div>
+
             </div>
         </div>
     </div>

@@ -10,25 +10,31 @@ class PCIDevice(models.Model):
     """
     TYPE_UNKNOW = 0
     TYPE_GPU = 1
+    TYPE_ETH = 2
+    TYPE_PHD = 3
+    TYPE_HD = 4
     CHOICES_TYPE = (
         (TYPE_UNKNOW, '未知设备'),
-        (TYPE_GPU, 'GPU')
+        (TYPE_GPU, 'PCIeGPU'),
+        (TYPE_ETH, 'PCIe网卡'),
+        (TYPE_PHD, 'PCIe硬盘'),
+        (TYPE_HD, '本地硬盘')
     )
 
     id = models.AutoField(primary_key=True)
-    type = models.SmallIntegerField(choices=CHOICES_TYPE, default=TYPE_UNKNOW, verbose_name='设备类型')
+    type = models.SmallIntegerField(choices=CHOICES_TYPE, default=TYPE_UNKNOW, verbose_name='资源类型')
     vm = models.ForeignKey(to=Vm, null=True, blank=True, related_name='device_set', on_delete=models.SET_NULL,
                            verbose_name='挂载于虚拟机')
     attach_time = models.DateTimeField(null=True, blank=True, verbose_name='挂载时间')
-    enable = models.BooleanField(default=True, verbose_name='状态')
+    enable = models.BooleanField(default=True, verbose_name='启用设备')
     remarks = models.TextField(null=True, blank=True, verbose_name='备注')
     host = models.ForeignKey(to=Host, on_delete=models.CASCADE, related_name='pci_devices', verbose_name='宿主机')
-    address = models.CharField(max_length=100, help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0')
+    address = models.CharField(max_length=100, help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0 或 /dev/sdp 本地盘')
 
     class Meta:
         ordering = ['-id']
-        verbose_name = 'PCIe设备' 
-        verbose_name_plural = 'PCIe设备'
+        verbose_name = '本地资源'
+        verbose_name_plural = '本地资源'
 
     def __str__(self):
         return self.host.ipv4 + '_' + self.address
@@ -68,7 +74,7 @@ class PCIDevice(models.Model):
         """
         设备是否需要与挂载的虚拟机在同一个宿主机上
         """
-        if self.type in [self.TYPE_GPU]:
+        if self.type in [self.TYPE_GPU, self.TYPE_HD, self.TYPE_PHD, self.TYPE_ETH]:
             return True
         return False
 

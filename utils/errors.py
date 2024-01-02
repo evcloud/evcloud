@@ -1,3 +1,9 @@
+import re
+import sys
+import traceback
+from django.shortcuts import render
+
+
 class Error(Exception):
     """
     错误定义
@@ -41,6 +47,17 @@ class Error(Exception):
             msg_key: self.detail()
         }
 
+    def render(self, request):
+        class_path = (re.findall('\<class \'(.*?)\'>', str(type(self)))[0]).split('.')
+        error_type = class_path[len(class_path) - 1]
+        error_code = self.code
+        error_tips = [self.msg]
+        error_traceback = traceback.format_exc(limit=1, chain=self)
+        return render(request, 'error.html',
+                      context={'error_code': error_code, 'error_type': error_type,
+                               'error_tips': error_tips, 'error_traceback': error_traceback},
+                      status=500)
+
     @property
     def status_code(self):
         return self.code
@@ -58,6 +75,19 @@ class Error(Exception):
             return cls(msg=str(err))
 
         return cls(msg=err.msg, code=err.code, err_code=err.err_code)
+
+
+class SystemRunningError(Error):
+    err_code = 'SystemRunningError'
+    code = 500
+    msg = '系统运行时错误.'
+
+    def render(self, request):
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        return render(request, 'error.html',
+                      context={'error_code': self.code, 'error_type': 'SystemRunningError',
+                               'error_tips': [self.msg, exc_value], 'error_traceback': traceback.format_exc(limit=1)},
+                      status=500)
 
 
 class AuthenticationFailedError(Error):
@@ -161,7 +191,7 @@ class AcrossGroupConflictError(VmError):
 class AcrossCenterConflictError(VmError):
     err_code = 'AcrossCenterConflict'
     code = 409
-    msg = '资源冲突，不属于同一个分中心。'
+    msg = '资源冲突，不属于同一个数据中心。'
 
 
 class VmTooManyVdiskMounted(VmError):
@@ -356,3 +386,9 @@ class NoHostGroupError(Error):
 class NoSuchImage(NotFoundError):
     msg = '没有此镜像'
     err_code = 'NoSuchImage'
+
+
+class LocaldiskAlreadyMounted(VdiskError):
+    code = 409
+    msg = '本地硬盘已被挂载'
+    err_code = 'LocaldiskAlreadyMounted'

@@ -25,6 +25,13 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='内存计算单位（默认MB，可选GB）'
+            ),
+            openapi.Parameter(
+                name='center_id',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='数据中心'
             )
         ],
         responses={
@@ -46,16 +53,27 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
                 "vm_created": 3,
                 "vm_limit": 41,
                 "ips_total": 5,
-                "ips_used": 2
+                "ips_used": 2,
+                "ips_private":2,
+                "ips_public":3,
               }
             }
         """
-        mem_unit = str.upper(request.data.get('mem_unit', 'UNKNOWN'))
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        center_id = request.query_params.get('center_id', None)
+
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
 
-        quota = GroupManager().compute_quota(user=request.user)
+        try:
+            center_id = int(center_id)
+        except ValueError:
+            return self.exception_response(
+                exceptions.BadRequestError(msg='无效的数据中心id，值需要是一个正整数'))
+
+        quota = GroupManager().compute_quota(user=request.user, center_id=center_id)
+
         if 'GB' == mem_unit:
             quota['mem_unit'] = 'GB'
         else:

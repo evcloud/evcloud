@@ -1,27 +1,27 @@
 ;
 var VM_TASK_CN = {
-    'start': '启动',
-    'reboot': '重启',
-    'shutdown': '关闭',
-    'poweroff': '关闭电源',
-    'delete': '删除',
-    'reset': '重置',
-    'delete_force': '强制删除',
-    'miss_fix': '丢失恢复'
+    'start': gettext('启动'),
+    'reboot': gettext('重启'),
+    'shutdown': gettext('关闭'),
+    'poweroff': gettext('关闭电源'),
+    'delete': gettext('删除'),
+    'reset': gettext('重置'),
+    'delete_force': gettext('强制删除'),
+    'miss_fix': gettext('丢失恢复')
 };
 
 var VM_STATUS_CN = {
-    0: '故障0', //无状态
-    1: '运行',
-    2: '阻塞',
-    3: '暂停',
-    4: '关机',
-    5: '关机',
-    6: '崩溃',
-    7: '暂停',
-    8: '故障',  //libvirt预留状态码
-    9: '无法访问宿主机',  //宿主机连接失败
-    10: '云主机丢失'  //虚拟机丢失
+    0: gettext('故障0'), //无状态
+    1: gettext('运行'),
+    2: gettext('阻塞'),
+    3: gettext('暂停'),
+    4: gettext('关机'),
+    5: gettext('关机'),
+    6: gettext('崩溃'),
+    7: gettext('暂停'),
+    8: gettext('故障'),  //libvirt预留状态码
+    9: gettext('无法访问宿主机'),  //宿主机连接失败
+    10: gettext('未找到')  //虚拟机丢失
 };
 
 var VM_STATUS_LABEL = {
@@ -78,7 +78,7 @@ function start_vm_ajax(vm_uuid, before_func, complate_func){
         success: function (data, status_text) {
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '启动虚拟机失败;');
+            msg = get_err_msg_or_default(xhr, gettext('启动虚拟机失败;'));
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -104,7 +104,7 @@ function reboot_vm_ajax(vm_uuid, before_func, complate_func){
         success: function (data, status_text) {
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '重启虚拟机失败;');
+            msg = get_err_msg_or_default(xhr, gettext('重启虚拟机失败;'));
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -130,7 +130,7 @@ function shutdown_vm_ajax(vm_uuid, before_func, complate_func){
         success: function (data, status_text) {
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '虚拟机关机失败;');
+            msg = get_err_msg_or_default(xhr, gettext('虚拟机关机失败;'));
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -156,7 +156,7 @@ function poweroff_vm_ajax(vm_uuid, before_func, complate_func){
         success: function (data, status_text) {
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '强制断电失败;');
+            msg = get_err_msg_or_default(xhr, gettext('强制断电失败;'));
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -185,7 +185,7 @@ function delete_vm_ajax(vm_uuid, op='delete', before_func, success_func, complat
             }
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '删除虚拟机失败;');
+            msg = get_err_msg_or_default(xhr, gettext('删除虚拟机失败;'));
             alert(msg);
             if(typeof(complate_func) === "function"){
                 complate_func();
@@ -210,7 +210,7 @@ function create_snap_vm_ajax(vm_uuid, remarks, before_func, success_func, compla
             }
         },
         error: function (xhr, msg, err) {
-            msg = get_err_msg_or_default(xhr, '创建主机快照失败;');
+            msg = get_err_msg_or_default(xhr, gettext('创建主机快照失败;'));
             alert(msg);
         },
         complete:function (xhr, ts) {
@@ -241,18 +241,18 @@ function vm_miss_fix_ajax(vm_uuid, before_func, success_func, complate_func){
             let d = xhr.responseJSON;
             if (d.hasOwnProperty('err_code')){
                 if (d.err_code === 'VmNotExist'){
-                    msg = '此虚拟主机不存在，无法恢复，请刷新网页后重试。'
+                    msg = gettext('此虚拟主机不存在，无法恢复，请刷新网页后重试。')
                 }else if (d.err_code === 'VmDiskImageMiss'){
-                    msg = '此虚拟主机的系统盘镜像已丢失，无法恢复。'
+                    msg = gettext('此虚拟主机的系统盘镜像已丢失，无法恢复。')
                 }else if (d.err_code === 'HostDown'){
-                    msg = '宿主机可能宕机或网络问题，无法访问宿主机，可以选择等待宿主机恢复；也可以尝试迁移此虚拟主机到其他宿主机。'
+                    msg = gettext('宿主机可能宕机或网络问题，无法访问宿主机，可以选择等待宿主机恢复；也可以尝试迁移此虚拟主机到其他宿主机。')
                 }else if(d.err_code === 'VmAlreadyExist') {
-                    msg = '此虚拟主机未丢失，无需恢复。'
+                    msg = gettext('此虚拟主机未丢失，无需恢复。')
                 }else{
-                    msg = get_err_msg_or_default(xhr, '尝试恢复丢失的虚拟主机失败;');
+                    msg = get_err_msg_or_default(xhr, gettext('尝试恢复丢失的虚拟主机失败;'));
                 }
             }else{
-                msg = get_err_msg_or_default(xhr, '尝试恢复丢失的虚拟主机失败;');
+                msg = get_err_msg_or_default(xhr, gettext('尝试恢复丢失的虚拟主机失败;'));
             }
 
             alert(msg);

@@ -11,7 +11,7 @@ class PaymentHistoryTests(MyAPITestCase):
         self.user = get_or_create_user()
 
     def test_vpn(self):
-        vpn_username = 'testvpn'
+        vpn_username = 'testvpn@cnic.cn'
 
         self.client.force_login(self.user)
 
@@ -27,14 +27,14 @@ class PaymentHistoryTests(MyAPITestCase):
         r = self.client.get(detail_url)
         self.assertEqual(r.status_code, 200)
         self.assertKeysIn(["username", "password", "active", "create_time", "modified_time"], r.data)
-        self.assert_is_subdict_of(sub={'username': 'testvpn', 'password': 'vpnpassword', 'active': False}, d=r.data)
+        self.assert_is_subdict_of(sub={'username': vpn_username, 'password': 'vpnpassword', 'active': False}, d=r.data)
 
         # change password
         query = parse.urlencode(query={'password': 'new_password'})
         r = self.client.patch(f'{detail_url}?{query}')
         self.assertEqual(r.status_code, 200)
         self.assertKeysIn(["username", "password", "active", "create_time", "modified_time"], r.data)
-        self.assert_is_subdict_of(sub={'username': 'testvpn', 'password': 'new_password', 'active': False}, d=r.data)
+        self.assert_is_subdict_of(sub={'username': vpn_username, 'password': 'new_password', 'active': False}, d=r.data)
 
         vpn = VPNAuth.objects.filter(username=vpn_username).first()
         self.assertEqual(vpn.password, "new_password")
@@ -46,7 +46,7 @@ class PaymentHistoryTests(MyAPITestCase):
         r = self.client.post(active_url)
         self.assertEqual(r.status_code, 200)
         self.assertKeysIn(["username", "password", "active", "create_time", "modified_time"], r.data)
-        self.assert_is_subdict_of(sub={'username': 'testvpn', 'password': 'new_password', 'active': True}, d=r.data)
+        self.assert_is_subdict_of(sub={'username': vpn_username, 'password': 'new_password', 'active': True}, d=r.data)
         vpn.refresh_from_db()
         self.assertIs(vpn.active, True)
 
@@ -55,6 +55,6 @@ class PaymentHistoryTests(MyAPITestCase):
         r = self.client.post(deactive_url)
         self.assertEqual(r.status_code, 200)
         self.assertKeysIn(["username", "password", "active", "create_time", "modified_time"], r.data)
-        self.assert_is_subdict_of(sub={'username': 'testvpn', 'password': 'new_password', 'active': False}, d=r.data)
+        self.assert_is_subdict_of(sub={'username': vpn_username, 'password': 'new_password', 'active': False}, d=r.data)
         vpn.refresh_from_db()
         self.assertIs(vpn.active, False)

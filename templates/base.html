@@ -1,12 +1,18 @@
 {% load static %}
+{% load i18n %}
 {% load custom_tags %}
+{% load globalconfig_tags %}
 <!DOCTYPE html>
-<html lang="en">
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
 	<meta charset="UTF-8">
 	<link rel="stylesheet" type="text/css" href="{% static 'bootstrap-4.4.1/css/bootstrap.min.css' %}">
-	{% block head %}{% endblock %}
-	<title>{% block title %}{% endblock %}</title>
+	{% block head %}
+        <script src="{% url 'javascript-catalog' %}"></script>
+	{% endblock %}
+    {% get_global_config as global_config %}
+	<title> {% if global_config %} {{ global_config.sitename }} | {% endif %}{% block title %}{% endblock %}</title>
     <style>
         html{
             height: 100%;
@@ -37,7 +43,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand" href="/">
             <img src="{% static 'images/logo/logo.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
-            EVCloud</a>
+            {% if global_config %} {{ global_config.sitename }} {% else %} EVcloud {% endif %}</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -46,28 +52,44 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
             {% if user.is_authenticated %}
-                <li class="nav-item" id="nav_vm_list"><a class="nav-link" href="{% url "vms:vms-list" %}">云主机</a></li>
-                <li class="nav-item" id="nav_vdisk_list"><a class="nav-link" href="{% url "vdisk:vdisk-list" %}">云硬盘</a></li>
-                <li class="nav-item" id="nav_image_list"><a class="nav-link" href="{% url "image:image-list" %}">镜像</a></li>
-                <li class="nav-item" id="nav_pci_list"><a class="nav-link" href="{% url "device:pci-list" %}">PCI设备</a></li>
-                <li class="nav-item" id="nav_vpn_list"><a class="nav-link" href="{% url "vpn:vpn-list" %}">VPN</a></li>
-                <li class="nav-item" id="nav_quota"><a class="nav-link" href="{% url "reports:reports-quota" %}">资源配额</a></li>
+                <li class="nav-item" id="nav_vm_list"><a class="nav-link" href="{% url "vms:vms-list" %}">{% translate '虚拟机' %}</a></li>
+                <li class="nav-item" id="nav_vdisk_list"><a class="nav-link" href="{% url "vdisk:vdisk-list" %}">{% translate '云硬盘' %}</a></li>
+                <li class="nav-item" id="nav_pci_list"><a class="nav-link" href="{% url "device:pci-list" %}">{% translate '本地资源' %}</a></li>
+                <li class="nav-item" id="nav_image_list"><a class="nav-link" href="{% url "image:image-list" %}">{% translate '镜像' %}</a></li>
                 {% if user.is_superuser %}
-                    <li class="nav-item" id="nav_vlan_list"><a class="nav-link" href="{% url "network:vlan_list" %}">网络</a></li>
-                    <li class="nav-item" id="nav_reports"><a class="nav-link" href="{% url 'reports:reports-list' %}">统计报表</a></li>
+                    <li class="nav-item" id="nav_vlan_list"><a class="nav-link" href="{% url "network:vlan_list" %}">{% translate '网络' %}</a></li>
+                {% endif %}
+                <li class="nav-item" id="nav_vpn_list"><a class="nav-link" href="{% url "vpn:vpn-list" %}">VPN</a></li>
+                <li class="nav-item" id="nav_quota"><a class="nav-link" href="{% url "reports:reports-quota" %}">{% translate '资源配额' %}</a></li>
+                {% if user.is_superuser %}
+                    <li class="nav-item" id="nav_reports"><a class="nav-link" href="{% url 'reports:reports-list' %}">{% translate '统计报表' %}</a></li>
                 {% endif %}
             {% endif %}
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item dropdown">
+                    {% get_available_languages as LANGUAGES %}
+                    <form action="{% url 'set_language' %}" method="post" id="id-language-switcher" hidden>
+                        {% csrf_token %}
+                    </form>
+                    <a class="nav-link dropdown-toggle" href="#" id="navbar-dropdown-language" role="button"
+                       data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">{% trans '语言' %}<span class="caret"></span></a>
+                    <div class="dropdown-menu" id="language-switcher" aria-labelledby="navbar-dropdown-language">
+                        {% for code, name in LANGUAGES %}
+                            <a class="dropdown-item language-switcher-item" href="#" value="{{ code }}">{{ name }}</a>
+                        {% endfor %}
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
-                           aria-haspopup="true" aria-expanded="false">帮助&文档<span class="caret"></span></a>
+                           aria-haspopup="true" aria-expanded="false">{% translate '帮助&文档' %}<span class="caret"></span></a>
                     <div class="dropdown-menu">
-                        <a class="dropdown-item" href="{% url 'apidocs' %}" target="view_window" >API交互文档</a>
-                        <a class="dropdown-item" href="{% url 'redoc' %}" target="view_window" >API文档</a>
-                        <a class="dropdown-item" href="{% url 'docs:docs' %}">文档</a>
+                        <a class="dropdown-item" href="{% url 'apidocs' %}" target="view_window" >{% translate 'API交互文档' %}</a>
+                        <a class="dropdown-item" href="{% url 'redoc' %}" target="view_window" >{% translate 'API文档' %}</a>
+                        <a class="dropdown-item" href="{% url 'docs:docs' %}">{% translate '文档' %}</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="{% url 'about' %}">关于</a>
+                        <a class="dropdown-item" href="{% url 'about' %}">{% translate '关于' %}</a>
                     </div>
                 </li>
                 {% if user.is_authenticated %}
@@ -77,35 +99,52 @@
                             <i class="fa fa-user"></i>{{ user.username }}
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="{% url 'users:logout' %}?next=/">登出</a>
-                            <a class="dropdown-item" href="{% url 'users:change_password' %}">修改密码</a>
-                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'users:logout' %}?next=/">{% translate '登出' %}</a>
+                            <a class="dropdown-item" href="{% url 'users:change_password' %}">{% translate '修改密码' %}</a>
                             {% if user.is_superuser %}
-                                <a class="dropdown-item" href="{% url 'admin:index' %}">后台管理</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{% url 'appnav' %}">{% translate '后台管理' %}</a>
                             {% endif %}
                         </div>
                     </li>
                 {% else %}
-                    <li class="nav-item"><a class="nav-link" href="{% url 'users:login' %}">登录</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'users:login' %}">{% translate '登录' %}</a></li>
                     {% use_register_user as use_register %}
                     <li class="nav-item">
                         <a class="nav-link" {% if use_register %}href="{% url 'users:register' %}"
-                            {% else %}onclick="alert('不允许个人注册，请联系管理员');return false;" href="#"{% endif %}>注册</a>
+                            {% else %}onclick="alert('{% translate '不允许个人注册，请联系管理员' %}');return false;" href="#"{% endif %}>{% translate '注册' %}</a>
                     </li>
                 {% endif %}
             </ul>
         </div>
     </nav>
 </div>
-    <div class="page-content">
-        {% block boby %}{% endblock %}
-    </div>
-    <footer class="page-footer text-center bg-light p-2">
-        <p><a href="http://www.cnic.cas.cn/">中国科学院计算机网络信息中心</a> 科技云部</p>
-    </footer>
-    <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'bootstrap-4.4.1/js/bootstrap.bundle.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'fontawesome-free/js/all.min.js' %}"></script>
-	{% block script %}{% endblock %}
+<div class="page-content">
+    {% block boby %}{% endblock %}
+</div>
+<footer class="page-footer text-center bg-light p-2">
+    <p>Powered by <a href="{% if global_config %}{{ global_config.poweredby }}
+            {% else %} https://gitee.com/cstcloud-cnic/evcloud {% endif %}"> Evcloud </a></p>
+</footer>
+<script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'bootstrap-4.4.1/js/bootstrap.bundle.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'fontawesome-free/js/all.min.js' %}"></script>
+<script>
+
+$("#language-switcher").on("click", ".language-switcher-item", function () {
+    let langValue = $(this).attr('value');
+    let form = $("#id-language-switcher");
+    let langInput = document.createElement("input");
+    langInput.type="text";
+    langInput.name="language";
+    langInput.value = langValue;
+    form.append(langInput);
+    form.submit();
+})
+
+</script>
+<script src="{% url 'javascript-catalog' %}"></script>
+
+{% block script %}{% endblock %}
 </body>
 </html>

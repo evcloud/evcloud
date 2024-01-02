@@ -1,45 +1,46 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
-{% block title %}挂载PCI设备{% endblock %}
+{% block title %}{% translate '挂载本地设备设备' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid col-12">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>挂载PCI设备</strong></span>
+                <span class="card-title"><strong>{% translate '挂载本地设备设备' %}</strong></span>
                 <div class="float-right">
-                    <a class="btn btn-sm btn-info" href="{% url 'device:pci-list' %}">PCI设备列表</a>
+                    <a class="btn btn-sm btn-info" href="{% url 'device:pci-list' %}">{% translate '本地设备设备列表' %}</a>
                 </div>
             </div>
             <div class="card-body">
                 <div class="">
-                    <div class="text-primary h4">云主机信息:</div>
+                    <div class="text-primary h4">{% translate '虚拟机信息' %}:</div>
                     <div class="">
                         <dl class="row">
-                            <dt class="col-2 text-right">云主机UUID:</dt> <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
-                            <dt class="col-2 text-right">云主机IP:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
-                            <dt class="col-2 text-right">镜像:</dt> <dd class="col-10">{{ vm.image }}</dd>
-                            <dt class="col-2 text-right">宿主机:</dt> <dd class="col-10">{{ vm.host }}</dd>
-                            <dt class="col-2 text-right">机组:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
-                            <dt class="col-2 text-right">备注:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
+                            <dt class="col-2 text-right">{% translate '虚拟机UUID' %}:</dt> <dd class="col-10" id="id-mount-vm-uuid">{{ vm.hex_uuid }}</dd>
+                            <dt class="col-2 text-right">{% translate '虚拟机IP' %}:</dt> <dd class="col-10">{{ vm.ipv4 }}</dd>
+                            <dt class="col-2 text-right">{% translate '镜像' %}:</dt> <dd class="col-10">{{ vm.image_name }}</dd>
+                            <dt class="col-2 text-right">{% translate '宿主机' %}:</dt> <dd class="col-10">{{ vm.host }}</dd>
+                            <dt class="col-2 text-right">{% translate '机组' %}:</dt> <dd class="col-10">{{ vm.host.group }}</dd>
+                            <dt class="col-2 text-right">{% translate '备注' %}:</dt> <dd class="col-10">{{ vm.remarks }}</dd>
                         </dl>
                     </div>
                 </div>
                 <hr style=" height:1px;border:1px;border-top:1px solid #185598;"/>
                 <div>
                     <div class="row">
-                        <div class="text-success h4 col-sm-4">可供挂载的设备：</div>
+                        <div class="text-success h4 col-sm-4">{% translate '可供挂载的设备' %}：</div>
                         <div class="float-right col-sm-8">
                             <form role="form" class="form-horizontal" method="get" action="">
                                 <div class="input-group" style="">
                                     <div class="input-group-prepend">
-                                        <label class="input-group-text" for="id-center">关键字</label>
+                                        <label class="input-group-text" for="id-center">{% translate '关键字' %}</label>
                                     </div>
                                     <input type="text" class="form-control" name="search" value="{{ search }}"
-                                           id="id-center" placeholder="搜 IP、备注"/>
+                                           id="id-center" placeholder="{% translate '搜 IP地址、备注' %}"/>
                                     <div class="input-group-append">
-                                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                                        <button type="submit" class="btn btn-primary form-control">{% translate '筛选' %}</button>
                                     </div>
                                 </div>
                             </form>
@@ -51,12 +52,12 @@
                 <thead class="table-light">
                 <tr>
                     <th>ID</th>
-                    <th>类型</th>
-                    <th>机组</th>
-                    <th>宿主机</th>
-                    <th>状态</th>
-                    <th>备注</th>
-                    <th>操作</th>
+                    <th>{% translate '类型' %}</th>
+                    <th>{% translate '机组' %}</th>
+                    <th>{% translate '宿主机' %}</th>
+                    <th>{% translate '状态' %}</th>
+                    <th>{% translate '备注' %}</th>
+                    <th>{% translate '操作' %}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -75,7 +76,7 @@
                         </td>
                         <td><span>{{ dev.remarks|default_if_none:'' }}</span></td>
                         {% if dev.is_mounted %}
-                            <td>已被挂载</td>
+                            <td>{% translate '已被挂载' %}</td>
                         {% else %}
                             <td>
                                 <button type="button" class="btn btn-sm btn-success btn-pci-mount" data-pci-id="{{ dev.id }}">挂载</button>

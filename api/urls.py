@@ -20,6 +20,8 @@ router.register(r'macip', views.MacIPViewSet, basename='macip')
 router.register(r'flavor', views.FlavorViewSet, basename='flavor')
 router.register(r'vpn', views.VPNViewSet, basename='vpn')
 router.register(r'task/vm-migrate', views.MigrateTaskViewSet, basename='vm-migrate-task')
+router.register(r'version', views.VersionViewSet, basename='version')
+
 
 no_router = DefaultRouter(trailing_slash=False)
 no_router.register(r'compute/quota', compute_view.ComputeQuotaViewSet, basename='compute-quota')

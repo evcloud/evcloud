@@ -60,7 +60,7 @@
     $(".btn-vm-shutdown").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定关闭虚拟机？'))
+        if(!confirm(gettext('确定关闭虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -75,7 +75,7 @@
     $(".btn-vm-poweroff").click(function (e) {
         e.preventDefault();
 
-        if(!confirm('确定强制断电虚拟机？'))
+        if(!confirm(gettext('确定强制断电虚拟机？')))
 		    return;
 
         let vm_uuid = $(this).attr('data-vm-uuid');
@@ -89,7 +89,7 @@
     $(".btn-pci-mount").click(function (e) {
         e.preventDefault();
 
-        if(!confirm("确定挂载到此云主机吗？"))
+        if(!confirm(gettext("确定挂载到此虚拟机吗？")))
             return;
 
         let pci_id = $("#id-mount-pci-id").text();
@@ -99,11 +99,11 @@
             url: api,
             type: 'post',
             success: function (data, status_text) {
-                alert('已成功挂载设备');
+                alert(gettext('已成功挂载设备'));
             },
             error: function (xhr, msg, err) {
                 let data = xhr.responseJSON;
-                msg = '挂载设备失败';
+                msg = gettext('挂载设备失败');
                 if (data && data.hasOwnProperty('code_text')){
                     msg = data.code_text;
                 }

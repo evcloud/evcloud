@@ -49,7 +49,7 @@
 			    div_show.children("span:first").text(remark);
 			},
             error: function(e){
-			    alert('修改失败');
+			    alert(gettext('修改失败'));
             },
 			complete:function() {
 				div_show.show();
@@ -61,7 +61,7 @@
     //卸载硬盘
     $('.btn-disk-umount').click(function (e) {
         e.preventDefault();
-        if(!confirm("确定要卸载此硬盘吗？")){
+        if(!confirm(gettext("确定要卸载此硬盘吗？"))){
             return
         }
         let disk_uuid = $(this).attr('data-disk-uuid');
@@ -69,11 +69,12 @@
 			url: build_absolute_url('/api/v3/vdisk/' + disk_uuid + '/umount/'),
 			type: 'patch',
             success: function (data, status_text) {
-                alert('已成功卸载硬盘');
+                alert(gettext('已成功卸载硬盘'));
+                window.location.reload();
             },
             error: function (xhr, msg, err) {
                 data = xhr.responseJSON;
-                msg = '卸载硬盘失败' + msg;
+                msg = gettext('卸载硬盘失败') + msg;
                 if (data.hasOwnProperty('code_text')){
                     msg = data.code_text;
                 }
@@ -85,7 +86,7 @@
     // 删除此硬盘
     $('.btn-disk-delete').click(function (e) {
         e.preventDefault();
-        if(!confirm("确定要删除此硬盘吗？")){
+        if(!confirm(gettext("确定要删除此硬盘吗？"))){
             return
         }
         let disk_uuid = $(this).attr('data-disk-uuid');
@@ -94,11 +95,11 @@
 			type: 'delete',
             success: function (data, status_text) {
 			    $("#tr_" + disk_uuid).remove();
-                alert('已成功删除硬盘');
+                alert(gettext('已成功删除硬盘'));
             },
             error: function (xhr, msg, err) {
                 data = xhr.responseJSON;
-                msg = '删除硬盘' + msg;
+                msg = gettext('删除硬盘') + msg;
                 if (data.hasOwnProperty('code_text')){
                     msg = data.code_text;
                 }

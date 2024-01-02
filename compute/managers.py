@@ -6,6 +6,7 @@ from django.utils.functional import cached_property
 
 from compute.models import Center, Group, Host
 from network.models import Vlan, MacIP
+from image.models import Image
 from ceph.models import CephPool
 from utils import errors
 from utils.errors import ComputeError
@@ -15,8 +16,10 @@ class DefaultSum(Sum):
     """
     累加结果为None时，返回默认值, 只是用于int和float
     """
+
     def __init__(self, *expressions, distinct=False, filter=None, return_if_none=0, **extra):
         self.return_if_none = return_if_none
+        self.empty_result_set_value = return_if_none
         super().__init__(*expressions, distinct=distinct, filter=filter, **extra)
 
     @cached_property
@@ -39,17 +42,18 @@ class DefaultSum(Sum):
 
 class CenterManager:
     """
-    分中心管理器
+    数据中心管理器
     """
+
     def __init__(self):
-        # 分中心对象缓存，分中心对象数据有变化，需要清除缓存或设置覆盖缓存
+        # 数据中心对象缓存，数据中心对象数据有变化，需要清除缓存或设置覆盖缓存
         self._cache_centers = {}
 
     def _cache_center_remove(self, center_id=None):
         """
-        尝试从分中心对象缓存移除指定的分中心对象，未指定center_id，清除所有缓存
+        尝试从数据中心对象缓存移除指定的数据中心对象，未指定center_id，清除所有缓存
 
-        :param center_id: 分中心id
+        :param center_id: 数据中心id
         """
         if center_id is None:
             self._cache_centers.clear()
@@ -57,9 +61,9 @@ class CenterManager:
 
     def _cache_center_add(self, center):
         """
-        缓存一个分中心对象
+        缓存一个数据中心对象
 
-        :param center: 分中心对象
+        :param center: 数据中心对象
         """
         if not isinstance(center, Center):
             return
@@ -70,7 +74,7 @@ class CenterManager:
 
     def _cache_center_get(self, center_id):
         """
-        尝试从分中心对象缓存获取分中心对象
+        尝试从数据中心对象缓存获取数据中心对象
 
         :return:
             Center() or None
@@ -83,31 +87,31 @@ class CenterManager:
     @staticmethod
     def get_center_by_id(center_id: int):
         """
-        通过id获取分中心
+        通过id获取数据中心
 
-        :param center_id: 分中心id
+        :param center_id: 数据中心id
         :return:
             Image() # success
             None    #不存在
         :raise ComputeError
         """
         if not isinstance(center_id, int) or center_id < 0:
-            raise ComputeError(msg='分中心ID参数有误')
+            raise ComputeError(msg='数据中心ID参数有误')
 
         try:
             return Center.objects.filter(id=center_id).first()
         except Exception as e:
-            raise ComputeError(msg=f'查询分中心时错误,{str(e)}')
+            raise ComputeError(msg=f'查询数据中心时错误,{str(e)}')
 
     def enforce_center_obj(self, center_or_id):
         """
-        转换为分中心对象
+        转换为数据中心对象
 
         :param center_or_id: Center() or id
         :return:
             Center()
 
-        :raise: ComputeError    # 分中心不存在，或参数有误
+        :raise: ComputeError    # 数据中心不存在，或参数有误
         """
         if isinstance(center_or_id, Center):
             return center_or_id
@@ -125,15 +129,15 @@ class CenterManager:
                 self._cache_center_add(c)
                 return c
             else:
-                raise errors.ComputeError.from_error(errors.NotFoundError(msg='分中心不存在'))
+                raise errors.ComputeError.from_error(errors.NotFoundError(msg='数据中心不存在'))
 
         raise errors.ComputeError.from_error(errors.BadRequestError(msg='无效的center or id'))
 
     def get_group_ids_by_center(self, center_or_id):
         """
-        获取分中心下的宿主机组id list
+        获取数据中心下的宿主机组id list
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
             ids: list   # success
         :raise ComputeError
@@ -148,15 +152,15 @@ class CenterManager:
 
     def get_group_queryset_by_center(self, center_or_id):
         """
-        获取分中心下的宿主机组查询集
+        获取数据中心下的宿主机组查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
             groups: QuerySet   # success
         :raise ComputeError
         """
         center = self.enforce_center_obj(center_or_id)
-        return center.group_set.all()
+        return center.group_set.filter(enable=True).all()
 
     @staticmethod
     def get_user_group_queryset(user):
@@ -168,9 +172,9 @@ class CenterManager:
             groups: QuerySet   # success
         """
         if user.is_superuser:
-            return Group.objects.all()
+            return Group.objects.filter(enable=True).all()
 
-        return user.group_set.all()
+        return user.group_set.filter(enable=True).all()
 
     def get_user_group_ids(self, user):
         """
@@ -191,9 +195,9 @@ class CenterManager:
 
     def get_user_group_queryset_by_center(self, center_or_id, user):
         """
-        获取分中心下的宿主机组查询集
+        获取数据中心下的宿主机组查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :param user: 用户对象
         :return:
             groups: QuerySet   # success
@@ -201,15 +205,15 @@ class CenterManager:
         """
         if isinstance(center_or_id, Center) or isinstance(center_or_id, int):
             qs = self.get_user_group_queryset(user)
-            return qs.filter(center=center_or_id)
+            return qs.filter(center=center_or_id, enable=True)
 
         raise errors.ComputeError.from_error(errors.BadRequestError(msg='无效的center id'))
 
     def get_user_group_ids_by_center(self, center, user):
         """
-        获取分中心下的，用户有访问权限的宿主机组查询集
+        获取数据中心下的，用户有访问权限的宿主机组查询集
 
-        :param center: 分中心对象或ID
+        :param center: 数据中心对象或ID
         :param user: 用户对象
         :return:
             QuerySet()
@@ -223,9 +227,9 @@ class CenterManager:
 
     def get_ceph_queryset_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有ceph集群查询集
+        获取一个数据中心下的所有ceph集群查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
              QuerySet   # success
         :raise ComputeError
@@ -235,9 +239,9 @@ class CenterManager:
 
     def get_ceph_ids_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有ceph集群id list
+        获取一个数据中心下的所有ceph集群id list
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
             ids: list   # success
         :raise ComputeError
@@ -248,9 +252,9 @@ class CenterManager:
 
     def get_pool_queryset_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有ceph pool查询集
+        获取一个数据中心下的所有ceph pool查询集
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
              QuerySet   # success
         :raise ComputeError
@@ -260,9 +264,9 @@ class CenterManager:
 
     def get_pool_ids_by_center(self, center_or_id):
         """
-        获取一个分中心下的所有ceph pool id
+        获取一个数据中心下的所有ceph pool id
 
-        :param center_or_id: 分中心对象或id
+        :param center_or_id: 数据中心对象或id
         :return:
              QuerySet   # success
         :raise ComputeError
@@ -273,7 +277,7 @@ class CenterManager:
     @staticmethod
     def get_stat_center_queryset(filters: dict = None):
         """
-        分中心资源统计查询集
+        数据中心资源统计查询集
 
         :param filters: center的过滤条件
         :return:
@@ -295,6 +299,7 @@ class GroupManager:
     """
     宿主机组管理器
     """
+
     def __init__(self):
         # 机组对象缓存，机组对象数据有变化，需要清除缓存或设置覆盖缓存
         self._cache_groups = {}
@@ -336,7 +341,7 @@ class GroupManager:
 
     @staticmethod
     def get_group_queryset():
-        return Group.objects.all()
+        return Group.objects.filter(enable=True).all()
 
     @staticmethod
     def get_group_by_id(group_id: int):
@@ -409,9 +414,9 @@ class GroupManager:
         :raise ComputeError
         """
         group = self.enforce_group_obj(group_or_id)
-        return group.hosts_set.all()
+        return group.hosts_set.filter(~Q(ipv4='127.0.0.1')).all()
 
-    def get_enable_host_ids_by_group(self,  group_or_id):
+    def get_enable_host_ids_by_group(self, group_or_id):
         """
         通过宿主机组对象和id获取宿主机id list
 
@@ -428,7 +433,7 @@ class GroupManager:
             raise ComputeError(msg=f'查询宿主机id错误，{str(e)}')
         return ids
 
-    def get_all_host_ids_by_group(self,  group_or_id):
+    def get_all_host_ids_by_group(self, group_or_id):
         """
         通过宿主机组对象和id获取所有（包括未激活的）宿主机id list
 
@@ -536,12 +541,21 @@ class GroupManager:
             vcpu_total=DefaultSum('hosts_set__vcpu_total'), vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
             real_cpu=DefaultSum('hosts_set__real_cpu'), vm_created=DefaultSum('hosts_set__vm_created')).all()
 
-    def compute_quota(self, user):
+    @staticmethod
+    def compute_quota(user, center_id=None):
         """
         用户可用总资源配额，已用配额，和其他用户共用配额
         """
         if user.is_superuser:
-            quota = Host.objects.filter(enable=True).aggregate(
+            quota_qs = Host.objects.filter(enable=True)
+            if center_id:
+                group_ids = list(Group.objects.filter(center_id=center_id).values_list('id', flat=True))
+                if group_ids:
+                    quota_qs = quota_qs.filter(group_id__in=group_ids)
+                else:
+                    quota_qs = quota_qs.none()
+
+            quota = quota_qs.aggregate(
                 mem_total=DefaultSum('mem_total'),
                 mem_allocated=DefaultSum('mem_allocated'),
                 vcpu_total=DefaultSum('vcpu_total'),
@@ -552,25 +566,38 @@ class GroupManager:
             )
             ip_data = MacIP.objects.filter(enable=True, vlan__enable=True).aggregate(
                 ips_total=Count('id'),
-                ips_used=Count('id', filter=Q(used=True))
+                ips_used=Count('id', filter=Q(used=True)),
+                ips_private=Count('id', filter=Q(vlan__tag=0)),
+                ips_public=Count('id', filter=Q(vlan__tag=1))
             )
             quota.update(ip_data)
             return quota
 
-        quota = user.group_set.all().aggregate(
+        group_qs = user.group_set.all()
+        if center_id:
+            group_qs = group_qs.filter(center_id=center_id)
+
+        quota = group_qs.aggregate(
             mem_total=DefaultSum('hosts_set__mem_total', filter=Q(hosts_set__enable=True)),
             mem_allocated=DefaultSum('hosts_set__mem_allocated'),
-            mem_reserved=DefaultSum('hosts_set__mem_reserved'),
             vcpu_total=DefaultSum('hosts_set__vcpu_total'),
             vcpu_allocated=DefaultSum('hosts_set__vcpu_allocated'),
             real_cpu=DefaultSum('hosts_set__real_cpu'),
             vm_created=DefaultSum('hosts_set__vm_created'),
             vm_limit=DefaultSum('hosts_set__vm_limit')
         )
-        g_ids = user.group_set.all().values_list('id', flat=True)
-        ip_data = Vlan.objects.filter(group__in=g_ids, enable=True).aggregate(
+
+        g_ids = list(group_qs.values_list('id', flat=True))
+        if g_ids:
+            ip_qs = Vlan.objects.filter(group__in=g_ids, enable=True, image_specialized=False).exclude(vlan_shield__user_name_id=user.id) # 镜像专用vlan过滤
+        else:
+            ip_qs = Vlan.objects.none()
+
+        ip_data = ip_qs.aggregate(
             ips_total=Count('macips', filter=Q(macips__enable=True)),
-            ips_used=Count('macips', filter=Q(macips__enable=True)&Q(macips__used=True))
+            ips_used=Count('macips', filter=Q(macips__enable=True) & Q(macips__used=True)),
+            ips_private=Count('macips', filter=Q(tag=0)),
+            ips_public=Count('macips', filter=Q(tag=1))
         )
         quota.update(ip_data)
         return quota
@@ -580,6 +607,7 @@ class HostManager:
     """
     宿主机管理器
     """
+
     @staticmethod
     def get_host_by_id(host_id: int):
         """
@@ -639,7 +667,7 @@ class HostManager:
         if not isinstance(group_id, int) or group_id < 0:
             raise ComputeError(msg='宿主机组ID参数有误')
         try:
-            hosts_qs = Host.objects.filter(group=group_id).all()
+            hosts_qs = Host.objects.filter(group=group_id).filter(~Q(ipv4='127.0.0.1')).all()
             return list(hosts_qs)
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机组的宿主机列表时错误,{str(e)}')
@@ -661,13 +689,13 @@ class HostManager:
 
         qs = None
         if group_id > 0:
-            qs = Host.objects.filter(group=group_id).all()
+            qs = Host.objects.filter(group=group_id).filter(~Q(ipv4='127.0.0.1')).all()
 
         if qs is None:
-            qs = Host.objects.all()
+            qs = Host.objects.filter(~Q(ipv4='127.0.0.1')).all()
 
         if enable:
-            qs = qs.filter(enable=True).all()
+            qs = qs.filter(enable=True).filter(~Q(ipv4='127.0.0.1')).all()
 
         return qs
 
@@ -734,14 +762,15 @@ class HostManager:
             False   # failed
         """
         # 释放资源
-        try:
-            host = Host.objects.filter(id=host_id).first()
-            if not host:
-                return False
+        with transaction.atomic():
+            try:
+                host = Host.objects.select_for_update().filter(id=host_id).first()
+                if not host:
+                    return False
 
-            return host.free(vcpu=vcpu, mem=mem)
-        except Exception:
-            return False
+                return host.free(vcpu=vcpu, mem=mem)
+            except Exception:
+                return False
 
     def filter_meet_requirements(self, hosts: list, vcpu: int, mem: int, claim=False):
         """
@@ -773,13 +802,13 @@ class HostManager:
         if not isinstance(mem, int) or mem <= 0:
             raise ComputeError(msg='参数有误，mem必须是一个正整数')
 
-        random.shuffle(hosts)   # 随机打乱
+        random.shuffle(hosts)  # 随机打乱
         for host in hosts:
             # 宿主机是否满足资源需求
             if not host.meet_needs(vcpu=vcpu, mem=mem):
                 continue
 
-            if not claim:    # 立即申请资源
+            if not claim:  # 立即申请资源
                 continue
 
             host = self.claim_from_host(host_id=host.id, vcpu=vcpu, mem=mem)
@@ -787,3 +816,28 @@ class HostManager:
                 return host
 
         return None
+
+    @staticmethod
+    def update_host_quota(host_id: int):
+        """
+        更新宿主机已分配资源
+
+        :param host_id: 宿主机id
+        """
+        with transaction.atomic():
+            host = Host.objects.select_for_update().filter(id=host_id).first()
+            # if host.ipv4 == '127.0.0.1':
+            #     a = Image.objects.filter(vm_uuid__isnull=False).aggregate(vcpu_now=Sum('vm_vcpu'), mem_now=Sum('vm_mem'),
+            #                                                   count=Count('pk'))
+            #     vcpu_allocated = a.get('vcpu_now')
+            #     mem_allocated = a.get('mem_now')
+            #     vm_num = a.get('count')
+            # else:
+            s = host.stats_vcpu_mem_vms_now()
+            vcpu_allocated = s.get('vcpu')
+            mem_allocated = s.get('mem')
+            vm_num = s.get('vm_num')
+        host.vcpu_allocated = vcpu_allocated
+        host.mem_allocated = mem_allocated
+        host.vm_created = vm_num
+        host.save(update_fields=['vcpu_allocated', 'mem_allocated', 'vm_created'])

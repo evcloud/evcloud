@@ -95,7 +95,7 @@ function chart_init() {
         data: {
             labels: [],
             datasets: [{
-                label: '云主机数量',
+                label: '虚拟机数量',
                 backgroundColor: window.chartColors.blue,
                 maxBarThickness: 50,
                 minBarLength: 2,
@@ -106,7 +106,7 @@ function chart_init() {
             plugins: {
                 title: {
                     display: true,
-                    text: '云主机 (个)'
+                    text: '虚拟机 (个)'
                 }
             },
             tooltips: {

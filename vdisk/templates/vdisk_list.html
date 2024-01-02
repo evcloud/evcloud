@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 {% load  sizeformat %}
 
 {% block head %}
@@ -18,22 +19,22 @@
     }
     </style>
 {% endblock %}
-{% block title %}云硬盘列表{% endblock %}
+{% block title %}{% translate '云硬盘列表' %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid">
         <div class="card">
             <div class="card-header">
-                <span class="card-title"><strong>云硬盘列表 ({{ count }})</strong></span>
+                <span class="card-title"><strong>{% translate '云硬盘列表' %} ({{ count }})</strong></span>
                 <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vdisk:vdisk-create' %}">
-                    创建云硬盘 <i class="fa fa-plus"></i>
+                    {% translate '创建云硬盘' %} <i class="fa fa-plus"></i>
                 </a></span>
             </div>
             <div class="card-body">
                 <form role="form" class="form-horizontal" method="get" action="">
                     <div class="input-group" style="">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-center">分中心</label>
+                            <label class="input-group-text" for="id-center">{% translate '数据中心' %}</label>
                         </div>
                         <select name="center" class="custom-select" id="id-center">
                             <option value="">--</option>
@@ -44,7 +45,7 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-group">主机组</label>
+                            <label class="input-group-text" for="id-group">{% translate '主机组' %}</label>
                         </div>
                         <select name="group" class="custom-select" id="id-group">
                             <option value="">--</option>
@@ -54,7 +55,7 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-quota">存储池</label>
+                            <label class="input-group-text" for="id-quota">{% translate '存储池' %}</label>
                         </div>
                         <select name="quota" class="custom-select" id="id-quota">
                             <option value="">--</option>
@@ -64,7 +65,7 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="id-user">创建者</label>
+                            <label class="input-group-text" for="id-user">{% translate '创建者' %}</label>
                         </div>
                         <select name="user" class="custom-select" id="id-user">
                             <option value="">--</option>
@@ -73,12 +74,12 @@
                             {% endfor %}
                         </select>
                         <div class="input-group-prepend">
-                            <label class="input-group-text">关键字</label>
+                            <label class="input-group-text">{% translate '关键字' %}</label>
                         </div>
                         <input type="text" class="form-control" name="search" value="{{ search }}"
-                               placeholder="搜 UUID、IP、备注"/>
+                               placeholder="{% translate '搜 UUID、IP地址、备注' %}"/>
                         <span class="input-group-text"></span>
-                        <button type="submit" class="btn btn-primary form-control">筛选</button>
+                        <button type="submit" class="btn btn-primary form-control">{% translate '筛选' %}</button>
                     </div>
                 </form>
                 <table class="table table-hover table-vm-list" style="word-wrap:break-word;word-break:break-all;">
@@ -86,16 +87,16 @@
                     <tr>
                         <th></th>
                         <th style="max-width: 150px;">UUID</th>
-                        <th>机组</th>
-                        <th>存储池</th>
-                        <th>容量</th>
-                        <th>用户</th>
-                        <th>创建时间</th>
-                        <th>挂载云主机</th>
-                        <th>挂载时间</th>
-                        <th>状态</th>
-                        <th>备注</th>
-                        <th>操作</th>
+                        <th>{% translate '机组' %}</th>
+                        <th>{% translate '存储池' %}</th>
+                        <th>{% translate '容量' %}</th>
+                        <th>{% translate '用户' %}</th>
+                        <th>{% translate '创建时间' %}</th>
+                        <th>{% translate '挂载虚拟机' %}</th>
+                        <th>{% translate '挂载时间' %}</th>
+                        <th>{% translate '状态' %}</th>
+                        <th>{% translate '备注' %}</th>
+                        <th>{% translate '操作' %}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -109,11 +110,15 @@
                             <td>{{ disk.user }}</td>
                             <td>{{ disk.create_time|date:'Y-m-d H:i:s' }}</td>
                             {% if disk.vm %}
+                                {% if disk.vm.mac_ip %}
                                 <td>{{ disk.vm.ipv4 }}</td>
+                                {% else %}
+                                <td>{% translate '无' %}</td>
+                                {% endif %}
                                 <td>{{ disk.attach_time|date:'Y-m-d H:i:s' }}</td>
                             {% else %}
-                                <td>未挂载</td>
-                                <td>无</td>
+                                <td>{% translate '未挂载' %}</td>
+                                <td>{% translate '无' %}</td>
                             {% endif %}
                             <td>
                                 {%if disk.enable%}
@@ -125,24 +130,24 @@
                             <td class="mouse-hover">
                                 <div>
                                     <span>{{ disk.remarks|default_if_none:'' }}</span>
-                                    <span class="mouse-hover-show edit_disk_remark" data-disk-uuid="{{ disk.uuid }}" title="修改备注">
+                                    <span class="mouse-hover-show edit_disk_remark" data-disk-uuid="{{ disk.uuid }}" title="{% translate '修改备注' %}">
                                         <i class="fa fa-edit"></i>
                                     </span>
                                 </div>
                                 <div id="remarks_edit" style="display:none">
                                     <textarea id="remarks">{{ disk.remarks|default_if_none:'' }}</textarea>
-                                    <span class="save_disk_remark" title="保存备注" data-disk-uuid="{{ disk.uuid }}">
+                                    <span class="save_disk_remark" title="{% translate '保存备注' %}" data-disk-uuid="{{ disk.uuid }}">
                                         <i class="fa fa-save"></i>
                                     </span>
                                 </div>
                             </td>
                             <td>
                                 {% if disk.is_mounted %}
-                                    <button type="button" class="btn btn-sm btn-warning btn-disk-umount" data-disk-uuid="{{ disk.uuid }}">卸载</button>
+                                    <button type="button" class="btn btn-sm btn-warning btn-disk-umount" data-disk-uuid="{{ disk.uuid }}">{% translate '卸载' %}</button>
                                 {% else %}
-                                    <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-mount-to-vm' disk_uuid=disk.uuid %}">挂载</a>
+                                    <a class="btn btn-sm btn-success" href="{% url 'vdisk:vdisk-mount-to-vm' disk_uuid=disk.uuid %}">{% translate '挂载' %}</a>
                                 {% endif %}
-                                <button type="button" class="btn btn-sm btn-danger btn-disk-delete" data-disk-uuid="{{ disk.uuid }}">删除</button>
+                                <button type="button" class="btn btn-sm btn-danger btn-disk-delete" data-disk-uuid="{{ disk.uuid }}">{% translate '删除' %}</button>
                             </td>
                         </tr>
                     {% endfor %}

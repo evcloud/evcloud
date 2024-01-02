@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load static %}
 
-{% block title %}资源配额概况{% endblock %}
+{% block title %}{% translate '资源配额概况' %}{% endblock %}
 
 {% block head %}{% endblock %}
 
 {% block boby %}
     <div class="container-fluid col-lg-12">
         <div class="pt-4 pb-4">
-            <p class="font-weight-bold">资源配额概况</p>
+            <p class="font-weight-bold">{% translate '资源配额概况' %}</p>
         </div>
         <div class="row">
             <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-cpu" height=""></canvas></div>
@@ -69,21 +70,21 @@
             let vm_total = {{ quota.vm_limit }};
             let vm_used = {{ quota.vm_created }};
 
-            let mem_title = '内存 (' + sizeFormat(mem_total, "GB") + ')'
-            let vcpu_subtitle = "已使用 " + cpu_used + " of " + cpu_total;
-            let mem_subtitle = "已使用 " + mem_used + "Gb of " + mem_total+ "Gb";
-            let ips_subtitle = "已使用 " + ips_used + " of " + ips_total;
-            let vm_subtitle = "已使用 " + vm_used + " of " + vm_total;
+            let mem_title = '{% translate '内存' %} (' + sizeFormat(mem_total, "GB") + ')'
+            let vcpu_subtitle = "{% translate '已使用' %} " + cpu_used + " of " + cpu_total;
+            let mem_subtitle = "{% translate '已使用' %} " + mem_used + "Gb of " + mem_total+ "Gb";
+            let ips_subtitle = "{% translate '已使用' %} " + ips_used + " of " + ips_total;
+            let vm_subtitle = "{% translate '已使用' %} " + vm_used + " of " + vm_total;
 
             let canvas_mem = document.getElementById('id-chart-mem').getContext('2d');
             let canvas_cpu = document.getElementById('id-chart-cpu').getContext('2d');
             let canvas_vm = document.getElementById('id-chart-vm').getContext('2d');
             let canvas_ips = document.getElementById('id-chart-ips').getContext('2d');
 
-            create_chart(canvas_cpu, 'VCPU数', vcpu_subtitle, {total: cpu_total, used: cpu_used});
+            create_chart(canvas_cpu, '{% translate 'VCPU数' %}', vcpu_subtitle, {total: cpu_total, used: cpu_used});
             create_chart(canvas_mem, mem_title, mem_subtitle, {total: mem_total, used: mem_used});
-            create_chart(canvas_ips, 'IP数', ips_subtitle, {total: ips_total, used: ips_used});
-            create_chart(canvas_vm, '云主机数', vm_subtitle, {total: vm_total, used: vm_used});
+            create_chart(canvas_ips, '{% translate 'IP地址数' %}', ips_subtitle, {total: ips_total, used: ips_used});
+            create_chart(canvas_vm, '{% translate '虚拟机数' %}', vm_subtitle, {total: vm_total, used: vm_used});
         }
     </script>
 {% endblock %}

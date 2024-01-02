@@ -31,7 +31,7 @@ class VPNManager:
         return qs.filter(id=pk).first()
 
     @staticmethod
-    def create_vpn(username: str, password: str = '', active: bool = True, remarks: str = '', create_user: str = ''):
+    def create_vpn(username: str, password: str = '', expired_time = None, active: bool = True, remarks: str = '', create_user: str = ''):
         """
         :param username: 用户名
         :param password: 密码口令
@@ -44,7 +44,7 @@ class VPNManager:
         :raises: VPNError
         """
         kwargs = {'username': username, 'remarks': remarks, 'active': active, 'create_user': create_user,
-                  'modified_user': create_user}
+                  'modified_user': create_user, 'expired_time': expired_time}
         if password:
             kwargs['password'] = password
 

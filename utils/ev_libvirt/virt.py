@@ -339,7 +339,9 @@ class VirtHost:
             pass
 
         try:
-            ok = dom.undefine()
+            # ok = dom.undefine()
+            # 当存在NVRAM文件时，删除虚拟机需增加--nvram参数；若不存在NVRAM文件，经测试也可删除
+            ok = dom.undefineFlags(libvirt.VIR_DOMAIN_UNDEFINE_NVRAM)
             if ok == 0:
                 return True
             return False
