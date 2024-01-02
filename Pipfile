@@ -6,13 +6,13 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-django = "==4.2.5"
+django = "==4.2.8"
 mysqlclient = "==2.1.0"
 djangorestframework = "==3.14.0"
 #libvirt-python = "==9.3.0"    # 不适用于 pip 安装， 通过 dnf install python3-libvirt.x86_64
 websockify = "==0.10.0"
 djangorestframework-simplejwt = "==5.2.0"
-django-debug-toolbar = "*"
+django-debug-toolbar = "3.5.0"
 uwsgi = "==2.0.20"
 drf-yasg = "==1.21.7"
 pyjwt = "==2.4.0"
