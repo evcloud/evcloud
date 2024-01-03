@@ -1,0 +1,15 @@
+[Unit]
+Description=EVCloud's web service  v4.0.5
+After=network.target
+Documentation=https://gitee.com/cstcloud-cnic/evcloud
+
+[Service]
+Type=forking
+PIDFile=/home/uwsgi/evcloud/uwsgi-master.pid
+ExecStart=/bin/bash /home/uwsgi/evcloud/00_shell/run_uwsgi.sh
+ExecReload=/bin/bash /home/uwsgi/evcloud/00_shell/reload_uwsgi.sh
+ExecStop=/bin/bash /home/uwsgi/evcloud/00_shell/stop_uwsgi.sh
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
