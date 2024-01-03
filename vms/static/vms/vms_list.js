@@ -118,7 +118,7 @@
                 node_status.html('<span class="badge  badge-' + VM_STATUS_LABEL[data.status.status_code] + '">' + VM_STATUS_CN[data.status.status_code] + "</span>");
             },
             error: function (xhr) {
-                node_status.html('<span class="badge  badge-danger">gettext("查询失败")</span>');
+                node_status.html('<span class="badge  badge-danger">' + gettext("查询失败") + '</span>');
             }
         });
     }

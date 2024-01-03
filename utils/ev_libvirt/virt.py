@@ -4,6 +4,7 @@ import time
 import libvirt
 from xml.etree import ElementTree
 
+from compute.managers import HostManager
 
 VIR_DOMAIN_NOSTATE = 0  # no state
 VIR_DOMAIN_RUNNING = 1  # the domain is running
@@ -202,6 +203,9 @@ class VirtHost:
 
     def __init__(self, host_ipv4: str):
         self.host_ipv4 = host_ipv4
+        self.ssh_host = HostManager().get_host_by_ipv4(host_ipv4=self.host_ipv4)
+
+        self.ssh_key = self.ssh_host.group.center.ssh_key
         self._conn = None
 
     def __del__(self):
@@ -240,9 +244,9 @@ class VirtHost:
         """
         host_ip = self.host_ipv4
         if host_ip:
-            if not self.host_alive():
+            if not self.host_alive() or not self.ssh_key:
                 raise VirHostDown(msg='无法访问宿主机')
-            name = f'qemu+ssh://{host_ip}/system?no_tty=1'      # no_tty如果设置为非零值，如果它无法自动登录到远程计算机，它将阻止ssh询问密码
+            name = f'qemu+ssh://{host_ip}/system?no_tty=1&keyfile={self.ssh_key}'      # no_tty如果设置为非零值，如果它无法自动登录到远程计算机，它将阻止ssh询问密码
         else:
             name = 'qemu:///system'
 

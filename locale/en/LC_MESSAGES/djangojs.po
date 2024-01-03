@@ -2,13 +2,13 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-12-12 16:32+0800\n"
+"POT-Creation-Date: 2024-01-03 13:19+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,8 +17,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-#: compute/static/compute/custom.js:14 image/static/image/image_create.js:100
-#: image/static/image/image_vm_create.js:101 vms/static/vms/vms_create.js:98
+
+#: compute/static/compute/custom.js:14 image/static/image/image_create.js:106
+#: image/static/image/image_vm_create.js:97
+#: image/static/image/image_vm_create2.js:131 vms/static/vms/vms_create.js:98
 msgid "加载宿主机下拉框选项失败"
 msgstr "Failed to load host dropdown menu options."
 
@@ -69,64 +71,74 @@ msgstr "style"
 msgid "div"
 msgstr "div"
 
-#: image/static/image/image_create.js:132
-#: image/static/image/image_vm_create.js:133
+#: image/static/image/image_create.js:138
+#: image/static/image/image_vm_create.js:125
+#: image/static/image/image_vm_create2.js:160
 msgid "加载子网vlan下拉框选项失败"
 msgstr "Failed to load subnet VLAN dropdown menu options."
 
-#: image/static/image/image_create.js:170
-#: image/static/image/image_vm_create.js:171 vms/static/vms/vms_create.js:168
+#: image/static/image/image_create.js:176
+#: image/static/image/image_vm_create.js:159
+#: image/static/image/image_vm_create2.js:195 vms/static/vms/vms_create.js:168
 msgid "加载IP下拉框选项失败"
 msgstr "Failed to load IP dropdown menu options."
 
-#: image/static/image/image_create.js:178
-#: image/static/image/image_vm_create.js:179 vms/static/vms/vms_create.js:176
+#: image/static/image/image_create.js:184
+#: image/static/image/image_vm_create.js:167
+#: image/static/image/image_vm_create2.js:204 vms/static/vms/vms_create.js:176
 #: vms/static/vms/vms_shelve_list.js:38
 msgid "机组和宿主机至少选择其一"
 msgstr "Select at least one of the host unit and host."
 
-#: image/static/image/image_create.js:192
-#: image/static/image/image_vm_create.js:193 vms/static/vms/vms_create.js:194
+#: image/static/image/image_create.js:198
+#: image/static/image/image_vm_create.js:181
+#: image/static/image/image_vm_create2.js:218 vms/static/vms/vms_create.js:194
 #: vms/static/vms/vms_edit.js:18
 msgid "配置CPU输入不是有效正整数"
 msgstr "Please enter a valid positive integer."
 
-#: image/static/image/image_create.js:196
-#: image/static/image/image_vm_create.js:197 vms/static/vms/vms_create.js:198
+#: image/static/image/image_create.js:202
+#: image/static/image/image_vm_create.js:185
+#: image/static/image/image_vm_create2.js:222 vms/static/vms/vms_create.js:198
 #: vms/static/vms/vms_edit.js:27
 msgid "配置RAM输入不是有效正整数"
 msgstr "Please enter a valid positive integer."
 
-#: image/static/image/image_create.js:216
-#: image/static/image/image_vm_create.js:217 vms/static/vms/vms_create.js:219
+#: image/static/image/image_create.js:222
+#: image/static/image/image_vm_create.js:205
+#: image/static/image/image_vm_create2.js:242 vms/static/vms/vms_create.js:219
 msgid "确定创建虚拟机？"
 msgstr "Are you sure to create a new virtual server?"
 
-#: image/static/image/image_create.js:247 vms/static/vms/vms_create.js:234
+#: image/static/image/image_create.js:253 vms/static/vms/vms_create.js:234
 msgid "创建成功,是否去主机列表看看？"
 msgstr "Successfully! Would you like to check the server list?"
 
-#: image/static/image/image_create.js:251
-#: image/static/image/image_vm_create.js:237
+#: image/static/image/image_create.js:257
+#: image/static/image/image_vm_create.js:220
+#: image/static/image/image_vm_create2.js:257
 #: vdisk/static/vdisk/vdisk_create.js:126 vms/static/vms/vms_create.js:238
 #: vms/static/vms/vms_edit.js:68
 msgid "创建失败！"
 msgstr "Failed!"
 
-#: image/static/image/image_create.js:255
-#: image/static/image/image_vm_create.js:241 vms/static/vms/vms_create.js:242
+#: image/static/image/image_create.js:261
+#: image/static/image/image_vm_create.js:223
+#: image/static/image/image_vm_create2.js:260 vms/static/vms/vms_create.js:242
 msgid "创建主机失败!"
 msgstr "Failed to create server."
 
-#: image/static/image/image_create.js:299
-#: image/static/image/image_vm_create.js:287 vms/static/vms/vms_create.js:287
+#: image/static/image/image_create.js:306
+#: image/static/image/image_vm_create.js:268 vms/static/vms/vms_create.js:287
 msgid "获取镜像数据失败!"
 msgstr "Failed to obtain image data."
 
-#: image/static/image/image_create.js:344
-#: image/static/image/image_vm_create.js:333 vms/static/vms/vms_create.js:332
+#: image/static/image/image_create.js:352
+#: image/static/image/image_vm_create.js:314 vms/static/vms/vms_create.js:332
 msgid "当前您选择的操作系统镜像，要求系统盘最小"
-msgstr "The operating system image you have selected currently requires a minimum system disk size."
+msgstr ""
+"The operating system image you have selected currently requires a minimum "
+"system disk size."
 
 #: image/static/image/image_list.js:5 vms/static/vms/vms_operations.js:14
 msgid "故障0"
@@ -183,6 +195,10 @@ msgstr "Failed to open vnc."
 msgid "打开vnc失败!"
 msgstr "Failed to open vnc."
 
+#: image/static/image/image_list.js:179
+msgid "更新"
+msgstr "Update"
+
 #: image/static/image/image_list.js:184
 msgid "镜像更新失败！"
 msgstr "Failed to update image."
@@ -194,10 +210,6 @@ msgstr "Failed to update image."
 #: image/static/image/image_list.js:223
 msgid "镜像启用失败！"
 msgstr "Failed to enable image."
-
-#: image/static/image/image_list.js:179
-msgid "更新"
-msgstr "Update"
 
 #: image/static/image/image_list.js:227
 msgid "镜像启用失败!"
@@ -218,7 +230,8 @@ msgstr "Failed to start."
 
 #: image/static/image/image_list.js:276
 msgid "确定删除镜像虚拟机（删除虚拟机不会删除镜像）？"
-msgstr "Are you sure to delete the image virtual server? Image will not be deleted."
+msgstr ""
+"Are you sure to delete the image virtual server? Image will not be deleted."
 
 #: image/static/image/image_list.js:281
 msgid "删除中"
@@ -240,9 +253,16 @@ msgstr "Failed to stop virtual server."
 msgid "强制断电中"
 msgstr "force power off"
 
-#: image/static/image/image_vm_create.js:233
+#: image/static/image/image_vm_create.js:216
+#: image/static/image/image_vm_create2.js:253
 msgid "创建成功,是否去镜像列表看看？"
 msgstr "Successfully! Would you like to check the image list?"
+
+#: image/static/image/image_vm_create2.js:99
+#, fuzzy
+#| msgid "加载宿主机下拉框选项失败"
+msgid "加载宿主机组下拉框选项失败"
+msgstr "Failed to load host dropdown menu options."
 
 #: vdisk/static/vdisk/vdisk_create.js:72
 msgid "加载硬盘存储池配额下拉框选项失败"
@@ -384,7 +404,9 @@ msgstr "Successfully!"
 
 #: vms/static/vms/vms_detail.js:463
 msgid "确定回滚虚拟机到此快照吗？请谨慎操作。"
-msgstr "Are you sure to roll back the virtual server to this snapshot? Please operate with caution."
+msgstr ""
+"Are you sure to roll back the virtual server to this snapshot? Please "
+"operate with caution."
 
 #: vms/static/vms/vms_detail.js:474
 msgid "回滚主机成功"
@@ -434,6 +456,10 @@ msgstr "Edit successfully!"
 msgid "修改主机失败!"
 msgstr "Failed to edit."
 
+#: vms/static/vms/vms_list.js:121
+msgid "查询失败"
+msgstr "Query failure"
+
 #: vms/static/vms/vms_list.js:295
 msgid "确定启动所有选中的虚拟机？"
 msgstr "Are you sure to start all selected virtual servers?"
@@ -460,7 +486,9 @@ msgstr "Create successfully!"
 
 #: vms/static/vms/vms_list.js:417
 msgid "确定尝试恢复丢失的虚拟机？请确认虚拟主机处于丢失状态"
-msgstr "Are you sure to recover the lost virtual server? Please confirm that the virtual server is in a lost state."
+msgstr ""
+"Are you sure to recover the lost virtual server? Please confirm that the "
+"virtual server is in a lost state."
 
 #: vms/static/vms/vms_list.js:429
 msgid "已成功恢复丢失的虚拟主机"
@@ -592,17 +620,24 @@ msgstr "Failed to create a snapshot."
 
 #: vms/static/vms/vms_operations.js:244
 msgid "此虚拟主机不存在，无法恢复，请刷新网页后重试。"
-msgstr "The virtual server does not exist and cannot be restored. Please refresh the webpage and try again."
+msgstr ""
+"The virtual server does not exist and cannot be restored. Please refresh the "
+"webpage and try again."
 
 #: vms/static/vms/vms_operations.js:246
 msgid "此虚拟主机的系统盘镜像已丢失，无法恢复。"
-msgstr "The system disk image of this virtual server has been lost and cannot be restored."
+msgstr ""
+"The system disk image of this virtual server has been lost and cannot be "
+"restored."
 
 #: vms/static/vms/vms_operations.js:248
 msgid ""
 "宿主机可能宕机或网络问题，无法访问宿主机，可以选择等待宿主机恢复；也可以尝试"
 "迁移此虚拟主机到其他宿主机。"
-msgstr "This host may be down, having network problems or inaccessible. You can choose to wait for the host to recover or try migrating this virtual server to another host."
+msgstr ""
+"This host may be down, having network problems or inaccessible. You can "
+"choose to wait for the host to recover or try migrating this virtual server "
+"to another host."
 
 #: vms/static/vms/vms_operations.js:250
 msgid "此虚拟主机未丢失，无需恢复。"

@@ -1,3 +1,4 @@
+import ipaddress
 import random
 
 from django.db import transaction
@@ -624,6 +625,30 @@ class HostManager:
 
         try:
             return Host.objects.select_related('group').filter(id=host_id).first()
+        except Exception as e:
+            raise ComputeError(msg=f'查询宿主机时错误,{str(e)}')
+
+    @staticmethod
+    def get_host_by_ipv4(host_ipv4: str):
+        """
+        通过id获取宿主机元数据模型对象
+
+        :param host_id: 宿主机 ip
+        :return:
+            Host() # success
+            None    #不存在
+        :raise ComputeError
+        """
+        if not isinstance(host_ipv4, str):
+            raise ComputeError(msg='宿主机IP参数有误')
+
+        try:
+            ipaddress.IPv4Address(host_ipv4)
+        except ipaddress.AddressValueError as e:
+            raise ComputeError(msg=f'宿主机IP参数有误,{str(e)}')
+
+        try:
+            return Host.objects.select_related('group', 'group__center').filter(ipv4=host_ipv4).first()
         except Exception as e:
             raise ComputeError(msg=f'查询宿主机时错误,{str(e)}')
 

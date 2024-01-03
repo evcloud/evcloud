@@ -11,7 +11,7 @@ from utils.ev_libvirt.virt import VirtHost, VirHostDown
 @admin.register(Center)
 class CenterAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
-    list_display = ('id', 'name', 'location', 'desc', 'ceph_clusters_list')
+    list_display = ('id', 'name', 'location', 'desc', 'ceph_clusters_list', 'ssh_key')
     list_filter = ['location']
     search_fields = ['name', 'location']
 

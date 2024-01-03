@@ -1,6 +1,9 @@
+import os
+
 from django.db import models
 from django.db.models import F, Sum, Count
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 from pcservers.models import PcServer
 from utils.errors import ComputeError
@@ -17,6 +20,9 @@ class Center(models.Model):
     name = models.CharField(verbose_name='数据中心名称', max_length=100, unique=True)
     location = models.CharField(verbose_name='位置', max_length=100)
     desc = models.CharField(verbose_name='简介', max_length=200, default='', blank=True)
+    keyring = models.TextField(verbose_name='宿主机 ssh key文本', default='')
+    ssh_key = models.CharField(max_length=200, editable=False, blank=True, verbose_name='ssh key文件保存路径',
+                               help_text="ssh 私钥")
 
     class Meta:
         ordering = ('id',)
@@ -26,6 +32,47 @@ class Center(models.Model):
     def __str__(self):
         return self.name
 
+    def get_keyring_file(self):
+        """
+        ssh key文件路径
+        :return: str
+        """
+        if not self.ssh_key:
+            self._save_config_to_file()
+
+        return self.ssh_key
+
+    def _save_config_to_file(self):
+        """
+        ceph的配置内容保存到配置文件
+
+        :return:
+            True    # success
+            False   # failed
+        """
+        path = os.path.join(settings.BASE_DIR, 'data/sshkey/conf/')
+        self.ssh_key = os.path.join(path, f'{self.id}.keyrsa')
+
+        try:
+            # 目录路径不存在存在则创建
+            os.makedirs(path, exist_ok=True)
+            with open(self.ssh_key, 'w') as f:
+                keyring = self.keyring.replace('\r\n', '\n')
+                self.keyring = keyring.replace('\r', '\n')
+                f.write(self.keyring + '\n')
+        except Exception:
+            return False
+
+        os.chmod(self.ssh_key, 0o600)   # 设置权限
+        return True
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            super().save(*args, **kwargs)
+
+        self._save_config_to_file()
+        super().save(*args, **kwargs)
+
 
 class Group(models.Model):
     """
@@ -34,7 +81,8 @@ class Group(models.Model):
     组用于权限隔离，某一个用户创建的虚拟机只能创建在指定的组的宿主机上，无权使用其他组的宿主机
     """
     id = models.AutoField(primary_key=True)
-    center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set', verbose_name='组所属的数据中心')
+    center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set',
+                               verbose_name='组所属的数据中心')
     name = models.CharField(max_length=100, verbose_name='组名称')
     enable = models.BooleanField(default=True, verbose_name='启用宿主机组')
     desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
@@ -81,7 +129,8 @@ class Host(models.Model):
     宿主机是真实的物理主机，是虚拟机的载体，虚拟机使用宿主机的资源在宿主机上运行
     """
     id = models.AutoField(primary_key=True)
-    group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set', verbose_name='宿主机所属的组')
+    group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set',
+                              verbose_name='宿主机所属的组')
     pcserver = models.OneToOneField(to=PcServer, related_name='pc_server_host', blank=True, null=True,
                                     on_delete=models.CASCADE, verbose_name='物理服务器')
     ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
@@ -100,14 +149,12 @@ class Host(models.Model):
     ipmi_user = models.CharField(max_length=100, default='', blank=True)
     ipmi_password = models.CharField(max_length=100, default='', blank=True)
 
-
     class Meta:
         verbose_name = '宿主机'
         verbose_name_plural = '06_宿主机'
 
     def __str__(self):
         return self.ipv4
-
 
     def exceed_vm_limit(self):
         """
@@ -315,7 +362,8 @@ class Host(models.Model):
         if not self.id:
             return err_ret
         try:
-            a = Vm.objects.filter(host=self.id, vm_status='normal').aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'), count=Count('pk'))
+            a = Vm.objects.filter(host=self.id, vm_status='normal').aggregate(vcpu_now=Sum('vcpu'), mem_now=Sum('mem'),
+                                                                              count=Count('pk'))
         except Exception:
             return err_ret
 
