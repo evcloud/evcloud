@@ -66,18 +66,18 @@
             <table class="table table-hover table-vm-list" style="word-wrap:break-word;word-break:break-all;">
                 <thead class="thead-light">
                 <tr>
-                    <th style="width: 50px"></th>
-                    <th style="width: 280px">{% translate '名称' %}</th>
-                    <th style="width: 60px">{% translate '启用' %}</th>
-                    <th style="width: 90px">{% translate '系统类型' %}</th>
-                    <th style="width: 100px">{% translate '镜像标签' %}</th>
-                    <th style="width: 180px">{% translate '虚拟机模板' %}</th>
-                    <th style="width: 220px">{% translate '生效快照' %}</th>
+                    <th></th>
+                    <th>{% translate '名称' %}</th>
+                    <th>{% translate '启用' %}</th>
+                    <th>{% translate '系统类型' %}</th>
+                    <th>{% translate '镜像标签' %}</th>
+                    <th>{% translate '虚拟机模板' %}</th>
+                    <th>{% translate '生效快照' %}</th>
 
-                    <th>备注</th>
+                    <th >{% translate '备注' %}</th>
                     {% if user.is_superuser %}
-                        <th style="width: 150px">
-                            <span>{% translate '虚拟机状态' %}</span>
+                        <th >
+                            <span>{% translate '镜像机状态' %}</span>
                             <button class="btn btn-sm btn-outline-success btn-update-vm-status"><i
                                     class="fa fa-sync"></i>
                             </button>
@@ -127,7 +127,7 @@
                                 </button>
                             {% endif %}
                         </td>
-                        <td class="mouse-hover" style="max-width: 200px;">
+                        <td class="mouse-hover" style="max-width: 500px;">
                             <div>
                                 <span>{{ image.desc|default_if_none:'' }}</span>
                                 {% if user.is_superuser %}
