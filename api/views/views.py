@@ -932,10 +932,11 @@ class VmsViewSet(CustomGenericViewSet):
 
         vm_uuid = vm.get_uuid()
         host_ipv4 = vm.host.ipv4
+        sshkey = vm.host.group.center.ssh_key
 
         vnc_manager = NovncTokenManager()
         try:
-            vnc_id, url = vnc_manager.generate_token(vmid=vm_uuid, hostip=host_ipv4)
+            vnc_id, url = vnc_manager.generate_token(vmid=vm_uuid, hostip=host_ipv4, sshkey=sshkey)
         except NovncError as e:
             e.msg = f'创建虚拟机vnc失败，{str(e)}'
             return self.exception_response(e)
