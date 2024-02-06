@@ -222,7 +222,7 @@ class ImageVmOperateView(View):
         if operation == 'get-vnc-url':
             vnc_manager = NovncTokenManager()
             try:
-                vnc_id, url = vnc_manager.generate_token(vmid=image.vm_uuid, hostip=image.vm_host.ipv4)
+                vnc_id, url = vnc_manager.generate_token(vmid=image.vm_uuid, hostip=image.vm_host.ipv4, sshkey=image.vm_host.group.center.ssh_key)
                 # url = request.build_absolute_uri(url)
                 http_host = request.META['HTTP_HOST']
                 # http_host = http_host.split(':')[0]

@@ -13,7 +13,7 @@ from utils.errors import NovncError
 
 
 class NovncTokenManager(object):
-    def generate_token(self, vmid: str, hostip: str):
+    def generate_token(self, vmid: str, hostip: str, sshkey: str):
         """
         创建虚拟机vnc url
 
@@ -24,7 +24,7 @@ class NovncTokenManager(object):
 
         :raise: NovncError
         """
-        protocol_type, port = self.get_vm_graphics_info(vmid, hostip)
+        protocol_type, port = self.get_vm_graphics_info(vmid, hostip, sshkey)
         port = str(port)
         now = timezone.now()
         # 删除该hostip和vncport的历史token记录
@@ -53,7 +53,7 @@ class NovncTokenManager(object):
         Token.objects.filter(token=str(vncid)).delete()
 
     @staticmethod
-    def get_vm_graphics_info(vmid, hostip):
+    def get_vm_graphics_info(vmid, hostip, sshkey):
         """
         获取虚拟机的graphics display
 
@@ -72,7 +72,7 @@ class NovncTokenManager(object):
         except ValueError:
             vm_uuid = vmid
 
-        cmd = f'ssh {hostip} virsh domdisplay {vm_uuid}'
+        cmd = f'ssh -i {sshkey} {hostip} virsh domdisplay {vm_uuid}'
         # cmd = f'ssh {hostip} virsh vncdisplay {vmid}'
         res, info = subprocess.getstatusoutput(cmd)
         if res != 0:
