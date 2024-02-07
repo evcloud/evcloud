@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-django = "==4.2.5"
+django = "==4.2.10"
 mysqlclient = "==2.1.0"
 djangorestframework = "==3.14.0"
 #libvirt-python = "==9.3.0"    # 不适用于 pip 安装， 通过 dnf install python3-libvirt.x86_64
