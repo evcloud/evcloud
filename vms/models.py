@@ -70,7 +70,8 @@ def remove_protected_snap(ceph, pool_name: str, image_name: str):
     try:
         rbd = get_rbd_manager(ceph=ceph, pool_name=pool_name)
         list_prot_snap = rbd.list_image_snaps(name=image_name)
-        for prot_snap in list_prot_snap:
+        sorted_dict_list = sorted(list_prot_snap, key=lambda x: x['id'], reverse=True)  # 倒序删除，不一定删除全部  iso --> snap1 --> snap2 --> snap3 ; snap1 --> iso2 --> snap4  不能直接删除 snap1
+        for prot_snap in sorted_dict_list:
             rbd.remove_snap(image_name=image_name, snap=prot_snap['name'])
     except (RadosError, Exception) as e:
         raise Error(msg=str(e))
@@ -837,3 +838,36 @@ class AttachmentsIP(models.Model):
 
     def __str__(self):
         return self.vm.uuid
+
+
+class ErrorLog(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name='ID')
+    status_code = models.IntegerField(verbose_name=_('状态码'), blank=True, default=0)
+    method = models.CharField(verbose_name=_('请求方法'), max_length=32, blank=True, default='')
+    full_path = models.CharField(verbose_name=_('请求路径'), max_length=1024, blank=True, default='')
+    message = models.TextField(verbose_name=_('日志信息'), blank=True, default='')
+    create_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
+    username = models.CharField(verbose_name=_('请求用户'), max_length=150, blank=True, default='')
+
+    class Meta:
+        db_table = 'error_log'
+        ordering = ['-create_time']
+        verbose_name = _("接口错误日志记录表")
+        verbose_name_plural = verbose_name
+
+
+    @classmethod
+    def add_log(cls, status_code: int, method: str, full_path: str, message: str, username: str = ''):
+        """
+        创建一条错误日志
+        :return:
+            Exception   # error
+            ErrorLog()  # success
+        """
+        try:
+            ins = cls(status_code=status_code, method=method, full_path=full_path, message=message, username=username)
+            ins.save(force_insert=True)
+        except Exception as exc:
+            return exc
+
+        return ins

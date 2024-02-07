@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib import messages
 
-from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor, AttachmentsIP
+from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor, AttachmentsIP, ErrorLog
 
 
 @admin.register(Vm)
@@ -183,4 +183,10 @@ class FlavorAdmin(admin.ModelAdmin):
 class AttachmentsIPAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
     list_display = ('id', 'vm', 'sub_ip')
+
+
+@admin.register(ErrorLog)
+class ErrorLogAdmin(admin.ModelAdmin):
+    list_display_links = ('id',)
+    list_display = ('id', 'full_path', 'status_code', 'method', 'message', 'create_time', 'username')
 
