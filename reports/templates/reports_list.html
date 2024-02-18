@@ -14,29 +14,34 @@
     <div class="container-fluid d-flex flex-column h-100">
         <div class="d-flex px-3">
             <nav aria-label="breadcrumb">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item active" aria-current="page">{% translate '全部' %}</li>
-              </ol>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">{% translate '全部' %}</li>
+                </ol>
             </nav>
-{#            <p class="h5">资源分配统计</p>#}
+            {#            <p class="h5">资源分配统计</p>#}
         </div>
         <div class="d-flex px-3" style="flex: 1">
             <div style="width: 200px">
                 <ul class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
-                  <li class="nav-item">
-                    <a class="nav-link active" data-toggle="tab" href="#center" aria-controls="center" aria-selected="true">{% translate '数据中心' %}</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" href="#host_group" aria-controls="host_group" aria-selected="false">{% translate '宿主机组' %}</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" data-toggle="tab" href="#host" aria-controls="host" aria-selected="false">{% translate '宿主机' %}</a>
-                  </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#host" aria-controls="host"
+                           aria-selected="false">{% translate '宿主机' %}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#center" aria-controls="center"
+                           aria-selected="true">{% translate '数据中心' %}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#host_group" aria-controls="host_group"
+                           aria-selected="false">{% translate '宿主机组' %}</a>
+                    </li>
+
                 </ul>
             </div>
             <div class="pl-lg-1 flex-grow-1">
-              <div class="tab-content h-100">
-                    <div class="card tab-pane fade show active  h-100" id="center" role="tabpanel" aria-labelledby="center-tab">
+                <div class="tab-content h-100">
+                    <div class="card tab-pane fade show h-100" id="center" role="tabpanel"
+                         aria-labelledby="center-tab">
                         <table class="table">
                             <thead class="thead-light">
                             <tr>
@@ -54,21 +59,22 @@
                             <tbody>
                             {% for c in centers %}
                                 <tr>
-                                    <td><a href="{% url 'reports:reports-center' id=c.id %}">{{c.name}}</a></td>
-                                    <td>{{c.real_cpu}}</td>
-                                    <td>{{c.vcpu_total}}</td>
-                                    <td>{{c.vcpu_allocated}}</td>
-                                    <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
-                                    <td>{{c.mem_total | sizeformat:'GB'}}</td>
-                                    <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
-                                    <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
-                                    <td>{{c.vm_created}}</td>
+                                    <td><a href="{% url 'reports:reports-center' id=c.id %}">{{ c.name }}</a></td>
+                                    <td>{{ c.real_cpu }}</td>
+                                    <td>{{ c.vcpu_total }}</td>
+                                    <td>{{ c.vcpu_allocated }}</td>
+                                    <td>{{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
+                                    <td>{{ c.mem_total | sizeformat:'GB' }}</td>
+                                    <td>{{ c.mem_allocated | sizeformat:'GB' }}</td>
+                                    <td>{{ c.mem_allocated | percentageformat:c.mem_total }}</td>
+                                    <td>{{ c.vm_created }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    <div class="card tab-pane fade show h-100" id="host_group" role="tabpanel" aria-labelledby="host_group-tab">
+                    <div class="card tab-pane fade show h-100" id="host_group" role="tabpanel"
+                         aria-labelledby="host_group-tab">
                         <table class="table">
                             <thead class="thead-light">
                             <tr>
@@ -87,22 +93,91 @@
                             <tbody>
                             {% for c in groups %}
                                 <tr>
-                                    <td><a href="{% url 'reports:reports-group' id=c.id %}">{{c.name}}</a></td>
-                                    <td>{{c.center__name}}</td>
-                                    <td>{{c.real_cpu}}</td>
-                                    <td>{{c.vcpu_total}}</td>
-                                    <td>{{c.vcpu_allocated}}</td>
-                                    <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
-                                    <td>{{c.mem_total | sizeformat:'GB'}}</td>
-                                    <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
-                                    <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
-                                    <td>{{c.vm_created}}</td>
+                                    <td><a href="{% url 'reports:reports-group' id=c.id %}">{{ c.name }}</a></td>
+                                    <td>{{ c.center__name }}</td>
+                                    <td>{{ c.real_cpu }}</td>
+                                    <td>{{ c.vcpu_total }}</td>
+                                    <td>{{ c.vcpu_allocated }}</td>
+                                    <td>{{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
+                                    <td>{{ c.mem_total | sizeformat:'GB' }}</td>
+                                    <td>{{ c.mem_allocated | sizeformat:'GB' }}</td>
+                                    <td>{{ c.mem_allocated | percentageformat:c.mem_total }}</td>
+                                    <td>{{ c.vm_created }}</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    <div class="card  tab-pane fade show h-100 " id="host" role="tabpanel" aria-labelledby="host-tab">
+                    <div class="card  tab-pane fade show h-100 active" id="host" role="tabpanel"
+                         aria-labelledby="host-tab">
+
+                        <form role="form" class="form-horizontal" method="get" action="">
+                            <div class="input-group" style="">
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text" for="id-center">{% translate '数据中心' %}</label>
+                                </div>
+                                <select name="center" class="custom-select" id="id-center">
+                                    <option value="">--</option>
+                                    {% for c in centers %}
+                                        <option value="{{ c.id }}" {% if c.id == center_id %}selected{% endif %}>
+                                            {{ c.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text" for="id-group">{% translate '主机组' %}</label>
+                                </div>
+                                <select name="group" class="custom-select" id="id-group">
+                                    <option value="">--</option>
+                                    {% for g in groups %}
+                                        <option value="{{ g.id }}" {% if g.id == group_id|add:0 %}
+                                                selected {% endif %}>{{ g.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text" for="id-host">{% translate '宿主机' %}</label>
+                                </div>
+                                <select name="host" class="custom-select" id="id-host">
+                                    <option value="">--</option>
+                                    {% for h in hosts %}
+                                        <option value="{{ h.id }}" {% if h.id == host_id|add:0 %}
+                                                selected {% endif %}>{{ h.ipv4 }}</option>
+                                    {% endfor %}
+                                </select>
+                                {#                                <div class="input-group-prepend">#}
+                                {#                                    <label class="input-group-text" for="id-user">{% translate '创建者' %}</label>#}
+                                {#                                </div>#}
+                                {#                                <select name="user" class="custom-select" id="id-user">#}
+                                {#                                    <option value="">--</option>#}
+                                {#                                    {% for u in users %}#}
+                                {#                                        <option value="{{ u.id }}"#}
+                                {#                                                {% if u.id == user_id %}selected {% endif %}>{{ u.username }}</option>#}
+                                {#                                    {% endfor %}#}
+                                {#                                </select>#}
+                                <div class="input-group-prepend">
+                                    <label class="input-group-text">{% translate '关键字' %}</label>
+                                </div>
+                                <input type="text" class="form-control" name="search" value="{{ search }}"
+                                       placeholder="{% translate '搜 IP地址' %}"/>
+                                <span class="input-group-text"></span>
+                                <button type="submit"
+                                        class="btn btn-primary form-control">{% translate '筛选' %}</button>
+
+                                <button type="button" class="btn btn-primary" data-toggle="modal"
+                                        data-target="#exampleModal2"
+                                        style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>
+                                {#                                <a class="btn btn-primary float-right" style="color: #fff; margin-right: 10px"#}
+                                {#                                   id="batchdetection"> {% translate '一键检测' %} </a>#}
+                                <button type="button" class="btn btn-primary" data-toggle="modal"
+                                        data-target="#exampleModal">
+                                    {% translate '一键检测' %}
+                                </button>
+
+
+                            </div>
+                        </form>
+
+                        <p></p>
                         <table class="table">
                             <thead class="thead-light">
                             <tr>
@@ -112,38 +187,138 @@
                                 <th>{% translate '虚拟cpu(/核)' %}</th>
                                 <th>{% translate '已分配cpu(/核)' %}</th>
                                 <th>cpu{% translate '分配率' %}</th>
-                                <th>{% translate '总内存' %}</th>
-                                <th>{% translate '已使用内存' %}</th>
-                                <th>{% translate '内存使用率' %}</th>
+                                <th>{% translate '可分配内存/实际可分配内存' %}</th>
+                                <th>{% translate '已使用内存/实际已使用内存' %}</th>
+                                <th>{% translate '内存使用率/实际内存使用率' %}</th>
                                 <th>{% translate '虚拟机数' %}</th>
+                                <th>{% translate '操作' %}</th>
                             </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tbody-host">
                             {% for c in hosts %}
                                 <tr>
-                                    <td>{{c.ipv4}}</td>
-                                    <td>{{c.group__name}}</td>
-                                    <td>{{c.real_cpu}}</td>
-                                    <td>{{c.vcpu_total}}</td>
-                                    <td>{{c.vcpu_allocated}}</td>
-                                    <td>{{c.vcpu_allocated | percentageformat:c.vcpu_total}}</td>
-                                    <td>{{c.mem_total | sizeformat:'GB'}}</td>
-                                    <td>{{c.mem_allocated | sizeformat:'GB'}}</td>
-                                    <td>{{c.mem_allocated | percentageformat:c.mem_total}}</td>
-                                    <td>{{c.vm_created}}</td>
+                                    <td>{{ c.ipv4 }}</td>
+                                    <td>{{ c.group__name }}</td>
+                                    <td>{{ c.real_cpu }}</td>
+                                    <td>{{ c.vcpu_total }}</td>
+                                    <td>{{ c.vcpu_allocated }}</td>
+                                    <td>{{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
+                                    <td>{{ c.mem_total | sizeformat:'GB' }} </td>
+                                    <td>{{ c.mem_allocated | sizeformat:'GB' }} </td>
+                                    <td>{{ c.mem_allocated | percentageformat:c.mem_total }}</td>
+                                    <td>{{ c.vm_created }}</td>
+                                    <td><a type="button" class="btn btn-primary"
+                                           onclick='detectionHost( this ,"{{ c.ipv4 }}", "{{ csrf_token }}")'
+                                           style="color: #fff;">检测</a>
+                                        | <a
+                                                type="button"
+                                                class="btn btn-primary" style="color: #fff;"
+                                                onclick="saveHostInfo(this, '{{ c.ipv4 }}', '{{ csrf_token }}')">保存</a>
+                                    </td>
                                 </tr>
                             {% endfor %}
+
+
                             </tbody>
+
                         </table>
+
                     </div>
-              </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">ip 范围</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="input-group mb-3">
+
+                            <input type="text" class="form-control" aria-label="Sizing example input"
+                                   aria-describedby="inputGroup-sizing-default" placeholder="起始地址" id="ip-start">
+                        </div>
+                        <div class="input-group mb-3">
+
+                            <input type="text" class="form-control" aria-label="Sizing example input"
+                                   aria-describedby="inputGroup-sizing-default" placeholder="结束地址" id="ip-end">
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" aria-label="Sizing example input"
+                                   aria-describedby="inputGroup-sizing-default" placeholder="子网/掩码" id="ip-subnet">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="batchdetection-ip">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel2">ip 范围</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">宿主机机组</label>
+                            <div class="col-sm-10">
+                                <select name="group" class="custom-select" id="id-group-savedetect">
+                                    <option value="">--</option>
+                                    {% for g in groups %}
+                                        <option value="{{ g.id }}" {% if g.id == group_id|add:0 %}
+                                                selected {% endif %}>{{ g.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="staticEmail" class="col-sm-2 col-form-label">部门</label>
+                            <div class="col-sm-10">
+                                <select name="group" class="custom-select" id="id-room-savedetect">
+                                    <option value="">--</option>
+                                    {% for r in room %}
+                                        <option value="{{ r.id }}">{{ r.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" id="savedetection-ip">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block script %}
+    <script type="text/javascript" src="{% static 'reports/reports_list.js' %}"></script>
     <script>
-        $("#nav_reports").addClass("active");
+        $("#host").addClass("active");
     </script>
+    <script>
+
+    </script>
+
 {% endblock %}
