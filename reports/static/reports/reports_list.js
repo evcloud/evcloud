@@ -156,14 +156,13 @@ batchDetection.addEventListener('click', function () {
 
         success: function (data) {
             // Handle success
-            console.log(data.msg)
+            // console.log(data.msg)
             let obj = JSON.parse(data.msg)
             let tbody_host = document.getElementById('tbody-host')
             for (let key in obj) {
                 if (obj.hasOwnProperty(key)) {
-                    console.log(key + ": " + obj[key]);
+                    // console.log(key + ": " + obj[key]);
                     let data_list = obj[key].split(',')
-
 
                     let temp_tr = `<tr>
                                     <td>${key}</td>
@@ -191,12 +190,17 @@ batchDetection.addEventListener('click', function () {
 
                 }
             }
+            $('#exampleModal').modal('hide')
 
-            console.log(data.error)
+            // console.log(data.error)
+            if (data.error !== "{}"){
+                alert(data.error)
+            }
 
 
         }, error: function (data) {
             // Handle error
+            $('#exampleModal').modal('hide')
             alert('保存数据失败：' + data.responseJSON.msg_error)
         }
     })
@@ -208,6 +212,8 @@ let savedetection = document.getElementById('savedetection-ip')
 savedetection.addEventListener('click', function () {
     let savedetect_group = $('#id-group-savedetect').val()
     let savedetect_room = $('#id-room-savedetect').val()
+
+    // if(){}
 
     let tbody_host = document.getElementById('tbody-host')
     let json_host = {}
@@ -229,8 +235,6 @@ savedetection.addEventListener('click', function () {
 
     }
 
-    console.log(json_host)
-
     let csrftoken = getCookie('csrftoken');
     $.ajax({
         url: '/reports/host/detect/', type: 'POST', headers: {
@@ -239,10 +243,12 @@ savedetection.addEventListener('click', function () {
 
         success: function (data) {
             // Handle success
+            $('#exampleModal2').modal('hide')
             alert(data.msg)
 
         }, error: function (data) {
             // Handle error
+            $('#exampleModal2').modal('hide')
             alert('保存数据失败：' + data.responseJSON.msg_error)
         }
     })

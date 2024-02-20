@@ -157,6 +157,8 @@ class ReportHostCpuMem(View):
 
 class ReportsHostBatchDetection(View):
 
+    """ 一键检测和批量保存"""
+
     def get(self, request, *args, **kwargs):
         ip_start = request.GET.get('ip_start')
         ip_end = request.GET.get('ip_end')

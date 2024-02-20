@@ -32,6 +32,7 @@ pipenv install
 #### （2） 使用系统python环境
 在代码工程根目录下，即文件requirements.txt同目录下运行命令：  
 ```pip3 install -r requirements.txt```
+```缺少 libvirt-python   dnf install libvirt```
 
 ### 3 安全敏感信息配置文件
 安全信息配置demo文件security_demo.py修改文件名为security.py，根据自己情况完成配置。
@@ -47,7 +48,7 @@ DATABASES = {
         'PORT': '3306',  # 数据库使用的端口
         'USER': 'xxx',  # 数据库用户名
         'PASSWORD': 'xxx',  # 密码
-        'OPTIONS': {'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"}
+        'OPTIONS': {'init_command': "SET sql_mode='STRICT_TRANS_TABLES'", 'charset': 'utf8mb4'}
     },
 }
 ```   
