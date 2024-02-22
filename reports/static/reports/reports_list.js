@@ -143,8 +143,9 @@ batchDetection.addEventListener('click', function () {
     let ip_start = document.getElementById('ip-start').value
     let ip_end = document.getElementById('ip-end').value
     let ip_subent = document.getElementById('ip-subnet').value
+    let batchdetect_group = $('#id-group-batchdetect').val()
 
-    if (ip_start.trim() === '' || ip_end.trim() === '' || ip_subent.trim() === '') {
+    if (ip_start.trim() === '' || ip_end.trim() === '' || ip_subent.trim() === '' || batchdetect_group.trim() === '') {
         alert('请将内容填写完整')
         return
     }
@@ -152,7 +153,7 @@ batchDetection.addEventListener('click', function () {
     $.ajax({
         url: '/reports/host/detect/', type: 'GET', headers: {
             'X-CSRFToken': csrftoken
-        }, data: {'ip_start': ip_start, 'ip_end': ip_end, 'ip_subent': ip_subent},
+        }, data: {'ip_start': ip_start, 'ip_end': ip_end, 'ip_subent': ip_subent, 'batchdetect_group': batchdetect_group},
 
         success: function (data) {
             // Handle success

@@ -12,6 +12,7 @@ from compute.managers import CenterManager, GroupManager, HostManager
 from network.managers import check_ip_in_subnets
 from pcservers.models import Room, PcServer
 from utils.ev_libvirt.virt import VmDomain
+from utils.host_cpu_mem import HosthardwareInfo
 
 
 class ReportsListView(View):
@@ -160,6 +161,7 @@ class ReportsHostBatchDetection(View):
     """ 一键检测和批量保存"""
 
     def get(self, request, *args, **kwargs):
+        batchdetect_group = request.GET.get('batchdetect_group')
         ip_start = request.GET.get('ip_start')
         ip_end = request.GET.get('ip_end')
         subnet = request.GET.get('ip_subent')  # 子网ip/掩码
@@ -182,9 +184,17 @@ class ReportsHostBatchDetection(View):
         err_dict = {}
         info_dict = {}
 
+        group = GroupManager().get_group_by_id(group_id=int(batchdetect_group))
+
+        if not group:
+            return JsonResponse({'msg_error': f'宿主机组不存在。'},
+                                json_dumps_params={'ensure_ascii': False}, status=400)
+
+        sshk_key = group.center.ssh_key
+
         for ip in ip_list:
             try:
-                data = get_host_cpu_men_info(host_ipv4=ip)
+                data = self.get_host_info(ipv4=ip, ssh_key=sshk_key)
             except Exception as e:
                 err_dict[ip] = str(e)
                 continue
@@ -216,21 +226,30 @@ class ReportsHostBatchDetection(View):
         return JsonResponse({'msg': f'保存成功'},
                             json_dumps_params={'ensure_ascii': False})
 
+    def get_host_info(self, ipv4, ssh_key):
+        host = HosthardwareInfo(ipv4=ipv4, ssh_key=ssh_key)
+        host_cpu = host.get_cpu()
+        host_mem = host.get_hugepages()
+        mem_all = int(host_mem['HugePages_Total'])
+        mem_x = mem_all - int(host_mem['HugePages_Free'])
+
+        cpu_h = int(host_cpu)  # 真是cpu
+        cpu_x = int(host_cpu) * 4  # 虚拟cpu
+
+        cpu_y = 0
+        cpu_p = 0
+        mem_p = 0
+
+        data = f'{cpu_h}, {cpu_x}, {cpu_y}, {cpu_p}, {mem_all}, {mem_x}, {mem_p}'
+
+        return data
+
     def pcserver_check(self, host_ip, cpu, mem, room_id):
         obj = PcServer.objects.filter(host_ipv4=host_ip).first()
         if obj:
-            flag = []
-            if obj.real_cpu != cpu:
+            if obj.real_cpu != cpu and cpu != 0:
                 obj.real_cpu = cpu
-                flag.append('real_cpu')
-
-            if obj.real_mem != mem:
-                obj.real_mem = mem
-                flag.append('real_mem')
-
-            if flag:
-                obj.save(update_fields=['real_cpu', 'real_mem'])
-
+                obj.save(update_fields=['real_cpu'])
             return obj
 
         obj = PcServer(
@@ -249,11 +268,19 @@ class ReportsHostBatchDetection(View):
 
     def host_check(self, host_ip, cpu, mem, pcserver_id, room_id):
 
-        host_obj = Host.objects.filter(pcserver__host_ipv4=host_ip).filter()
+        host_obj = Host.objects.filter(pcserver__host_ipv4=host_ip).first()
         if host_obj:
-            if host_obj.vcpu_total != cpu * 4:
+            flag = []
+            if host_obj.vcpu_total != cpu * 4 and cpu != 0:
                 host_obj.vcpu_total = cpu * 4
-                host_obj.save(update_fields=['vcpu_total'])
+                flag.append('vcpu_total')
+
+            if host_obj.mem_total != mem and mem != 0:
+                host_obj.mem_total = mem
+                flag.append('mem_total')
+
+            if flag:
+                host_obj.save(update_fields=flag)
             return host_obj
 
         host_obj = Host(

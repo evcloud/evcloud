@@ -162,16 +162,16 @@
                                 <span class="input-group-text"></span>
                                 <button type="submit"
                                         class="btn btn-primary form-control">{% translate '筛选' %}</button>
+                                {% if user.is_superuser %}
+                                    <button type="button" class="btn btn-primary" data-toggle="modal"
+                                            data-target="#exampleModal2"
+                                            style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>
 
-                                <button type="button" class="btn btn-primary" data-toggle="modal"
-                                        data-target="#exampleModal2"
-                                        style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>
-                                {#                                <a class="btn btn-primary float-right" style="color: #fff; margin-right: 10px"#}
-                                {#                                   id="batchdetection"> {% translate '一键检测' %} </a>#}
-                                <button type="button" class="btn btn-primary" data-toggle="modal"
-                                        data-target="#exampleModal">
-                                    {% translate '一键检测' %}
-                                </button>
+                                    <button type="button" class="btn btn-primary" data-toggle="modal"
+                                            data-target="#exampleModal">
+                                        {% translate '一键检测' %}
+                                    </button>
+                                {% endif %}
 
 
                             </div>
@@ -191,7 +191,9 @@
                                 <th>{% translate '已使用内存/实际已使用内存' %}</th>
                                 <th>{% translate '内存使用率/实际内存使用率' %}</th>
                                 <th>{% translate '虚拟机数' %}</th>
-                                <th>{% translate '操作' %}</th>
+                                {% if user.is_superuser %}
+                                    <th>{% translate '操作' %}</th>
+                                {% endif %}
                             </tr>
                             </thead>
                             <tbody id="tbody-host">
@@ -207,14 +209,16 @@
                                     <td>{{ c.mem_allocated | sizeformat:'GB' }} </td>
                                     <td>{{ c.mem_allocated | percentageformat:c.mem_total }}</td>
                                     <td>{{ c.vm_created }}</td>
-                                    <td><a type="button" class="btn btn-primary"
-                                           onclick='detectionHost( this ,"{{ c.ipv4 }}", "{{ csrf_token }}")'
-                                           style="color: #fff;">检测</a>
-                                        | <a
-                                                type="button"
-                                                class="btn btn-primary" style="color: #fff;"
-                                                onclick="saveHostInfo(this, '{{ c.ipv4 }}', '{{ csrf_token }}')">保存</a>
-                                    </td>
+                                    {% if  user.is_superuser %}
+                                        <td><a type="button" class="btn btn-primary"
+                                               onclick='detectionHost( this ,"{{ c.ipv4 }}", "{{ csrf_token }}")'
+                                               style="color: #fff;">检测</a>
+                                            | <a
+                                                    type="button"
+                                                    class="btn btn-primary" style="color: #fff;"
+                                                    onclick="saveHostInfo(this, '{{ c.ipv4 }}', '{{ csrf_token }}')">保存</a>
+                                        </td>
+                                    {% endif %}
                                 </tr>
                             {% endfor %}
 
@@ -241,6 +245,18 @@
                 <div class="modal-body">
                     <form>
                         <div class="input-group mb-3">
+                            <label for="staticEmail" class="">宿主机组</label>
+                            <div class="col-sm-10">
+                                <select name="group" class="custom-select" id="id-group-batchdetect">
+                                    <option value="">--</option>
+                                    {% for g in groups %}
+                                        <option value="{{ g.id }}" {% if g.id == group_id|add:0 %}
+                                                selected {% endif %}>{{ g.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group mb-3">
 
                             <input type="text" class="form-control" aria-label="Sizing example input"
                                    aria-describedby="inputGroup-sizing-default" placeholder="起始地址" id="ip-start">
@@ -254,6 +270,7 @@
                             <input type="text" class="form-control" aria-label="Sizing example input"
                                    aria-describedby="inputGroup-sizing-default" placeholder="子网/掩码" id="ip-subnet">
                         </div>
+
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -276,7 +293,7 @@
                 <div class="modal-body">
                     <form>
                         <div class="form-group row">
-                            <label for="staticEmail" class="col-sm-2 col-form-label">宿主机机组</label>
+                            <label for="staticEmail" class="col-sm-2 col-form-label">宿主机组</label>
                             <div class="col-sm-10">
                                 <select name="group" class="custom-select" id="id-group-savedetect">
                                     <option value="">--</option>
