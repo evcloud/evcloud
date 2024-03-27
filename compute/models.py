@@ -20,9 +20,9 @@ class Center(models.Model):
     name = models.CharField(verbose_name='数据中心名称', max_length=100, unique=True)
     location = models.CharField(verbose_name='位置', max_length=100)
     desc = models.CharField(verbose_name='简介', max_length=200, default='', blank=True)
-    keyring = models.TextField(verbose_name='宿主机 ssh key文本', default='')
-    ssh_key = models.CharField(max_length=200, editable=False, blank=True, verbose_name='ssh key文件保存路径',
-                               help_text="ssh 私钥")
+    keyring = models.TextField(verbose_name='宿主机ssh私钥（id_rsa）', default='')
+    ssh_key = models.CharField(max_length=200, editable=False, blank=True, verbose_name='宿主机ssh私钥文件保存路径',
+                               help_text="宿主机ssh私钥文件保存路径")
 
     class Meta:
         ordering = ('id',)

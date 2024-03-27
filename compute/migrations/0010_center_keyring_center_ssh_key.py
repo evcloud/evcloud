@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='center',
             name='keyring',
-            field=models.TextField(default='', verbose_name='宿主机 ssh key文本'),
+            field=models.TextField(default='', verbose_name='宿主机ssh私钥（id_rsa）'),
         ),
         migrations.AddField(
             model_name='center',
             name='ssh_key',
-            field=models.CharField(blank=True, editable=False, help_text='ssh 私钥', max_length=200, verbose_name='ssh key文件保存路径'),
+            field=models.CharField(blank=True, editable=False, help_text='宿主机ssh私钥文件保存路径', max_length=200, verbose_name='宿主机ssh私钥文件保存路径'),
         ),
     ]
