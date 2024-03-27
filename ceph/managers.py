@@ -272,6 +272,9 @@ class RbdManager:
         :return:
             True    # success
         :raises: RadosError
+        rbd.ImageNotFound：
+            #("RBD image not found (error opening image b'760f89a2bf7c4eb0b1a790d1c98f132a' at snapshot None)",)  # 镜像不存在时
+            # ("RBD image not found (error checking if snapshot b'760f89a2bf7c4eb0b1a790d1c98f132a'@b'760f89a2bf7c4eb0b1a790d1c98f132a-20240305_092624' is protected)",) # 快照不存在时
         """
         cluster = self.get_cluster()
         try:
@@ -280,7 +283,7 @@ class RbdManager:
                     if image.is_protected_snap(snap):   # protected snap check
                         image.unprotect_snap(snap)
                     image.remove_snap(snap)
-        except rbd.ObjectNotFound:
+        except (rbd.ObjectNotFound, rbd.ImageNotFound) as e:
             return True
         except Exception as e:
             raise RadosError(f'remove_snap error:{str(e)}')
