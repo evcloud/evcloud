@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-29 15:25+0800\n"
+"POT-Creation-Date: 2024-03-29 16:00+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,7 +33,8 @@ msgstr "Certification required"
 
 #: ceph/models.py:19
 msgid "未选中时，不使用uuid字段，uuid设置为空"
-msgstr "If it is not selected, the uuid field is not used and the uuid is left blank"
+msgstr ""
+"If it is not selected, the uuid field is not used and the uuid is left blank"
 
 #: ceph/models.py:20
 msgid "xml中ceph的uuid"
@@ -41,7 +42,9 @@ msgstr "xml中ceph的uuid"
 
 #: ceph/models.py:21
 msgid "xml中ceph配置的uuid,libvirt通过uuid获取访问ceph的用户key"
-msgstr "The uuid configured for ceph in xml. libvirt uses the uuid to obtain the user key for accessing ceph."
+msgstr ""
+"The uuid configured for ceph in xml. libvirt uses the uuid to obtain the "
+"user key for accessing ceph."
 
 #: ceph/models.py:22
 msgid "ceph集群配置文本"
@@ -53,7 +56,9 @@ msgstr "Config file"
 
 #: ceph/models.py:24
 msgid "点击保存，配置文本会存储到这个文件, 此字段自动填充"
-msgstr "Click Save, the configuration text will be stored in this file, and the field will be filled in automatically"
+msgstr ""
+"Click Save, the configuration text will be stored in this file, and the "
+"field will be filled in automatically"
 
 #: ceph/models.py:25
 msgid "ceph集群keyring文本"
@@ -65,7 +70,9 @@ msgstr "keyring File saving path"
 
 #: ceph/models.py:27
 msgid "点击保存，keyring文本会存储到这个文件, 此字段自动填充"
-msgstr "Click Save, the keyring text is stored in this file, and this field is automatically filled"
+msgstr ""
+"Click Save, the keyring text is stored in this file, and this field is "
+"automatically filled"
 
 #: ceph/models.py:29
 msgid ""
@@ -151,6 +158,10 @@ msgstr "Global configuration table"
 #: ceph/models.py:162
 msgid "novnc http协议配置有误。"
 msgstr "The HTTP protocol configuration of Novnc is incorrect."
+
+#: compute/apps.py:7
+msgid "计算资源管理"
+msgstr "Computing resource management"
 
 #: compute/models.py:21
 msgid "数据中心名称"
@@ -291,6 +302,10 @@ msgstr "Hosts"
 #: compute/models.py:155
 msgid "06_宿主机"
 msgstr "Host machine"
+
+#: device/apps.py:7
+msgid "本地资源(GPU等PCIe设备)"
+msgstr "Local resources (PCIe devices such as Gpus)"
 
 #: device/models.py:18
 msgid "未知设备"
@@ -511,6 +526,10 @@ msgstr ""
 #: django_site/settings.py:147
 msgid "中文简体"
 msgstr ""
+
+#: image/apps.py:7
+msgid "系统镜像和模板"
+msgstr "System images and templates"
 
 #: image/forms.py:15
 msgid "宿组机组"
@@ -867,6 +886,10 @@ msgid "当前您选择的操作系统镜像，要求系统盘最小50GB"
 msgstr ""
 "The operating system image you have selected currently requires a minimum "
 "system disk size of 50GB."
+
+#: network/apps.py:7
+msgid "网络，IP与MAC"
+msgstr "Network, IP and MAC"
 
 #: network/models.py:19
 msgid "私网"
@@ -1660,6 +1683,10 @@ msgstr "Password"
 msgid "忘记密码"
 msgstr "Forgot password"
 
+#: vdisk/apps.py:7
+msgid "云硬盘设置"
+msgstr "Cloud hard disk Settings"
+
 #: vdisk/models.py:25
 msgid "存储池名称"
 msgstr "Storage pool name"
@@ -1691,7 +1718,9 @@ msgstr "Available"
 
 #: vdisk/models.py:33
 msgid "开启和暂停使用2中状态, 未开启使用不允许创建云硬盘时"
-msgstr "Enable and Suspend Use state in 2. If this state is not enabled, cloud hard disks cannot be created"
+msgstr ""
+"Enable and Suspend Use state in 2. If this state is not enabled, cloud hard "
+"disks cannot be created"
 
 #: vdisk/models.py:37 vdisk/models.py:38 vdisk/models.py:161
 msgid "云硬盘CEPH存储池"
