@@ -1,5 +1,6 @@
 # coding=utf-8
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from compute.models import Host
 from vms.models import Vm
 
@@ -14,27 +15,27 @@ class PCIDevice(models.Model):
     TYPE_PHD = 3
     TYPE_HD = 4
     CHOICES_TYPE = (
-        (TYPE_UNKNOW, '未知设备'),
+        (TYPE_UNKNOW, _('未知设备')),
         (TYPE_GPU, 'PCIeGPU'),
-        (TYPE_ETH, 'PCIe网卡'),
-        (TYPE_PHD, 'PCIe硬盘'),
-        (TYPE_HD, '本地硬盘')
+        (TYPE_ETH, _('PCIe网卡')),
+        (TYPE_PHD, _('PCIe硬盘')),
+        (TYPE_HD, _('本地硬盘'))
     )
 
     id = models.AutoField(primary_key=True)
-    type = models.SmallIntegerField(choices=CHOICES_TYPE, default=TYPE_UNKNOW, verbose_name='资源类型')
+    type = models.SmallIntegerField(choices=CHOICES_TYPE, default=TYPE_UNKNOW, verbose_name=_('资源类型'))
     vm = models.ForeignKey(to=Vm, null=True, blank=True, related_name='device_set', on_delete=models.SET_NULL,
-                           verbose_name='挂载于虚拟机')
-    attach_time = models.DateTimeField(null=True, blank=True, verbose_name='挂载时间')
-    enable = models.BooleanField(default=True, verbose_name='启用设备')
-    remarks = models.TextField(null=True, blank=True, verbose_name='备注')
-    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, related_name='pci_devices', verbose_name='宿主机')
+                           verbose_name=_('挂载于虚拟机'))
+    attach_time = models.DateTimeField(null=True, blank=True, verbose_name=_('挂载时间'))
+    enable = models.BooleanField(default=True, verbose_name=_('启用设备'))
+    remarks = models.TextField(null=True, blank=True, verbose_name=_('备注'))
+    host = models.ForeignKey(to=Host, on_delete=models.CASCADE, related_name='pci_devices', verbose_name=_('宿主机'))
     address = models.CharField(max_length=100, help_text='format:[domain]:[bus]:[slot]:[function], example: 0000:84:00:0 或 /dev/sdp 本地盘')
 
     class Meta:
         ordering = ['-id']
-        verbose_name = '本地资源'
-        verbose_name_plural = '本地资源'
+        verbose_name = _('本地资源')
+        verbose_name_plural = _('本地资源')
 
     def __str__(self):
         return self.host.ipv4 + '_' + self.address

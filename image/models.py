@@ -3,7 +3,7 @@ import math
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-
+from django.utils.translation import gettext_lazy as _
 from ceph.models import CephPool
 from ceph.managers import get_rbd_manager, RadosError
 from compute.models import Host
@@ -17,16 +17,16 @@ class VmXmlTemplate(models.Model):
     创建虚拟机的XML模板
     """
     id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='模板名称', max_length=100, unique=True)
-    xml = models.TextField(verbose_name='XML模板')
-    desc = models.TextField(verbose_name='描述', default='', blank=True)
+    name = models.CharField(verbose_name=_('模板名称'), max_length=100, unique=True)
+    xml = models.TextField(verbose_name=_('XML模板'))
+    desc = models.TextField(verbose_name=_('描述'), default='', blank=True)
 
     def __str__(self):
         return self.name
 
     class Meta:
-        verbose_name = '虚拟机XML模板'
-        verbose_name_plural = '08_虚拟机XML模板'
+        verbose_name = _('虚拟机XML模板')
+        verbose_name_plural = _('08_虚拟机XML模板')
 
 
 class Image(models.Model):
@@ -36,8 +36,8 @@ class Image(models.Model):
     TAG_BASE = 1
     TAG_USER = 2
     CHOICES_TAG = (
-        (TAG_BASE, '基础镜像'),
-        (TAG_USER, '用户镜像')
+        (TAG_BASE, _('基础镜像')),
+        (TAG_USER, _('用户镜像'))
     )
 
     SYS_TYPE_WINDOWS = 1
@@ -52,7 +52,7 @@ class Image(models.Model):
         (SYS_TYPE_UNIX, 'Unix'),
         (SYS_TYPE_MACOS, 'MacOS'),
         (SYS_TYPE_ANDROID, 'Android'),
-        (SYS_TYPE_OTHER, '其他'),
+        (SYS_TYPE_OTHER, _('其他')),
     )
 
     RELEASE_WINDOWS_DESKTOP = 1
@@ -91,45 +91,45 @@ class Image(models.Model):
     )
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='镜像名称', max_length=100)
-    sys_type = models.SmallIntegerField(verbose_name='系统类型', choices=CHOICES_SYS_TYPE, default=SYS_TYPE_OTHER)
-    version = models.CharField(verbose_name='系统发行编号', max_length=100)
-    release = models.SmallIntegerField(verbose_name='系统发行版本', choices=RELEASE_CHOICES, default=RELEASE_CENTOS)
-    architecture = models.SmallIntegerField(verbose_name='系统架构', choices=ARCHITECTURE_CHOICES,
+    name = models.CharField(verbose_name=_('镜像名称'), max_length=100)
+    sys_type = models.SmallIntegerField(verbose_name=_('系统类型'), choices=CHOICES_SYS_TYPE, default=SYS_TYPE_OTHER)
+    version = models.CharField(verbose_name=_('系统发行编号'), max_length=100)
+    release = models.SmallIntegerField(verbose_name=_('系统发行版本'), choices=RELEASE_CHOICES, default=RELEASE_CENTOS)
+    architecture = models.SmallIntegerField(verbose_name=_('系统架构'), choices=ARCHITECTURE_CHOICES,
                                             default=ARCHITECTURE_X86_64)
-    boot_mode = models.SmallIntegerField(verbose_name='系统启动方式', choices=BOOT_CHOICES, default=BOOT_BIOS)
-    nvme_support = models.BooleanField(verbose_name='支持NVME设备', default=False)
+    boot_mode = models.SmallIntegerField(verbose_name=_('系统启动方式'), choices=BOOT_CHOICES, default=BOOT_BIOS)
+    nvme_support = models.BooleanField(verbose_name=_('支持NVME设备'), default=False)
 
-    ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.CASCADE, verbose_name='CEPH存储后端')
-    tag = models.SmallIntegerField(verbose_name='镜像标签', choices=CHOICES_TAG, default=TAG_USER)
-    base_image = models.CharField(verbose_name='镜像', max_length=200, default='', help_text='用于创建镜像快照')
-    enable = models.BooleanField(verbose_name='启用', default=True, help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
-    snap = models.CharField(verbose_name='当前生效镜像快照', max_length=200, default='', blank=True, editable=True)
-    xml_tpl = models.ForeignKey(to=VmXmlTemplate, on_delete=models.CASCADE, verbose_name='xml模板',
+    ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.CASCADE, verbose_name=_('CEPH存储后端'))
+    tag = models.SmallIntegerField(verbose_name=_('镜像标签'), choices=CHOICES_TAG, default=TAG_USER)
+    base_image = models.CharField(verbose_name=_('镜像'), max_length=200, default='', help_text='用于创建镜像快照')
+    enable = models.BooleanField(verbose_name=_('启用'), default=True, help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
+    snap = models.CharField(verbose_name=_('当前生效镜像快照'), max_length=200, default='', blank=True, editable=True)
+    xml_tpl = models.ForeignKey(to=VmXmlTemplate, on_delete=models.CASCADE, verbose_name=_('xml模板'),
                                 help_text='使用此镜象创建虚拟机时要使用的XML模板，不同类型的镜像有不同的XML格式')
     user = models.ForeignKey(to=User, on_delete=models.SET_NULL, null=True, blank=True,
-                             related_name='images_set', verbose_name='创建者')
+                             related_name='images_set', verbose_name=_('创建者'))
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
-    desc = models.TextField(verbose_name='描述', default='', blank=True)
-    default_user = models.CharField(verbose_name='系统默认登录用户名', max_length=32, default='root')
-    default_password = models.CharField(verbose_name='系统默认登录密码', max_length=32, default='cnic.cn')
-    size = models.IntegerField(verbose_name='镜像大小（Gb）', default=0,
+    desc = models.TextField(verbose_name=_('描述'), default='', blank=True)
+    default_user = models.CharField(verbose_name=_('系统默认登录用户名'), max_length=32, default='root')
+    default_password = models.CharField(verbose_name=_('系统默认登录密码'), max_length=32, default='cnic.cn')
+    size = models.IntegerField(verbose_name=_('镜像大小（Gb）'), default=0,
                                help_text='image size不是整Gb大小，要向上取整，如1.1GB向上取整为2Gb')
-    vm_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, verbose_name='宿主机', null=True, blank=True,
+    vm_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, verbose_name=_('宿主机'), null=True, blank=True,
                                 default=None)
-    vm_uuid = models.CharField(verbose_name='虚拟机UUID', max_length=36, null=True, blank=True, )
-    vm_mac_ip = models.ForeignKey(to=MacIP, on_delete=models.SET_NULL, verbose_name='MAC IP', null=True, blank=True, )
-    vm_vcpu = models.IntegerField(verbose_name='CPU数', null=True, blank=True, )
-    vm_mem = models.IntegerField(verbose_name='内存大小', help_text='单位GB', null=True, blank=True, )
+    vm_uuid = models.CharField(verbose_name=_('虚拟机UUID'), max_length=36, null=True, blank=True, )
+    vm_mac_ip = models.ForeignKey(to=MacIP, on_delete=models.SET_NULL, verbose_name=_('MAC IP'), null=True, blank=True, )
+    vm_vcpu = models.IntegerField(verbose_name=_('CPU数'), null=True, blank=True, )
+    vm_mem = models.IntegerField(verbose_name=_('内存大小'), help_text='单位GB', null=True, blank=True, )
 
     def __str__(self):
         return self.name
 
     class Meta:
         ordering = ['-id']
-        verbose_name = '操作系统镜像'
-        verbose_name_plural = '10_操作系统镜像'
+        verbose_name = _('操作系统镜像')
+        verbose_name_plural = _('10_操作系统镜像')
         unique_together = ('name', 'version')
 
     @property

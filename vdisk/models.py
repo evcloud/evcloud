@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import F, Sum
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from ceph.models import CephPool
 from ceph.managers import get_rbd_manager, RadosError
@@ -21,20 +22,20 @@ class Quota(models.Model):
     计算集群在指定存储卷上可申请的存储容量限额，total集群总容量限额，vdisk对应单块云硬盘容量限额
     """
     id = models.AutoField(verbose_name='ID', primary_key=True)
-    name = models.CharField(max_length=100, default='', verbose_name='存储池名称')
-    group = models.ForeignKey(to=Group, verbose_name='宿主机组', null=True,
+    name = models.CharField(max_length=100, default='', verbose_name=_('存储池名称'))
+    group = models.ForeignKey(to=Group, verbose_name=_('宿主机组'), null=True,
                               on_delete=models.CASCADE, related_name='quota_set')
-    cephpool = models.ForeignKey(to=CephPool, verbose_name='CEPH存储池', null=True,
+    cephpool = models.ForeignKey(to=CephPool, verbose_name=_('CEPH存储池'), null=True,
                                  on_delete=models.CASCADE, related_name='quota_set')
-    total = models.IntegerField(verbose_name='可用总容量(GB)', default=0, help_text='单位GB')
-    size_used = models.IntegerField(verbose_name='已使用容量(GB)', default=0, help_text='单位GB')
-    max_vdisk = models.IntegerField(verbose_name='云硬盘最大容量(GB)', default=200, help_text='单位GB')
-    enable = models.BooleanField(verbose_name='存储池是否可用', default=True, help_text='开启和暂停使用2中状态, '
-                                                                                 '未开启使用不允许创建云硬盘时')
+    total = models.IntegerField(verbose_name=_('可用总容量(GB)'), default=0, help_text=_('单位GB'))
+    size_used = models.IntegerField(verbose_name=_('已使用容量(GB)'), default=0, help_text=_('单位GB'))
+    max_vdisk = models.IntegerField(verbose_name=_('云硬盘最大容量(GB)'), default=200, help_text=_('单位GB'))
+    enable = models.BooleanField(verbose_name=_('存储池是否可用'), default=True, help_text=_('开启和暂停使用2中状态, '
+                                                                                 '未开启使用不允许创建云硬盘时'))
 
     class Meta:
-        verbose_name = '云硬盘CEPH存储池'
-        verbose_name_plural = '云硬盘CEPH存储池'
+        verbose_name = _('云硬盘CEPH存储池')
+        verbose_name_plural = _('云硬盘CEPH存储池')
         unique_together = ('group', 'cephpool')
 
     def __str__(self):
@@ -150,27 +151,27 @@ class Quota(models.Model):
 
 class Vdisk(models.Model):
     """附加磁盘类"""
-    uuid = models.CharField(max_length=64, primary_key=True, editable=False, blank=True, verbose_name='云硬盘UUID')
-    size = models.IntegerField(verbose_name='容量大小GB', help_text='单位GB')
+    uuid = models.CharField(max_length=64, primary_key=True, editable=False, blank=True, verbose_name=_('云硬盘UUID'))
+    size = models.IntegerField(verbose_name=_('容量大小GB'), help_text='单位GB')
     vm = models.ForeignKey(to=Vm, related_name='vdisk_set', on_delete=models.SET_NULL,
-                           null=True, blank=True, verbose_name='挂载于虚拟机')
+                           null=True, blank=True, verbose_name=_('挂载于虚拟机'))
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE,
-                             related_name='vdisk_set', verbose_name='创建者')
+                             related_name='vdisk_set', verbose_name=_('创建者'))
     quota = models.ForeignKey(to=Quota, on_delete=models.CASCADE, null=True,
-                              related_name='vdisk_set', verbose_name='云硬盘CEPH存储池')
-    create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-    attach_time = models.DateTimeField(null=True, blank=True, verbose_name='挂载时间')
-    dev = models.CharField(max_length=100, blank=True, editable=False, default='', verbose_name='虚拟机中disk的设备名称',
+                              related_name='vdisk_set', verbose_name=_('云硬盘CEPH存储池'))
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name=_('创建时间'))
+    attach_time = models.DateTimeField(null=True, blank=True, verbose_name=_('挂载时间'))
+    dev = models.CharField(max_length=100, blank=True, editable=False, default='', verbose_name=_('虚拟机中disk的设备名称'),
                            help_text="对应系统中硬盘挂载逻辑设备名称（vda-vdz）")
-    enable = models.BooleanField(default=True, verbose_name='是否可用')
-    deleted = models.BooleanField(default=False, verbose_name='已删除')
-    remarks = models.TextField(blank=True, default='', verbose_name='备注')
+    enable = models.BooleanField(default=True, verbose_name=_('是否可用'))
+    deleted = models.BooleanField(default=False, verbose_name=_('已删除'))
+    remarks = models.TextField(blank=True, default='', verbose_name=_('备注'))
     rbd_name = models.CharField(verbose_name='Ceph rbd name', max_length=64, blank=True, default='')
     
     class Meta:
         ordering = ['-create_time']
-        verbose_name = 'CEPH云硬盘'
-        verbose_name_plural = 'CEPH云硬盘'
+        verbose_name = _('CEPH云硬盘')
+        verbose_name_plural = _('CEPH云硬盘')
         unique_together = ['uuid', 'quota']
 
     def __str__(self):

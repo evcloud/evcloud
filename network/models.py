@@ -16,38 +16,38 @@ class Vlan(models.Model):
     NET_TAG_PRIVATE = 0
     NET_TAG_PUBLIC = 1
     NET_TAG_CHOICES = (
-        (NET_TAG_PRIVATE, '私网'),
-        (NET_TAG_PUBLIC, '公网')
+        (NET_TAG_PRIVATE, _('私网')),
+        (NET_TAG_PUBLIC, _('公网'))
     )
 
     id = models.AutoField(primary_key=True)
-    br = models.CharField(verbose_name='网桥名', max_length=50)
-    vlan_id = models.IntegerField(verbose_name='vlan id', blank=True, null=True, default=None, validators=[MinValueValidator(0)])
-    name = models.CharField(verbose_name='VLAN描述', max_length=100)
-    group = models.ForeignKey(to=Group, verbose_name='宿主机组', default=None, null=True,
+    br = models.CharField(verbose_name=_('网桥名'), max_length=50)
+    vlan_id = models.IntegerField(verbose_name=_('vlan id'), blank=True, null=True, default=None, validators=[MinValueValidator(0)])
+    name = models.CharField(verbose_name=_('VLAN描述'), max_length=100)
+    group = models.ForeignKey(to=Group, verbose_name=_('宿主机组'), default=None, null=True,
                               on_delete=models.SET_NULL, related_name='vlan_set')
-    tag = models.SmallIntegerField(verbose_name='网络标签', choices=NET_TAG_CHOICES, default=NET_TAG_PRIVATE)
-    subnet_ip = models.GenericIPAddressField(verbose_name='子网IP')
-    net_mask = models.GenericIPAddressField(verbose_name='子网掩码')
-    gateway = models.GenericIPAddressField(verbose_name='网关')
-    dns_server = models.CharField(verbose_name='DNS服务IP', max_length=255)
-    subnet_ip_v6 = models.GenericIPAddressField(verbose_name='子网IP(IPv6)', null=True, blank=True, default=None)
-    net_mask_v6 = models.GenericIPAddressField(verbose_name='子网掩码(IPv6)', null=True, blank=True, default=None)
-    gateway_v6 = models.GenericIPAddressField(verbose_name='网关(IPv6)', null=True, blank=True,  default=None)
-    dns_server_v6 = models.CharField(verbose_name='DNS服务IP(IPv6)', max_length=255, null=True, blank=True,  default=None)
-    dhcp_config = models.TextField(verbose_name='DHCP部分配置信息')
-    dhcp_config_v6 = models.TextField(verbose_name='DHCP6部分配置信息', null=True, blank=True,  default=None)
-    enable = models.BooleanField(verbose_name='启用网络', default=True)
-    image_specialized = models.BooleanField(verbose_name='镜像虚拟机专用', default=False)
-    remarks = models.TextField(verbose_name='备注', default='', blank=True)
+    tag = models.SmallIntegerField(verbose_name=_('网络标签'), choices=NET_TAG_CHOICES, default=NET_TAG_PRIVATE)
+    subnet_ip = models.GenericIPAddressField(verbose_name=_('子网IP'))
+    net_mask = models.GenericIPAddressField(verbose_name=_('子网掩码'))
+    gateway = models.GenericIPAddressField(verbose_name=_('网关'))
+    dns_server = models.CharField(verbose_name=_('DNS服务IP'), max_length=255)
+    subnet_ip_v6 = models.GenericIPAddressField(verbose_name=_('子网IP(IPv6)'), null=True, blank=True, default=None)
+    net_mask_v6 = models.GenericIPAddressField(verbose_name=_('子网掩码(IPv6)'), null=True, blank=True, default=None)
+    gateway_v6 = models.GenericIPAddressField(verbose_name=_('网关(IPv6)'), null=True, blank=True,  default=None)
+    dns_server_v6 = models.CharField(verbose_name=_('DNS服务IP(IPv6)'), max_length=255, null=True, blank=True,  default=None)
+    dhcp_config = models.TextField(verbose_name=_('DHCP部分配置信息'))
+    dhcp_config_v6 = models.TextField(verbose_name=_('DHCP6部分配置信息'), null=True, blank=True,  default=None)
+    enable = models.BooleanField(verbose_name=_('启用网络'), default=True)
+    image_specialized = models.BooleanField(verbose_name=_('镜像虚拟机专用'), default=False)
+    remarks = models.TextField(verbose_name=_('备注'), default='', blank=True)
 
     def __str__(self):
         return self.name
 
     class Meta:
         ordering = ('id',)
-        verbose_name = 'VLAN子网'
-        verbose_name_plural = '05_VLAN子网'
+        verbose_name = _('VLAN子网')
+        verbose_name_plural = _('05_VLAN子网')
 
     def get_free_ip_number(self):
         """
@@ -92,14 +92,14 @@ class ShieldVlan(models.Model):
     """
     id = models.AutoField(primary_key=True)
     user_name = models.ForeignKey(to=User, on_delete=models.SET_NULL, related_name='user_vlan_shield', null=True,
-                                  verbose_name='用户')
+                                  verbose_name=_('用户'))
     vlan_id = models.ManyToManyField(to=Vlan, related_name='vlan_shield',
-                                     blank=True, verbose_name='vlan')
+                                     blank=True, verbose_name=_('vlan'))
 
     class Meta:
         ordering = ('id',)
-        verbose_name = '对用户屏蔽vlan'
-        verbose_name_plural = '12_对用户屏蔽vlan'
+        verbose_name = _('对用户屏蔽vlan')
+        verbose_name_plural = _('12_对用户屏蔽vlan')
 
     def get_user_name(self):
         return self.user_name.username
@@ -120,18 +120,18 @@ class MacIP(models.Model):
     """
     id = models.AutoField(primary_key=True)
     vlan = models.ForeignKey(to=Vlan, on_delete=models.SET_NULL, related_name='macips',
-                             null=True, verbose_name='VLAN子网')   # IP所属的vlan局域子网
-    mac = models.CharField(verbose_name='MAC地址', max_length=17, unique=True)
-    ipv4 = models.GenericIPAddressField(verbose_name='IP地址', unique=True)
-    ipv6 = models.GenericIPAddressField(verbose_name='IPv6地址', null=True, blank=True, default='')
-    used = models.BooleanField(verbose_name='被使用', default=False, help_text='是否已分配给虚拟机使用')
-    enable = models.BooleanField(verbose_name='开启使用', default=True, help_text='是否可以被分配使用')
-    desc = models.TextField(verbose_name='备注说明', default='', blank=True)
+                             null=True, verbose_name=_('VLAN子网'))   # IP所属的vlan局域子网
+    mac = models.CharField(verbose_name=_('MAC地址'), max_length=17, unique=True)
+    ipv4 = models.GenericIPAddressField(verbose_name=_('IP地址'), unique=True)
+    ipv6 = models.GenericIPAddressField(verbose_name=_('IPv6地址'), null=True, blank=True, default='')
+    used = models.BooleanField(verbose_name=_('被使用'), default=False, help_text='是否已分配给虚拟机使用')
+    enable = models.BooleanField(verbose_name=_('开启使用'), default=True, help_text='是否可以被分配使用')
+    desc = models.TextField(verbose_name=_('备注说明'), default='', blank=True)
 
     class Meta:
         ordering = ['id']
-        verbose_name = 'MAC IP地址'
-        verbose_name_plural = '07_MAC IP地址'
+        verbose_name = _('MAC IP地址')
+        verbose_name_plural = _('07_MAC IP地址')
 
     def __str__(self):
         return self.ipv4
