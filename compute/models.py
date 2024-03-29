@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import F, Sum, Count
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 from pcservers.models import PcServer
 from utils.errors import ComputeError
@@ -17,17 +18,17 @@ class Center(models.Model):
     一个数据中心对应一个存储后端，存储虚拟机相关的数据，Ceph集群，虚拟机的虚拟硬盘和系统镜像使用ceph块存储
     """
     id = models.AutoField(primary_key=True)
-    name = models.CharField(verbose_name='数据中心名称', max_length=100, unique=True)
-    location = models.CharField(verbose_name='位置', max_length=100)
-    desc = models.CharField(verbose_name='简介', max_length=200, default='', blank=True)
-    keyring = models.TextField(verbose_name='宿主机ssh私钥（id_rsa）', default='')
-    ssh_key = models.CharField(max_length=200, editable=False, blank=True, verbose_name='宿主机ssh私钥文件保存路径',
+    name = models.CharField(verbose_name=_('数据中心名称'), max_length=100, unique=True)
+    location = models.CharField(verbose_name=_('位置'), max_length=100)
+    desc = models.CharField(verbose_name=_('简介'), max_length=200, default='', blank=True)
+    keyring = models.TextField(verbose_name=_('宿主机ssh私钥（id_rsa）'), default='')
+    ssh_key = models.CharField(max_length=200, editable=False, blank=True, verbose_name=_('宿主机ssh私钥文件保存路径'),
                                help_text="宿主机ssh私钥文件保存路径")
 
     class Meta:
         ordering = ('id',)
-        verbose_name = '数据中心'
-        verbose_name_plural = '01_数据中心'
+        verbose_name = _('数据中心')
+        verbose_name_plural = _('01_数据中心')
 
     def __str__(self):
         return self.name
@@ -82,10 +83,10 @@ class Group(models.Model):
     """
     id = models.AutoField(primary_key=True)
     center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name='group_set',
-                               verbose_name='组所属的数据中心')
-    name = models.CharField(max_length=100, verbose_name='组名称')
-    enable = models.BooleanField(default=True, verbose_name='启用宿主机组')
-    desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
+                               verbose_name=_('组所属的数据中心'))
+    name = models.CharField(max_length=100, verbose_name=_('组名称'))
+    enable = models.BooleanField(default=True, verbose_name=_('启用宿主机组'))
+    desc = models.CharField(max_length=200, default='', blank=True, verbose_name=_('描述'))
     users = models.ManyToManyField(to=User, blank=True, related_name='group_set')  # 有权访问此组的用户
 
     def __str__(self):
@@ -93,8 +94,8 @@ class Group(models.Model):
 
     class Meta:
         ordering = ('id',)
-        verbose_name = '宿主机组'
-        verbose_name_plural = '02_宿主机组'
+        verbose_name = _('宿主机组')
+        verbose_name_plural = _('02_宿主机组')
         unique_together = ('center', 'name')
 
     def user_has_perms(self, user: User):
@@ -130,28 +131,28 @@ class Host(models.Model):
     """
     id = models.AutoField(primary_key=True)
     group = models.ForeignKey(to=Group, on_delete=models.CASCADE, related_name='hosts_set',
-                              verbose_name='宿主机所属的组')
+                              verbose_name=_('宿主机所属的组'))
     pcserver = models.OneToOneField(to=PcServer, related_name='pc_server_host', blank=True, null=True,
-                                    on_delete=models.CASCADE, verbose_name='物理服务器')
-    ipv4 = models.GenericIPAddressField(unique=True, verbose_name='宿主机ip')
-    real_cpu = models.IntegerField(default=20, verbose_name='真实物理CPU(核)')
-    real_mem = models.IntegerField(default=30, verbose_name='真实物理内存(Gb)')
-    vcpu_total = models.IntegerField(default=24, verbose_name='虚拟CPU(核）')
-    vcpu_allocated = models.IntegerField(default=0, verbose_name='已用CPU（核）')
-    mem_total = models.IntegerField(default=30, verbose_name='虚拟内存(GB)')
-    mem_allocated = models.IntegerField(default=0, verbose_name='已用内存(GB)')
-    vm_limit = models.IntegerField(default=10, verbose_name='本地虚拟机数量上限')
-    vm_created = models.IntegerField(default=0, verbose_name='本地已创建虚拟机数量')
-    enable = models.BooleanField(default=True, verbose_name='启用宿主机')
-    desc = models.CharField(max_length=200, default='', blank=True, verbose_name='描述')
+                                    on_delete=models.CASCADE, verbose_name=_('物理服务器'))
+    ipv4 = models.GenericIPAddressField(unique=True, verbose_name=_('宿主机ip'))
+    real_cpu = models.IntegerField(default=20, verbose_name=_('真实物理CPU(核)'))
+    real_mem = models.IntegerField(default=30, verbose_name=_('真实物理内存(Gb)'))
+    vcpu_total = models.IntegerField(default=24, verbose_name=_('虚拟CPU(核）'))
+    vcpu_allocated = models.IntegerField(default=0, verbose_name=_('已用CPU（核）'))
+    mem_total = models.IntegerField(default=30, verbose_name=_('虚拟内存(GB)'))
+    mem_allocated = models.IntegerField(default=0, verbose_name=_('已用内存(GB)'))
+    vm_limit = models.IntegerField(default=10, verbose_name=_('本地虚拟机数量上限'))
+    vm_created = models.IntegerField(default=0, verbose_name=_('本地已创建虚拟机数量'))
+    enable = models.BooleanField(default=True, verbose_name=_('启用宿主机'))
+    desc = models.CharField(max_length=200, default='', blank=True, verbose_name=_('描述'))
 
     ipmi_host = models.CharField(max_length=100, default='', blank=True)
     ipmi_user = models.CharField(max_length=100, default='', blank=True)
     ipmi_password = models.CharField(max_length=100, default='', blank=True)
 
     class Meta:
-        verbose_name = '宿主机'
-        verbose_name_plural = '06_宿主机'
+        verbose_name = _('宿主机')
+        verbose_name_plural = _('06_宿主机')
 
     def __str__(self):
         return self.ipv4
