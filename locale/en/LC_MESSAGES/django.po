@@ -2417,7 +2417,7 @@ msgstr "Stop and migrate"
 
 #: vms/templates/vm_operations.html:26 vms/templates/vm_operations.html:32
 msgid "创建快照"
-msgstr "Create image"
+msgstr "Create snapshot"
 
 #: vms/templates/vm_operations.html:27 vms/templates/vm_operations.html:35
 msgid "丢失恢复"

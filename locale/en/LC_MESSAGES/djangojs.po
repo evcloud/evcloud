@@ -694,3 +694,27 @@ msgstr "Faile to hibernate."
 #: vms/static/vms/vms_shelve_list.js:176
 msgid "搁置虚拟机删除失败;"
 msgstr "Failed to delete the hibernated server."
+
+#: vms/static/vms/vms_create.js:70
+msgid "自动选择"
+msgstr "Auto select"
+
+#: vms/static/vms/vms_create.js:73
+msgid "总资源"
+msgstr "Total"
+
+#: vms/static/vms/vms_create.js:73
+msgid "核"
+msgstr "core"
+
+#: vms/static/vms/vms_create.js:73
+msgid "剩余"
+msgstr "left"
+
+#: vms/static/vms/vms_create.js:74
+msgid "VM上限"
+msgstr "VM Limit"
+
+#: vms/static/vms/vms_create.js:74
+msgid "个"
+msgstr "EA"

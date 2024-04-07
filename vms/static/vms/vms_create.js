@@ -67,11 +67,11 @@
     // 加载宿主机下拉框渲染模板
     //
     let render_host_select_items = template.compile(`
-        <option value="">自动选择</option>
+        <option value="">` + gettext('自动选择') + `</option>
         {{ each results }}
             <option value="{{ $value.id }}">
-                {{ $value.ipv4 }}(总资源:{{$value.vcpu_total}}核/{{$value.mem_total}}GB，剩余:{{$value.vcpu_total - $value.vcpu_allocated}}核/{{$value.mem_total - $value.mem_allocated}}GB),
-                (VM上限:{{$value.vm_limit}}个/剩余:{{$value.vm_limit - $value.vm_created}}个)
+                {{ $value.ipv4 }}(` + gettext('总资源') + `:{{$value.vcpu_total}}`+ gettext('核') +`/{{$value.mem_total}}GB，`+ gettext('剩余') + `:{{$value.vcpu_total - $value.vcpu_allocated}}`+ gettext('核') +`/{{$value.mem_total - $value.mem_allocated}}GB),
+                (`+ gettext('VM上限') + `:{{$value.vm_limit}}` + gettext('个') +`/` + gettext('剩余') + `:{{$value.vm_limit - $value.vm_created}}` + gettext('个') + `)
             </option>
         {{/each}}
     `);
@@ -102,7 +102,7 @@
 
     // 加载子网vlan下拉框渲染模板
     let render_vlan_select_items = template.compile(`
-        <option value="">自动选择</option>
+        <option value="">` + gettext('自动选择') +`</option>
         {{ each results }}
             <option value="{{ $value.id }}">{{ $value.name }}</option>
         {{/each}}
@@ -134,7 +134,7 @@
 
     // 加载MAC IP下拉框渲染模板
     let render_ipv4_select_items = template.compile(`
-        <option value="">自动选择</option>
+        <option value="">` + gettext('自动选择') + `</option>
         {{ each results }}
             <option value="{{ $value.ipv4 }}" title="{{ $value.id}}">
                 {{ $value.ipv4 }}
@@ -146,7 +146,7 @@
     function update_ipv4_select_items(){
         let vlan = $('select[name="vlan_id"]').val();
         if(!vlan){
-            let html = '<option value="">自动选择</option>';
+            let html = '<option value="">' + gettext('自动选择') + '</option>';
             let ipv4 = $('select[name="ipv4"]');
             ipv4.empty();
             ipv4.append(html);
