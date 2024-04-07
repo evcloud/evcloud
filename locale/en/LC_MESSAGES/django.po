@@ -1235,7 +1235,7 @@ msgstr "Config info"
 
 #: pcservers/models.py:108 pcservers/models.py:109
 msgid "服务器"
-msgstr "Hosts"
+msgstr "Physical server"
 
 #: reports/templates/quota.html:5 reports/templates/quota.html:12
 msgid "资源配额概况"
@@ -1455,11 +1455,11 @@ msgstr "Computing resource configuration and management"
 
 #: templates/app_nav.html:21
 msgid "服务器信息维护"
-msgstr "Host info maintenance"
+msgstr "Physical server info maintenance"
 
 #: templates/app_nav.html:24
 msgid "服务器设备"
-msgstr "Hosts"
+msgstr "Physical server"
 
 #: templates/app_nav.html:41
 msgid "宿主机配置"
