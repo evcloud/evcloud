@@ -2647,6 +2647,162 @@ msgstr "Search"
 msgid "登录日志列表"
 msgstr "Login log list"
 
+#: users/form.py:16
+msgid "用户名(邮箱)"
+msgstr "Username(Email)"
+
+#: users/form.py:21
+msgid "请输入邮箱作为用户名"
+msgstr "Please input a valid email as your username"
+
+#: users/form.py:28
+msgid "请输入一个8-20位的密码"
+msgstr "Please enter a password of 8-20 digits"
+
+#: users/form.py:30
+msgid "确认密码"
+msgstr "Password confirm"
+
+#: users/form.py:35
+msgid "请输入确认密码"
+msgstr "Please enter password confirm"
+
+#: users/form.py:38
+msgid "姓氏"
+msgstr "Lastname"
+
+#: users/form.py:41
+msgid "请如实填写"
+msgstr "Please fill in truthfully"
+
+#: users/form.py:44
+msgid "名字"
+msgstr "Firstname"
+
+#: users/form.py:50
+msgid "电话"
+msgstr "Telephone"
+
+#: users/form.py:55
+msgid "公司/单位"
+msgstr "Company"
+
+#: users/form.py:72
+msgid "用户名不能为空"
+msgstr "The username cannot be empty"
+
+#: users/form.py:78
+msgid "用户名已存在，请重新输入"
+msgstr "Username already exist, please enter another one"
+
+#: users/form.py:125
+msgid "密码输入不一致"
+msgstr "Inconsistent password input"
+
+#: users/form.py:84
+msgid "原密码"
+msgstr "Old Password"
+
+#: users/form.py:130
+msgid "请输入原密码"
+msgstr "Please enter old password"
+
+#: users/form.py:132
+msgid "新密码"
+msgstr "New Password"
+
+#: users/form.py:139
+msgid "确认新密码"
+msgstr "New Password Confirm"
+
+#: users/form.py:144
+msgid "请再次输入新密码"
+msgstr "Please enter new password again"
+
+#: users/form.py:159
+msgid "新密码输入不一致，请重新输入"
+msgstr "The new password input is inconsistent"
+
+#: users/form.py:168
+msgid "原密码有误"
+msgstr "Old password is not correct"
+
+#: users/form.py:180
+msgid "请输入用户名"
+msgstr "Please enter the username"
+
+#: users/form.py:197
+msgid "用户不存在"
+msgstr "Username not exist"
+
+#: users/form.py:243
+msgid "重置密码失败，jwt无效或已过期，请重新找回密码获取新的链接"
+msgstr "Password reset failed, jwt is invalid or has expired. Please retrieve your password to obtain a new link"
+
+#: users/views.py:67
+msgid "EVCloud账户激活"
+msgstr "EVCloud Account Activate"
+
+#: users/views.py:129
+msgid "用户注册成功，请登录邮箱访问收到的连接以激活用户"
+msgstr "User registration successful, please log in to email to access the received connection to activate the user"
+
+#: users/views.py:131
+msgid "邮件发送失败，请检查邮箱输入是否有误"
+msgstr "Email sending failed, please check if there is an error in the email input"
+
+#: users/views.py:133
+msgid "用户注册失败，保存用户数据是错误"
+msgstr "User registration failed, error saving user data"
+
+#: users/views.py:137
+msgid "用户注册"
+msgstr "User Registration"
+
+#: users/views.py:158
+msgid "用户激活失败，无待激活账户，或者账户已被激活，请直接尝试登录"
+msgstr "User activation failed, there is no account to be activated, or the account has already been activated. Please try logging in directly"
+
+#: users/views.py:166
+msgid "用户已激活"
+msgstr "User has been activated"
+
+#: users/views.py:215
+msgid "用户未激活，请先登录邮箱访问收到的链接以激活用户"
+msgstr "The user is not activated. Please log in to your email first to access the received link to activate the user"
+
+#: users/views.py:217
+msgid "邮件发送失败，请检查用户名输入是否有误，稍后重试"
+msgstr "Email sending failed. Please check if the username was entered incorrectly and try again later"
+
+#: users/views.py:221
+msgid "重置密码确认邮件已发送，请尽快登录邮箱访问收到的链接以完成密码重置，以防链接过期无效"
+msgstr "The password reset confirmation email has been sent. Please log in to your email as soon as possible to access the received link to complete the password reset, in case the link expires or becomes invalid"
+
+#: users/views.py:227
+msgid "找回密码"
+msgstr "Forgot Password"
+
+#: users/views.py:227
+msgid "提交"
+msgstr "Submit"
+
+#: users/views.py:251
+msgid "用户重置密码成功，请尝试登录"
+msgstr "User reset password successful, please try logging in"
+
+#: users/views.py:259
+msgid "链接无效或已过期，请重新找回密码获取新的链接"
+msgstr "The link is invalid or has expired. Please retrieve your password to obtain a new link"
+
+#: users/views.py:264
+msgid "重置密码"
+msgstr "Password Reset"
+
+#: users/views.py:285
+msgid "EVCloud账户找回密码"
+msgstr "EVCloud User Password Forgot"
+
 #~ msgid "统计报表"
 #~ msgstr "Statistics report"
 
