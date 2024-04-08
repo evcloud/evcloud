@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     'docs',
     'reports',
     'pcservers',
-    'vpn'
+    'vpn',
+    'logrecord'
 ]
 
 MIDDLEWARE = [

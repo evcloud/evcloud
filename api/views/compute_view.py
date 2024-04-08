@@ -5,6 +5,9 @@ from drf_yasg.utils import swagger_auto_schema
 from compute.managers import CenterManager, GroupManager, ComputeError
 from api.viewsets import CustomGenericViewSet
 from drf_yasg import openapi
+
+from logrecord.manager import user_operation_record
+from logrecord.models import LogRecord
 from utils import errors as exceptions
 
 
@@ -66,6 +69,9 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
 
+        # 用户操作日志记录
+        user_operation_record.add_log(request=request, type=LogRecord.ASSETS, action_flag=LogRecord.SELECT,
+                                      operation_content='获取可用总资源配额和已用配额信息', remark='')
         try:
             center_id = int(center_id)
         except ValueError:

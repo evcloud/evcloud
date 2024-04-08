@@ -10,6 +10,8 @@ from rest_framework.decorators import action
 from rest_framework.serializers import Serializer
 from drf_yasg.utils import swagger_auto_schema
 
+from logrecord.manager import user_operation_record
+from logrecord.models import LogRecord
 from utils.paginators import NumsPaginator
 from .manager import VPNManager, VPNError
 from .forms import VPNChangeFrom, VPNAddFrom
@@ -183,6 +185,9 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         """
         下载用户vpn配置文件
         """
+        # 用户操作日志记录
+        user_operation_record.add_log(request=request, type=LogRecord.VPN, action_flag=LogRecord.SELECT,
+                                      operation_content='下载用户vpn配置文件', remark='')
         obj = VPNManager().vpn_config_file()
         if not obj:
             return Response(data={'未添加vpn配置文件'}, status=status.HTTP_404_NOT_FOUND)
@@ -199,6 +204,11 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         """
         下载用户vpn ca证书文件
         """
+
+        # 用户操作日志记录
+        user_operation_record.add_log(request=request, type=LogRecord.VPN, action_flag=LogRecord.SELECT,
+                                      operation_content='下载用户vpn ca证书文件', remark='')
+
         obj = VPNManager().vpn_ca_file()
         if not obj:
             return Response(data={'未添加vpn ca证书文件'}, status=status.HTTP_404_NOT_FOUND)
