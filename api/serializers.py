@@ -2,6 +2,7 @@ import math
 
 from rest_framework import serializers
 
+from logrecord.models import LogRecord
 from vms.models import Vm, MigrateTask, AttachmentsIP
 from compute.models import Center, Group, Host
 from network.models import Vlan
@@ -636,3 +637,18 @@ class MigrateTaskSerializer(serializers.Serializer):
     status = serializers.CharField(help_text=f'{MigrateTask.Status.choices}')
     content = serializers.CharField()
     tag = serializers.CharField(help_text=f'{MigrateTask.Tag.choices}')
+
+
+class LogRecordSerializer(serializers.ModelSerializer):
+    """用户操作日志"""
+    create_time = serializers.DateTimeField()
+    username = serializers.CharField()
+    resourc_type = serializers.SerializerMethodField()
+    operation_content = serializers.CharField()
+
+    class Meta:
+        model = LogRecord
+        fields = ('create_time', 'username', 'resourc_type', 'operation_content')
+
+    def get_resourc_type(self, obj):
+        return obj.get_resourc_type_display()

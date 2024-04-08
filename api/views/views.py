@@ -340,7 +340,8 @@ class VmsViewSet(CustomGenericViewSet):
 
         user = request.user
         manager = VmManager()
-        user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.SELECT, operation_content='查询云主机列表', remark='')
+        user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.SELECT,
+                                      operation_content='查询云主机列表', remark='')
         try:
             if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
                 self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
@@ -656,7 +657,8 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=e.data(), status=e.status_code)
 
         if not vm:
-            return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(), status=status.HTTP_404_NOT_FOUND)
+            return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(),
+                            status=status.HTTP_404_NOT_FOUND)
         if not vm.user_has_perms(user=request.user):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
@@ -949,7 +951,8 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(e)
 
         if not vm:
-            return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(), status=status.HTTP_404_NOT_FOUND)
+            return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(),
+                            status=status.HTTP_404_NOT_FOUND)
         if not vm.user_has_perms(user=request.user):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
@@ -1850,7 +1853,6 @@ class VmsViewSet(CustomGenericViewSet):
         user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.SELECT,
                                       operation_content='云主机附加IP列表', remark='')
 
-
         api = VmAPI()
         try:
             queryset = api.attach_ip_list(vm_uuid=vm_uuid, user=request.user)
@@ -2591,7 +2593,6 @@ class AuthTokenViewSet(ObtainAuthToken):
             slr = serializers.AuthTokenDumpSerializer(token)
             return Response({'token': slr.data})
 
-
         # 用户操作日志记录
         user_operation_record.add_log(request=request, type=LogRecord.USER, action_flag=LogRecord.SELECT,
                                       operation_content='获取当前用户的token', remark='')
@@ -2884,7 +2885,6 @@ class VDiskViewSet(CustomGenericViewSet):
         # 用户操作日志记录
         user_operation_record.add_log(request=request, type=LogRecord.VMDISK, action_flag=LogRecord.SELECT,
                                       operation_content='获取云硬盘列表', remark='')
-
 
         user = request.user
         manager = VdiskManager()

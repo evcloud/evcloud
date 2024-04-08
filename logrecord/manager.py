@@ -42,5 +42,9 @@ class LogManager:
         except Exception as e:
             pass
 
+    def get_log_record(self, type_list: list = []):
+        """获取日志"""
+        return LogRecord.objects.all().exclude(resourc_type__in=type_list)
+
 
 user_operation_record = LogManager()

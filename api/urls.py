@@ -2,6 +2,7 @@ from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
 from .views import views, compute_view
+from .views.logrecord_view import LogRecordViewSet
 
 app_name = "api"
 
@@ -21,10 +22,12 @@ router.register(r'flavor', views.FlavorViewSet, basename='flavor')
 router.register(r'vpn', views.VPNViewSet, basename='vpn')
 router.register(r'task/vm-migrate', views.MigrateTaskViewSet, basename='vm-migrate-task')
 router.register(r'version', views.VersionViewSet, basename='version')
+router.register(r'logrecord', LogRecordViewSet, basename='log-record')
 
 
 no_router = DefaultRouter(trailing_slash=False)
 no_router.register(r'compute/quota', compute_view.ComputeQuotaViewSet, basename='compute-quota')
+
 
 urlpatterns = [
     path('', include(router.urls)),
