@@ -229,7 +229,7 @@ class ImageVmOperateView(View):
                 http_scheme = 'https'
                 global_config_obj = GlobalConfig().get_global_config()
                 if global_config_obj:
-                    http_scheme = global_config_obj.novnchttp
+                    http_scheme = global_config_obj['novnchttp']
 
                 url = f'{http_scheme}://{http_host}{url}'
                 return JsonResponse({'code': status.HTTP_200_OK, 'vnc_url': url, 'code_text': '获取VNC地址成功'},
