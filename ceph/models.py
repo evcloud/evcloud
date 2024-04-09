@@ -121,18 +121,8 @@ class CephPool(models.Model):
 class GlobalConfig(models.Model):
     """全局配置表"""
 
-    SITENAME = 1
-    POWEREDBY = 2
-    NOVNC = 3
-
-    TYPE = [
-        (SITENAME, _("站点")),
-        (POWEREDBY, _("技术支持")),
-        (NOVNC, _("novnchttp")),
-    ]
-
     id = models.AutoField(primary_key=True, verbose_name=_('ID'))
-    name = models.PositiveSmallIntegerField(verbose_name=_('名称'), choices=TYPE, default=None)
+    name = models.CharField(verbose_name=_('名称'), max_length=255)
     content = models.CharField(verbose_name=_('内容'), max_length=255, default='')
     remark = models.CharField(verbose_name=_('备注信息'), max_length=255, default='', blank=True)
     create_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
@@ -156,14 +146,14 @@ class GlobalConfig(models.Model):
 
         }
 
-        inst = cls.objects.filter(name__in=[1, 2, 3])
+        inst = cls.objects.filter(name__in=['sitename', 'poweredby', 'novnchttp'])
         for obj in inst:
-            if obj.name == 1:
+            if obj.name == 'sitename':
                 inst_idct['sitename'] = obj.content
-            elif obj.name == 2:
+            elif obj.name == 'poweredby':
                 inst_idct['poweredby'] = obj.content
-            elif obj.name == 3:
-                inst_idct['novnchttp'] = obj.content
+            elif obj.name == 'poweredby':
+                inst_idct['poweredby'] = obj.content
 
         return inst_idct
 

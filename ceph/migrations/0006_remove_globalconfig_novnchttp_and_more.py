@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='globalconfig',
             name='name',
-            field=models.PositiveSmallIntegerField(choices=[(1, '站点'), (2, '技术支持'), (3, 'novnchttp')], default=None, verbose_name='名称'),
+            field=models.CharField(verbose_name='名称', max_length=255),
         ),
         migrations.AddField(
             model_name='globalconfig',
