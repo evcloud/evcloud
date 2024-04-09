@@ -16,4 +16,5 @@ def get_global_config():
     if not global_config_obj:
         return None
 
-    return global_config_obj.get_global_config()
+    return global_config_obj
+    # return global_config_obj.get_global_config()

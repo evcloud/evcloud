@@ -121,12 +121,22 @@ class CephPool(models.Model):
 class GlobalConfig(models.Model):
     """全局配置表"""
 
-    INSTANCE_ID = 1
-    id = models.AutoField(primary_key=True, default=INSTANCE_ID)
-    sitename = models.CharField(verbose_name=_('站点名称'), max_length=50, default='EVcloud')
-    poweredby = models.CharField(verbose_name=_('技术支持'), max_length=255, default='https://gitee.com/cstcloud-cnic/evcloud')
-    novnchttp = models.CharField(verbose_name=_('novnc http协议配置'), max_length=10, default='http',
-                                 help_text=_('配置novnchttp协议 http/https'))
+    SITENAME = 1
+    POWEREDBY = 2
+    NOVNC = 3
+
+    TYPE = [
+        (SITENAME, _("站点")),
+        (POWEREDBY, _("技术支持")),
+        (NOVNC, _("novnchttp")),
+    ]
+
+    id = models.AutoField(primary_key=True, verbose_name=_('ID'))
+    name = models.PositiveSmallIntegerField(verbose_name=_('名称'), choices=TYPE, default=None)
+    content = models.CharField(verbose_name=_('内容'), max_length=255, default='')
+    remark = models.CharField(verbose_name=_('备注信息'), max_length=255, default='', blank=True)
+    create_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
+    modif_time = models.DateTimeField(verbose_name=_('修改时间'), auto_now=True)
 
     class Meta:
         db_table = 'site_global_config'
@@ -135,15 +145,27 @@ class GlobalConfig(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return f'GlobalConfig<{self.sitename}>'
+        return f'GlobalConfig<{self.name}>'
 
     @classmethod
     def get_instance(cls):
-        inst = cls.objects.filter(id=cls.INSTANCE_ID).first()
-        if not inst:
-            return None
+        inst_idct = {
+            'sitename': 'EVCloud',
+            'poweredby': 'https://gitee.com/cstcloud-cnic/evcloud',
+            'novnchttp': 'https',
 
-        return inst
+        }
+
+        inst = cls.objects.filter(name__in=[1, 2, 3])
+        for obj in inst:
+            if obj.name == 1:
+                inst_idct['sitename'] = obj.content
+            elif obj.name == 2:
+                inst_idct['poweredby'] = obj.content
+            elif obj.name == 3:
+                inst_idct['novnchttp'] = obj.content
+
+        return inst_idct
 
     def save(self, *args, **kwargs):
 
@@ -157,9 +179,9 @@ class GlobalConfig(models.Model):
 
         super().delete(*args, **kwargs)
 
-    def clean(self):
-        if self.novnchttp not in ['http', 'https']:
-            raise ValidationError({'novnchttp': _('novnc http协议配置有误。')})
+    # def clean(self):
+    #     if self.novnchttp not in ['http', 'https']:
+    #         raise ValidationError({'novnchttp': _('novnc http协议配置有误。')})
 
     @staticmethod
     def get_global_config():

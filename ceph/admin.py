@@ -22,15 +22,15 @@ class CephPoolAdmin(admin.ModelAdmin):
 
 @admin.register(GlobalConfig)
 class GlobalConfigTableAdmin(admin.ModelAdmin):
-    list_display_links = ('id', 'sitename')
-    list_display = ('id', 'sitename', 'poweredby', 'novnchttp')
+    list_display_links = ('id',)
+    list_display = ('id', 'name', 'content', 'remark', 'create_time', 'modif_time')
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def has_add_permission(self, request):
-        is_exist = GlobalConfig.objects.first()
-        if is_exist:
-            return False
-
-        return super().has_add_permission(request=request)
+    # def has_delete_permission(self, request, obj=None):
+    #     return False
+    #
+    # def has_add_permission(self, request):
+    #     is_exist = GlobalConfig.objects.first()
+    #     if is_exist:
+    #         return False
+    #
+    #     return super().has_add_permission(request=request)
