@@ -1,8 +1,23 @@
+
 ### v4.0.0 v4.0.1 v4.0.2 v4.0.3 v4.0.4 v4.1.0
+### v4.1.1
+
+更新命令是在代码目录下（/home/uwsgi/evcloud/）
 1. 停止服务 
 ```shell
+  v4.0.5 之前版本更新
   systemctl stop evcloud.service
   systemctl stop evcloud-vnc.service 
+  执行 00_shell/config_systemctl.sh  
+   evcloud-vnc.service  更名为 evcloud_vnc.service
+   如果软连接无法生效 删除软连接 执行如下命令
+   cp /home/uwsgi/evcloud/evcloud.service /usr/lib/systemd/system/ -f
+   cp /home/uwsgi/evcloud/evcloud_vnc.service /usr/lib/systemd/system/ -f
+   v4.0.5 之后版本更新
+   
+    systemctl stop evcloud.service
+    systemctl stop evcloud_vnc.service 
+   
 ```
 2. 备份数据库
 ```shell
@@ -10,7 +25,9 @@ mysqldump -u root -p  数据库名称 > 文件
 ```
 3. 拉取gitee代码
 ```shell
-git pull origin develop
+
+git branch   # 查看更新哪个分支  标记* 的是当前使用的分支 一般会更新带 * 的分支
+git pull origin 分支名称
 git fetch --tags  # 拉取版本信息
 ```
 
@@ -21,7 +38,11 @@ pip install -r requirements.txt
 
 5. 迁移文件 (未有数据库字段的改动，不需要执行)
 ```shell
-python manage.py migrate --plan  
+python manage.py migrate --plan  # 检测是否有迁移文件， 
+  # 如果出现如下内容，则不需要 执行 python manage.py migrate 命令
+    Planned operations:
+    No planned migration operations.
+    
 python manage.py migrate  # 有迁移
 ```
 
@@ -32,8 +53,13 @@ python manage.py collectstatic
 
 7. 启动服务 
 ```shell
+  v4.0.5 之前版本更新
   systemctl start evcloud
   systemctl start evcloud-vnc.service 
+  
+  v4.0.5 之后版本更新
+  systemctl start evcloud
+  systemctl start evcloud_vnc.service 
 ```
 
 
