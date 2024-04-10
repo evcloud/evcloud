@@ -24,6 +24,7 @@ class Center(models.Model):
     keyring = models.TextField(verbose_name=_('宿主机ssh私钥（id_rsa）'), default='')
     ssh_key = models.CharField(max_length=200, editable=False, blank=True, verbose_name=_('宿主机ssh私钥文件保存路径'),
                                help_text="宿主机ssh私钥文件保存路径")
+    ssh_public = models.TextField(verbose_name=_('宿主机ssh公钥（id_rsa.pub）'), default='')
 
     class Meta:
         ordering = ('id',)
