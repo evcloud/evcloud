@@ -21,7 +21,7 @@ def return_auth_passed():
 
 try:
     # 将项目路径添加到系统搜寻路径当中，查找方式为从当前脚本开始，找到要调用的django项目的路径
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     # 设置项目的配置文件 不做修改的话就是 settings 文件
     from django_site.security import DATABASES
 except Exception as e:
