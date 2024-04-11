@@ -11,3 +11,4 @@
 /data/
 /ignore*
 *.pid
+/00_script/openvpn_crt/*

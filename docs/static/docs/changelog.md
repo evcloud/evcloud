@@ -1,7 +1,7 @@
 ## v4.1.1
 2024-04-10
 * 全局配置表修改   提交人：wanghuang
-* 增加api log用户日志记录   提交人：wanghuang
+* 增加api log用户日志记录，提供查询接口   提交人：wanghuang
 * 后台信息中英文翻译    提交人：wanghuang
 * 数据中心增加 ssh 公钥配置  提交人：wanghuang
 * 修正openvpn相关执行文件   提交人：wanghuang

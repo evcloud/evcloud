@@ -1,0 +1,14 @@
+[Unit]
+Description=EVCloud_VNC's web service
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/uwsgi/evcloud/00_script/novnc_run.sh
+ExecReload=/bin/bash /home/uwsgi/evcloud/00_script/novnc_run.sh
+ExecStop=/bin/bash /home/uwsgi/evcloud/00_script/novnc_stop.sh
+PrivateTmp=true
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

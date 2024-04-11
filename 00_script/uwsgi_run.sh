@@ -1,0 +1,1 @@
+uwsgi --ini /home/uwsgi/evcloud/00_script/evcloud_uwsgi.ini

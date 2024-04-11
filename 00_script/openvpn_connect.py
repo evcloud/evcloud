@@ -5,8 +5,8 @@ import time
 import datetime
 sys.path.insert(0, '/home/uwsgi/evcloud/vpn/utils')
 
-from mysqlconnect import VNCLogMysql
-from log import get_logger
+from openvpn_mysqlconnect import VNCLogMysql
+from openvpn_log import get_logger
 
 log = get_logger('vpn_login')
 
