@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenVPN service for evcloud
+Wants=network-online.target
+After=network-online.target
+After=rc-local.service
+After=keeplived.service
+After=haproxy.service
+
+[Service]
+Restart=always
+User=root
+ExecStart=/usr/sbin/openvpn --config /home/uwsgi/evcloud/00_script/openvpn_server.conf
+
+[Install]
+WantedBy=multi-user.target
+
