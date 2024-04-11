@@ -28,8 +28,8 @@
         <div class="card">
             <div class="card-header">
                 <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}" class="btn btn-outline-primary">{% translate 'VPN用户' %} ({{ vpn_user_count }})</a></strong></span>
-                <span class="card-title"><strong><a href="" class="btn btn-primary">VPN{% translate 'VPN登录日志' %} ({{ count }})</a></strong></span>
-                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vpn:vpn-add' %}">{% translate '创建VPN' %}</a></span>
+                <span class="card-title"><strong><a href="" class="btn btn-primary">{% translate 'VPN登录日志' %} ({{ count }})</a></strong></span>
+                <span><a class="btn btn-outline-primary" href="{% url 'vpn:vpn-add' %}">{% translate '创建VPN账户' %}</a></span>
             </div>
             <div class="card-body">
                 <div class="row">

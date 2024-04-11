@@ -8,10 +8,17 @@
 
 {% block boby %}
     <div class="container-fluid">
+        <div class="card-header">
+            <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}"
+                                                class="btn btn-outline-primary">{% translate 'VPN用户' %} ({{ vpn_user_count }})</a></strong></span>
+            <span class="card-title"><strong><a href=""
+                                                class="btn btn-outline-primary">{% translate 'VPN登录日志' %} ({{ count }})</a></strong></span>
+            <span><a class="btn btn-primary" href="{% url 'vpn:vpn-add' %}">{% translate '创建VPN账户' %}</a></span>
+        </div>
         <form method="post">
-        <input type="date" name="date" value="2020-03-31"
-class="form-control dateinput form-control"
-placeholder="Select a date" required="" id="id_date"/>
+            {#            <input type="date" name="date" value="2020-03-31"#}
+            {#                   class="form-control dateinput form-control"#}
+            {#                   placeholder="Select a date" required="" id="id_date"/>#}
             <div class="card">
                 <div class="card-header">
                     <span class="card-title"><strong>{% translate '添加 VPN' %}</strong></span>
@@ -22,8 +29,9 @@ placeholder="Select a date" required="" id="id_date"/>
                         <div class="form-group row">
                             {% if field.is_hidden %}
                                 {{ field }}
-                            {% elif field.field.widget.input_type == "checkbox"%}
-                                <div class="col-12 {% if field.field.required %}font-weight-bold{% endif %}">{{ field }}{{ field.label_tag }}</div>
+                            {% elif field.field.widget.input_type == "checkbox" %}
+                                <div class="col-12 {% if field.field.required %}font-weight-bold{% endif %}">
+                                    {{ field }}{{ field.label_tag }}</div>
                             {% else %}
                                 <div class="col-2 {% if field.field.required %}font-weight-bold{% endif %}">{{ field.label_tag }}</div>
                                 <div class="col-9">{{ field }}</div>
@@ -40,9 +48,12 @@ placeholder="Select a date" required="" id="id_date"/>
                     <p id="tip_text" class="text-danger">{{ form.non_field_errors.as_text }}</p>
                 </div>
                 <div class="card-footer">
-                    <input type="submit" name="_continue" class="btn btm-sm btn-info float-right m-2" value="{% translate '保存并继续编辑' %}">
-                    <input type="submit" name="_addanother" class="btn btm-sm btn-info float-right m-2" value="{% translate '保存并添加另一个' %}">
-                    <input type="submit" name="_save" class="btn btm-sm btn-primary float-right m-2" value="{% translate '保存' %}">
+                    <input type="submit" name="_continue" class="btn btm-sm btn-info float-right m-2"
+                           value="{% translate '保存并继续编辑' %}">
+                    <input type="submit" name="_addanother" class="btn btm-sm btn-info float-right m-2"
+                           value="{% translate '保存并添加另一个' %}">
+                    <input type="submit" name="_save" class="btn btm-sm btn-primary float-right m-2"
+                           value="{% translate '保存' %}">
                 </div>
             </div>
         </form>
