@@ -1,3 +1,12 @@
+### v4.1.2
+主要修改配置文件
+1. 停止服务 
+2. 更新代码
+3. 重新执行 00_script 中 config_systemctl.sh 文件
+4. openvpn 认证文件要复制到 00_script/openvpn_crt目录下
+5. openvpn 启动配置文件到 00_script 下找
+6. 启动服务
+
 
 ### v4.0.0 v4.0.1 v4.0.2 v4.0.3 v4.0.4 v4.1.0
 ### v4.1.1

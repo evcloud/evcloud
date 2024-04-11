@@ -1,3 +1,11 @@
+## v4.1.2
+2024-04-11
+* 00_shell 修改为 00_script   提交人：wanghuang
+* openvpn 配置文件归并到 00_script   提交人：wanghuang
+* 服务启动文件重命名，服务文件启动路径修改   提交人：wanghuang
+* openvpn_crt 存放 认证文件   提交人：wanghuang
+
+
 ## v4.1.1
 2024-04-10
 * 全局配置表修改   提交人：wanghuang
