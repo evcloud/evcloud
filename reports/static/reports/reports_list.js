@@ -20,21 +20,24 @@
 function saveHostInfo(th, obj, csrf_token) {
 
     let par = th.parentNode.parentNode // tr
-    let realcpu = par.children[2].children[0].innerHTML
-    let realcpuarr = realcpu.split('GB')
-    let realcpulint = parseInt(realcpuarr[0].trim())
+    // let realcpu = par.children[2].children[0].innerHTML
+    // let realcpuarr = realcpu.split('GB')
+    // let realcpulint = parseInt(realcpuarr[0].trim())
+    //
+    // let vcputotal = par.children[3].children[0].innerHTML
+    //
+    // let vcputotalarr = vcputotal.split('GB')
+    // let vcputotalint = parseInt(vcputotalarr[0].trim())
 
-    let vcputotal = par.children[3].children[0].innerHTML
-
-    let vcputotalarr = vcputotal.split('GB')
-    let vcputotalint = parseInt(vcputotalarr[0].trim())
-
-    let memtotal = par.children[6].children[0].innerHTML
-    let memtotalarr = memtotal.split('GB')
-    let memtotalint = parseInt(memtotalarr[0].trim())
+    let mem_total = par.children[6].children[0].innerHTML
+    let mem_total_arr = mem_total.split('GB')
+    let mem = parseInt(mem_total_arr[0].trim())  // 空闲的内存
+    let mem_use = par.children[7].children[0].innerHTML
+    let mem_use_arr = mem_use.split('GB')
+    let mem_use_num = parseInt(mem_use_arr[0].trim())  // 实际被占用的
 
 
-    let msg = "物理cpu: " + realcpulint + ", 虚拟cpu: " + vcputotalint + ", 可分配内存: " + memtotalint
+    let msg = "实际可分配内存: " + mem + ' 实际使用内存：' + mem_use_num
     if (!confirm(msg)) {
         return
     }
@@ -44,7 +47,7 @@ function saveHostInfo(th, obj, csrf_token) {
     $.ajax({
         url: '/reports/host/' + obj, type: 'POST', headers: {
             'X-CSRFToken': csrf_token
-        }, data: {'realcpu': realcpu, 'vcputotal': vcputotal, 'memtotalint': memtotalint},
+        }, data: {'mem_use_num': mem_use_num, 'mem_total': mem},
 
         success: function (data) {
             // Handle success
@@ -79,36 +82,36 @@ function detectionHost(th, obj, csrf_token) {
 
             let newChild = document.createElement('span');
             newChild.style.color = 'red'
+            //
+            // par.children[2].innerHTML = par.children[2].innerHTML + '/'
+            // // let newChild2 = newChild.cloneNode(true);
+            // par.children[2].appendChild(newChild)
+            // par.children[2].children[0].innerHTML = dataarr[0]
+            //
+            // par.children[3].innerHTML = par.children[3].innerHTML + '/'
+            // let newChild3 = newChild.cloneNode(true);
+            // par.children[3].appendChild(newChild3)
+            // par.children[3].children[0].innerHTML = dataarr[1]
+            //
+            // // par.children[4].innerHTML = dataarr[2]
+            // // par.children[5].innerHTML = dataarr[3] + '%'
+            // par.children[5].innerHTML = par.children[5].innerHTML + '/'
+            // let newChild5 = newChild.cloneNode(true);
+            // par.children[5].appendChild(newChild5)
+            // par.children[5].children[0].innerHTML = dataarr[3] + '%'
 
-            par.children[2].innerHTML = par.children[2].innerHTML + '/'
-            // let newChild2 = newChild.cloneNode(true);
-            par.children[2].appendChild(newChild)
-            par.children[2].children[0].innerHTML = dataarr[0]
 
-            par.children[3].innerHTML = par.children[3].innerHTML + '/'
-            let newChild3 = newChild.cloneNode(true);
-            par.children[3].appendChild(newChild3)
-            par.children[3].children[0].innerHTML = dataarr[1]
-
-            // par.children[4].innerHTML = dataarr[2]
-            // par.children[5].innerHTML = dataarr[3] + '%'
-            par.children[5].innerHTML = par.children[5].innerHTML + '/'
-            let newChild5 = newChild.cloneNode(true);
-            par.children[5].appendChild(newChild5)
-            par.children[5].children[0].innerHTML = dataarr[3] + '%'
-
-
-            par.children[6].innerHTML = par.children[6].innerHTML + '/'
+            par.children[6].innerHTML = par.children[6].innerHTML.replace('未检测', '')
             let newChild6 = newChild.cloneNode(true);
             par.children[6].appendChild(newChild6)
-            par.children[6].children[0].innerHTML = dataarr[4] + 'GB'
+            par.children[6].children[0].innerHTML = dataarr[4] + 'GB'  // 可分配指的是 总的大页内存
 
-            par.children[7].innerHTML = par.children[7].innerHTML + '/'
+            par.children[7].innerHTML = par.children[7].innerHTML.replace('未检测', '')
             let newChild7 = newChild.cloneNode(true);
             par.children[7].appendChild(newChild7)
-            par.children[7].children[0].innerHTML = dataarr[5] + 'GB' // 不准确 获取大页内存 如果关机是否占用、如果
+            par.children[7].children[0].innerHTML = dataarr[7] + 'GB' // 不准确 获取大页内存 如果关机是否占用、如果  // 大页内存（被占用的）
 
-            par.children[8].innerHTML = par.children[8].innerHTML + '/'
+            par.children[8].innerHTML = par.children[8].innerHTML.replace('未检测', '')
             let newChild78 = newChild.cloneNode(true);  //  深层副本， 使用同一个newChild 前几个添加的标签都会移动到最后一个
             par.children[8].appendChild(newChild78)
             par.children[8].children[0].innerHTML = dataarr[6] + "%"
@@ -151,9 +154,12 @@ batchDetection.addEventListener('click', function () {
     }
     let csrftoken = getCookie('csrftoken');
     $.ajax({
-        url: '/reports/host/detect/', type: 'GET', headers: {
+        url: '/reports/host/detect/',
+        type: 'GET',
+        headers: {
             'X-CSRFToken': csrftoken
-        }, data: {'ip_start': ip_start, 'ip_end': ip_end, 'ip_subent': ip_subent, 'batchdetect_group': batchdetect_group},
+        },
+        data: {'ip_start': ip_start, 'ip_end': ip_end, 'ip_subent': ip_subent, 'batchdetect_group': batchdetect_group},
 
         success: function (data) {
             // Handle success
@@ -194,12 +200,13 @@ batchDetection.addEventListener('click', function () {
             $('#exampleModal').modal('hide')
 
             // console.log(data.error)
-            if (data.error !== "{}"){
+            if (data.error !== "{}") {
                 alert(data.error)
             }
 
 
-        }, error: function (data) {
+        },
+        error: function (data) {
             // Handle error
             $('#exampleModal').modal('hide')
             alert('保存数据失败：' + data.responseJSON.msg_error)

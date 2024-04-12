@@ -656,7 +656,8 @@ class VirtHost:
         for i in p:
             if not i:
                 break
-            men = i.split(':      ')   # ['HugePages_Total', ' 0'] ['HugePages_Free', '  0']
+            i = i.replace(' ','')
+            men = i.split(':')   # ['HugePages_Total', ' 0'] ['HugePages_Free', '  0']
             d[men[0]] = men[1].strip()
 
         return d

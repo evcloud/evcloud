@@ -111,48 +111,39 @@ class ReportHostCpuMem(View):
         """保存信息"""
 
         host_ipv4 = kwargs.get('host_ipv4')
-        realcpu = request.POST.get('realcpu')
-        vcputotal = request.POST.get('vcputotal')
-        memtotalint = request.POST.get('memtotalint')
+        mem_use_num = request.POST.get('mem_use_num')
 
-        if not realcpu or not vcputotal or not memtotalint:
+        mem_total = request.POST.get('mem_total')
+
+        if not mem_use_num or not mem_total:
             return JsonResponse({'msg_error': f'获取到的值为空，请检查。'}, json_dumps_params={'ensure_ascii': False},
                                 status=400)
 
-        realcpu = int(realcpu)
-        vcputotal = int(vcputotal)
-        memtotalint = int(memtotalint)
+        mem_total = int(mem_total)
+        mem_use_num = int(mem_use_num)
 
         try:
             base_host = HostManager().get_host_by_ipv4(host_ipv4=host_ipv4)
         except Exception as e:
             return JsonResponse({'msg_error': f'{str(e)}'}, json_dumps_params={'ensure_ascii': False}, status=400)
 
-        count = 0
-        if realcpu != 0 and base_host.real_cpu != realcpu:
-            base_host.pcserver.real_cpu = realcpu
-            count += 1
+        update_fiedls = []
+        if mem_total > 0:
+            base_host.mem_total = mem_total
+            update_fiedls.append('mem_total')
 
-        if vcputotal != 0 and base_host.vcpu_total != vcputotal:
-            base_host.vcpu_total = vcputotal
-            count += 1
-
-        if memtotalint != 0 and base_host.mem_total != memtotalint:
-            base_host.mem_total = memtotalint
-            count += 1
-
-        if count == 0:
-            return JsonResponse({'msg_error': f'数据为零或新旧数据相同数据不保存。'},
-                                json_dumps_params={'ensure_ascii': False},
-                                status=400)
+        if mem_use_num > 0:
+            base_host.mem_allocated = mem_use_num
+            update_fiedls.append('mem_allocated')
 
         try:
-            base_host.pcserver.save()
-            base_host.save()
+            # base_host.pcserver.save()
+            if update_fiedls:
+                base_host.save()
         except Exception as e:
             return JsonResponse({'msg_error': f'无法保存数据， 请重试。 error: {str(e)}'},
                                 json_dumps_params={'ensure_ascii': False}, status=400)
-
+        # print(f'mem_total = {mem_total} , mem_use_num = {mem_use_num}')
         return JsonResponse({'msg': f'数据保存成。'}, json_dumps_params={'ensure_ascii': False})
 
 

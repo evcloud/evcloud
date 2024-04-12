@@ -183,9 +183,9 @@
                             <tr>
                                 <th>{% translate '宿主机IP地址' %}</th>
                                 <th>{% translate '机组' %}</th>
-                                <th>{% translate '物理cpu(/核)' %}</th>
-                                <th>{% translate '虚拟cpu(/核)' %}</th>
-                                <th>{% translate '已分配cpu(/核)' %}</th>
+                                <th>{% translate '物理cpu(核)' %}</th>
+                                <th>{% translate '虚拟cpu(核)' %}</th>
+                                <th>{% translate '已分配cpu(核)' %}</th>
                                 <th>cpu{% translate '分配率' %}</th>
                                 <th>{% translate '可分配内存/实际可分配内存' %}</th>
                                 <th>{% translate '已使用内存/实际已使用内存' %}</th>
@@ -205,9 +205,9 @@
                                     <td>{{ c.vcpu_total }}</td>
                                     <td>{{ c.vcpu_allocated }}</td>
                                     <td>{{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
-                                    <td>{{ c.mem_total | sizeformat:'GB' }} </td>
-                                    <td>{{ c.mem_allocated | sizeformat:'GB' }} </td>
-                                    <td>{{ c.mem_allocated | percentageformat:c.mem_total }}</td>
+                                    <td>{{ c.mem_total }} GB/未检测 </td>
+                                    <td>{{ c.mem_allocated }} GB/未检测 </td>
+                                    <td>{{ c.mem_allocated | percentageformat:c.mem_total }}/未检测</td>
                                     <td>{{ c.vm_created }}</td>
                                     {% if  user.is_superuser %}
                                         <td><a type="button" class="btn btn-primary"
@@ -268,7 +268,7 @@
                         </div>
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" aria-label="Sizing example input"
-                                   aria-describedby="inputGroup-sizing-default" placeholder="子网/掩码" id="ip-subnet">
+                                   aria-describedby="inputGroup-sizing-default" placeholder="子网/掩码 例如：192.168.0/255.255.255.0" id="ip-subnet">
                         </div>
 
                     </form>

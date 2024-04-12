@@ -11,4 +11,4 @@
 /data/
 /ignore*
 *.pid
-/00_script/openvpn_server.conf
+./00_script/openvpn_server.conf
