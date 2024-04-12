@@ -18,11 +18,11 @@ from .forms import VPNChangeFrom, VPNAddFrom
 from .models import VPNLog
 
 
-def change_vpn_view(request, vpn):
+def change_vpn_view(request, vpn, vpnauthcount, vpnlog):
     initial = {'username': vpn.username, 'password': vpn.password,
                'active': vpn.active, 'remarks': vpn.remarks}
     form = VPNChangeFrom(initial=initial)
-    return render(request, 'change.html', context={'form': form, 'vpn': vpn})
+    return render(request, 'change.html', context={'form': form, 'vpn': vpn, 'vpn_login_log_count': vpnlog, 'vpn_user_count':vpnauthcount})
 
 
 def add_vpn_view(request, pk: int):
@@ -66,7 +66,11 @@ class VPNChangeView(View):
         if not vpn:
             raise Http404
 
-        return change_vpn_view(request, vpn)
+        mgr = VPNManager()
+        vpnauthcount = mgr.get_vpn_queryset().count()
+        vpnlog = VPNLog.objects.all().count()
+
+        return change_vpn_view(request, vpn, vpnauthcount, vpnlog)
 
     def post(self, request, *args, **kwargs):
         post = request.POST
@@ -129,8 +133,12 @@ class VPNChangeView(View):
 
 class VPNAddView(View):
     def get(self, request, *args, **kwargs):
+
+        mgr = VPNManager()
+        vpnauthcount = mgr.get_vpn_queryset().count()
+        vpnlog = VPNLog.objects.all().count()
         form = VPNAddFrom(initial={'active': True})
-        return render(request, 'add.html', context={'form': form})
+        return render(request, 'add.html', context={'form': form, 'vpn_login_log_count': vpnlog, 'vpn_user_count':vpnauthcount })
 
     def post(self, request, *args, **kwargs):
         post = request.POST

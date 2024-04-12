@@ -30,6 +30,7 @@
                 <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}" class="btn btn-outline-primary">{% translate 'VPN用户' %} ({{ vpn_user_count }})</a></strong></span>
                 <span class="card-title"><strong><a href="" class="btn btn-primary">{% translate 'VPN登录日志' %} ({{ count }})</a></strong></span>
                 <span><a class="btn btn-outline-primary" href="{% url 'vpn:vpn-add' %}">{% translate '创建VPN账户' %}</a></span>
+                <span><strong><a class="btn btn-outline-primary " href="{% url 'vpn:vpn-file-config' %}">{% translate '配置文件' %}</a></strong></span>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -48,6 +49,7 @@
                 <tr>
                     {#                    <th></th>#}
                     <th>{% translate '用户名' %}</th>
+                    <th>{% translate 'VPN服务端IP' %}</th>
                     <th>ASSIGN_ip</th>
                     <th>{% translate '客户端IP' %}</th>
                     <th>{% translate '客户端公网端口' %}</th>
@@ -61,6 +63,7 @@
                 {% for obj in vpn_log %}
                     <tr>
                         <td>{{ obj.username }}</td>
+                        <td>{{ obj.vpn_server_ip }}</td>
                         <td>{{ obj.client_ip }}</td>
                         <td>{{ obj.client_trusted_ip }}</td>
                         <td>{{ obj.client_trusted_port }}</td>

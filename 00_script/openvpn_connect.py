@@ -5,7 +5,7 @@ import time
 import datetime
 sys.path.insert(0, '/home/uwsgi/evcloud/vpn/utils')
 
-from openvpn_mysqlconnect import VNCLogMysql
+from openvpn_mysqlconnect import VNCLogMysql, get_public_ip
 from openvpn_log import get_logger
 
 log = get_logger('vpn_login')
@@ -35,8 +35,9 @@ def get_environ_value():
 
 def main():
     k = get_environ_value()
+    public_ip = get_public_ip()
     value = f'"{k["username"]}", {k["timeunix"]}, "{k["login_time"]}", "{k["server_local_ip"]}", "{k["client_ip"]}", "{k["client_trusted_ip"]}", ' \
-            f'{k["client_trusted_port"]}, NULL, NULL, NULL'
+            f'{k["client_trusted_port"]}, NULL, NULL, NULL, "{public_ip}"'
 
     try:
         VNCLogMysql().insert(value=value)
@@ -44,7 +45,7 @@ def main():
         log.error(f'vpn用户 {k["username"]} -->登录时间：{k["login_time"]}, 登录时错误：{str(e)}')
 
     log.info(
-        f'vpn用户 {k["username"]} --> 登录时间：{k["login_time"]}, 客户端IP地址：{k["client_ip"]}, 服务端IP地址：{[k["server_local_ip"]]},'
+        f'vpn用户 {k["username"]} --> 登录时间：{k["login_time"]}, 客户端IP地址：{k["client_ip"]}, 服务端IP地址：{[k["server_local_ip"], public_ip]},'
         f'客户端使用的公网IP地址及端口：{k["client_trusted_ip"]}:{k["client_trusted_port"]}')
 
 

@@ -52,7 +52,7 @@
                     <th>{% translate '激活状态' %}</th>
                     <th>{% translate '创建时间' %}</th>
                     <th>{% translate '修改时间' %}</th>
-                    <th>{% translate '过期时间' %}</th>
+{#                    <th>{% translate '过期时间' %}</th>#}
                     <th>{% translate '创建人' %}</th>
                     <th>{% translate '备注' %}</th>
                 </tr>
@@ -74,7 +74,7 @@
                         </td>
                         <td>{{ obj.create_time|date:'Y-m-d H:i:s' }}</td>
                         <td>{{ obj.modified_time|date:'Y-m-d H:i:s' }}</td>
-                        <td>{{ obj.expired_time|date:'Y-m-d H:i:s' }}</td>
+{#                        <td>{{ obj.expired_time|date:'Y-m-d H:i:s' }}</td>#}
                         <td>{{ obj.create_user}}</td>
                         <td>{{ obj.remarks}}</td>
                     </tr>

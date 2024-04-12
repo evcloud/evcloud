@@ -89,6 +89,7 @@ class VPNLog(models.Model):
     client_trusted_port = models.IntegerField(verbose_name=_('客户端公网端口'))
     bytes_received = models.PositiveBigIntegerField(verbose_name=_('上行流量'), null=True, blank=True, default=None)
     bytes_sent = models.PositiveBigIntegerField(verbose_name=_('下行流量'), null=True, blank=True, default=None)
+    vpn_server_ip = models.GenericIPAddressField(verbose_name=_('VPN服务IP'), default=None, blank=True, null=True)
 
     class Meta:
         ordering = ['-id']

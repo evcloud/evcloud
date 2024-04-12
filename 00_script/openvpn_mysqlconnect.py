@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import socket
 
 import MySQLdb  # pip3 install mysqlclient 或者 dnf install python3-mysql.x86_64
 
@@ -13,6 +14,15 @@ db_User = settings.DATABASES['default']['USER']
 db_Password = settings.DATABASES['default']['PASSWORD']
 db_DefaultDB = settings.DATABASES['default']['NAME']
 db_Table = 'vpn_vpnlog'
+
+
+def get_public_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))  # 连接Google的DNS服务器
+    public_ip = s.getsockname()[0]
+    s.close()
+    return public_ip
+
 
 
 class VNCLogMysql(object):
@@ -50,7 +60,7 @@ class VNCLogMysql(object):
         mysql_conn = self.connect()
 
         sql = f'INSERT INTO {db_Table} (username, timeunix, login_time, server_local_ip, ' \
-              f'client_ip, client_trusted_ip, client_trusted_port, logout_time, bytes_received, bytes_sent) VALUES ({value})'
+              f'client_ip, client_trusted_ip, client_trusted_port, logout_time, bytes_received, bytes_sent, vpn_server_ip) VALUES ({value})'
 
         mysql_cur = mysql_conn.cursor()  # mysql cursor
         try:

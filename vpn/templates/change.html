@@ -8,43 +8,56 @@
 
 {% block boby %}
     <div class="container-fluid">
-        <form method="post">
-        <div class="card">
-            <div class="card-header">
-                <span class="card-title"><strong>{% translate '修改 VPN' %}</strong></span>
-            </div>
-            <div class="card-body">
-                {% csrf_token %}
-                {% for field in form %}
-                    <div class="form-group row">
-                        {% if field.is_hidden %}
-                            {{ field }}
-                        {% elif field.field.widget.input_type == "checkbox" %}
-                            <div class="col-12 {% if field.field.required %}font-weight-bold{% endif %}">{{ field }}{{ field.label_tag }}</div>
-                        {% else %}
-                            <div class="col-2 {% if field.field.required %}font-weight-bold{% endif %}">{{ field.label_tag }}</div>
-                            <div class="col-9">{{ field }}</div>
-                            {% if field.errors %}
-                                <p class="text-danger">{{ field.errors.as_text }}</p>
-                            {% endif %}
-                        {% endif %}
-                        {% if field.help_text %}
-                            <div class="col-12 font-weight-lighter font-italic">{{ field.help_text|safe }}</div>
-                        {% endif %}
-                    </div>
-                    <hr>
-                {% endfor %}
-                <p id="tip_text" class="text-danger">{{ form.non_field_errors.as_text }}</p>
-            </div>
-            <div class="card-footer">
-                {% if vpn %}
-                    <a class="btn btm-sm btn-primary btn-danger m-2" href="{% url 'vpn:vpn-delete' id=vpn.id %}">{% translate '删除' %}</a>
-                {% endif %}
-                <input type="submit" name="_continue" class="btn btm-sm btn-info float-right m-2" value="{% translate '保存并继续编辑' %}">
-                <input type="submit" name="_addanother" class="btn btm-sm btn-info float-right m-2" value="{% translate '保存并添加另一个' %}">
-                <input type="submit" name="_save" class="btn btm-sm btn-primary float-right m-2" value="{% translate '保存' %}">
-            </div>
+        <div class="card-header">
+            <span class="card-title"><strong><a href="{% url 'vpn:vpn-list' %}"
+                                                class="btn btn-outline-primary">{% translate 'VPN用户' %} ({{ vpn_user_count }})</a></strong></span>
+            <span class="card-title"><strong><a href="{% url 'vpn:vpn-login-log' %}"
+                                                class="btn btn-outline-primary">{% translate 'VPN登录日志' %} ({{ vpn_login_log_count }})</a></strong></span>
+            <span><a class="btn btn-primary" href="{% url 'vpn:vpn-add' %}">{% translate '创建VPN账户' %}</a></span>
+            <span><strong><a class="btn btn-outline-primary " href="{% url 'vpn:vpn-file-config' %}">{% translate '配置文件' %}</a></strong></span>
         </div>
+        <form method="post">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><strong>{% translate '修改 VPN' %}</strong></span>
+                </div>
+                <div class="card-body">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="form-group row">
+                            {% if field.is_hidden %}
+                                {{ field }}
+                            {% elif field.field.widget.input_type == "checkbox" %}
+                                <div class="col-12 {% if field.field.required %}font-weight-bold{% endif %}">
+                                    {{ field }}{{ field.label_tag }}</div>
+                            {% else %}
+                                <div class="col-2 {% if field.field.required %}font-weight-bold{% endif %}">{{ field.label_tag }}</div>
+                                <div class="col-9">{{ field }}</div>
+                                {% if field.errors %}
+                                    <p class="text-danger">{{ field.errors.as_text }}</p>
+                                {% endif %}
+                            {% endif %}
+                            {% if field.help_text %}
+                                <div class="col-12 font-weight-lighter font-italic">{{ field.help_text|safe }}</div>
+                            {% endif %}
+                        </div>
+                        <hr>
+                    {% endfor %}
+                    <p id="tip_text" class="text-danger">{{ form.non_field_errors.as_text }}</p>
+                </div>
+                <div class="card-footer">
+                    {% if vpn %}
+                        <a class="btn btm-sm btn-primary btn-danger m-2"
+                           href="{% url 'vpn:vpn-delete' id=vpn.id %}">{% translate '删除' %}</a>
+                    {% endif %}
+                    <input type="submit" name="_continue" class="btn btm-sm btn-info float-right m-2"
+                           value="{% translate '保存并继续编辑' %}">
+                    <input type="submit" name="_addanother" class="btn btm-sm btn-info float-right m-2"
+                           value="{% translate '保存并添加另一个' %}">
+                    <input type="submit" name="_save" class="btn btm-sm btn-primary float-right m-2"
+                           value="{% translate '保存' %}">
+                </div>
+            </div>
         </form>
     </div>
 {% endblock %}
