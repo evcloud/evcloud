@@ -3,7 +3,7 @@ import os
 import sys
 import time
 import datetime
-sys.path.insert(0, '/home/uwsgi/evcloud/vpn/utils')
+sys.path.insert(0, '/home/uwsgi/evcloud/00_script/')
 
 from openvpn_mysqlconnect import VNCLogMysql, get_public_ip
 from openvpn_log import get_logger
@@ -36,8 +36,13 @@ def get_environ_value():
 def main():
     k = get_environ_value()
     public_ip = get_public_ip()
+    if public_ip is None:
+        public_ip = 'NULL'
+    else:
+        public_ip = f'"{public_ip}"'
+
     value = f'"{k["username"]}", {k["timeunix"]}, "{k["login_time"]}", "{k["server_local_ip"]}", "{k["client_ip"]}", "{k["client_trusted_ip"]}", ' \
-            f'{k["client_trusted_port"]}, NULL, NULL, NULL, "{public_ip}"'
+            f'{k["client_trusted_port"]}, NULL, NULL, NULL, {public_ip}'
 
     try:
         VNCLogMysql().insert(value=value)
@@ -50,7 +55,7 @@ def main():
 
 
 if __name__ == '__main__':
-    # os.environ['common_name'] = 'wanghuang'
+    # os.environ['common_name'] = 'test'
     # os.environ['time_unix'] = '1693882866'
     # os.environ['ifconfig_local'] = '10.10.10.10'
     # os.environ['ifconfig_pool_remote_ip'] = '192.168.192.111'

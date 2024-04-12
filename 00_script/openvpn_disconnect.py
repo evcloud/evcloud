@@ -4,7 +4,7 @@ import os
 import sys
 import time
 
-sys.path.insert(0, '/home/uwsgi/evcloud/vpn/utils')
+sys.path.insert(0, '/home/uwsgi/evcloud/00_script/')
 
 from openvpn_log import get_logger
 from openvpn_mysqlconnect import VNCLogMysql
@@ -42,7 +42,7 @@ def main():
 
 
 if __name__ == '__main__':
-    # os.environ['common_name'] = 'wanghuang'
+    # os.environ['common_name'] = 'test'
     # os.environ['time_unix'] = '1693882866'
     # os.environ['bytes_sent'] = '23'
     # os.environ['bytes_received'] = '234'

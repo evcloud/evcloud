@@ -16,12 +16,17 @@ db_DefaultDB = settings.DATABASES['default']['NAME']
 db_Table = 'vpn_vpnlog'
 
 
-def get_public_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("8.8.8.8", 80))  # 连接Google的DNS服务器
-    public_ip = s.getsockname()[0]
-    s.close()
-    return public_ip
+def get_public_ip(path='/home/uwsgi/evcloud/00_script/openvpn_server.conf', target_string='net_gateway'):
+    try:
+        with open(path, 'r') as file:
+            for line in file:
+                if target_string in line:
+                    # 如果目标字符串在当前行中
+                    return line.split()[2]  # 返回包含目标信息的第二个单词
+        # 如果未找到目标字符串
+        return None
+    except FileNotFoundError:
+        return None
 
 
 
