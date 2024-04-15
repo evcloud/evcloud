@@ -9,6 +9,7 @@ from drf_yasg import openapi
 from logrecord.manager import user_operation_record
 from logrecord.models import LogRecord
 from utils import errors as exceptions
+from rest_framework.decorators import action
 
 
 class ComputeQuotaViewSet(CustomGenericViewSet):
@@ -33,7 +34,7 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
                 name='center_id',
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
-                required=False,
+                required=True,
                 description='数据中心'
             )
         ],
@@ -79,6 +80,67 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
                 exceptions.BadRequestError(msg='无效的数据中心id，值需要是一个正整数'))
 
         quota = GroupManager().compute_quota(user=request.user, center_id=center_id)
+
+        if 'GB' == mem_unit:
+            quota['mem_unit'] = 'GB'
+        else:
+            quota['mem_total'] = quota['mem_total'] * 1024
+            quota['mem_allocated'] = quota['mem_allocated'] * 1024
+            quota['mem_unit'] = 'MB'
+        return Response(data={'quota': quota})
+
+    # 汇总数据中心资源
+    @swagger_auto_schema(
+        operation_summary='全数据中心资源汇总',
+        manual_parameters=[
+            openapi.Parameter(
+                name='mem_unit',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='内存计算单位（默认MB，可选GB）'
+            )
+        ],
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'center', url_name='center')
+    def center_compute_quota(self,  request, *args, **kwargs):
+        """
+        获取所有数据中心资源配额信息
+
+            http code 200:
+                {
+                  "quota": {
+                    "mem_total": 37,  # 总内存
+                    "mem_allocated": 1,  # 使用内存
+                    "vcpu_total": 72,   # 总cpu
+                    "vcpu_allocated": 1,  # 使用cpu
+                    "real_cpu": 32,   #
+                    "vm_created": 1,  # 创建的虚拟机数
+                    "vm_limit": 22,
+                    "ips_total": 9,  # IP 总数
+                    "ips_used": 1,  # IP 使用数
+                    "ips_private": 7,  # 内网IP数
+                    "ips_public": 2,  # 公网IP数
+                    "vdisk_num": 3,  # 云硬盘数
+                    "vpn_total": 1,  # vpn总数
+                    "vpn_active": 1,  # vpn 有效数
+                    "vpn_invalid": 0,  # vpn 无效数
+                    "ips_rate": 0.11,  # ip 使用率
+                    "cpu_rate": 0.01,  # cpu 使用率
+                    "mem_rate": 0.03,  # 内存使用率
+                    "mem_unit": "GB"
+                  }
+                }
+        """
+        mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
+        if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
+            exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
+            return self.exception_response(exc)
+
+        quota = CenterManager().get_stat_all_center(user=request.user)
 
         if 'GB' == mem_unit:
             quota['mem_unit'] = 'GB'

@@ -11,6 +11,7 @@ from image.models import Image
 from ceph.models import CephPool
 from utils import errors
 from utils.errors import ComputeError
+from vpn.manager import VPNManager
 
 
 class DefaultSum(Sum):
@@ -294,6 +295,109 @@ class CenterManager:
             vcpu_total=DefaultSum('group_set__hosts_set__vcpu_total'),
             vcpu_allocated=DefaultSum('group_set__hosts_set__vcpu_allocated'),
             vm_created=DefaultSum('group_set__hosts_set__vm_created')).all()
+
+    def get_all_center_cpn_mem_stat(self, ):
+        """获取数据中心内存、cpu资源"""
+        quota= {
+            "mem_total": 0, # 内存总数
+            "mem_allocated": 0,# 从内存使用数
+            "vcpu_total": 0, # cpu 总数
+            "vcpu_allocated": 0,# cpu 使用数
+            "real_cpu": 0,
+            "vm_created": 0,# 云主机数
+            "vm_limit": 0,
+            "ips_total": 0,  # IP总数
+            "ips_used": 0,   # IP使用数
+            "ips_private": 0,  # 私网IP数
+            "ips_public": 0,  # 公网IP数
+            "vdisk_num": 0,  # 云硬盘数
+            "vpn_total": 0,  # vpn总数
+            "vpn_active": 0,  # vpn 有效数
+            "vpn_invalid":0, # vpn 无效数
+        }
+
+        qs = Center.objects.all()
+        if not qs:
+            return quota, False
+
+        quota_qs = Host.objects.filter(enable=True)
+        for center in qs:
+
+            group_ids = list(Group.objects.filter(center_id=center.id).values_list('id', flat=True))
+            if group_ids:
+                quota_qs = quota_qs.filter(group_id__in=group_ids)
+            else:
+                quota_qs = quota_qs.none()
+
+            center_quota = quota_qs.aggregate(
+                mem_total=DefaultSum('mem_total'),
+                mem_allocated=DefaultSum('mem_allocated'),
+                vcpu_total=DefaultSum('vcpu_total'),
+                vcpu_allocated=DefaultSum('vcpu_allocated'),
+                real_cpu=DefaultSum('real_cpu'),
+                vm_created=DefaultSum('vm_created'),
+                vm_limit=DefaultSum('vm_limit')
+            )
+
+            quota["mem_total"] = quota["mem_total"] + center_quota["mem_total"]
+            quota["mem_allocated"] = quota["mem_allocated"] + center_quota["mem_allocated"]
+            quota["vcpu_total"] = quota["vcpu_total"] + center_quota["vcpu_total"]
+            quota["vcpu_allocated"] = quota["vcpu_allocated"] + center_quota["vcpu_allocated"]
+            quota["real_cpu"] = quota["real_cpu"] + center_quota["real_cpu"]
+            quota["vm_created"] = quota["vm_created"] + center_quota["vm_created"]
+            quota["vm_limit"] = quota["vm_limit"] + center_quota["vm_limit"]
+
+        return quota, True
+
+
+    def get_stat_all_center(self, user):
+        """汇总数据中心信息
+
+            云主机数、云硬盘数、已用IP地址 总IP数、IP使用率、已用cpu、总计cpu数 cpu使用率、内存、vpn
+        """
+
+        quota, flag = self.get_all_center_cpn_mem_stat()
+        if not flag:
+            return quota
+
+        ip_data = MacIP.objects.filter(enable=True, vlan__enable=True).aggregate(
+            ips_total=Count('id'),
+            ips_used=Count('id', filter=Q(used=True)),
+            ips_private=Count('id', filter=Q(vlan__tag=0)),
+            ips_public=Count('id', filter=Q(vlan__tag=1))
+        )
+
+        quota.update(ip_data)
+
+        # 使用率
+        ip_rate = quota["ips_used"]/quota["ips_total"]
+        cpu_rate = quota["vcpu_allocated"]/quota["vcpu_total"]
+        mem_rate = quota["mem_allocated"]/quota["mem_total"]
+        quota["ips_rate"] = float(f'{ip_rate:.2f}')
+        quota["cpu_rate"] = float(f'{cpu_rate:.2f}')
+        quota["mem_rate"] = float(f'{mem_rate:.2f}')
+
+        # 云硬盘
+        group_qs = GroupManager().get_group_queryset()
+        vdisk_all = group_qs.aggregate(vdisk_num=Count('quota_set__vdisk_set'))
+        quota.update(vdisk_all)
+        # VPN
+        qs = VPNManager().get_vpn_queryset()
+        if not qs:
+            quota["vpn_total"]=0
+            quota["vpn_active"]=0
+            quota["vpn_invalid"]=0
+            return quota
+
+        vpn_total = qs.count()
+        vpn_active = qs.filter(active=True).count()
+        vpn_invalid = qs.filter(active=False).count()
+
+        quota["vpn_total"] = vpn_total
+        quota["vpn_active"] = vpn_active
+        quota["vpn_invalid"] = vpn_invalid
+
+        return quota
 
 
 class GroupManager:
