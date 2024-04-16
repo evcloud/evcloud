@@ -72,49 +72,29 @@ function detectionHost(th, obj, csrf_token) {
 
         success: function (data) {
             // Handle success
-
             let par = th.parentNode.parentNode //
 
-            console.log(data.msg)
+            // console.log(data.msg)
 
             let dataarr = data.msg.split(',')
 
-
             let newChild = document.createElement('span');
             newChild.style.color = 'red'
-            //
-            // par.children[2].innerHTML = par.children[2].innerHTML + '/'
-            // // let newChild2 = newChild.cloneNode(true);
-            // par.children[2].appendChild(newChild)
-            // par.children[2].children[0].innerHTML = dataarr[0]
-            //
-            // par.children[3].innerHTML = par.children[3].innerHTML + '/'
-            // let newChild3 = newChild.cloneNode(true);
-            // par.children[3].appendChild(newChild3)
-            // par.children[3].children[0].innerHTML = dataarr[1]
-            //
-            // // par.children[4].innerHTML = dataarr[2]
-            // // par.children[5].innerHTML = dataarr[3] + '%'
-            // par.children[5].innerHTML = par.children[5].innerHTML + '/'
-            // let newChild5 = newChild.cloneNode(true);
-            // par.children[5].appendChild(newChild5)
-            // par.children[5].children[0].innerHTML = dataarr[3] + '%'
 
+            par.children[5].innerHTML = par.children[5].innerHTML.replace('未检测', '')
+            let newChild5 = newChild.cloneNode(true);
+            par.children[5].appendChild(newChild5)
+            par.children[5].children[0].innerHTML = dataarr[4] + 'GB'  // 可分配指的是 总的大页内存
 
             par.children[6].innerHTML = par.children[6].innerHTML.replace('未检测', '')
             let newChild6 = newChild.cloneNode(true);
             par.children[6].appendChild(newChild6)
-            par.children[6].children[0].innerHTML = dataarr[4] + 'GB'  // 可分配指的是 总的大页内存
+            par.children[6].children[0].innerHTML = dataarr[5] + 'GB' // 不准确 获取大页内存 如果关机是否占用、如果  // 大页内存（被占用的）
 
             par.children[7].innerHTML = par.children[7].innerHTML.replace('未检测', '')
-            let newChild7 = newChild.cloneNode(true);
+            let newChild7 = newChild.cloneNode(true);  //  深层副本， 使用同一个newChild 前几个添加的标签都会移动到最后一个
             par.children[7].appendChild(newChild7)
-            par.children[7].children[0].innerHTML = dataarr[7] + 'GB' // 不准确 获取大页内存 如果关机是否占用、如果  // 大页内存（被占用的）
-
-            par.children[8].innerHTML = par.children[8].innerHTML.replace('未检测', '')
-            let newChild78 = newChild.cloneNode(true);  //  深层副本， 使用同一个newChild 前几个添加的标签都会移动到最后一个
-            par.children[8].appendChild(newChild78)
-            par.children[8].children[0].innerHTML = dataarr[6] + "%"
+            par.children[7].children[0].innerHTML = dataarr[6] + "%"
 
 
         }, error: function (data) {
@@ -175,12 +155,11 @@ batchDetection.addEventListener('click', function () {
                                     <td>${key}</td>
                                     <td>无</td>
                                     <td>${data_list[0]}</td>
-                                    <td>${data_list[1]}</td>
-                                    <td>${data_list[2]}</td>
+                                    <td>${data_list[2]}/${data_list[1]}</td>
                                     <td>${data_list[3]}%</td>
-                                    <td>${data_list[4]} GB</td>
-                                    <td>${data_list[5]} GB</td>
-                                    <td>${data_list[6]}%</td>
+                                    <td>${data_list[4]} GB/${data_list[4]} GB</td>
+                                    <td>${data_list[5]} GB/${data_list[5]} GB</td>
+                                    <td>${data_list[6]}%/${data_list[6]}%</td>
                                     <td>0</td>
       
                                 </tr>`
@@ -221,7 +200,6 @@ savedetection.addEventListener('click', function () {
     let savedetect_group = $('#id-group-savedetect').val()
     let savedetect_room = $('#id-room-savedetect').val()
 
-    // if(){}
 
     let tbody_host = document.getElementById('tbody-host')
     let json_host = {}
@@ -231,17 +209,34 @@ savedetection.addEventListener('click', function () {
     for (let i = 0; i < tr_obj.length; i++) {
         let info = []
         let td_obj = tr_obj[i].children
-        info.push(td_obj[2].innerHTML)
-        let newStr = td_obj[6].innerHTML.replace(/\s/g, '');
-        newStr = newStr.replace(/&nbsp;/g, '');
-        newStr = newStr.split('GB')[0]
-        info.push(newStr)
+        info.push(td_obj[2].innerHTML)  // 物理cpu
 
-        td_obj[1].innerHTML
+        let newStr = td_obj[3].innerHTML.replace(/\s/g, '');
+        newStr = newStr.split('/')
+
+        info.push(newStr[0])  // 已用cpu
+        info.push(newStr[1])  // 总cpu
+
+        newStr = td_obj[5].innerHTML.replace(/\s/g, '');
+        newStr = newStr.replace(/&nbsp;/g, '');
+        newStr = newStr.split('/')
+
+        info.push(newStr[0].split('GB')[0])  // 可分配内存
+        info.push(newStr[1].split('GB')[0])  // 实际分配内存
+
+        newStr = td_obj[6].innerHTML.replace(/\s/g, '');
+        newStr = newStr.replace(/&nbsp;/g, '');
+        newStr = newStr.split('/')
+
+        info.push(newStr[0].split('GB')[0])  // 已使用内存
+        info.push(newStr[1].split('GB')[0])  // 实际使用内存
 
         json_host[td_obj[0].innerHTML] = info
 
+
     }
+
+    console.log(json_host)
 
     let csrftoken = getCookie('csrftoken');
     $.ajax({
@@ -253,6 +248,7 @@ savedetection.addEventListener('click', function () {
             // Handle success
             $('#exampleModal2').modal('hide')
             alert(data.msg)
+            window.location.reload()
 
         }, error: function (data) {
             // Handle error

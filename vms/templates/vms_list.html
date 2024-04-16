@@ -14,7 +14,7 @@
             <div class="card-header">
                 <span class="card-title"><strong><a class="btn btn-primary" href="{% url 'vms:vms-list' %}">{% translate '在线虚拟机' %} ({{ count }})</a></strong></span>
                 <span class="card-title"><strong><a class="btn btn-outline-primary" href="{% url 'vms:shelve-list' %}">{% translate '已搁置' %} ({{ shelve_count }})</a></strong></span>
-                <span><a class="btn btn-sm btn-primary float-right" href="{% url 'vms:vm-create' %}">
+                <span><a class="btn btn-outline-primary" href="{% url 'vms:vm-create' %}">
                     {% translate '创建虚拟机' %}
                 </a></span>
             </div>

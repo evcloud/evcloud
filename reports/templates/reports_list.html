@@ -184,8 +184,8 @@
                                 <th>{% translate '宿主机IP地址' %}</th>
                                 <th>{% translate '机组' %}</th>
                                 <th>{% translate '物理cpu(核)' %}</th>
-                                <th>{% translate '虚拟cpu(核)' %}</th>
-                                <th>{% translate '已分配cpu(核)' %}</th>
+                                <th>{% translate '已分配/总虚拟cpu(核)' %}</th>
+{#                                <th>{% translate '已分配cpu(核)' %}</th>#}
                                 <th>cpu{% translate '分配率' %}</th>
                                 <th>{% translate '可分配内存/实际可分配内存' %}</th>
                                 <th>{% translate '已使用内存/实际已使用内存' %}</th>
@@ -202,8 +202,8 @@
                                     <td>{{ c.ipv4 }}</td>
                                     <td>{{ c.group__name }}</td>
                                     <td>{{ c.real_cpu }}</td>
-                                    <td>{{ c.vcpu_total }}</td>
-                                    <td>{{ c.vcpu_allocated }}</td>
+                                    <td>{{ c.vcpu_allocated }}/{{ c.vcpu_total }}</td>
+
                                     <td>{{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
                                     <td>{{ c.mem_total }} GB/未检测 </td>
                                     <td>{{ c.mem_allocated }} GB/未检测 </td>

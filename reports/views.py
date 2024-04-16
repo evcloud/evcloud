@@ -198,7 +198,7 @@ class ReportsHostBatchDetection(View):
         room_id = request.POST.get('room')
         group_id = request.POST.get('group')
         host_info = request.POST.get('host_info')
-        host_info = json.loads(host_info)
+        host_info = json.loads(host_info)  # [物理cpu， 已分配，总虚拟cpu，可分配内存，实际可分配内存，已使用内存，实际已使用内存]
 
         if not room_id or not group_id or not host_info:
             return JsonResponse({'msg_error': f'未获取到完整数据，请检查。'}, json_dumps_params={'ensure_ascii': False},
@@ -207,9 +207,10 @@ class ReportsHostBatchDetection(View):
         for key, val in host_info.items():
 
             try:
-                cpu, mem = int(val[0]), int(val[1])
+                cpu, mem, mem_allocated = int(val[0]), int(val[4]), int(val[6])
+
                 pc = self.pcserver_check(host_ip=key, cpu=cpu, mem=mem, room_id=int(room_id))
-                self.host_check(host_ip=key, cpu=cpu, mem=mem, pcserver_id=pc.id, room_id=int(room_id))
+                self.host_check(host_ip=key, cpu=cpu, mem=mem, mem_allocated=mem_allocated, pcserver_id=pc.id, room_id=int(room_id))
             except Exception as e:
                 return JsonResponse({'msg_error': f'保存失败：{str(e)}'}, json_dumps_params={'ensure_ascii': False},
                                     status=400)
@@ -257,7 +258,7 @@ class ReportsHostBatchDetection(View):
 
         return obj
 
-    def host_check(self, host_ip, cpu, mem, pcserver_id, room_id):
+    def host_check(self, host_ip, cpu, mem, mem_allocated, pcserver_id, room_id):
 
         host_obj = Host.objects.filter(pcserver__host_ipv4=host_ip).first()
         if host_obj:
@@ -270,6 +271,10 @@ class ReportsHostBatchDetection(View):
                 host_obj.mem_total = mem
                 flag.append('mem_total')
 
+            if host_obj.mem_allocated != mem_allocated and mem_allocated != 0:
+                host_obj.mem_allocated = mem_allocated
+                flag.append('mem_allocated')
+
             if flag:
                 host_obj.save(update_fields=flag)
             return host_obj
@@ -279,6 +284,7 @@ class ReportsHostBatchDetection(View):
             group_id=room_id,
             vcpu_total=cpu * 4,
             mem_total=mem,
+            mem_allocated=mem_allocated,
             vm_created=30,
         )
         host_obj.save()
