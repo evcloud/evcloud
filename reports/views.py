@@ -78,7 +78,7 @@ def get_host_cpu_men_info(host_ipv4):
 
     host_mem = host.get_hugepages()  # 获取大页内存 dict
     mem_all = int(host_mem['HugePages_Total'])
-    mem_x = mem_all - int(host_mem['HugePages_Free'])
+    mem_x = mem_all - int(host_mem['HugePages_Free'])  # 已使用的大页内存
     per = 0
     try:
         if mem_all != 0 and mem_x != 0:
@@ -122,12 +122,17 @@ class ReportHostCpuMem(View):
         mem_total = int(mem_total)
         mem_use_num = int(mem_use_num)
 
+        if mem_total == 0 and mem_use_num == 0:
+            return JsonResponse({'msg': f'数值为 0 不保存数据。'}, json_dumps_params={'ensure_ascii': False})
+
+
         try:
             base_host = HostManager().get_host_by_ipv4(host_ipv4=host_ipv4)
         except Exception as e:
             return JsonResponse({'msg_error': f'{str(e)}'}, json_dumps_params={'ensure_ascii': False}, status=400)
 
         update_fiedls = []
+
         if mem_total > 0:
             base_host.mem_total = mem_total
             update_fiedls.append('mem_total')
@@ -143,8 +148,7 @@ class ReportHostCpuMem(View):
         except Exception as e:
             return JsonResponse({'msg_error': f'无法保存数据， 请重试。 error: {str(e)}'},
                                 json_dumps_params={'ensure_ascii': False}, status=400)
-        # print(f'mem_total = {mem_total} , mem_use_num = {mem_use_num}')
-        return JsonResponse({'msg': f'数据保存成。'}, json_dumps_params={'ensure_ascii': False})
+        return JsonResponse({'msg': f'数据保存成功。'}, json_dumps_params={'ensure_ascii': False})
 
 
 class ReportsHostBatchDetection(View):
@@ -198,7 +202,7 @@ class ReportsHostBatchDetection(View):
         room_id = request.POST.get('room')
         group_id = request.POST.get('group')
         host_info = request.POST.get('host_info')
-        host_info = json.loads(host_info)  # [物理cpu， 已分配，总虚拟cpu，可分配内存，实际可分配内存，已使用内存，实际已使用内存]
+        host_info = json.loads(host_info)  # [物理cpu，  大页内存已使用, 大页内存总数]
 
         if not room_id or not group_id or not host_info:
             return JsonResponse({'msg_error': f'未获取到完整数据，请检查。'}, json_dumps_params={'ensure_ascii': False},
@@ -207,7 +211,7 @@ class ReportsHostBatchDetection(View):
         for key, val in host_info.items():
 
             try:
-                cpu, mem, mem_allocated = int(val[0]), int(val[4]), int(val[6])
+                cpu, mem, mem_allocated = int(val[0]), int(val[2]), int(val[1])
 
                 pc = self.pcserver_check(host_ip=key, cpu=cpu, mem=mem, room_id=int(room_id))
                 self.host_check(host_ip=key, cpu=cpu, mem=mem, mem_allocated=mem_allocated, pcserver_id=pc.id, room_id=int(room_id))
@@ -228,9 +232,7 @@ class ReportsHostBatchDetection(View):
         cpu_h = int(host_cpu)  # 真是cpu
         cpu_x = int(host_cpu) * 4  # 虚拟cpu
 
-        cpu_y = 0
-        cpu_p = 0
-        mem_p = 0
+        cpu_y = cpu_p = mem_p = 0
 
         data = f'{cpu_h}, {cpu_x}, {cpu_y}, {cpu_p}, {mem_all}, {mem_x}, {mem_p}'
 

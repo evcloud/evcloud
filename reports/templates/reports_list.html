@@ -178,19 +178,18 @@
                         </form>
 
                         <p></p>
-                        <table class="table">
+                        <table class="table text-center">
                             <thead class="thead-light">
                             <tr>
-                                <th>{% translate '宿主机IP地址' %}</th>
                                 <th>{% translate '机组' %}</th>
-                                <th>{% translate '物理cpu(核)' %}</th>
-                                <th>{% translate '已分配/总虚拟cpu(核)' %}</th>
-{#                                <th>{% translate '已分配cpu(核)' %}</th>#}
-                                <th>cpu{% translate '分配率' %}</th>
-                                <th>{% translate '可分配内存/实际可分配内存' %}</th>
-                                <th>{% translate '已使用内存/实际已使用内存' %}</th>
-                                <th>{% translate '内存使用率/实际内存使用率' %}</th>
+                                <th>{% translate '宿主机IP地址' %}</th>
                                 <th>{% translate '虚拟机数' %}</th>
+                                <th>{% translate '物理cpu核' %}</th>
+                                <th>{% translate '虚拟CPU核：已用/总数/利用率 ' %}</th>
+
+                                <th>{% translate '虚拟内存GB：已分配/总数/分配率' %}</th>
+                                <th>{% translate '实际大页内存GB：已分配/总数/利用率' %}</th>
+
                                 {% if user.is_superuser %}
                                     <th>{% translate '操作' %}</th>
                                 {% endif %}
@@ -199,16 +198,13 @@
                             <tbody id="tbody-host">
                             {% for c in hosts %}
                                 <tr>
-                                    <td>{{ c.ipv4 }}</td>
                                     <td>{{ c.group__name }}</td>
-                                    <td>{{ c.real_cpu }}</td>
-                                    <td>{{ c.vcpu_allocated }}/{{ c.vcpu_total }}</td>
-
-                                    <td>{{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
-                                    <td>{{ c.mem_total }} GB/未检测 </td>
-                                    <td>{{ c.mem_allocated }} GB/未检测 </td>
-                                    <td>{{ c.mem_allocated | percentageformat:c.mem_total }}/未检测</td>
+                                    <td>{{ c.ipv4 }}</td>
                                     <td>{{ c.vm_created }}</td>
+                                    <td>{{ c.real_cpu }}</td>
+                                    <td>{{ c.vcpu_allocated }} / {{ c.vcpu_total }} / {{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
+                                    <td>{{ c.mem_allocated }} / {{ c.mem_total }} / {{ c.mem_allocated | percentageformat:c.mem_total }}</td>
+                                    <td>未检测 / 未检测 / 未检测</td>
                                     {% if  user.is_superuser %}
                                         <td><a type="button" class="btn btn-primary"
                                                onclick='detectionHost( this ,"{{ c.ipv4 }}", "{{ csrf_token }}")'
@@ -268,7 +264,8 @@
                         </div>
                         <div class="input-group mb-3">
                             <input type="text" class="form-control" aria-label="Sizing example input"
-                                   aria-describedby="inputGroup-sizing-default" placeholder="子网/掩码 例如：192.168.0/255.255.255.0" id="ip-subnet">
+                                   aria-describedby="inputGroup-sizing-default"
+                                   placeholder="子网/掩码 例如：192.168.0/255.255.255.0" id="ip-subnet">
                         </div>
 
                     </form>
