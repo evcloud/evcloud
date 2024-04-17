@@ -1,3 +1,14 @@
+## v4.2.0
+2024-04-17
+* 增加数据大屏展示数据汇总接口   提交人：wanghuang
+* 增加 openvpn service 服务文件，config_systemctl 增加 openvpn service 服务开机启动操作   提交人：wanghuang
+* openvpn auth 内容配置路径修   提交人：wanghuang
+* vpn 删除过期日期，标题头部按钮调整，增加 vpn服务IP字段   提交人：wanghuang
+* vpn服务认证内容移动到openvpn_server.conf中，删除openvpn_crt目录   提交人：wanghuang
+* 资源管理检测大页内存信息格式不对优化，标题信息调整   提交人：wanghuang
+* mac_ip 显示字段顺序调整   提交人：wanghuang
+
+
 ## v4.1.2
 2024-04-11
 * 00_shell 修改为 00_script   提交人：wanghuang
