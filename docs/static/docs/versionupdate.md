@@ -13,7 +13,7 @@ vpn 部分增加 vpn服务IP字段
    ````
    git status # 查看 是否有手动修改的内容，并记录
    git checkout . # 丢弃修改的内容
-   git pull orgin master
+   git pull origin master
    git fetch --tag
 4. 执行数据库操作
    ````
