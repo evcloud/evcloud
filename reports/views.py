@@ -54,8 +54,10 @@ class ReportsListView(View):
 
         room = Room.objects.all()
 
+        quota = GroupManager().compute_quota(request.user)
+
         return render(request, 'reports_list.html',
-                      context={'centers': centers, 'groups': groups, 'hosts': hosts, 'room': room})
+                      context={'centers': centers, 'groups': groups, 'hosts': hosts, 'room': room, 'quota': quota})
 
 
 def get_host_cpu_men_info(host_ipv4):

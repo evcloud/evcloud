@@ -60,10 +60,11 @@
                     <li class="nav-item" id="nav_vlan_list"><a class="nav-link" href="{% url "network:vlan_list" %}">{% translate '网络' %}</a></li>
                 {% endif %}
                 <li class="nav-item" id="nav_vpn_list"><a class="nav-link" href="{% url "vpn:vpn-list" %}">VPN</a></li>
-                <li class="nav-item" id="nav_quota"><a class="nav-link" href="{% url "reports:reports-quota" %}">{% translate '资源配额' %}</a></li>
+{#                <li class="nav-item" id="nav_quota"><a class="nav-link" href="{% url "reports:reports-quota" %}">{% translate '资源配额' %}</a></li>#}
                 {% if user.is_superuser %}
-                    <li class="nav-item" id="nav_reports"><a class="nav-link" href="{% url 'reports:reports-list' %}">{% translate '资源统计管理' %}</a></li>
+                <li class="nav-item" id="nav_reports"><a class="nav-link" href="{% url 'reports:reports-list' %}">{% translate '资源统计管理' %}</a></li>
                 {% endif %}
+
             {% endif %}
             </ul>
             <ul class="navbar-nav">

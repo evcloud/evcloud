@@ -35,6 +35,10 @@
                         <a class="nav-link" data-toggle="tab" href="#host_group" aria-controls="host_group"
                            aria-selected="false">{% translate '宿主机组' %}</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#quota" aria-controls="host_quota"
+                           aria-selected="false">{% translate '资源配额图标' %}</a>
+                    </li>
 
                 </ul>
             </div>
@@ -224,6 +228,22 @@
                         </table>
 
                     </div>
+
+
+                    <div class="card tab-pane fade show h-100" id="quota" role="tabpanel"
+                         aria-labelledby="quota-tab">
+                           <div class="container-fluid col-lg-12">
+                                <div class="pt-4 pb-4">
+                                    <p class="font-weight-bold">{% translate '资源配额概况' %}</p>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-cpu" height=""></canvas></div>
+                                    <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-mem" height=""></canvas></div>
+                                    <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-ips" height=""></canvas></div>
+                                    <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-vm" height=""></canvas></div>
+                                </div>
+                            </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -327,12 +347,77 @@
 {% endblock %}
 
 {% block script %}
+    <script type="text/javascript" src="{% static 'chartjs/chart-3.4.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'reports/reports_common.js' %}"></script>
+    <script>
+        {% verbatim script %}
+            window.onload = function() {
+
+                initQuotaCharts();
+            };
+        function create_chart(dom_canvas, title, subtitle, data){
+            return new Chart(
+                dom_canvas, {
+                    type: 'pie',
+                    options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: title,
+                                align: 'center',
+                                position: 'bottom'
+                            },
+                            subtitle: {
+                                display: true,
+                                text: subtitle,
+                                position: 'bottom'
+                            }
+                        }
+                    },
+                    data: {
+                        labels: ['已用', '可用'],
+                        datasets: [{
+                            label: '已用',
+                            backgroundColor: [window.chartColors.grey, window.chartColors.green],
+                            data: [data.used, data.total - data.used]
+                        }]
+                    }
+                }
+            );
+        }
+        {% endverbatim script %}
+        function initQuotaCharts(){
+            let cpu_total = {{ quota.vcpu_total }};
+            let cpu_used = {{ quota.vcpu_allocated }};
+            let mem_total = {{ quota.mem_total }};
+            let mem_used = {{ quota.mem_allocated }};
+            let ips_total = {{ quota.ips_total }};
+            let ips_used = {{ quota.ips_used }};
+            let vm_total = {{ quota.vm_limit }};
+            let vm_used = {{ quota.vm_created }};
+
+            let mem_title = '{% translate '内存' %} (' + sizeFormat(mem_total, "GB") + ')'
+            let vcpu_subtitle = "{% translate '已使用' %} " + cpu_used + " of " + cpu_total;
+            let mem_subtitle = "{% translate '已使用' %} " + mem_used + "Gb of " + mem_total+ "Gb";
+            let ips_subtitle = "{% translate '已使用' %} " + ips_used + " of " + ips_total;
+            let vm_subtitle = "{% translate '已使用' %} " + vm_used + " of " + vm_total;
+
+            let canvas_mem = document.getElementById('id-chart-mem').getContext('2d');
+            let canvas_cpu = document.getElementById('id-chart-cpu').getContext('2d');
+            let canvas_vm = document.getElementById('id-chart-vm').getContext('2d');
+            let canvas_ips = document.getElementById('id-chart-ips').getContext('2d');
+
+            create_chart(canvas_cpu, '{% translate 'VCPU数' %}', vcpu_subtitle, {total: cpu_total, used: cpu_used});
+            create_chart(canvas_mem, mem_title, mem_subtitle, {total: mem_total, used: mem_used});
+            create_chart(canvas_ips, '{% translate 'IP地址数' %}', ips_subtitle, {total: ips_total, used: ips_used});
+            create_chart(canvas_vm, '{% translate '虚拟机数' %}', vm_subtitle, {total: vm_total, used: vm_used});
+        }
+    </script>
+
     <script type="text/javascript" src="{% static 'reports/reports_list.js' %}"></script>
     <script>
         $("#host").addClass("active");
-    </script>
-    <script>
-
+        $("#nav_reports").addClass("active");
     </script>
 
 {% endblock %}
