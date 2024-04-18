@@ -28,8 +28,8 @@ class Migration(migrations.Migration):
                 ('center', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ceph_clusters', to='compute.Center', verbose_name='所属数据中心')),
             ],
             options={
-                'verbose_name': 'CEPH集群',
-                'verbose_name_plural': '03_CEPH集群',
+                'verbose_name': 'ceph cluster',
+                'verbose_name_plural': 'ceph cluster',
                 'ordering': ('id',),
             },
         ),
@@ -43,8 +43,8 @@ class Migration(migrations.Migration):
                 ('ceph', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='ceph.CephCluster')),
             ],
             options={
-                'verbose_name': 'CEPH Pool',
-                'verbose_name_plural': '04_CEPH Pool',
+                'verbose_name': 'ceph pool',
+                'verbose_name_plural': 'ceph pool',
                 'ordering': ('id',),
             },
         ),

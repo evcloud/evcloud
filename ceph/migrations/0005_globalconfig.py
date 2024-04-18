@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
                 ('novnchttp', models.CharField(default='http', help_text='配置novnchttp协议 http/https', max_length=10, verbose_name='novnc http协议配置')),
             ],
             options={
-                'verbose_name': '全局配置表',
-                'verbose_name_plural': '全局配置表',
+                'verbose_name': '站点配置',
+                'verbose_name_plural': '站点配置',
                 'db_table': 'site_global_config',
                 'ordering': ['-id'],
             },

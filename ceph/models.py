@@ -33,8 +33,8 @@ class CephCluster(models.Model):
 
     class Meta:
         ordering = ('id',)
-        verbose_name = _('CEPH集群')
-        verbose_name_plural = _('03_CEPH集群')
+        verbose_name = _('ceph cluster')
+        verbose_name_plural = _('ceph cluster')
 
     def __str__(self):
         return self.name
@@ -111,8 +111,8 @@ class CephPool(models.Model):
 
     class Meta:
         ordering = ('id',)
-        verbose_name = 'CEPH Pool'
-        verbose_name_plural = '04_CEPH Pool'
+        verbose_name = 'ceph pool'
+        verbose_name_plural = 'ceph pool'
 
     def __str__(self):
         return f'ceph<{self.ceph.name}>@pool<{self.pool_name}>'
@@ -131,7 +131,7 @@ class GlobalConfig(models.Model):
     class Meta:
         db_table = 'site_global_config'
         ordering = ['-id']
-        verbose_name = _('全局配置表')
+        verbose_name = _('站点配置')
         verbose_name_plural = verbose_name
 
     def __str__(self):
