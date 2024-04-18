@@ -62,6 +62,25 @@ INSTALLED_APPS = [
     'logrecord'
 ]
 
+# 自定义参数，设置admin后台app的排列顺序
+ADMIN_SORTED_APP_LIST = [
+    'ceph',
+    'vms',
+    'vdisk',
+    'device',
+    'image',
+    'network',
+    'compute',
+    'pcservers',
+    'reports',
+    'users',
+    'logrecord',
+    'vpn',
+    'Group',
+    'LogEntry'
+
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
