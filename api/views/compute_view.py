@@ -131,6 +131,7 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
                     "ips_rate": 0.11,  # ip 使用率
                     "cpu_rate": 0.01,  # cpu 使用率
                     "mem_rate": 0.03,  # 内存使用率
+                    "vpn_online": 1,  # VPN 在线数
                     "mem_unit": "GB"
                   }
                 }

@@ -1,5 +1,5 @@
 from utils.errors import VPNError
-from .models import VPNAuth, VPNConfig
+from .models import VPNAuth, VPNConfig, VPNLog
 
 
 class VPNManager:
@@ -73,3 +73,7 @@ class VPNManager:
             None or VPNConfig()
         """
         return VPNConfig.objects.filter(tag=VPNConfig.TAG_CA).first()
+
+    def vpn_login_num(self):
+        """vpn 登录数"""
+        return VPNLog.objects.filter(logout_time=None).count()

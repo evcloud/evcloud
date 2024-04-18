@@ -383,6 +383,7 @@ class CenterManager:
         quota.update(vdisk_all)
         # VPN
         qs = VPNManager().get_vpn_queryset()
+        vpn_online = VPNManager().vpn_login_num()
         if not qs:
             quota["vpn_total"]=0
             quota["vpn_active"]=0
@@ -396,6 +397,7 @@ class CenterManager:
         quota["vpn_total"] = vpn_total
         quota["vpn_active"] = vpn_active
         quota["vpn_invalid"] = vpn_invalid
+        quota["vpn_online"] = vpn_online
 
         return quota
 
