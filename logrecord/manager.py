@@ -3,7 +3,7 @@ from logrecord.models import LogRecord
 
 class LogManager:
 
-    def extract_string(self, text, start_marker, end_marker):
+    def extract_string_remark(self, text, start_marker, end_marker):
         """提取两个标志位中间的字符串"""
         start_index = text.find(start_marker)
         if start_index == -1:
@@ -16,6 +16,23 @@ class LogManager:
 
         return text[start_index:end_index]
 
+    def extract_string_url(self, text, start_marker):
+        """提取一个标志位后面的字符串"""
+
+        if not text:
+            return None
+
+        start_index = text.find(start_marker)
+        if start_index == -1:
+            return None
+        start_index += len(start_marker)
+        #
+        # end_index = text.find(end_marker, start_index)
+        # if end_index == -1:
+        #     return None
+
+        return text[start_index:]
+
     def add_log(self, request, type: int, action_flag: int, operation_content, remark=None):
         """
             添加用户操作
@@ -24,11 +41,14 @@ class LogManager:
 
         method = request.method
         full_path = request.get_full_path()
-        username = request.user.username
-        if remark and '[user]' in remark:
+
+        username = self.get_request_url_user(url=full_path)
+        if not username :
+
             username = self.extract_string(text=remark, start_marker='[user]', end_marker=';')
             if username is None:
-                pass
+                username = request.user.username
+
         try:
             LogRecord.objects.create(
                 method=method,
@@ -42,9 +62,19 @@ class LogManager:
         except Exception as e:
             pass
 
-    def get_log_record(self, type_list: list = []):
+    def get_log_record(self, type_list: list = [], timestamp=None):
         """获取日志"""
+        if timestamp:
+            return LogRecord.objects.filter(create_time__gt=timestamp).all().exclude(resourc_type__in=type_list)
         return LogRecord.objects.all().exclude(resourc_type__in=type_list)
+
+
+    def get_request_url_user(self, url):
+        """获取请求路径的用户"""
+        username = self.extract_string(text=url, start_marker='[user]')
+
+        return username
+
 
 
 user_operation_record = LogManager()

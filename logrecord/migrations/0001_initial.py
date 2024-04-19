@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('full_path', models.CharField(blank=True, default='', max_length=1024, verbose_name='请求路径')),
                 ('message', models.TextField(blank=True, default='', verbose_name='日志信息')),
                 ('create_time', models.DateTimeField(auto_now_add=True, verbose_name='创建时间')),
-                ('username', models.CharField(blank=True, default='', max_length=150, verbose_name='请求用户')),
+                ('username', models.CharField(blank=True, default='', max_length=150, verbose_name='用户')),
             ],
             options={
                 'verbose_name': '用户操作日志',

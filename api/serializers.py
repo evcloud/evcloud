@@ -641,10 +641,12 @@ class MigrateTaskSerializer(serializers.Serializer):
 
 class LogRecordSerializer(serializers.ModelSerializer):
     """用户操作日志"""
-    create_time = serializers.DateTimeField()
+    # create_time = serializers.DateTimeField()
+    create_time = serializers.SerializerMethodField()
     username = serializers.CharField()
     resourc_type = serializers.SerializerMethodField()
     operation_content = serializers.CharField()
+    # operation_content = serializers.SerializerMethodField()
 
     class Meta:
         model = LogRecord
@@ -652,3 +654,9 @@ class LogRecordSerializer(serializers.ModelSerializer):
 
     def get_resourc_type(self, obj):
         return obj.get_resourc_type_display()
+
+    def get_create_time(self, obj):
+        return obj.create_time.timestamp()
+
+    # def get_operation_content(self, obj):
+    #     return f'{obj.operation_content}'

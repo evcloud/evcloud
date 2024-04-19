@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -22,6 +24,13 @@ class LogRecordViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='获取用户操作日志',
         manual_parameters=[
+            openapi.Parameter(
+                name='timestamp',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='时间戳'
+            ),
             openapi.Parameter(
                 name='type',
                 in_=openapi.IN_QUERY,
@@ -49,10 +58,8 @@ class LogRecordViewSet(CustomGenericViewSet):
 
         """
 
-        # # 用户操作日志记录
-        # user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.SELECT,
-        #                               operation_content='查询云主机搁置列表', remark='')
         exclude_type = request.query_params.get('type', '')
+        timestamp = request.query_params.get('timestamp', '')
         type_list = []
         if exclude_type:
             type_dict = {'云主机': 6, 'VPN': 7, '云硬盘': 8, '数据中心': 12, '宿主机': 13, 'Vlan': 14, '镜像': 15,
@@ -62,9 +69,12 @@ class LogRecordViewSet(CustomGenericViewSet):
                 if log_type in type_dict:
                     type_list.append(type_dict[log_type])
 
-        self.queryset = user_operation_record.get_log_record(type_list=type_list)
+        if timestamp:
+            timestamp = datetime.fromtimestamp(float(timestamp))  # 转datetime
 
-        print(self.queryset)
+        self.queryset = user_operation_record.get_log_record(type_list=type_list, timestamp=timestamp)
+
+        # print(self.queryset)
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
