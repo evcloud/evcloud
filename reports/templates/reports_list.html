@@ -44,6 +44,7 @@
             </div>
             <div class="pl-lg-1 flex-grow-1">
                 <div class="tab-content h-100">
+
                     <div class="card tab-pane fade show h-100" id="center" role="tabpanel"
                          aria-labelledby="center-tab">
                         <table class="table">
@@ -167,12 +168,18 @@
                                 <button type="submit"
                                         class="btn btn-primary form-control">{% translate '筛选' %}</button>
                                 {% if user.is_superuser %}
-                                    <button type="button" class="btn btn-primary" data-toggle="modal"
-                                            data-target="#exampleModal2"
-                                            style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>
+{#                                    <button type="button" class="btn btn-primary" data-toggle="modal"#}
+{#                                            data-target="#exampleModal2"#}
+{#                                            style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>#}
 
-                                    <button type="button" class="btn btn-primary" data-toggle="modal"
-                                            data-target="#exampleModal">
+{#                                    <button type="button" class="btn btn-primary" data-toggle="modal"#}
+{#                                            data-target="#exampleModal">#}
+{#                                        {% translate '一键检测' %}#}
+{#                                    </button>#}
+
+                                    <button type="button" class="btn btn-primary" id="batch-save"
+                                            style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>
+                                    <button type="button" class="btn btn-primary" id="one-click-detection">
                                         {% translate '一键检测' %}
                                     </button>
                                 {% endif %}
@@ -189,10 +196,9 @@
                                 <th>{% translate '宿主机IP地址' %}</th>
                                 <th>{% translate '虚拟机数' %}</th>
                                 <th>{% translate '物理cpu核' %}</th>
-                                <th>{% translate '虚拟CPU核：已用/总数/利用率 ' %}</th>
-
-                                <th>{% translate '虚拟内存GB：已分配/总数/分配率' %}</th>
-                                <th>{% translate '实际大页内存GB：已分配/总数/利用率' %}</th>
+                                <th>{% translate '虚拟CPU核:' %} <br>  {% translate '已用/总数/利用率' %}</th>
+                                <th>{% translate '虚拟内存GB:' %} <br> {% translate '已分配/总数/分配率' %} </th>
+                                <th>{% translate '实际大页内存GB:' %} <br>  {% translate '已分配/总数/利用率' %}</th>
 
                                 {% if user.is_superuser %}
                                     <th>{% translate '操作' %}</th>

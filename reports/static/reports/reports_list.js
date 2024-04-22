@@ -90,66 +90,67 @@ function getCookie(name) {
     return cookieValue;
 }
 
-let batchDetection = document.getElementById('batchdetection-ip')
-batchDetection.addEventListener('click', function () {
-    let ip_start = document.getElementById('ip-start').value
-    let ip_end = document.getElementById('ip-end').value
-    let ip_subent = document.getElementById('ip-subnet').value
-    let batchdetect_group = $('#id-group-batchdetect').val()
 
-    if (ip_start.trim() === '' || ip_end.trim() === '' || ip_subent.trim() === '' || batchdetect_group.trim() === '') {
-        alert('请将内容填写完整')
-        return
+function renderLargePageMemory(element, reslist) {
+    // element => getElementById("tbody-host")
+    // reslist => {ip: []}
+
+    // console.log(JSON.parse(reslist))  // "{'ip': [' 23', '123', ' 18.70'], 'ip2': [' 23', '123', ' 18.70']}"
+    let validJsonString = reslist.replace(/'/g, '"');
+
+    let json_obj = JSON.parse(validJsonString)
+
+    // 遍历表格行
+    for (let i = 0; i < element.rows.length; i++) {
+        // 获取特定列的内容，这里假设第二列是索引为 1 的列
+        let cell = element.rows[i].cells[1].innerHTML;
+        if (Object.values(json_obj)[i][0] == '未检测'){
+            element.rows[i].cells[6].innerHTML = Object.values(json_obj)[i][0] + " / " + Object.values(json_obj)[i][1] + " / " + Object.values(json_obj)[i][2]
+
+        }else {
+            element.rows[i].cells[6].innerHTML = Object.values(json_obj)[i][0] + " / " + Object.values(json_obj)[i][1] + " / " + Object.values(json_obj)[i][2] + "%"
+            element.rows[i].cells[6].style.color = 'red'
+
+        }
+
     }
+}
+
+let batchDetection = document.getElementById('one-click-detection')
+// let batchDetection = document.getElementById('batchdetection-ip')
+
+// 批量检测
+batchDetection.addEventListener('click', function () {
+    // 获取页面主机IP
+    //  ip --》 {'ip': [0,0,0]}
+
+    ipList = []
+    // 找到包含表格的 HTML 元素
+    let table = document.getElementById("tbody-host");
+
+    // 遍历表格行
+    for (let i = 0; i < table.rows.length; i++) {
+        // 获取特定列的内容，这里假设第二列是索引为 1 的列
+        let cell = table.rows[i].cells[1];
+
+        // 输出内容到控制台或者执行其他操作
+        ipList.push(cell.textContent)
+    }
+
     let csrftoken = getCookie('csrftoken');
     $.ajax({
         url: '/reports/host/detect/',
-        type: 'GET',
+        type: 'POST',
         headers: {
-            'X-CSRFToken': csrftoken
+            'X-CSRFToken': csrftoken,
         },
-        data: {'ip_start': ip_start, 'ip_end': ip_end, 'ip_subent': ip_subent, 'batchdetect_group': batchdetect_group},
+        contentType: 'application/json',
+        data: JSON.stringify({'ip_list':ipList}),
+        // data: {'ip_list':ipList},
 
         success: function (data) {
-            // Handle success
             // console.log(data.msg)
-            let obj = JSON.parse(data.msg)
-            let tbody_host = document.getElementById('tbody-host')
-            for (let key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    // console.log(key + ": " + obj[key]);
-                    let data_list = obj[key].split(',')
-
-                    let temp_tr = `<tr>
-                                    <td>无</td>    
-                                    <td>${key}</td>
-                                    <td>0</td>
-                                    <td>${data_list[0]}</td>
-                                    <td>${data_list[2]} / ${data_list[1]} / ${data_list[3]}%</td>
-                                    <td>${data_list[4]} / ${data_list[5]} / ${data_list[6]}</td>
-                                    <td style="coler:red">${data_list[4]} / ${data_list[5]} / ${data_list[6]}%</td>
-                  
-                                </tr>`
-                    //   <td><a type="button" class="btn btn-primary"
-                    //        onclick='detectionHost( this ,"${key}", "{{ csrf_token }}")'
-                    //        style="color: #fff;">检测</a>
-                    //     | <a
-                    //             type="button"
-                    //             className="btn btn-primary" style="color: #fff;"
-                    //             onClick="saveHostInfo(this, '${key}', '{{ csrf_token }}')">保存</a>
-                    // </td>
-                    tbody_host.innerHTML = ''
-                    tbody_host.insertAdjacentHTML('beforeend', temp_tr);
-
-                }
-            }
-            $('#exampleModal').modal('hide')
-
-            // console.log(data.error)
-            if (data.error !== "{}") {
-                alert(data.error)
-            }
-
+            renderLargePageMemory(table, data.msg)
 
         },
         error: function (data) {
@@ -162,54 +163,47 @@ batchDetection.addEventListener('click', function () {
 })
 
 
-let savedetection = document.getElementById('savedetection-ip')
+let savedetection = document.getElementById('batch-save')
 savedetection.addEventListener('click', function () {
-    let savedetect_group = $('#id-group-savedetect').val()
-    let savedetect_room = $('#id-room-savedetect').val()
 
+    let table = document.getElementById('tbody-host')
+    let json_host = {}  // {ip:[x,x,x]}
 
-    let tbody_host = document.getElementById('tbody-host')
-    let json_host = {}
+    // 遍历表格行
+    for (let i = 0; i < table.rows.length; i++) {
 
-    let tr_obj = tbody_host.children
-
-    for (let i = 0; i < tr_obj.length; i++) {
         let info = []
-        let td_obj = tr_obj[i].children
-        info.push(td_obj[3].innerHTML)  // 物理cpu
 
-        let largePageMemory = td_obj[6].innerHTML.split(' / ')
-        let invalidStr = largePageMemory.indexOf("未检测")
-        if (invalidStr > -1) {
-            // 表示数组含有此字符串
-            alert("请重新检测，未找到相应内容数据。")
-            return
-        }
+        // 获取特定列的内容，这里假设第二列是索引为 1 的列
+        let cell = table.rows[i].cells[1];
 
-        info.push(largePageMemory[0])
-        info.push(largePageMemory[1])
+        // 输出内容到控制台或者执行其他操作
+        console.log(cell.textContent);
+        // ipList.push(cell.textContent)    // ip
 
-        json_host[td_obj[1].innerHTML] = info
+        let cell_content = table.rows[i].cells[6].innerHTML.split(' / ')  // 大页内存
+        info.push(cell_content[0])
+        info.push(cell_content[1])
+
+
+        json_host[cell.innerHTML] = info
 
     }
 
-    console.log(json_host)
 
     let csrftoken = getCookie('csrftoken');
     $.ajax({
-        url: '/reports/host/detect/', type: 'POST', headers: {
+        url: '/reports/host/batchsave/', type: 'POST', headers: {
             'X-CSRFToken': csrftoken
-        }, data: {'room': savedetect_room, 'group': savedetect_group, host_info: JSON.stringify(json_host)},
+        }, data: {host_info: JSON.stringify(json_host)},
 
         success: function (data) {
             // Handle success
-            $('#exampleModal2').modal('hide')
             alert(data.msg)
             window.location.reload()
 
         }, error: function (data) {
             // Handle error
-            $('#exampleModal2').modal('hide')
             alert('保存数据失败：' + data.responseJSON.msg_error)
         }
     })

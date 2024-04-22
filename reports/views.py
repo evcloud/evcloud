@@ -1,7 +1,6 @@
-import ipaddress
+
 import json
 
-import math
 from django.http import JsonResponse
 from django.shortcuts import render, HttpResponse
 from django.views import View
@@ -9,10 +8,10 @@ from django.db.models import Q
 
 from compute.models import Host
 from compute.managers import CenterManager, GroupManager, HostManager
-from network.managers import check_ip_in_subnets
-from pcservers.models import Room, PcServer
+
+from pcservers.models import Room
 from utils.ev_libvirt.virt import VmDomain
-from utils.host_cpu_mem import HosthardwareInfo
+
 
 
 class ReportsListView(View):
@@ -88,8 +87,18 @@ def get_host_cpu_men_info(host_ipv4):
     except Exception as e:
         raise e
 
+    host_virt_men_total = base_host.mem_total
+    host_virt_men_allocated = base_host.mem_allocated
+    host_virt_per = 0
+    try:
+        if host_virt_men_total != 0 and host_virt_men_total != 0:
+            host_virt_per = 100 * float(host_virt_men_total) / float(host_virt_men_total)
+            host_virt_per = f'{host_virt_per:.2f}'
+    except Exception as e:
+        raise e
+
     mem_p = f'{per:.2f}'  # %
-    data = f'{cpu_h}, {cpu_x}, {cpu_y}, {cpu_p}, {mem_all}, {mem_x}, {mem_p}'  # cpu , 虚拟cpu, 内存,
+    data = f'{cpu_h}, {cpu_x}, {cpu_y}, {cpu_p}, {mem_x},{mem_all}, {mem_p}, {host_virt_men_allocated}, {host_virt_men_total}, {host_virt_per}'  # 物理cpu , 虚拟cpu, 已用cpu, cpu 使用率， , 已用大页内存、大页内存、 大页内存使用率、宿主机使用内存， 宿主机总内存
     return data
 
 
@@ -126,7 +135,6 @@ class ReportHostCpuMem(View):
 
         if mem_total == 0 and mem_use_num == 0:
             return JsonResponse({'msg': f'数值为 0 不保存数据。'}, json_dumps_params={'ensure_ascii': False})
-
 
         try:
             base_host = HostManager().get_host_by_ipv4(host_ipv4=host_ipv4)
@@ -206,94 +214,62 @@ class ReportsHostBatchDetection(View):
         host_info = request.POST.get('host_info')
         host_info = json.loads(host_info)  # [物理cpu，  大页内存已使用, 大页内存总数]
 
-        if not room_id or not group_id or not host_info:
-            return JsonResponse({'msg_error': f'未获取到完整数据，请检查。'}, json_dumps_params={'ensure_ascii': False},
-                                status=400)
+class ReportsHostBatchDetection(View):
+    """ 一键检测 """
 
-        for key, val in host_info.items():
+    def post(self, request, *args, **kwargs):
+
+        # ip_list = QueryDict(request.body)
+        body_string = request.body.decode('utf-8')
+        ip_list = json.loads(body_string)
+        if not ip_list:
+            return
+
+        ip_list_data = {} # {ip:[]}
+        for ip in ip_list['ip_list']:
 
             try:
-                cpu, mem, mem_allocated = int(val[0]), int(val[2]), int(val[1])
-
-                pc = self.pcserver_check(host_ip=key, cpu=cpu, mem=mem, room_id=int(room_id))
-                self.host_check(host_ip=key, cpu=cpu, mem=mem, mem_allocated=mem_allocated, pcserver_id=pc.id, room_id=int(room_id))
+                data = get_host_cpu_men_info(host_ipv4=ip)
             except Exception as e:
-                return JsonResponse({'msg_error': f'保存失败：{str(e)}'}, json_dumps_params={'ensure_ascii': False},
-                                    status=400)
+                ip_list_data[ip] = ['未检测', '未检测', '未检测' ]
+                continue
+                # return JsonResponse({'msg_error': f'宿主机查询信息有误， error: {str(e)}。'},
+                #                     json_dumps_params={'ensure_ascii': False}, status=400)
+            data = data.split(',')
+            ip_list_data[ip] = [data[4], data[5], data[6]]
 
-        return JsonResponse({'msg': f'保存成功'},
-                            json_dumps_params={'ensure_ascii': False})
+        return JsonResponse({'msg': f'{ip_list_data}'}, json_dumps_params={'ensure_ascii': False})
 
-    def get_host_info(self, ipv4, ssh_key):
-        host = HosthardwareInfo(ipv4=ipv4, ssh_key=ssh_key)
-        host_cpu = host.get_cpu()
-        host_mem = host.get_hugepages()
-        mem_all = int(host_mem['HugePages_Total'])
-        mem_x = mem_all - int(host_mem['HugePages_Free'])
 
-        cpu_h = int(host_cpu)  # 真是cpu
-        cpu_x = int(host_cpu) * 4  # 虚拟cpu
+class ReportsHostBatchSave(View):
+    """批量保存"""
+    def post(self, request, *args, **kwargs):
+        host_info = json.loads(request.POST.get('host_info'))
 
-        cpu_y = cpu_p = mem_p = 0
+        if not host_info:
+            return
 
-        data = f'{cpu_h}, {cpu_x}, {cpu_y}, {cpu_p}, {mem_all}, {mem_x}, {mem_p}'
+        for host in host_info:
+            if host_info[host][0] == "未检测" or int(host_info[host][0]) == 0:
+                continue
 
-        return data
+            host_obj = Host.objects.filter(pcserver__host_ipv4=host).first()
 
-    def pcserver_check(self, host_ip, cpu, mem, room_id):
-        obj = PcServer.objects.filter(host_ipv4=host_ip).first()
-        if obj:
-            if obj.real_cpu != cpu and cpu != 0:
-                obj.real_cpu = cpu
-                obj.save(update_fields=['real_cpu'])
-            return obj
+            if not host_obj:
+                continue
 
-        obj = PcServer(
-            tag_no='x86',
-            location='无',
-            real_cpu=cpu,
-            real_mem=mem,
-            host_ipv4=host_ip,
-            ipmi_ip=host_ip,
-            user='无',
-            department_id=room_id
-        )
-        obj.save()
+            if host_obj.mem_allocated != host_info[host][0]:
+                host_obj.mem_allocated = int(host_info[host][0])
 
-        return obj
+            if host_obj.mem_total != host_info[host][1]:
+                host_obj.mem_total = int(host_info[host][1])
+            try:
+                host_obj.save()
+            except Exception as e:
+                return JsonResponse({'msg': f'保存失败：{str(e)}'}, json_dumps_params={'ensure_ascii': False})
 
-    def host_check(self, host_ip, cpu, mem, mem_allocated, pcserver_id, room_id):
+        return JsonResponse({'msg': f'保存成功'}, json_dumps_params={'ensure_ascii': False})
 
-        host_obj = Host.objects.filter(pcserver__host_ipv4=host_ip).first()
-        if host_obj:
-            flag = []
-            if host_obj.vcpu_total != cpu * 4 and cpu != 0:
-                host_obj.vcpu_total = cpu * 4
-                flag.append('vcpu_total')
-
-            if host_obj.mem_total != mem and mem != 0:
-                host_obj.mem_total = mem
-                flag.append('mem_total')
-
-            if host_obj.mem_allocated != mem_allocated and mem_allocated != 0:
-                host_obj.mem_allocated = mem_allocated
-                flag.append('mem_allocated')
-
-            if flag:
-                host_obj.save(update_fields=flag)
-            return host_obj
-
-        host_obj = Host(
-            pcserver_id=pcserver_id,
-            group_id=room_id,
-            vcpu_total=cpu * 4,
-            mem_total=mem,
-            mem_allocated=mem_allocated,
-            vm_created=30,
-        )
-        host_obj.save()
-
-        return host_obj
 
 
 class ReportsCenterView(View):
