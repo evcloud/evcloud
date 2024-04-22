@@ -145,5 +145,11 @@
     <script type="text/javascript" src="{% static 'evcloud/common.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_operations.js' %}"></script>
     <script type="text/javascript" src="{% static 'vms/vms_shelve_list.js' %}"></script>
+    <script>
+        window.onload = function () {
+            $("#nav_vm_list").addClass("active");// 激活列表导航栏
+        };
+
+    </script>
 {% endblock %}
 

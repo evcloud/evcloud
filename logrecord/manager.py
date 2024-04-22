@@ -42,10 +42,10 @@ class LogManager:
         method = request.method
         full_path = request.get_full_path()
 
-        username = self.get_request_url_user(url=full_path)
+        username = self.get_request_url_user(url=full_path)  # 尝试从 url 中 获取数据
         if not username :
 
-            username = self.extract_string(text=remark, start_marker='[user]', end_marker=';')
+            username = self.extract_string_remark(text=remark, start_marker='[user]', end_marker=';')  #尝试从 remart 中 获取数据
             if username is None:
                 username = request.user.username
 
@@ -71,7 +71,7 @@ class LogManager:
 
     def get_request_url_user(self, url):
         """获取请求路径的用户"""
-        username = self.extract_string(text=url, start_marker='[user]')
+        username = self.extract_string_url(text=url, start_marker='[user]')
 
         return username
 
