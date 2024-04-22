@@ -38,8 +38,8 @@
                         </form>
                     </div>
                     <div class="col-md-6">
-{#                        <span><a class="btn btn-sm btn-outline-success float-right m-2" href="{% url 'vpn:vpn-file-config' %}">{% translate '配置文件' %}</a></span>#}
-{#                        <span><a class="btn btn-sm btn-outline-success float-right m-2" href="{% url 'vpn:vpn-file-ca' %}">{% translate 'CA证书' %}</a></span>#}
+                        <span class="card-title"><strong><a class="btn btn-outline-danger" href=""
+                                                            id="delete-unatvice">{% translate '删除非激活用户' %}</a></strong></span>
                     </div>
                 </div>
             </div>
@@ -115,8 +115,33 @@
 
 {% block script %}
     <script>
-         window.onload = function() {
+        window.onload = function () {
             $("#nav_vpn_list").addClass("active");// 激活列表导航栏
-         };
+        };
+
+    </script>
+
+    <script>
+        document.getElementById('delete-unatvice').addEventListener('click', function (e) {
+            e.preventDefault()
+            $.ajax({
+                url: '{% url 'vpn:vpn-delete-unactive' %}',
+                type: 'post',
+                headers: {
+                    'X-CSRFToken': '{{csrf_token}}'
+                },
+                contentType: 'application/json',
+                success: function (data, status, xhr) {
+                    alert(data.msg)
+                    window.location.reload()
+
+                },
+                error: function (data) {
+                    alert(data.responseJSON.msg)
+
+                },
+            })
+
+        })
     </script>
 {% endblock %}

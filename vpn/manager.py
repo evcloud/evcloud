@@ -12,6 +12,10 @@ class VPNManager:
         qs = self.get_vpn_queryset()
         return qs.filter(active=True).all()
 
+    def get_unactive_vpn_queryset(self):
+        qs = self.get_vpn_queryset()
+        return qs.filter(active=False).all()
+
     def get_vpn(self, username: str):
         """
         :return:

@@ -41,6 +41,10 @@
                             <button class="btn btn-sm btn-outline-primary" type="submit">{% translate '搜索' %}</button>
                         </form>
                     </div>
+                    <div class="col-md-6">
+                        <span class="card-title"><strong><a class="btn btn-outline-danger" href=""
+                                                            id="delete-log">{% translate '清理半年前日志' %}</a></strong></span>
+                    </div>
                 </div>
             </div>
             <table class="table table-hover text-center table-vm-list"
@@ -114,9 +118,33 @@
 {% endblock %}
 
 {% block script %}
-{#    <script>#}
-{#        window.onload = function () {#}
-{#            $("#nav_vpn_list").addClass("active");// 激活列表导航栏#}
-{#        };#}
-{#    </script>#}
+    <script>
+        window.onload = function () {
+            $("#nav_vpn_list").addClass("active");// 激活列表导航栏
+        };
+    </script>
+
+    <script>
+            document.getElementById('delete-log').addEventListener('click', function (e) {
+                e.preventDefault()
+                $.ajax({
+                    url: '{% url 'vpn:vpn-login-log' %}',
+                    type: 'post',
+                    headers: {
+                        'X-CSRFToken': '{{csrf_token}}'
+                    },
+                    contentType: 'application/json',
+                    success: function (data, status, xhr) {
+                        alert(data.msg)
+                        window.location.reload()
+
+                    },
+                    error: function (data) {
+                        alert(data.responseJSON.msg)
+
+                    },
+                })
+
+            })
+    </script>
 {% endblock %}

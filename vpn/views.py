@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
 from io import BytesIO
 
 from django.shortcuts import render, redirect, reverse
 from django.views import View
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.http import FileResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -176,6 +177,22 @@ class VPNDeleteView(View):
 
         return redirect(to=reverse('vpn:vpn-list'))
 
+class VPNDeleteUnactiveView(View):
+    """删除非激活用户"""
+
+    def post(self, request, *args, **kwargs):
+        vpn = VPNManager().get_unactive_vpn_queryset()
+        if not vpn:
+            return JsonResponse({'msg': f'删除失败: 未查到相关信息。'}, json_dumps_params={'ensure_ascii': False}, status=400)
+
+        if vpn:
+            try:
+                vpn.delete()
+            except Exception as e:
+                return JsonResponse({'msg': f'删除失败: {str(e)}'}, json_dumps_params={'ensure_ascii': False}, status=400)
+
+        return JsonResponse({'msg': '删除成功'}, json_dumps_params={'ensure_ascii': False})
+
 
 class VPNFileViewSet(viewsets.GenericViewSet):
     """
@@ -248,3 +265,14 @@ class VPNLoginLog(View):
         context = {'page_nav': page_nav, 'vpn_log': log_page, 'count': paginator.count, 'vpn_user_count': qs.count()}
 
         return render(request, 'vpn_log_list.html', context=context)
+
+    def post(self, request, *args, **kwargs):
+        """清理半年前日志"""
+        six_months_ago = datetime.now() - timedelta(days=180)
+        queryset = VPNLog.objects.filter(logout_time__lte=six_months_ago).all()
+        try:
+            queryset.delete()
+        except Exception as e:
+            return JsonResponse({'msg': f'删除失败: {str(e)}'}, json_dumps_params={'ensure_ascii': False}, status=400)
+
+        return JsonResponse({'msg': '删除成功'}, json_dumps_params={'ensure_ascii': False})
