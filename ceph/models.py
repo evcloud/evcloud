@@ -138,15 +138,36 @@ class GlobalConfig(models.Model):
         return f'GlobalConfig<{self.name}>'
 
     @classmethod
+    def create_base_data(cls):
+        """写入基数据"""
+        # inst_idct = {
+        #     'sitename': 'EVCloud',
+        #     'poweredby': 'https://gitee.com/cstcloud-cnic/evcloud',
+        #     'novnchttp': 'https',
+        #
+        # }
+        inst = cls.objects.filter(name='sitename').first()
+        if not inst:
+            cls.objects.create(name='sitename', content='EVCloud')
+
+        inst = cls.objects.filter(name='poweredby').first()
+        if not inst:
+            cls.objects.create(name='poweredby', content='https://gitee.com/cstcloud-cnic/evcloud')
+
+        inst = cls.objects.filter(name='novnchttp').first()
+        if not inst:
+            cls.objects.create(name='novnchttp', content='https')
+
+        return cls.objects.filter(name__in=['sitename', 'poweredby', 'novnchttp'])
+
+
+    @classmethod
     def get_instance(cls):
-        inst_idct = {
-            'sitename': 'EVCloud',
-            'poweredby': 'https://gitee.com/cstcloud-cnic/evcloud',
-            'novnchttp': 'https',
-
-        }
-
+        inst_idct = {}
         inst = cls.objects.filter(name__in=['sitename', 'poweredby', 'novnchttp'])
+        if not inst:
+            inst = cls.create_base_data()
+
         for obj in inst:
             if obj.name == 'sitename':
                 inst_idct['sitename'] = obj.content
