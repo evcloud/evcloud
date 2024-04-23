@@ -63,6 +63,7 @@
 {#                <li class="nav-item" id="nav_quota"><a class="nav-link" href="{% url "reports:reports-quota" %}">{% translate '资源配额' %}</a></li>#}
                 {% if user.is_superuser %}
                 <li class="nav-item" id="nav_reports"><a class="nav-link" href="{% url 'reports:reports-list' %}">{% translate '资源统计管理' %}</a></li>
+                <li class="nav-item" id="log-record"><a class="nav-link" href="{% url 'log-record:log-record-list' %}">{% translate '用户操作日志' %}</a></li>
                 {% endif %}
 
             {% endif %}

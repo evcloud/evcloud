@@ -33,6 +33,7 @@ class LogRecord(models.Model):
         (SELECT, _("查询")),
         (REBUILD, _("重建")),
         (MIGRATE, _("迁移")),
+        (SHELVE, _("搁置")),
         (UNSHELVE, _("恢复搁置")),
         (MOUNT, _("挂载")),
         (UNMOUNT, _("卸载")),
@@ -47,7 +48,7 @@ class LogRecord(models.Model):
         (VLAN, _("Vlan")),
         (IMAGE, _("镜像")),
         (USER, _("用户")),
-        (ASSETS, _("资源")),
+        (ASSETS, _("资源统计")),
     ]
 
     id = models.AutoField(primary_key=True, verbose_name=_('ID'))

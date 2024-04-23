@@ -89,6 +89,7 @@ urlpatterns = [
     path('about/', about, name='about'),
     path('appnav/', login_required(app_nav), name='appnav'),
     path('pcservers/', include('pcservers.urls', namespace='compute')),
+    path('log/', include('logrecord.urls', namespace='log-record')),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     path("i18n/", include("django.conf.urls.i18n")),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),

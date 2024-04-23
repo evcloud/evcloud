@@ -36,18 +36,18 @@ class LogManager:
     def add_log(self, request, type: int, action_flag: int, operation_content, remark=None):
         """
             添加用户操作
+            :param :
 
         """
 
         method = request.method
         full_path = request.get_full_path()
 
-        username = self.get_request_url_user(url=full_path)  # 尝试从 url 中 获取数据
-        if not username :
-
-            username = self.extract_string_remark(text=remark, start_marker='[user]', end_marker=';')  #尝试从 remart 中 获取数据
-            if username is None:
-                username = request.user.username
+        username , flag = self.get_username(request=request, full_path=full_path, remark=remark)
+        if flag:
+            operation_content = f'用户({username}), {operation_content}'  # 本地登录用户
+        else:
+            operation_content = f'用户(cstcloud:{username}), {operation_content}'
 
         try:
             LogRecord.objects.create(
@@ -61,6 +61,23 @@ class LogManager:
             )
         except Exception as e:
             pass
+
+    def get_username(self, request, full_path, remark):
+        flag = False
+        username = self.get_request_url_user(url=full_path)  # 尝试从 url 中 获取数据
+        if username :
+            return username, flag
+
+        username = self.extract_string_remark(text=remark, start_marker='[user]', end_marker=';')  #尝试从 remart 中 获取数据
+        if username:
+            return username, flag
+
+        username = request.user.username
+        if username != 'cstcloud':
+                flag = True
+
+        return username, flag
+
 
     def get_log_record(self, type_list: list = [], timestamp=None):
         """获取日志"""

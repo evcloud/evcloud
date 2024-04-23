@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='logrecord',
             name='action_flag',
-            field=models.PositiveSmallIntegerField(choices=[(1, '添加'), (2, '修改'), (3, '删除'), (4, '查询'), (5, '重建'), (9, '迁移'), (11, '恢复搁置'), (17, '挂载'), (18, '卸载')], default=None, verbose_name='操作'),
+            field=models.PositiveSmallIntegerField(choices=[(1, '添加'), (2, '修改'), (3, '删除'), (4, '查询'), (5, '重建'), (9, '迁移'), (10, '搁置'), (11, '恢复搁置'), (17, '挂载'), (18, '卸载')], default=None, verbose_name='操作'),
         ),
         migrations.AlterField(
             model_name='logrecord',
             name='resourc_type',
-            field=models.PositiveSmallIntegerField(choices=[(6, '云主机'), (7, 'VPN'), (8, '云硬盘'), (12, '数据中心'), (13, '宿主机'), (14, 'Vlan'), (15, '镜像'), (16, '用户'), (19, '资源')], default=None, verbose_name='资源类型'),
+            field=models.PositiveSmallIntegerField(choices=[(6, '云主机'), (7, 'VPN'), (8, '云硬盘'), (12, '数据中心'), (13, '宿主机'), (14, 'Vlan'), (15, '镜像'), (16, '用户'), (19, '资源统计')], default=None, verbose_name='资源类型'),
         ),
     ]

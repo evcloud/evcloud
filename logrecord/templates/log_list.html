@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block head %}
+    <style>
+        .mouse-hover:hover .mouse-hover-show {
+            display: inline-block;
+        }
+
+        .mouse-hover:hover .mouse-hover-no-show {
+            display: none;
+        }
+
+        .mouse-hover-no-show {
+            display: inline-block;
+        }
+
+        .mouse-hover-show {
+            display: none;
+        }
+    </style>
+{% endblock %}
+{% block title %}VPN {% translate '用户操作日志列表' %}{% endblock %}
+
+{% block boby %}
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><strong><a href="{% url 'log-record:log-record-list' %}"
+                                                    class="btn btn-outline-primary">{% translate '用户操作日志' %} ({{ count }})</a></strong></span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <form class="input-group">
+                            <input class="form-control" name="search" type="text" value="{{ search }}"
+                                   placeholder="用户名">
+                            <button class="btn btn-sm btn-outline-primary" type="submit">{% translate '搜索' %}</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="card-title"><strong><a class="btn btn-outline-danger" href=""
+                                                            id="delete-log">{% translate '清理半年前日志' %}</a></strong></span>
+                    </div>
+                </div>
+            </div>
+            <table class="table table-hover text-center table-vm-list"
+                   style="word-wrap:break-word;word-break:break-all;">
+                <thead class="thead-light">
+                <tr>
+                    <th>{% translate '序号' %}</th>
+                    <th>{% translate '用户名' %}</th>
+                    <th>{% translate '操作内容' %}</th>
+                    <th>{% translate '操作时间' %}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for obj in page %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ obj.username }}</td>
+                        <td>{{ obj.operation_content }}</td>
+                        <td>{{ obj.create_time }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+            {% with page_list=page_nav.page_list previous=page_nav.previous next=page_nav.next %}
+                {% if page_list %}
+                    <div class="card-footer">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination" style="margin:0;">
+                                {% if previous %}
+                                    <li class="page-item"><a class="page-link" href="?{{ previous }}"
+                                                             aria-label="Previous"><span
+                                            aria-hidden="true">&laquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link"
+                                                                        aria-hidden="true">&laquo;</span></li>
+                                {% endif %}
+                                {% for disp, query, active in page_list %}
+                                    {% if active %}
+                                        <li class="page-item active"><a class="page-link"
+                                                                        href="?{{ query }}">{{ disp }}</a></li>
+                                    {% else %}
+                                        <li class="page-item"><a class="page-link" href="?{{ query }}">{{ disp }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if next %}
+                                    <li class="page-item"><a class="page-link" href="?{{ next }}"
+                                                             aria-label="Next"><span
+                                            aria-hidden="true">&raquo;</span></a></li>
+                                {% else %}
+                                    <li class="page-item disable"><span class="page-link"
+                                                                        aria-hidden="true">&raquo;</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script>
+        window.onload = function () {
+            $("#log-record").addClass("active");// 激活列表导航栏
+        };
+    </script>
+
+    <script>
+        document.getElementById('delete-log').addEventListener('click', function (e) {
+            e.preventDefault()
+            $.ajax({
+                url: '{% url 'log-record:log-record-list' %}',
+                type: 'post',
+                headers: {
+                    'X-CSRFToken': '{{csrf_token}}'
+                },
+                contentType: 'application/json',
+                success: function (data, status, xhr) {
+                    alert(data.msg)
+                    window.location.reload()
+
+                },
+                error: function (data) {
+                    alert(data.responseJSON.msg)
+
+                },
+            })
+
+        })
+    </script>
+{% endblock %}
