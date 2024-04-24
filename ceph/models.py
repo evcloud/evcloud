@@ -173,8 +173,8 @@ class GlobalConfig(models.Model):
                 inst_idct['sitename'] = obj.content
             elif obj.name == 'poweredby':
                 inst_idct['poweredby'] = obj.content
-            elif obj.name == 'poweredby':
-                inst_idct['poweredby'] = obj.content
+            elif obj.name == 'novnchttp':
+                inst_idct['novnchttp'] = obj.content
 
         return inst_idct
 
