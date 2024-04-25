@@ -160,59 +160,14 @@ class ReportHostCpuMem(View):
                                 json_dumps_params={'ensure_ascii': False}, status=400)
         return JsonResponse({'msg': f'数据保存成功。'}, json_dumps_params={'ensure_ascii': False})
 
-
-class ReportsHostBatchDetection(View):
-
-    """ 一键检测和批量保存"""
-
+class BatchDetection(View):
+    """基于已有的ip 检测"""
     def get(self, request, *args, **kwargs):
-        batchdetect_group = request.GET.get('batchdetect_group')
-        ip_start = request.GET.get('ip_start')
-        ip_end = request.GET.get('ip_end')
-        subnet = request.GET.get('ip_subent')  # 子网ip/掩码
-
-        try:
-            start = ipaddress.IPv4Address(ip_start)
-            end = ipaddress.IPv4Address(ip_end)
-        except ipaddress.AddressValueError as e:
-            return JsonResponse({'msg_error': f'ipv4地址校验不通过。'},
-                                json_dumps_params={'ensure_ascii': False}, status=400)
-
-        try:
-            check_ip_in_subnets(subnet_netm=subnet, ip_from=start, ip_to=end)
-        except Exception as e:
-            return JsonResponse({'msg_error': f'ipv4地址校验不通过。error: {str(e)}'},
-                                json_dumps_params={'ensure_ascii': False}, status=400)
-
-        ip_list = [str(ipaddress.IPv4Address(ip)) for ip in range(int(start), int(end) + 1)]
-
-        err_dict = {}
-        info_dict = {}
-
-        group = GroupManager().get_group_by_id(group_id=int(batchdetect_group))
-
-        if not group:
-            return JsonResponse({'msg_error': f'宿主机组不存在。'},
-                                json_dumps_params={'ensure_ascii': False}, status=400)
-
-        sshk_key = group.center.ssh_key
-
-        for ip in ip_list:
-            try:
-                data = self.get_host_info(ipv4=ip, ssh_key=sshk_key)
-            except Exception as e:
-                err_dict[ip] = str(e)
-                continue
-            info_dict[ip] = data
-
-        return JsonResponse({'msg': f'{json.dumps(info_dict)}', 'error': f'{err_dict}'},
-                            json_dumps_params={'ensure_ascii': False})
-
+        ip = request.GET.get('ip')
+        pass
     def post(self, request, *args, **kwargs):
-        room_id = request.POST.get('room')
-        group_id = request.POST.get('group')
-        host_info = request.POST.get('host_info')
-        host_info = json.loads(host_info)  # [物理cpu，  大页内存已使用, 大页内存总数]
+        pass
+
 
 class ReportsHostBatchDetection(View):
     """ 一键检测 """

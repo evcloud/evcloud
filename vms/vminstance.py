@@ -696,7 +696,7 @@ class VmInstance:
         except Exception as e:
             raise errors.VmError(msg=str(e))
 
-        return True
+        return True, snap.vm.mac_ip
 
     @staticmethod
     def modify_sys_snap_remarks(snap_id: int, remarks: str, user):
@@ -718,7 +718,7 @@ class VmInstance:
         except Exception as e:
             raise errors.VmError(msg=str(e))
 
-        return snap
+        return snap, snap.vm.mac_ip
 
     def umount_pci_device(self, device: PCIDevice):
         """
