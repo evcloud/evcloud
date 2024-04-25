@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     'reports',
     'pcservers',
     'vpn',
-    'logrecord'
+    'logrecord',
 ]
 
 # 自定义参数，设置admin后台app的排列顺序
@@ -86,7 +86,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

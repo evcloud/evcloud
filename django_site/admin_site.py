@@ -46,10 +46,23 @@ def get_app_list(self, request, app_label=None):
         key=lambda x: ADMIN_SORTED_APP_LIST.index(
             x['app_label']) if x['app_label'] in ADMIN_SORTED_APP_LIST else app_count
     )
-
+    default_priority=100
     # Sort the models alphabetically within each app.
     for app in app_list:
-        app["models"].sort(key=lambda x: x["name"])
+        model_order = {}
+        try:
+            for model in app['models']:
+                from django.contrib.admin.sites import site
+                from django.apps import apps
+
+                model_order[model['object_name']] = getattr(
+                    site._registry[apps.get_model(app['app_label'], model['object_name'])],
+                    'admin_order',
+                    default_priority
+                )
+            app['models'].sort(key=lambda model_: model_order[model_['object_name']])
+        except Exception as e:
+            app["models"].sort(key=lambda x: x["name"])
 
     return app_list
 

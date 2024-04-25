@@ -6,6 +6,7 @@ from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor, Attac
 
 @admin.register(Vm)
 class VmAdmin(admin.ModelAdmin):
+    admin_order = 1
     list_display_links = ('hex_uuid',)
     list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'sys_disk_size',
                     'disk_type', 'user', 'create_time', 'remarks',
@@ -113,6 +114,7 @@ clear_vm_sys_snapshots.short_description = '清除所选的虚拟机镜像中的
 
 @admin.register(VmArchive)
 class VmArchiveAdmin(admin.ModelAdmin):
+    admin_order = 2
     list_display_links = ('id',)
     list_display = ('id', 'uuid', 'ipv4', 'vcpu', 'mem', 'mac', 'disk_type', 'disk', 'sys_disk_size', 'image_parent',
                     'center_name', 'group_name', 'host_ipv4', 'host_released', 'user', 'archive_time', 'remarks')
@@ -152,6 +154,7 @@ class VmLogAdmin(admin.ModelAdmin):
 
 @admin.register(VmDiskSnap)
 class VmDiskSnapAdmin(admin.ModelAdmin):
+    admin_order = 3
     list_display_links = ('id',)
     list_display = ('id', 'snap', 'disk', 'vm', 'create_time', 'remarks')
     search_fields = ['disk', 'remarks']
@@ -167,6 +170,7 @@ class VmDiskSnapAdmin(admin.ModelAdmin):
 
 @admin.register(MigrateTask)
 class MigrateTaskAdmin(admin.ModelAdmin):
+    admin_order = 4
     list_display_links = ('id',)
     list_display = ('id', 'vm_uuid', 'src_host_ipv4', 'src_is_free', 'dst_host_ipv4', 'dst_is_claim', 'status', 'tag', 'src_undefined', 'migrate_time')
     search_fields = ('vm_uuid', 'content')
@@ -175,18 +179,21 @@ class MigrateTaskAdmin(admin.ModelAdmin):
 
 @admin.register(Flavor)
 class FlavorAdmin(admin.ModelAdmin):
+    admin_order = 5
     list_display_links = ('id',)
     list_display = ('id', 'vcpus', 'ram', 'public', 'enable')
 
 
 @admin.register(AttachmentsIP)
 class AttachmentsIPAdmin(admin.ModelAdmin):
+    admin_order = 6
     list_display_links = ('id',)
     list_display = ('id', 'vm', 'sub_ip')
 
 
 @admin.register(ErrorLog)
 class ErrorLogAdmin(admin.ModelAdmin):
+    admin_order = 7
     list_display_links = ('id',)
     list_display = ('id', 'full_path', 'status_code', 'method', 'message', 'create_time', 'username')
 
