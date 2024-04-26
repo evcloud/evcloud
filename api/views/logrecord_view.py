@@ -32,11 +32,11 @@ class LogRecordViewSet(CustomGenericViewSet):
                 description='时间戳'
             ),
             openapi.Parameter(
-                name='type',
+                name='username',
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 required=False,
-                description='类型（排除）：云主机,VPN,云硬盘,数据中心,宿主机,Vlan,镜像,用户,资源。使用,隔开'
+                description='用户名称'
             ),
         ],
         responses={
@@ -52,27 +52,18 @@ class LogRecordViewSet(CustomGenericViewSet):
                 {
                   "create_time": "2024-04-08T15:28:39.091167+08:00",
                   "username": "wanghuang@cnic.cn",
-                  "resourc_type": "云硬盘",   # 资源类型
                   "operation_content": "卸载硬盘"  #  操作内容
                 }
 
         """
 
-        exclude_type = request.query_params.get('type', '')
         timestamp = request.query_params.get('timestamp', '')
-        type_list = []
-        if exclude_type:
-            type_dict = {'云主机': 6, 'VPN': 7, '云硬盘': 8, '数据中心': 12, '宿主机': 13, 'Vlan': 14, '镜像': 15,
-                         '用户': 16, '资源': 19}
-            exclude_type = exclude_type.split(',')
-            for log_type in exclude_type:
-                if log_type in type_dict:
-                    type_list.append(type_dict[log_type])
+        username = request.query_params.get('username', '')
 
         if timestamp:
             timestamp = datetime.fromtimestamp(float(timestamp))  # 转datetime
 
-        self.queryset = user_operation_record.get_log_record(type_list=type_list, timestamp=timestamp)
+        self.queryset = user_operation_record.get_log_record(username=username, timestamp=timestamp)
 
         # print(self.queryset)
         queryset = self.filter_queryset(self.get_queryset())

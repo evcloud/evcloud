@@ -33,7 +33,7 @@ class LogManager:
 
         return text[start_index:]
 
-    def add_log(self, request, type: int, action_flag: int, operation_content, remark=None):
+    def add_log(self, request, operation_content, remark=None):
         """
             添加用户操作
             :param :
@@ -52,9 +52,7 @@ class LogManager:
         try:
             LogRecord.objects.create(
                 method=method,
-                action_flag=action_flag,
                 operation_content=operation_content,
-                resourc_type=type,
                 full_path=full_path,
                 message=remark,
                 username=username
@@ -78,13 +76,17 @@ class LogManager:
 
         return username, flag
 
-
-    def get_log_record(self, type_list: list = [], timestamp=None):
+    def get_log_record(self, timestamp=None, username=None):
         """获取日志"""
-        if timestamp:
-            return LogRecord.objects.filter(create_time__gt=timestamp).all().exclude(resourc_type__in=type_list)
-        return LogRecord.objects.all().exclude(resourc_type__in=type_list)
+        if timestamp and username:
+            return LogRecord.objects.filter(create_time__gt=timestamp, username=username).all()
 
+        if timestamp:
+            return LogRecord.objects.filter(create_time__gt=timestamp).all()
+
+        if username:
+            return LogRecord.objects.filter(username=username).all()
+        return LogRecord.objects.all()
 
     def get_request_url_user(self, url):
         """获取请求路径的用户"""

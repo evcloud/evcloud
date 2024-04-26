@@ -123,7 +123,7 @@ class VmAPI:
         :raise VmError
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
-        self.vm_operation_log(request=request, action_flag=LogRecord.DELETION, operation_content=f'删除云主机, 云主机IP：{vm.mac_ip}')
+        self.vm_operation_log(request=request, operation_content=f'删除云主机, 云主机IP：{vm.mac_ip}')
         return VmInstance(vm=vm).delete(force=force)
 
     def delete_vm_for_image(self, vm=None):
@@ -164,7 +164,7 @@ class VmAPI:
 
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE, operation_content=f'修改云主机vcpu和内存大小，云主机IP：{vm.mac_ip}, 内存修改为{mem}, vcpu修改为{vcpu}')
+        self.vm_operation_log(request=request, operation_content=f'修改云主机vcpu和内存大小，云主机IP：{vm.mac_ip}, 内存修改为{mem}, vcpu修改为{vcpu}')
         return VmInstance(vm=vm).edit_vcpu_mem(vcpu=vcpu, mem=mem, force=force)
 
     def edit_vm_vcpu_mem_for_image(self, vm, vcpu: int = 0, mem: int = 0):
@@ -213,8 +213,7 @@ class VmAPI:
             'delete_force': '强制删除云主机',
         }
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'{ops_dict[op]}, 云主机IP: {vm.mac_ip}')
+        self.vm_operation_log(request=request, operation_content=f'{ops_dict[op]}, 云主机IP: {vm.mac_ip}')
 
         return VmInstance(vm=vm).operations(op=op)
 
@@ -272,8 +271,7 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'修改云主机备注信息, 云主机IP: {vm.mac_ip}, 备注信息为：{remark}')
+        self.vm_operation_log(request=request, operation_content=f'修改云主机备注信息, 云主机IP: {vm.mac_ip}, 备注信息为：{remark}')
         return VmInstance(vm=vm).modify_remark(remark=remark)
 
     def mount_disk(self, vm_uuid: str, vdisk_uuid: str, request):
@@ -303,8 +301,7 @@ class VmAPI:
 
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=('host__group', 'user'))
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.MOUNT,
-                              operation_content=f'挂载云硬盘, 云主机IP: {vm.mac_ip}, 云硬盘id：{vdisk_uuid}')
+        self.vm_operation_log(request=request, operation_content=f'挂载云硬盘, 云主机IP: {vm.mac_ip}, 云硬盘id：{vdisk_uuid}')
 
         return VmInstance(vm=vm).mount_disk(vdisk=vdisk)
 
@@ -342,8 +339,7 @@ class VmAPI:
             raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.UNMOUNT,
-                              operation_content=f'卸载云硬盘, 云主机IP: {vm.mac_ip}, 云硬盘id：{vdisk_uuid}')
+        self.vm_operation_log(request=request, operation_content=f'卸载云硬盘, 云主机IP: {vm.mac_ip}, 云硬盘id：{vdisk_uuid}')
 
         return VmInstance(vm=vm).umount_disk(vdisk=vdisk)
 
@@ -360,8 +356,7 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'image__ceph_pool__ceph'))
 
         vm_snap = VmInstance(vm=vm).create_sys_snap(remarks=remarks)
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'创建云主机系统盘快照, 云主机IP: {vm.mac_ip}, 快照ID：{vm_snap.id}',
+        self.vm_operation_log(request=request, operation_content=f'创建云主机系统盘快照, 云主机IP: {vm.mac_ip}, 快照ID：{vm_snap.id}',
                               remark=remarks)
 
         return vm_snap
@@ -379,8 +374,7 @@ class VmAPI:
         """
 
         flag , mac_ip = VmInstance.delete_sys_disk_snap(snap_id=snap_id, user=user)
-        self.vm_operation_log(request=request, action_flag=LogRecord.DELETION,
-                              operation_content=f'删除虚拟机系统快照, 云主机IP：{mac_ip}快照ID：{snap_id}',
+        self.vm_operation_log(request=request, operation_content=f'删除虚拟机系统快照, 云主机IP：{mac_ip}快照ID：{snap_id}',
                               remark='')
         return flag
 
@@ -398,8 +392,7 @@ class VmAPI:
 
         snap, mac_ip = VmInstance.modify_sys_snap_remarks(snap_id=snap_id, remarks=remarks, user=request.user)
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'修改云主机快照备注信息, 备注信息为：{remarks} 云主机IP：{mac_ip} 快照ID：{snap_id}',
+        self.vm_operation_log(request=request, operation_content=f'修改云主机快照备注信息, 备注信息为：{remarks} 云主机IP：{mac_ip} 快照ID：{snap_id}',
                               remark='')
         return snap
 
@@ -417,8 +410,7 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=())
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'云主机系统盘回滚到指定快照, 指定快照id为：{snap_id} 云主机IP：{vm.mac_ip}',
+        self.vm_operation_log(request=request, operation_content=f'云主机系统盘回滚到指定快照, 指定快照id为：{snap_id} 云主机IP：{vm.mac_ip}',
                               remark='')
         return VmInstance(vm=vm).rollback_to_snap(snap_id=snap_id)
 
@@ -505,8 +497,7 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'更换云主机系统成功, 云主机IP：{vm.mac_ip}',
+        self.vm_operation_log(request=request, operation_content=f'更换云主机系统成功, 云主机IP：{vm.mac_ip}',
                               remark='')
 
         new_image = VmBuilder().get_image(image_id)  # 镜像
@@ -532,8 +523,7 @@ class VmAPI:
         HostManager.update_host_quota(host_id=vm.host_id)
         HostManager.update_host_quota(host_id=new_vm.host_id)
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'静态迁移云主机到指定宿主机, 云主机IP：{vm.mac_ip}，指定宿主机IP：{new_vm.host.ipv4}',
+        self.vm_operation_log(request=request, operation_content=f'静态迁移云主机到指定宿主机, 云主机IP：{vm.mac_ip}，指定宿主机IP：{new_vm.host.ipv4}',
                               remark='')
         return new_vm
 
@@ -582,8 +572,7 @@ class VmAPI:
         vm = self._get_user_perms_vm(
             vm_uuid=vm_uuid, user=request.user, related_fields=('host', 'user', 'image__ceph_pool__ceph'))
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'尝试恢复丢失的云主机, 云主机IP：{vm.mac_ip}',
+        self.vm_operation_log(request=request, operation_content=f'尝试恢复丢失的云主机, 云主机IP：{vm.mac_ip}',
                               remark='')
         return VmInstance(vm).miss_fix()
 
@@ -604,8 +593,7 @@ class VmAPI:
         task = VmInstance(vm).live_migrate(dest_host_id=dest_host_id)
         # HostManager.update_host_quota(host_id=vm.host_id)
         # HostManager.update_host_quota(host_id=dest_host_id)
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'动态迁移云主机到指定宿主机, 云主机IP：{vm.mac_ip}，指定宿主机IP：{task.dst_host_ipv4}',
+        self.vm_operation_log(request=request, operation_content=f'动态迁移云主机到指定宿主机, 云主机IP：{vm.mac_ip}，指定宿主机IP：{task.dst_host_ipv4}',
                               remark='')
         return task
 
@@ -628,8 +616,7 @@ class VmAPI:
         """
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=('image__ceph_pool__ceph',))
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.CHANGE,
-                              operation_content=f'云主机系统盘扩容, 云主机IP：{vm.mac_ip}, 扩容大小为{expand_size}GB',
+        self.vm_operation_log(request=request, operation_content=f'云主机系统盘扩容, 云主机IP：{vm.mac_ip}, 扩容大小为{expand_size}GB',
                               remark='')
         return VmInstance(vm).sys_disk_expand(expand_size)
 
@@ -637,8 +624,7 @@ class VmAPI:
         """虚拟机搁置服务恢复"""
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=('host', 'host__group', 'user'),
                                      flag=True)
-        self.vm_operation_log(request=request, action_flag=LogRecord.UNSHELVE,
-                              operation_content=f'云主机搁置恢复, 云主机IP：{vm.mac_ip}',
+        self.vm_operation_log(request=request, operation_content=f'云主机搁置恢复, 云主机IP：{vm.mac_ip}',
                               remark='')
         return VmInstance(vm).unshelve_vm(group_id=group_id, host_id=host_id, mac_ip_id=mac_ip_id, user=request.user)
 
@@ -646,8 +632,7 @@ class VmAPI:
         """虚拟机搁置服务"""
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=('host', 'host__group', 'user'))
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.SHELVE,
-                              operation_content=f'云主机搁置, 云主机IP：{vm.mac_ip}',
+        self.vm_operation_log(request=request, operation_content=f'云主机搁置, 云主机IP：{vm.mac_ip}',
                               remark='')
         return VmInstance(vm).shelve_vm()
 
@@ -657,8 +642,7 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=('user', 'last_ip', 'last_ip__vlan',
                                                                                  'last_ip__vlan__group',
                                                                                  'last_ip__vlan__group__center'), flag=True)
-        self.vm_operation_log(request=request, action_flag=LogRecord.DELETION,
-                              operation_content=f'删除搁置云主机, 云主机IP：{vm.mac_ip}',
+        self.vm_operation_log(request=request, operation_content=f'删除搁置云主机, 云主机IP：{vm.mac_ip}',
                               remark='')
         return VmInstance(vm).delshelve_vm()
 
@@ -672,8 +656,7 @@ class VmAPI:
         if resq is False:
             AttachmentsIPManager().detach_ip_to_vm(attach_ip_obj=mac_ip_obj)
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.ADDITION,
-                              operation_content=f'云主机附加IP, 云主机IP：{vm.mac_ip}, 附加IP：{mac_ip_obj.ipv4}',
+        self.vm_operation_log(request=request, operation_content=f'云主机附加IP, 云主机IP：{vm.mac_ip}, 附加IP：{mac_ip_obj.ipv4}',
                               remark='')
         return resq
 
@@ -687,8 +670,7 @@ class VmAPI:
         if vm.mac_ip.id == mac_ip_obj.id:
             raise errors.BadRequestError(msg='您不能移除主IP。')
 
-        self.vm_operation_log(request=request, action_flag=LogRecord.DELETION,
-                              operation_content=f'云主机移除附加IP, 云主机IP：{vm.mac_ip}, 附加IP：{mac_ip_obj.ipv4}',
+        self.vm_operation_log(request=request, operation_content=f'云主机移除附加IP, 云主机IP：{vm.mac_ip}, 附加IP：{mac_ip_obj.ipv4}',
                               remark='')
 
         return VmInstance(vm).detach_ip_vm(mac_ip_obj=mac_ip_obj)
@@ -735,6 +717,5 @@ class VmAPI:
 
         return flatten_bool
 
-    def vm_operation_log(self, request, action_flag, operation_content, remark=''):
-        user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=action_flag,
-                                      operation_content=operation_content, remark=remark)
+    def vm_operation_log(self, request, operation_content, remark=''):
+        user_operation_record.add_log(request=request, operation_content=operation_content, remark=remark)

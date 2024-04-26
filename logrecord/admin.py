@@ -8,5 +8,5 @@ from logrecord.models import LogRecord
 
 @admin.register(LogRecord)
 class LogRecordAdmin(admin.ModelAdmin):
-    list_display = ('id', 'username', 'operation_content', 'resourc_type', 'action_flag',  'method', 'full_path', 'message',  'create_time')
+    list_display = ('id', 'username', 'operation_content', 'method', 'full_path', 'message',  'create_time')
 

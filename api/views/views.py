@@ -612,8 +612,7 @@ class VmsViewSet(CustomGenericViewSet):
             data['data'] = serializer.data
             return Response(data, status=status.HTTP_200_OK)
 
-        user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.ADDITION,
-                                      operation_content=f'创建云主机, 云主机IP：{vm.mac_ip}', remark=validated_data['remarks'])
+        user_operation_record.add_log(request=request, operation_content=f'创建云主机, 云主机IP：{vm.mac_ip}', remark=validated_data['remarks'])
 
         return Response(data={
             'code': 201,
@@ -936,8 +935,7 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
 
-        user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.ADDITION,
-                                      operation_content='远程连接云主机vnc', remark='')
+        user_operation_record.add_log(request=request, operation_content='远程连接云主机vnc', remark='')
         # 搁置虚拟机，不允许
         status_bool = vm_normal_status(vm=vm)
         if status_bool is False:
@@ -1356,8 +1354,7 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(exceptions.BadRequestError(msg=msg))
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.CHANGE,
-                                      operation_content='修改云主机登录密码', remark='')
+        user_operation_record.add_log(request=request, operation_content='修改云主机登录密码', remark='')
 
         data = serializer.validated_data
         username = data.get('username')
@@ -2204,8 +2201,7 @@ class VlanViewSet(CustomGenericViewSet):
             return Response(exc.data(), status=exc.code)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VLAN, action_flag=LogRecord.SELECT,
-                                      operation_content='查询网段信息', remark='')
+        user_operation_record.add_log(request=request, operation_content='查询网段信息', remark='')
 
         try:
             vlan = VlanManager().get_vlan_by_id(vlan_id=v_id, user=request.user)
@@ -2980,8 +2976,7 @@ class VDiskViewSet(CustomGenericViewSet):
         remarks = data.get('remarks', '')
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VMDISK, action_flag=LogRecord.ADDITION,
-                                      operation_content=f'创建云硬盘, 容量为 {size} GB', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'创建云硬盘, 容量为 {size} GB', remark='')
 
 
         manager = VdiskManager()
@@ -3083,8 +3078,7 @@ class VDiskViewSet(CustomGenericViewSet):
         disk_uuid = kwargs.get(self.lookup_field, '')
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VMDISK, action_flag=LogRecord.DELETION,
-                                      operation_content=f'销毁云硬盘， 云硬盘id：{disk_uuid}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'销毁云硬盘， 云硬盘id：{disk_uuid}', remark='')
 
         api = VdiskManager()
         try:
@@ -3862,8 +3856,7 @@ class PCIDeviceViewSet(CustomGenericViewSet):
             return self.exception_response(e)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.MOUNT,
-                                      operation_content=f'挂载PCI设备, 云主机IP：{device.vm_id}, pcie设备：{device}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'挂载PCI设备, 云主机IP：{device.vm_id}, pcie设备：{device}', remark='')
 
         return Response(data={'code': 201, 'code_text': '挂载成功'}, status=status.HTTP_201_CREATED)
 
@@ -3909,8 +3902,7 @@ class PCIDeviceViewSet(CustomGenericViewSet):
 
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.UNMOUNT,
-                                      operation_content=f'卸载PCI设备, 云主机IP:{device.vm_id}，pcie设备：{device}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'卸载PCI设备, 云主机IP:{device.vm_id}，pcie设备：{device}', remark='')
 
         return Response(data={'code': 201, 'code_text': '卸载成功'}, status=status.HTTP_201_CREATED)
 
@@ -4148,8 +4140,7 @@ class VPNViewSet(CustomGenericViewSet):
             return self.exception_response(e)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VPN, action_flag=LogRecord.ADDITION,
-                                      operation_content=f'创建vpn账户, VPN账户：{vpn.username}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'创建vpn账户, VPN账户：{vpn.username}', remark='')
 
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_201_CREATED)
 
@@ -4219,8 +4210,7 @@ class VPNViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VPN, action_flag=LogRecord.CHANGE,
-                                      operation_content=f'修改VPN账户密码, VPN账户：{vpn.username}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'修改VPN账户密码, VPN账户：{vpn.username}', remark='')
 
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
 
@@ -4271,8 +4261,7 @@ class VPNViewSet(CustomGenericViewSet):
                 return self.exception_response(exceptions.VPNError(msg=f'激活用户vpn失败，{str(e)}'))
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VPN, action_flag=LogRecord.CHANGE,
-                                      operation_content=f'激活vpn账户, VPN账户：{vpn.username}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'激活vpn账户, VPN账户：{vpn.username}', remark='')
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
@@ -4323,8 +4312,7 @@ class VPNViewSet(CustomGenericViewSet):
                 return self.exception_response(exceptions.VPNError(msg=f'停用用户vpn失败，{str(e)}'))
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, type=LogRecord.VPN, action_flag=LogRecord.CHANGE,
-                                      operation_content=f'停用vpn账户,  VPN账户：{vpn.username}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'停用vpn账户,  VPN账户：{vpn.username}', remark='')
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):

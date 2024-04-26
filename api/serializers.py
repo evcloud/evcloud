@@ -644,13 +644,12 @@ class LogRecordSerializer(serializers.ModelSerializer):
     # create_time = serializers.DateTimeField()
     create_time = serializers.SerializerMethodField()
     username = serializers.CharField()
-    resourc_type = serializers.SerializerMethodField()
     operation_content = serializers.CharField()
     # operation_content = serializers.SerializerMethodField()
 
     class Meta:
         model = LogRecord
-        fields = ('create_time', 'username', 'resourc_type', 'operation_content')
+        fields = ('create_time', 'username', 'operation_content')
 
     def get_resourc_type(self, obj):
         return obj.get_resourc_type_display()
