@@ -45,7 +45,7 @@
             </td>
             <td class="border-top-0">
                 <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/device/pcidevice/"
-                   role="button" target="_blank">{% translate '本地设备' %}</a>
+                   role="button" target="_blank">{% translate '本地资源' %}</a>
             </td>
             <td class="border-top-0">
                 <a class="btn btn-outline-secondary btn-sm btn-block" href="/admin/compute/center/"
@@ -104,7 +104,11 @@
                 <i class="fa fa-database" style="font-size: xxx-large"></i>
                 <h6 class="text-black-50 mt-2">{% translate '存储资源配置与管理' %}</h6>
             </td>
-            <td style="color: #0072c9">【{% translate 'CEPH配置' %}】</td>
+            <td style="color: #0072c9">【{% translate '全局配置' %}】</td>
+            <td><a class="btn btn-outline-secondary btn-sm btn-block"
+                   href="/admin/ceph/globalconfig/" role="button" target="_blank"><strong
+                    class="text-danger">*&nbsp;</strong>{% translate '站点配置' %}</a>
+            </td>
             <td><a class="btn btn-outline-secondary btn-sm btn-block"
                    href="/admin/ceph/cephcluster/" role="button" target="_blank"><strong
                     class="text-danger">*&nbsp;</strong>{% translate 'CEPH集群' %}</a>
@@ -188,6 +192,14 @@
             <td class="border-top-0 border-bottom">
                 <a class="btn btn-outline-info btn-sm btn-block" href="/admin/admin/logentry/"
                    role="button" target="_blank">{% translate '操作日志' %}</a>
+            </td>
+            <td class="border-top-0 border-bottom">
+                <a class="btn btn-outline-info btn-sm btn-block" href="/admin/logrecord/logrecord/"
+                   role="button" target="_blank">{% translate '用户操作日志' %}</a>
+            </td>
+            <td class="border-top-0 border-bottom">
+                <a class="btn btn-outline-info btn-sm btn-block" href="/admin/vpn/vpnlog/"
+                   role="button" target="_blank">{% translate 'VPN登录日志' %}</a>
             </td>
             <td colspan="4" class="border-top-0 border-bottom"></td>
         </tr>
