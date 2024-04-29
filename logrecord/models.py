@@ -15,7 +15,7 @@ class LogRecord(models.Model):
     message = models.TextField(verbose_name=_('备注信息'), blank=True, default='')
     create_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
     username = models.CharField(verbose_name=_('请求用户'), max_length=150, blank=True, default='')
-    real_user = models.CharField(verbose_name=_('实际用户'), max_length=150, blank=True, default='')
+    real_user = models.CharField(verbose_name=_('cstcloud用户'), max_length=150, blank=True, default='')
 
     class Meta:
         verbose_name = _("用户操作日志")

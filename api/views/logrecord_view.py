@@ -60,11 +60,12 @@ class LogRecordViewSet(CustomGenericViewSet):
 
             http code 200:
 
-                   {
-                      "create_time": 1713755469.394883,
-                      "username": "test",
-                      "operation_content": "云主机搁置"
-                    },
+                     {
+                      "create_time": 1714379004.22413,
+                      "username": "test@cnic.cn",    # 请求用户
+                      "real_user": "test@cnic.cn",   # cstcloud 用户
+                      "operation_content": "远程连接云主机vnc"
+                    }
 
         """
 
