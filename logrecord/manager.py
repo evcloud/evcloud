@@ -3,33 +3,18 @@ from logrecord.models import LogRecord
 
 class LogManager:
 
-    def extract_string_remark(self, text, start_marker, end_marker):
+    def extract_string(self, text, start_marker, end_marker=None):
         """提取两个标志位中间的字符串"""
         start_index = text.find(start_marker)
         if start_index == -1:
             return None
         start_index += len(start_marker)
 
-        end_index = text.find(end_marker, start_index)
-        if end_index == -1:
-            return None
-
-        return text[start_index:end_index]
-
-    def extract_string_url(self, text, start_marker):
-        """提取一个标志位后面的字符串"""
-
-        if not text:
-            return None
-
-        start_index = text.find(start_marker)
-        if start_index == -1:
-            return None
-        start_index += len(start_marker)
-        #
-        # end_index = text.find(end_marker, start_index)
-        # if end_index == -1:
-        #     return None
+        if end_marker:
+            end_index = text.find(end_marker, start_index)
+            if end_index == -1:
+                return None
+            return text[start_index:end_index]
 
         return text[start_index:]
 
@@ -43,11 +28,7 @@ class LogManager:
         method = request.method
         full_path = request.get_full_path()
 
-        username , flag = self.get_username(request=request, full_path=full_path, remark=remark)
-        if flag:
-            operation_content = f'用户({username}), {operation_content}'  # 本地登录用户
-        else:
-            operation_content = f'用户(cstcloud:{username}), {operation_content}'
+        real_user , username = self.get_username(request=request, full_path=full_path, remark=remark)
 
         try:
             LogRecord.objects.create(
@@ -55,45 +36,38 @@ class LogManager:
                 operation_content=operation_content,
                 full_path=full_path,
                 message=remark,
-                username=username
+                username=username,
+                real_user=real_user,
             )
         except Exception as e:
             pass
 
     def get_username(self, request, full_path, remark):
-        flag = False
-        username = self.get_request_url_user(url=full_path)  # 尝试从 url 中 获取数据
+        username = self.extract_string(text=full_path, start_marker='[user]')  # 尝试从 url 中 获取数据
         if username :
-            return username, flag
+            return username, 'cstcloud'
 
-        username = self.extract_string_remark(text=remark, start_marker='[user]', end_marker=';')  #尝试从 remart 中 获取数据
+        username = self.extract_string(text=remark, start_marker='[user]', end_marker=';')  #尝试从 remart 中 获取数据
         if username:
-            return username, flag
+            return username, 'cstcloud'
 
         username = request.user.username
-        if username != 'cstcloud':
-                flag = True
+        return username, username
 
-        return username, flag
-
-    def get_log_record(self, timestamp=None, username=None):
+    def get_log_record(self, kwargs):
         """获取日志"""
-        if timestamp and username:
-            return LogRecord.objects.filter(create_time__gt=timestamp, username=username).all()
 
-        if timestamp:
-            return LogRecord.objects.filter(create_time__gt=timestamp).all()
+        if kwargs:
+            return LogRecord.objects.filter(**kwargs).all()
 
-        if username:
-            return LogRecord.objects.filter(username=username).all()
         return LogRecord.objects.all()
 
-    def get_request_url_user(self, url):
-        """获取请求路径的用户"""
-        username = self.extract_string_url(text=url, start_marker='[user]')
+    def get_log_records_order_by(self, order_by, kwargs):
+        """获取排序后的数据
 
-        return username
-
+        :param order_by:排序字段
+        """
+        return self.get_log_record(kwargs).order_by(order_by)
 
 
 user_operation_record = LogManager()

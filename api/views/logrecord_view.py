@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import pytz
+from django.conf import settings
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -19,7 +21,6 @@ class LogRecordViewSet(CustomGenericViewSet):
     """
     permission_classes = [IsAuthenticated]
     pagination_class = LimitOffsetPagination
-    lookup_field = 'id'
 
     @swagger_auto_schema(
         operation_summary='获取用户操作日志',
@@ -29,7 +30,17 @@ class LogRecordViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 required=False,
-                description='时间戳'
+                description='时间戳',
+                default=0
+            ),
+            openapi.Parameter(
+                name='direction',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='方向，时间戳之前的数据还是之后的数据',
+                enum=['before', 'after'],
+                default='after'
             ),
             openapi.Parameter(
                 name='username',
@@ -49,23 +60,35 @@ class LogRecordViewSet(CustomGenericViewSet):
 
             http code 200:
 
-                {
-                  "create_time": "2024-04-08T15:28:39.091167+08:00",
-                  "username": "wanghuang@cnic.cn",
-                  "operation_content": "卸载硬盘"  #  操作内容
-                }
+                   {
+                      "create_time": 1713755469.394883,
+                      "username": "test",
+                      "operation_content": "云主机搁置"
+                    },
 
         """
 
-        timestamp = request.query_params.get('timestamp', '')
+        timestamp = request.query_params.get('timestamp', 0)
         username = request.query_params.get('username', '')
+        direction = request.query_params.get('direction', 'after')
 
-        if timestamp:
-            timestamp = datetime.fromtimestamp(float(timestamp))  # 转datetime
+        dict_params = {}
 
-        self.queryset = user_operation_record.get_log_record(username=username, timestamp=timestamp)
+        if username:
+            dict_params['username'] = username
 
-        # print(self.queryset)
+        timestamp = datetime.fromtimestamp(float(timestamp), tz=pytz.timezone(settings.TIME_ZONE))  # 转datetime
+        if direction == 'before':
+            dict_params['create_time__lte'] = timestamp
+        else:
+            dict_params['create_time__gt'] = timestamp
+
+        order_by = "create_time"
+        if direction == 'before':
+            order_by = '-create_time'
+
+        self.queryset = user_operation_record.get_log_records_order_by(order_by=order_by, kwargs=dict_params)
+
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
