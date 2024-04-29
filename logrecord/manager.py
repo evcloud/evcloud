@@ -43,16 +43,20 @@ class LogManager:
             pass
 
     def get_username(self, request, full_path, remark):
+        request_username = request.user.username
         username = self.extract_string(text=full_path, start_marker='[user]')  # 尝试从 url 中 获取数据
         if username :
-            return username, 'cstcloud'
+            # /?_who_action=%5Buser%5Dxxxxx%40cnic.cn&vm_uuid=xxxxx
+            if '&' in username:
+                username = username.split('&')[0]
+            return username, request_username
 
         username = self.extract_string(text=remark, start_marker='[user]', end_marker=';')  #尝试从 remart 中 获取数据
         if username:
-            return username, 'cstcloud'
+            return username, request_username
 
-        username = request.user.username
-        return username, username
+
+        return '', request_username
 
     def get_log_record(self, kwargs):
         """获取日志"""

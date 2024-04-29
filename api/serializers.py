@@ -642,13 +642,17 @@ class MigrateTaskSerializer(serializers.Serializer):
 class LogRecordSerializer(serializers.ModelSerializer):
     """用户操作日志"""
     create_time = serializers.SerializerMethodField()
-    # username = serializers.CharField()
-    real_user = serializers.CharField()
+    username = serializers.SerializerMethodField()
     operation_content = serializers.CharField()
 
     class Meta:
         model = LogRecord
-        fields = ('create_time', 'real_user', 'operation_content')
+        fields = ('create_time', 'username', 'operation_content')
 
     def get_create_time(self, obj):
         return obj.create_time.timestamp()
+
+    def get_username(self, obj):
+        if obj.real_user:
+            return obj.real_user
+        return obj.username
