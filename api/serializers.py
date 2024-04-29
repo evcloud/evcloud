@@ -642,6 +642,9 @@ class MigrateTaskSerializer(serializers.Serializer):
 class LogRecordSerializer(serializers.ModelSerializer):
     """用户操作日志"""
     create_time = serializers.SerializerMethodField()
+    # username = serializers.CharField()
+    real_user = serializers.CharField()
+    operation_content = serializers.CharField()
 
     class Meta:
         model = LogRecord
