@@ -1,3 +1,51 @@
+### v4.2.0 -- > v4.3.0
+1. 停止服务
+   ```
+   systemctl stop evcloud.service
+   systemctl stop evcloud_vnc.service
+   ``` 
+2. 备份数据库
+   ```shell
+   mysqldump -u user -p  数据库名称 > 文件
+   ```
+
+3. 更新代码前查看是否有手动修改的文件，妥善处理
+   ```
+   git status # 查看 是否有手动修改的内容，并记录  
+   ·········
+   如果文件 openvpn_disconnect.py、openvpn_connect.py、openvpn_auth.py 标红, 使用 git checkout 命令如下：
+   git checkout 00_script/openvpn_auth.py
+   git checkout 00_script/openvpn_connect.py
+   git checkout 00_script/openvpn_disconnect.py
+      
+   注意： 这三个文件在上一个版本没有设置权限，需要手动修改权限导致标红，代码中已经设置文件权限，所已需要提前操作。
+         openvpn_server.conf 这个文件标红，不用处理。
+         其他标红文件妥善处理
+   ·········
+   ```
+4. 更新代码
+   ```
+   git pull origin master
+   git fetch --tag
+   python manage.py migrate --plan # 查看是否有数据表修改  如果有多个节点使用同一个数据库，只在其中一个节点执行数据迁移操作就行
+   ····
+   # 如果出现如下内容，则不需要 执行 python manage.py migrate 命令
+    Planned operations:
+    No planned migration operations.
+   ····
+   python manage.py migrate  # 数据迁移
+   pip install -r 00_script/depend/requirements.txt
+   python manage.py collectstatic
+   
+   ```
+
+5. 启动服务
+   ``````
+   systemctl start evcloud.service
+   systemctl start evcloud_vnc.service
+   systemctl restart evcloud_openvpn.service
+
+
 ### v4.2.0
 
 vpn 部分增加 vpn服务IP字段
@@ -15,10 +63,13 @@ vpn 部分增加 vpn服务IP字段
    git checkout . # 丢弃修改的内容
    git pull origin master
    git fetch --tag
+   
 4. 执行数据库操作
    ````
    python manage.py migrate --plan # 查看是否有数据表修改
    python manage.py migrate
+   pip install -r requirements.txt
+   
 5. 收集静态文件
    ````
    python manage.py collectstatic
