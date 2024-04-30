@@ -59,8 +59,12 @@
                 {% for obj in page %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
-                        <td>{{ obj.username }}</td>
-                        <td>{{ obj.operation_content }}</td>
+                        {% if obj.real_user %}
+                            <td>cstcloud:{{ obj.real_user }}</td>
+                        {% else %}
+                            <td>{{ obj.username }}</td>
+                        {% endif %}
+                        <td class="text-left">{{ obj.operation_content }}</td>
                         <td>{{ obj.create_time }}</td>
                     </tr>
                 {% endfor %}
