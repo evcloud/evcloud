@@ -1,3 +1,6 @@
+import urllib
+from urllib import parse
+
 from logrecord.models import LogRecord
 
 
@@ -44,6 +47,7 @@ class LogManager:
 
     def get_username(self, request, full_path, remark):
         request_username = request.user.username
+        full_path = urllib.parse.unquote(full_path)  # 解码
         username = self.extract_string(text=full_path, start_marker='[user]')  # 尝试从 url 中 获取数据
         if username :
             # /?_who_action=%5Buser%5Dxxxxx%40cnic.cn&vm_uuid=xxxxx
