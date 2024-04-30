@@ -1,3 +1,20 @@
+## v4.3.0
+2024-04-28
+* 数据大屏展示数据汇总接口增加vpn在线数  提交人：wanghuang
+* 增加用户操作日志界面及日志清楚按钮  提交人：wanghuang
+* 资源配额图表页面合并到资源统计管理页面中  提交人：wanghuang
+* 用户操作日志优化：接口查询参数、model字段、url信息提取、界面 提交人：wanghuang
+* 检测优化：一键检测和批量保存限制页面显示内容，去掉通过输入IP信息检测功能  提交人：wanghuang
+* 站点配置默认信息会自动创建  提交人：wanghuang
+* 后端app根据自定义规则排序  提交人：wanghuang
+* 导航栏高亮部分不显示调整  提交人：wanghuang
+* 后台管理导航页面修改部分信息：全局配置信息、vpn 日志等  提交人：wanghuang
+* vpn页面增加"删除非激活用户按钮","清理半年前日志"按钮  提交人：wanghuang
+* vpn 后端显示"VNP服务IP"字段  提交人：wanghuang
+* openvpn部分文件 权限调整  提交人：wanghuang
+* 依赖包更新  提交人：wanghuang
+
+
 ## v4.2.0
 2024-04-17
 * 增加数据大屏展示数据汇总接口   提交人：wanghuang
