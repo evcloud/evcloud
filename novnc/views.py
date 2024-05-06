@@ -27,7 +27,7 @@ def vnc_view(req):
 
         global_config_obj = GlobalConfig().get_global_config()
         if global_config_obj:
-            http_scheme = global_config_obj['novnchttp']
+            http_scheme = global_config_obj['novncAccess']
 
         if NOVNC_PORT == 80:
             if protocol_type == 'spice':

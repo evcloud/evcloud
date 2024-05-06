@@ -957,7 +957,7 @@ class VmsViewSet(CustomGenericViewSet):
         http_scheme = 'https'
         global_config_obj = GlobalConfig().get_global_config()
         if global_config_obj:
-            http_scheme = global_config_obj['novnchttp']
+            http_scheme = global_config_obj['novncAccess']
         url = f'{http_scheme}://{http_host}{url}'
         return Response(data={'code': 200, 'code_text': '创建虚拟机vnc成功',
                               'vnc': {'id': vnc_id, 'url': url}})

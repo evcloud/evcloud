@@ -33,8 +33,8 @@ class CephCluster(models.Model):
 
     class Meta:
         ordering = ('id',)
-        verbose_name = _('ceph cluster')
-        verbose_name_plural = _('ceph cluster')
+        verbose_name = _('CEPH存储集群')
+        verbose_name_plural = verbose_name
 
     def __str__(self):
         return self.name
@@ -111,8 +111,8 @@ class CephPool(models.Model):
 
     class Meta:
         ordering = ('id',)
-        verbose_name = 'ceph pool'
-        verbose_name_plural = 'ceph pool'
+        verbose_name = _('CEPH数据存储池')
+        verbose_name_plural = verbose_name
 
     def __str__(self):
         return f'ceph<{self.ceph.name}>@pool<{self.pool_name}>'
@@ -123,7 +123,7 @@ class GlobalConfig(models.Model):
 
     id = models.AutoField(primary_key=True, verbose_name=_('ID'))
     name = models.CharField(verbose_name=_('名称'), max_length=255)
-    content = models.CharField(verbose_name=_('内容'), max_length=255, default='')
+    content = models.TextField(verbose_name=_('内容'), default='', null=True, blank=True)
     remark = models.CharField(verbose_name=_('备注信息'), max_length=255, default='', blank=True)
     create_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
     modif_time = models.DateTimeField(verbose_name=_('修改时间'), auto_now=True)
@@ -131,7 +131,7 @@ class GlobalConfig(models.Model):
     class Meta:
         db_table = 'site_global_config'
         ordering = ['-id']
-        verbose_name = _('站点配置')
+        verbose_name = _('站点参数')
         verbose_name_plural = verbose_name
 
     def __str__(self):
@@ -140,41 +140,28 @@ class GlobalConfig(models.Model):
     @classmethod
     def create_base_data(cls):
         """写入基数据"""
-        # inst_idct = {
-        #     'sitename': 'EVCloud',
-        #     'poweredby': 'https://gitee.com/cstcloud-cnic/evcloud',
-        #     'novnchttp': 'https',
-        #
-        # }
-        inst = cls.objects.filter(name='sitename').first()
-        if not inst:
-            cls.objects.create(name='sitename', content='EVCloud')
+        cls.objects.get_or_create(name='siteName', content='EVCloud')
+        cls.objects.get_or_create(name='poweredBy', content='https://gitee.com/cstcloud-cnic/evcloud')
+        cls.objects.get_or_create(name='novncAccess', content='https')
+        cls.objects.get_or_create(name='vncUserConfig', content='')
 
-        inst = cls.objects.filter(name='poweredby').first()
-        if not inst:
-            cls.objects.create(name='poweredby', content='https://gitee.com/cstcloud-cnic/evcloud')
-
-        inst = cls.objects.filter(name='novnchttp').first()
-        if not inst:
-            cls.objects.create(name='novnchttp', content='https')
-
-        return cls.objects.filter(name__in=['sitename', 'poweredby', 'novnchttp'])
+        return cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess'])
 
 
     @classmethod
     def get_instance(cls):
         inst_idct = {}
-        inst = cls.objects.filter(name__in=['sitename', 'poweredby', 'novnchttp'])
+        inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'vncUserConfig'])
         if not inst:
             inst = cls.create_base_data()
 
         for obj in inst:
-            if obj.name == 'sitename':
-                inst_idct['sitename'] = obj.content
-            elif obj.name == 'poweredby':
-                inst_idct['poweredby'] = obj.content
-            elif obj.name == 'novnchttp':
-                inst_idct['novnchttp'] = obj.content
+            if obj.name == 'siteName':
+                inst_idct['siteName'] = obj.content
+            elif obj.name == 'poweredBy':
+                inst_idct['poweredBy'] = obj.content
+            elif obj.name == 'novncAccess':
+                inst_idct['novncAccess'] = obj.content
 
         return inst_idct
 
@@ -189,10 +176,6 @@ class GlobalConfig(models.Model):
         self.delete_global_config_cache()
 
         super().delete(*args, **kwargs)
-
-    # def clean(self):
-    #     if self.novnchttp not in ['http', 'https']:
-    #         raise ValidationError({'novnchttp': _('novnc http协议配置有误。')})
 
     @staticmethod
     def get_global_config():

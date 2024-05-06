@@ -12,7 +12,7 @@
         <script src="{% url 'javascript-catalog' %}"></script>
 	{% endblock %}
     {% get_global_config as global_config %}
-	<title> {% if global_config %} {{ global_config.sitename }} | {% endif %}{% block title %}{% endblock %}</title>
+	<title> {% if global_config %} {{ global_config.siteName }} | {% endif %}{% block title %}{% endblock %}</title>
     <style>
         html{
             height: 100%;
@@ -43,7 +43,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <a class="navbar-brand" href="/">
             <img src="{% static 'images/logo/logo.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
-            {% if global_config %} {{ global_config.sitename }} {% else %} EVcloud {% endif %}</a>
+            {% if global_config %} {{ global_config.siteName }} {% else %} EVcloud {% endif %}</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -125,7 +125,7 @@
     {% block boby %}{% endblock %}
 </div>
 <footer class="page-footer text-center bg-light p-2">
-    <p>Powered by <a href="{% if global_config %}{{ global_config.poweredby }}
+    <p>Powered by <a href="{% if global_config %}{{ global_config.poweredBy }}
             {% else %} https://gitee.com/cstcloud-cnic/evcloud {% endif %}"> Evcloud </a></p>
 </footer>
 <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
