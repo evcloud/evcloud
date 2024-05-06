@@ -2201,7 +2201,7 @@ class VlanViewSet(CustomGenericViewSet):
             return Response(exc.data(), status=exc.code)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content='查询网段信息', remark='')
+        # user_operation_record.add_log(request=request, operation_content='查询网段信息', remark='')
 
         try:
             vlan = VlanManager().get_vlan_by_id(vlan_id=v_id, user=request.user)
