@@ -1,25 +1,25 @@
-from datetime import datetime
-
 import pytz
+
+from datetime import datetime
 from django.conf import settings
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import Serializer
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from api import serializers
 from api.viewsets import CustomGenericViewSet
-from drf_yasg import openapi
-
 from logrecord.manager import user_operation_record
+from utils.permissions import APIIPPermission
 
 
 class LogRecordViewSet(CustomGenericViewSet):
     """
     可用资源配额类视图
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
 
     @swagger_auto_schema(

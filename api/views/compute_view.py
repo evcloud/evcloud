@@ -2,21 +2,21 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import Serializer
 from drf_yasg.utils import swagger_auto_schema
-from compute.managers import CenterManager, GroupManager, ComputeError
-from api.viewsets import CustomGenericViewSet
+from rest_framework.decorators import action
 from drf_yasg import openapi
 
-from logrecord.manager import user_operation_record
-from logrecord.models import LogRecord
+from api.viewsets import CustomGenericViewSet
+from compute.managers import CenterManager, GroupManager, ComputeError
 from utils import errors as exceptions
-from rest_framework.decorators import action
+
+from utils.permissions import APIIPPermission
 
 
 class ComputeQuotaViewSet(CustomGenericViewSet):
     """
     可用资源配额类视图
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = None
     lookup_field = 'id'
 
@@ -106,7 +106,7 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
         }
     )
     @action(methods=['get'], detail=False, url_path=r'center', url_name='center')
-    def center_compute_quota(self,  request, *args, **kwargs):
+    def center_compute_quota(self, request, *args, **kwargs):
         """
         获取所有数据中心资源配额信息
 

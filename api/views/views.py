@@ -14,6 +14,7 @@ from drf_yasg import openapi
 
 from ceph.models import GlobalConfig
 from logrecord.manager import user_operation_record
+from utils.permissions import APIIPPermission
 from vms.manager import VmManager, VmError, FlavorManager
 from vms.api import VmAPI
 from vms.migrate import VmMigrateManager
@@ -33,7 +34,6 @@ from utils.vm_normal_status import vm_normal_status
 from api.paginations import MacIpLimitOffsetPagination
 from api.viewsets import CustomGenericViewSet
 from version import __version__
-from logrecord.models import LogRecord
 
 VPN_USER_ACTIVE_DEFAULT = getattr(settings, 'VPN_USER_ACTIVE_DEFAULT', False)
 
@@ -274,7 +274,7 @@ class VmsViewSet(CustomGenericViewSet):
           }
         }
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     lookup_field = 'uuid'
     lookup_value_regex = '[0-9a-z-]+'
@@ -1822,7 +1822,7 @@ class CenterViewSet(CustomGenericViewSet):
     """
     数据中心类视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     queryset = Center.objects.all()
 
@@ -1877,7 +1877,7 @@ class GroupViewSet(CustomGenericViewSet):
     """
     宿主机组类视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     queryset = Group.objects.filter(enable=True).all()
 
@@ -1968,7 +1968,7 @@ class HostViewSet(CustomGenericViewSet):
     """
     宿主机类视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     queryset = Host.objects.all()
 
@@ -2053,7 +2053,7 @@ class VlanViewSet(CustomGenericViewSet):
     """
     vlan类视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     lookup_field = 'id'
 
@@ -2231,7 +2231,7 @@ class ImageViewSet(CustomGenericViewSet):
     """
     镜像类视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     lookup_field = 'id'
 
@@ -2709,7 +2709,7 @@ class VDiskViewSet(CustomGenericViewSet):
     """
     虚拟硬盘类视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     lookup_field = 'uuid'
     lookup_value_regex = '[0-9a-z-]+'
@@ -3270,7 +3270,7 @@ class QuotaViewSet(CustomGenericViewSet):
     """
     硬盘存储池配额类视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
 
     @swagger_auto_schema(
@@ -3366,7 +3366,7 @@ class StatCenterViewSet(CustomGenericViewSet):
     """
     资源统计类视图
     """
-    permission_classes = [IsAuthenticated, IsSuperUser]
+    permission_classes = [IsAuthenticated, IsSuperUser, APIIPPermission]
     pagination_class = None
     lookup_field = 'id'
 
@@ -3626,7 +3626,7 @@ class PCIDeviceViewSet(CustomGenericViewSet):
     """
     PCI设备类视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
 
     @swagger_auto_schema(
@@ -3918,7 +3918,7 @@ class PCIDeviceViewSet(CustomGenericViewSet):
 
 
 class MacIPViewSet(CustomGenericViewSet):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = MacIpLimitOffsetPagination
 
     @swagger_auto_schema(
@@ -3989,7 +3989,7 @@ class FlavorViewSet(CustomGenericViewSet):
     """
     虚拟机硬件配置样式视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
 
     @swagger_auto_schema(
@@ -4047,7 +4047,7 @@ class VPNViewSet(CustomGenericViewSet):
     """
     VPN视图
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     lookup_field = 'username'
     lookup_value_regex = '[^/]+'  # 匹配排除“/”的任意字符串
@@ -4324,7 +4324,7 @@ class VPNViewSet(CustomGenericViewSet):
 
 
 class MigrateTaskViewSet(CustomGenericViewSet):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
     lookup_field = 'id'
     lookup_value_regex = '.+'

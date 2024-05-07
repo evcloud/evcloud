@@ -30,6 +30,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
 from utils.errors import SystemRunningError
+from utils.permissions import APIIPPermission
 from version import __version__, __version_git_change_set__
 
 from . import admin_site  # admin后台一些设置
@@ -67,7 +68,7 @@ schema_view = get_schema_view(
     ),
     public=False,
     generator_class=BothHttpAndHttpsSchemaGenerator,
-    permission_classes=[permissions.IsAuthenticated]
+    permission_classes=[permissions.IsAuthenticated, APIIPPermission]
 )
 
 urlpatterns = [
