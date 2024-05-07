@@ -3856,7 +3856,7 @@ class PCIDeviceViewSet(CustomGenericViewSet):
             return self.exception_response(e)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'挂载PCI设备, 云主机IP：{device.vm_id}, pcie设备：{device}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'挂载PCI设备, 云主机IP：{device.vm.mac_ip}, pcie设备：{device}', remark='')
 
         return Response(data={'code': 201, 'code_text': '挂载成功'}, status=status.HTTP_201_CREATED)
 

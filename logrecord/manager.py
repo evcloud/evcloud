@@ -4,34 +4,35 @@ from urllib import parse
 from logrecord.models import LogRecord
 
 
+def extract_string(text):
+    """提取操作用户"""
+
+    user_list = text.rsplit(';')
+
+    if len(user_list) == 1:
+        return None, user_list[0].rsplit('[user]', 1)[1]
+
+    if '[vo]' in user_list[0]:
+        return user_list[0].split('[vo]', 1)[1], user_list[1].rsplit('[user]', 1)[1]
+
+    if '[vo]' in user_list[1]:
+        return user_list[1].split('[vo]', 1)[1], user_list[0].rsplit('[user]', 1)[1]
+
+
 class LogManager:
-
-    def extract_string(self, text, start_marker, end_marker=None):
-        """提取两个标志位中间的字符串"""
-        start_index = text.find(start_marker)
-        if start_index == -1:
-            return None
-        start_index += len(start_marker)
-
-        if end_marker:
-            end_index = text.find(end_marker, start_index)
-            if end_index == -1:
-                return None
-            return text[start_index:end_index]
-
-        return text[start_index:]
 
     def add_log(self, request, operation_content, remark=None):
         """
             添加用户操作
-            :param :
-
         """
-
         method = request.method
         full_path = request.get_full_path()
-
-        real_user , username = self.get_username(request=request, full_path=full_path, remark=remark)
+        vo_or_user = request.query_params.get('_who_action', '')
+        username = request.user.username
+        real_user = ''
+        if vo_or_user:
+            vo , real_user = extract_string(text=vo_or_user)
+            remark = f'项目组：{vo}, {remark}' if vo else remark
 
         try:
             LogRecord.objects.create(
@@ -44,23 +45,6 @@ class LogManager:
             )
         except Exception as e:
             pass
-
-    def get_username(self, request, full_path, remark):
-        request_username = request.user.username
-        full_path = urllib.parse.unquote(full_path)  # 解码
-        username = self.extract_string(text=full_path, start_marker='[user]')  # 尝试从 url 中 获取数据
-        if username :
-            # /?_who_action=%5Buser%5Dxxxxx%40cnic.cn&vm_uuid=xxxxx
-            if '&' in username:
-                username = username.split('&')[0]
-            return username, request_username
-
-        username = self.extract_string(text=remark, start_marker='[user]', end_marker=';')  #尝试从 remart 中 获取数据
-        if username:
-            return username, request_username
-
-
-        return '', request_username
 
     def get_log_record(self, kwargs):
         """获取日志"""
