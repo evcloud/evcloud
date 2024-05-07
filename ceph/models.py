@@ -73,7 +73,7 @@ class CephCluster(models.Model):
 
         try:
             # 目录路径不存在存在则创建
-            os.makedirs(path, exist_ok=True)
+            os.makedirs(path, exist_ok=True, mode=0o755)  # 目录权限 755
 
             with open(self.config_file, 'w') as f:
                 config = self.config.replace('\r\n', '\n')      # Windows
@@ -87,6 +87,8 @@ class CephCluster(models.Model):
         except Exception:
             return False
 
+        os.chmod(self.config_file, 0o644)  # 设置权限
+        os.chmod(self.keyring_file, 0o644)  # 设置权限
         return True
 
     def save(self, *args, **kwargs):

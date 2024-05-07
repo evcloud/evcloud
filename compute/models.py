@@ -57,7 +57,7 @@ class Center(models.Model):
 
         try:
             # 目录路径不存在存在则创建
-            os.makedirs(path, exist_ok=True)
+            os.makedirs(path, exist_ok=True, mode=0o755)
             with open(self.ssh_key, 'w') as f:
                 keyring = self.keyring.replace('\r\n', '\n')
                 self.keyring = keyring.replace('\r', '\n')
@@ -65,7 +65,7 @@ class Center(models.Model):
         except Exception:
             return False
 
-        os.chmod(self.ssh_key, 0o600)   # 设置权限
+        os.chmod(self.ssh_key, 0o644)   # 设置权限
         return True
 
     def save(self, *args, **kwargs):
