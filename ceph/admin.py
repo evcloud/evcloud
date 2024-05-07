@@ -1,11 +1,11 @@
 from django.contrib import admin
 
-from .models import CephPool, CephCluster, GlobalConfig
+from .models import CephPool, CephCluster, GlobalConfig, ApiAllowIP
 
 
 @admin.register(CephCluster)
 class CephClusterAdmin(admin.ModelAdmin):
-    admin_order = 2
+    admin_order = 3
     list_display_links = ('name',)
     list_display = ('id', 'name', 'has_auth', 'uuid', 'config_file', 'keyring_file', 'hosts_xml', 'username')
     # list_filter = ['name']
@@ -14,7 +14,7 @@ class CephClusterAdmin(admin.ModelAdmin):
 
 @admin.register(CephPool)
 class CephPoolAdmin(admin.ModelAdmin):
-    admin_order = 3
+    admin_order = 4
     list_display_links = ('id', 'pool_name')
     list_display = ('id', 'pool_name', 'has_data_pool', 'data_pool', 'ceph', 'remarks')
     # list_filter = ['ceph']
@@ -36,3 +36,10 @@ class GlobalConfigTableAdmin(admin.ModelAdmin):
     #         return False
     #
     #     return super().has_add_permission(request=request)
+
+
+@admin.register(ApiAllowIP)
+class ApiAllowIPAdmin(admin.ModelAdmin):
+    admin_order = 2
+    list_display_links = ('id',)
+    list_display = ('id', 'ip_value', 'remark', 'creation_time', 'update_time',)

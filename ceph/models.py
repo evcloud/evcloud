@@ -1,3 +1,4 @@
+import ipaddress
 import os
 
 from django.db import models
@@ -7,6 +8,8 @@ from compute.models import Center
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
+from utils.iprestrict import convert_iprange
 
 
 class CephCluster(models.Model):
@@ -121,7 +124,7 @@ class CephPool(models.Model):
 
 
 class GlobalConfig(models.Model):
-    """全局配置表"""
+    """全局配置表-站点参数"""
 
     id = models.AutoField(primary_key=True, verbose_name=_('ID'))
     name = models.CharField(verbose_name=_('名称'), max_length=255)
@@ -193,3 +196,31 @@ class GlobalConfig(models.Model):
     @staticmethod
     def delete_global_config_cache():
         cache.delete('global_config_key')
+
+
+class ApiAllowIP(models.Model):
+    """全局配置表-管理员IP白名单：配置 nginx 允许的IP"""
+    id = models.BigAutoField(primary_key=True)
+    ip_value = models.CharField(
+        verbose_name=_('IP'), max_length=100, help_text='192.168.1.1、 192.168.1.1/24、192.168.1.66 - 192.168.1.100')
+    remark = models.CharField(verbose_name=_('备注'), max_length=255, blank=True, default='')
+    creation_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
+    update_time = models.DateTimeField(verbose_name=_('更新时间'), auto_now=True)
+
+    class Meta:
+        db_table = 'app_global_parameter_apiallowip' # 后续 app 更名为 app_global_parameter
+        ordering = ['-creation_time']
+        verbose_name = _('管理员IP白名单')
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return f'{self.id}({self.ip_value})'
+
+    def clean(self):
+        try:
+            subnet = convert_iprange(self.ip_value)
+        except Exception as exc:
+            raise ValidationError({'ip_value': str(exc)})
+
+        if isinstance(subnet, ipaddress.IPv4Network):
+            self.ip_value = str(subnet)
