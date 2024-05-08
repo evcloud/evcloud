@@ -1,4 +1,4 @@
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.core.exceptions import PermissionDenied
 from django.db.models import QuerySet
 from rest_framework.viewsets import GenericViewSet
@@ -20,6 +20,10 @@ def exception_handler(exc, context):
     Any unhandled exceptions may return `None`, which will cause a 500 error
     to be raised.
     """
+
+    if isinstance(exc, errors.APIAccessDeniedError):
+        return HttpResponse(exc.msg)
+
     if isinstance(exc, errors.Error):
         set_rollback()
         return Response(exc.data(), status=exc.status_code)

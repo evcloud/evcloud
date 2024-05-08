@@ -108,6 +108,10 @@ class AccessDeniedError(Error):
     msg = 'No access to the target resource'
 
 
+class APIAccessDeniedError(AccessDeniedError):
+    pass
+
+
 class NotFoundError(Error):
     """
     网络错误类型定义

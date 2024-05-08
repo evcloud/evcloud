@@ -93,7 +93,7 @@ class IPRestrictor:
         try:
             client_ip = ipaddress.IPv4Address(client_ip)
         except (ipaddress.AddressValueError, ipaddress.NetmaskValueError):
-            raise errors.AccessDeniedError(msg=_('无法获取到有效的客户端IPv4地址。') + client_ip)
+            raise errors.APIAccessDeniedError(msg=_('无法获取到有效的客户端IPv4地址。') + client_ip)
 
         for ip_rule in self.allowed_ips:
             if isinstance(ip_rule, IPRange):
@@ -103,7 +103,7 @@ class IPRestrictor:
                 if client_ip in ip_rule:
                     return False
 
-        raise errors.AccessDeniedError(msg=_("拒绝IP地址为'%s'访问, 请联系管理员。") % (client_ip,))
+        raise errors.APIAccessDeniedError(msg=_("拒绝IP地址为'%s'访问, 请联系管理员。") % (client_ip,))
 
     @staticmethod
     def get_remote_ip(request):
