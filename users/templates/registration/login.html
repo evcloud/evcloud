@@ -20,6 +20,8 @@
                 <div class="card-body">
                     {% if form.errors %}
                         <div class="text-danger">{{ form.non_field_errors }}</div>
+                    {% else %}
+                        <div class="text-danger"> {{ ip_error }}</div>
                     {% endif %}
                     <form method="post" action="{% url 'users:login' %}" id="login-form">
                         {% csrf_token %}

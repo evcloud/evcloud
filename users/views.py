@@ -1,3 +1,4 @@
+from django.contrib.auth.views import LoginView
 from django.shortcuts import render, redirect, reverse
 from django.contrib.auth import logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -7,6 +8,7 @@ from django.utils.translation import get_language
 
 from rest_framework.authtoken.models import Token
 
+from utils.permissions import APIIPRestrictor
 from .forms import UserRegisterForm, PasswordChangeForm, ForgetPasswordForm, PasswordResetForm
 from .models import Email
 from utils.jwt import JWTokenTool
@@ -122,11 +124,12 @@ def register_user(request):
         if form.is_valid():
             user = form.get_or_creat_unactivated_user()
             if user:
-                logout(request)     # 登出用户（确保当前没有用户登陆）
+                logout(request)  # 登出用户（确保当前没有用户登陆）
 
                 # 向邮箱发送激活连接
                 if send_active_url_email(request, user.email, user):
-                    return render(request, 'message.html', context={'message': _('用户注册成功，请登录邮箱访问收到的连接以激活用户')})
+                    return render(request, 'message.html',
+                                  context={'message': _('用户注册成功，请登录邮箱访问收到的连接以激活用户')})
 
                 form.add_error(None, _('邮件发送失败，请检查邮箱输入是否有误'))
             else:
@@ -134,7 +137,8 @@ def register_user(request):
     else:
         form = UserRegisterForm()
 
-    content = {'form_title': _('用户注册'), 'submit_text': _('注册'), 'action_url': reverse('users:register'), 'form': form}
+    content = {'form_title': _('用户注册'), 'submit_text': _('注册'), 'action_url': reverse('users:register'),
+               'form': form}
     return render(request, 'form.html', content)
 
 
@@ -155,7 +159,8 @@ def active_user(request):
     try:
         token = Token.objects.select_related('user').get(key=key)
     except Token.DoesNotExist:
-        return render(request, 'message.html', context={'message': _('用户激活失败，无待激活账户，或者账户已被激活，请直接尝试登录'), 'urls': urls})
+        return render(request, 'message.html',
+                      context={'message': _('用户激活失败，无待激活账户，或者账户已被激活，请直接尝试登录'), 'urls': urls})
 
     user = token.user
     user.is_active = True
@@ -218,7 +223,8 @@ def forget_password(request):
             else:
                 if send_forget_password_email(request, email, user):
                     return render(request, 'message.html', context={
-                        'message': _('重置密码确认邮件已发送，请尽快登录邮箱访问收到的链接以完成密码重置，以防链接过期无效')})
+                        'message': _(
+                            '重置密码确认邮件已发送，请尽快登录邮箱访问收到的链接以完成密码重置，以防链接过期无效')})
 
                 form.add_error(None, _('邮件发送失败，请检查用户名输入是否有误，稍后重试'))
     else:
@@ -256,7 +262,8 @@ def forget_password_confirm(request):
         except Exception:
             ret = None
         if not ret:
-            return render(request, 'message.html', context={'message': _('链接无效或已过期，请重新找回密码获取新的链接'), 'urls': urls})
+            return render(request, 'message.html',
+                          context={'message': _('链接无效或已过期，请重新找回密码获取新的链接'), 'urls': urls})
 
         jwt_value = ret[-1]
         form = PasswordResetForm(initial={'jwt': jwt_value})
@@ -310,3 +317,20 @@ def get_find_password_link(request, user):
 
     url = request.build_absolute_uri(url)
     return url + '?jwt=' + token
+
+
+class CustomLoginView(LoginView):
+
+    # template_name = 'login.html'
+    def dispatch(self, request, *args, **kwargs):
+
+        response = super().dispatch(request, *args, **kwargs)
+
+        try:
+            APIIPRestrictor().check_restricted(request=self.request)
+        except Exception as e:
+            ip_error = str(e)
+            print(ip_error)
+            return render(request=request, template_name=self.template_name, context={'ip_error': ip_error})
+
+        return response

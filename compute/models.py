@@ -65,7 +65,7 @@ class Center(models.Model):
         except Exception:
             return False
 
-        os.chmod(self.ssh_key, 0o644)   # 设置权限
+        os.chmod(self.ssh_key, 0o600)   # 设置权限
         return True
 
     def save(self, *args, **kwargs):

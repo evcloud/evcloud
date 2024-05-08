@@ -103,7 +103,7 @@ class IPRestrictor:
                 if client_ip in ip_rule:
                     return False
 
-        raise errors.AccessDeniedError(msg=_("此API拒绝从IP地址'%s'访问") % (client_ip,))
+        raise errors.AccessDeniedError(msg=_("拒绝IP地址为'%s'访问, 请联系管理员。") % (client_ip,))
 
     @staticmethod
     def get_remote_ip(request):
