@@ -1,3 +1,15 @@
+## v4.4.0
+2024-05-08
+* 增加管理员IP白名单  提交人：wanghuang
+* api 接口、登录界面增加 IP 限制  提交人：wanghuang
+* 用户操作接口获取用户信息方法修改  提交人：wanghuang
+* 全局配置内容调整：站点参数、管理员IP白名单、CEPH存储集群、CEPH数据存储池  提交人：wanghuang
+* 全局配置字段修改 TextField  提交人：wanghuang
+* 站点参数增加 vncUserConfig配置  提交人：wanghuang
+* vpn 配置文件接口增加获取vncUserConfig配置文件  提交人：wanghuang
+* data 目录权限调整：私钥文件权限 600、ceph 配置文件 644、 data 目录权限 755  提交人：wanghuang
+
+
 ## v4.3.0
 2024-04-28
 * 数据大屏展示数据汇总接口增加vpn在线数  提交人：wanghuang

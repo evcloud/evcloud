@@ -4,4 +4,4 @@ from django.utils.translation import gettext_lazy as _
 
 class CephConfig(AppConfig):
     name = 'ceph'
-    verbose_name = _('全局参数')
+    verbose_name = _('全局配置')
