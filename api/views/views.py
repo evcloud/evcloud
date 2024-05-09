@@ -4382,7 +4382,7 @@ class MigrateTaskViewSet(CustomGenericViewSet):
 
 
 class VersionViewSet(CustomGenericViewSet):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = []
     pagination_class = LimitOffsetPagination
 
     @swagger_auto_schema(

@@ -330,7 +330,6 @@ class CustomLoginView(LoginView):
             APIIPRestrictor().check_restricted(request=self.request)
         except Exception as e:
             ip_error = str(e)
-            print(ip_error)
             return render(request=request, template_name=self.template_name, context={'ip_error': ip_error})
 
         return response

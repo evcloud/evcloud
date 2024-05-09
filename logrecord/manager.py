@@ -1,22 +1,35 @@
-import urllib
-from urllib import parse
-
 from logrecord.models import LogRecord
 
 
 def extract_string(text):
-    """提取操作用户"""
+    """
+    提取操作用户
 
-    user_list = text.rsplit(';')
+    :retrun: (
+        vo_name: str,
+        username: str
+    )
+    正常格式：
+        [user]xxx@cnic.cn
+        [vo]vo_name;[user]xxx@cnic.cn
+    """
+    vo_name = ''
+    username = ''
+    if not text:
+        return vo_name, username
 
-    if len(user_list) == 1:
-        return None, user_list[0].rsplit('[user]', 1)[1]
+    items = text.split(';')
+    for s in items:
+        try:
 
-    if '[vo]' in user_list[0]:
-        return user_list[0].split('[vo]', 1)[1], user_list[1].rsplit('[user]', 1)[1]
+            if '[user]' in s:
+                username = s.split('[user]')[1]
+            elif '[vo]' in s:
+                vo_name = s.split('[vo]')[1]
+        except Exception as e:
+            pass
 
-    if '[vo]' in user_list[1]:
-        return user_list[1].split('[vo]', 1)[1], user_list[0].rsplit('[user]', 1)[1]
+    return vo_name, username
 
 
 class LogManager:
@@ -31,7 +44,7 @@ class LogManager:
         username = request.user.username
         real_user = ''
         if vo_or_user:
-            vo , real_user = extract_string(text=vo_or_user)
+            vo, real_user = extract_string(text=vo_or_user)
             remark = f'项目组：{vo}, {remark}' if vo else remark
 
         try:
