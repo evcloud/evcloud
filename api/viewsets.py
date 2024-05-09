@@ -21,7 +21,7 @@ def exception_handler(exc, context):
     to be raised.
     """
 
-    if isinstance(exc, errors.APIAccessDeniedError):
+    if isinstance(exc, errors.APIIPAccessDeniedError):
         return HttpResponse(exc.msg)
 
     if isinstance(exc, errors.Error):

@@ -58,21 +58,21 @@ def load_allowed_ips(setting_key: str) -> List[Union[ipaddress.IPv4Network, IPRa
 class IPRestrictor:
     _allowed_ip_rules = []
 
-    def reload_ip_rules(self):
+    def reload_ip_rules(self) -> List[Union[ipaddress.IPv4Network, IPRange]]:
         raise NotImplementedError('继承类IPRestrictor的子类没有实现类方法“reload_ip_rules”')
 
     @property
-    def allowed_ips(self):
+    def allowed_ips(self) -> List[Union[ipaddress.IPv4Network, IPRange]]:
         return self._allowed_ip_rules
 
     @allowed_ips.setter
-    def allowed_ips(self, ips: list):
+    def allowed_ips(self, ips: List[Union[ipaddress.IPv4Network, IPRange]]):
         for i in ips:
             if not isinstance(i, IPRange) and not isinstance(i, ipaddress.IPv4Network):
                 raise ValueError('IP列表数据项类型必须是“IPv4Network”或者“IPRange”')
 
         self._allowed_ip_rules = ips
-
+        
     def check_restricted(self, request):
         """
         :return:
@@ -93,7 +93,7 @@ class IPRestrictor:
         try:
             client_ip = ipaddress.IPv4Address(client_ip)
         except (ipaddress.AddressValueError, ipaddress.NetmaskValueError):
-            raise errors.APIAccessDeniedError(msg=_('无法获取到有效的客户端IPv4地址。') + client_ip)
+            raise errors.APIIPAccessDeniedError(msg=_('无法获取到有效的客户端IPv4地址。') + client_ip)
 
         for ip_rule in self.allowed_ips:
             if isinstance(ip_rule, IPRange):
@@ -103,7 +103,7 @@ class IPRestrictor:
                 if client_ip in ip_rule:
                     return False
 
-        raise errors.APIAccessDeniedError(msg=_("拒绝IP地址为'%s'访问, 请联系管理员。") % (client_ip,))
+        raise errors.APIIPAccessDeniedError(msg=_("拒绝IP地址为'%s'访问, 请联系管理员。") % (client_ip,))
 
     @staticmethod
     def get_remote_ip(request):

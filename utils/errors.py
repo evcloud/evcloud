@@ -108,7 +108,7 @@ class AccessDeniedError(Error):
     msg = 'No access to the target resource'
 
 
-class APIAccessDeniedError(AccessDeniedError):
+class APIIPAccessDeniedError(AccessDeniedError):
     pass
 
 
