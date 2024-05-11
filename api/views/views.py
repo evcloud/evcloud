@@ -935,7 +935,7 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
 
-        user_operation_record.add_log(request=request, operation_content='远程连接云主机vnc', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'远程连接云主机vnc,云主机IP：{vm.mac_ip}', remark='')
         # 搁置虚拟机，不允许
         status_bool = vm_normal_status(vm=vm)
         if status_bool is False:

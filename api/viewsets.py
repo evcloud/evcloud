@@ -22,7 +22,11 @@ def exception_handler(exc, context):
     """
 
     if isinstance(exc, errors.APIIPAccessDeniedError):
-        return HttpResponse(exc.msg)
+        exc = errors.APIIPAccessDeniedError(msg=str(exc))
+        data = exc.data()
+        response = Response(data=data, status=exc.status_code)
+        response.content = str(data)
+        return response
 
     if isinstance(exc, errors.Error):
         set_rollback()

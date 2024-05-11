@@ -12,6 +12,7 @@ from rest_framework.serializers import Serializer
 from drf_yasg.utils import swagger_auto_schema
 
 from ceph.models import GlobalConfig
+from logrecord.manager import user_operation_record
 from utils.paginators import NumsPaginator
 from .manager import VPNManager, VPNError
 from .forms import VPNChangeFrom, VPNAddFrom
@@ -209,6 +210,8 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         """
         下载用户vpn配置文件
         """
+        user_operation_record.add_log(request=request, operation_content=f'下载vpn配置文件',
+                                      remark='')
         obj = VPNManager().vpn_config_file()
         filename = 'client.ovpn'
         if not obj:
@@ -219,6 +222,7 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         else:
             filename = obj.filename if obj.filename else filename
         content = obj.content.encode(encoding='utf-8')
+
         return FileResponse(BytesIO(initial_bytes=content), as_attachment=True, filename=filename)
 
     @swagger_auto_schema(
@@ -230,6 +234,8 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         下载用户vpn ca证书文件
         """
 
+        user_operation_record.add_log(request=request, operation_content=f'下载用户vpn证书文件',
+                                      remark='')
         obj = VPNManager().vpn_ca_file()
         if not obj:
             return Response(data={'未添加vpn ca证书文件'}, status=status.HTTP_404_NOT_FOUND)
