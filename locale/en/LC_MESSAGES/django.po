@@ -2,13 +2,13 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
+# 
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-29 16:00+0800\n"
+"POT-Creation-Date: 2024-05-13 17:35+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,103 +18,107 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ceph/models.py:17 image/templates/image_list.html:70
+#: ceph/apps.py:7 templates/app_nav.html:107
+#, fuzzy
+#| msgid "全局配置表"
+msgid "全局配置"
+msgstr "Global configuration table"
+
+#: ceph/models.py:20 ceph/models.py:130 image/templates/image_list.html:70
 #: network/templates/vlan_add.html:21 vms/models.py:109 vms/models.py:360
 msgid "名称"
 msgstr "Name"
 
-#: ceph/models.py:18 vms/templates/vm_detail.html:74
+#: ceph/models.py:21 vms/templates/vm_detail.html:74
 msgid "所属数据中心"
 msgstr "Data center"
 
-#: ceph/models.py:19
+#: ceph/models.py:22
 msgid "需要认证"
 msgstr "Certification required"
 
-#: ceph/models.py:19
+#: ceph/models.py:22
 msgid "未选中时，不使用uuid字段，uuid设置为空"
 msgstr ""
 "If it is not selected, the uuid field is not used and the uuid is left blank"
 
-#: ceph/models.py:20
+#: ceph/models.py:23
 msgid "xml中ceph的uuid"
 msgstr "xml中ceph的uuid"
 
-#: ceph/models.py:21
+#: ceph/models.py:24
 msgid "xml中ceph配置的uuid,libvirt通过uuid获取访问ceph的用户key"
 msgstr ""
 "The uuid configured for ceph in xml. libvirt uses the uuid to obtain the "
 "user key for accessing ceph."
 
-#: ceph/models.py:22
+#: ceph/models.py:25
 msgid "ceph集群配置文本"
 msgstr "ceph cluster configuration text"
 
-#: ceph/models.py:23
+#: ceph/models.py:26
 msgid "配置文件保存路径"
 msgstr "Config file"
 
-#: ceph/models.py:24
+#: ceph/models.py:27
 msgid "点击保存，配置文本会存储到这个文件, 此字段自动填充"
 msgstr ""
 "Click Save, the configuration text will be stored in this file, and the "
 "field will be filled in automatically"
 
-#: ceph/models.py:25
+#: ceph/models.py:28
 msgid "ceph集群keyring文本"
 msgstr "ceph cluster keyring text"
 
-#: ceph/models.py:26
+#: ceph/models.py:29
 msgid "keyring文件保存路径"
 msgstr "keyring File saving path"
 
-#: ceph/models.py:27
+#: ceph/models.py:30
 msgid "点击保存，keyring文本会存储到这个文件, 此字段自动填充"
 msgstr ""
 "Click Save, the keyring text is stored in this file, and this field is "
 "automatically filled"
 
-#: ceph/models.py:29
+#: ceph/models.py:32
 msgid ""
 "设置虚机xml中disk/source元素的ceph monitors信息，格式:&lt;host "
 "name='10.100.50.1' port='6789'/&gt;"
 msgstr ""
 
-#: ceph/models.py:31
+#: ceph/models.py:34
 msgid "ceph用户名"
 msgstr "ceph user name"
 
-#: ceph/models.py:32
+#: ceph/models.py:35
 msgid "ceph用户名，需与keyring文件一致"
 msgstr "ceph user name, which must be the same as the keyring file"
 
-#: ceph/models.py:36 templates/app_nav.html:110
-msgid "CEPH集群"
+#: ceph/models.py:39
+#, fuzzy
+#| msgid "CEPH集群"
+msgid "CEPH存储集群"
 msgstr "Ceph cluster"
 
-#: ceph/models.py:37
-msgid "03_CEPH集群"
-msgstr "Ceph cluster"
-
-#: ceph/models.py:105
+#: ceph/models.py:110
 msgid "POOL名称"
 msgstr "POOL name"
 
-#: ceph/models.py:106
+#: ceph/models.py:111
 msgid "具备独立存储POOL"
 msgstr "An independent storage POOL is available"
 
-#: ceph/models.py:107
+#: ceph/models.py:112
 msgid "数据存储POOL名称"
 msgstr "Name of the data store POOL"
 
-#: ceph/models.py:109
+#: ceph/models.py:114
 msgid "启用存储POOL"
 msgstr "Enabling a storage POOL"
 
-#: ceph/models.py:110 device/models.py:31 device/templates/pci_list.html:85
-#: device/templates/pci_mount.html:27 device/templates/pci_mount.html:60
-#: image/templates/image_list.html:77 image/templates/image_vm_create2.html:167
+#: ceph/models.py:115 ceph/models.py:206 device/models.py:31
+#: device/templates/pci_list.html:85 device/templates/pci_mount.html:27
+#: device/templates/pci_mount.html:60 image/templates/image_list.html:77
 #: network/models.py:42 network/templates/vlan_list.html:35
 #: pcservers/models.py:103 vdisk/models.py:168
 #: vdisk/templates/vdisk_create.html:76 vdisk/templates/vdisk_list.html:98
@@ -135,29 +139,60 @@ msgstr "Enabling a storage POOL"
 msgid "备注"
 msgstr "Notes"
 
-#: ceph/models.py:126
-msgid "站点名称"
-msgstr "Site name"
+#: ceph/models.py:119
+#, fuzzy
+#| msgid "CEPH存储池"
+msgid "CEPH数据存储池"
+msgstr "Ceph pool"
 
-#: ceph/models.py:127
-msgid "技术支持"
-msgstr "Technical support"
+#: ceph/models.py:129 logrecord/models.py:10 pcservers/models.py:13
+#: pcservers/models.py:30 pcservers/models.py:48 pcservers/models.py:84
+#: vms/models.py:358 vms/models.py:578 vms/models.py:613 vms/models.py:808
+#: vms/models.py:828 vms/models.py:844 vpn/models.py:15 vpn/models.py:66
+#: vpn/models.py:81
+msgid "ID"
+msgstr "ID"
 
-#: ceph/models.py:128
-msgid "novnc http协议配置"
-msgstr "novnc http configuration"
+#: ceph/models.py:131
+#, fuzzy
+#| msgid "内存"
+msgid "内容"
+msgstr "Memory"
 
-#: ceph/models.py:129
-msgid "配置novnchttp协议 http/https"
-msgstr "Configure novnchttp protocol http or https"
+#: ceph/models.py:132 logrecord/models.py:15 vms/templates/vm_detail.html:154
+msgid "备注信息"
+msgstr "Notes"
 
-#: ceph/models.py:134
-msgid "全局配置表"
-msgstr "Global configuration table"
+#: ceph/models.py:133 ceph/models.py:207 image/templates/image_list.html:207
+#: logrecord/models.py:16 vdisk/models.py:162
+#: vdisk/templates/vdisk_list.html:94 vdisk/templates/vdisk_mount_to_vm.html:25
+#: vms/models.py:849 vms/templates/vm_detail.html:64
+#: vms/templates/vm_detail.html:186 vms/templates/vm_detail.html:282
+#: vms/templates/vm_mount_disk.html:60 vpn/models.py:19
+#: vpn/templates/vpn_list.html:53
+msgid "创建时间"
+msgstr "Create Time"
 
-#: ceph/models.py:162
-msgid "novnc http协议配置有误。"
-msgstr "The HTTP protocol configuration of Novnc is incorrect."
+#: ceph/models.py:134 vpn/models.py:20 vpn/models.py:71
+#: vpn/templates/vpn_list.html:54
+msgid "修改时间"
+msgstr "Modification time"
+
+#: ceph/models.py:139
+msgid "站点参数"
+msgstr "site parameter"
+
+#: ceph/models.py:205
+msgid "IP"
+msgstr ""
+
+#: ceph/models.py:208 image/templates/image_list.html:210
+msgid "更新时间"
+msgstr "Update Time"
+
+#: ceph/models.py:213
+msgid "管理员IP白名单"
+msgstr "Whitelist of the administrator IP address"
 
 #: compute/apps.py:7
 msgid "计算资源管理"
@@ -183,12 +218,17 @@ msgstr "Host ssh Private key (id_rsa)"
 msgid "宿主机ssh私钥文件保存路径"
 msgstr "Path for saving the ssh private key file on the host"
 
-#: compute/models.py:30 device/templates/pci_list.html:24 image/forms.py:13
-#: image/templates/image_list.html:27 image/templates/image_vm_create2.html:21
-#: reports/templates/reports_list.html:32
-#: reports/templates/reports_list.html:48
-#: reports/templates/reports_list.html:82
-#: reports/templates/reports_list.html:117 templates/app_nav.html:52
+#: compute/models.py:27
+#, fuzzy
+#| msgid "宿主机ssh私钥（id_rsa）"
+msgid "宿主机ssh公钥（id_rsa.pub）"
+msgstr "Host ssh Private key (id_rsa)"
+
+#: compute/models.py:31 device/templates/pci_list.html:24 image/forms.py:13
+#: image/templates/image_list.html:27 reports/templates/reports_list.html:32
+#: reports/templates/reports_list.html:53
+#: reports/templates/reports_list.html:87
+#: reports/templates/reports_list.html:122 templates/app_nav.html:52
 #: vdisk/templates/vdisk_create.html:20 vdisk/templates/vdisk_list.html:37
 #: vms/models.py:377 vms/templates/vm_edit.html:24
 #: vms/templates/vm_unshelve.html:26 vms/templates/vms_create.html:21
@@ -196,23 +236,23 @@ msgstr "Path for saving the ssh private key file on the host"
 msgid "数据中心"
 msgstr "Data center"
 
-#: compute/models.py:31
+#: compute/models.py:32
 msgid "01_数据中心"
 msgstr "01 Data center"
 
-#: compute/models.py:86
+#: compute/models.py:87
 msgid "组所属的数据中心"
 msgstr "The data center to which the group belongs"
 
-#: compute/models.py:87
+#: compute/models.py:88
 msgid "组名称"
 msgstr "group Name"
 
-#: compute/models.py:88
+#: compute/models.py:89
 msgid "启用宿主机组"
 msgstr "Host set enabled"
 
-#: compute/models.py:89 compute/models.py:147 image/models.py:22
+#: compute/models.py:90 compute/models.py:148 image/models.py:22
 #: image/models.py:114 pcservers/models.py:33 pcservers/models.py:50
 #: vms/templates/vm_attach_ip_list.html:76 vms/templates/vm_detail.html:120
 #: vms/templates/vm_detail.html:127 vms/templates/vm_detail.html:134
@@ -221,74 +261,73 @@ msgstr "Host set enabled"
 msgid "描述"
 msgstr "Description"
 
-#: compute/models.py:97 network/models.py:27
+#: compute/models.py:98 network/models.py:27
 #: reports/templates/reports_center.html:25
 #: reports/templates/reports_center.html:54
 #: reports/templates/reports_group.html:57
 #: reports/templates/reports_list.html:36
-#: reports/templates/reports_list.html:81 templates/app_nav.html:56
+#: reports/templates/reports_list.html:86 templates/app_nav.html:56
 #: vdisk/models.py:26 vms/models.py:379
 msgid "宿主机组"
 msgstr "Host unit"
 
-#: compute/models.py:98
+#: compute/models.py:99
 msgid "02_宿主机组"
 msgstr "Host unit"
 
-#: compute/models.py:134
+#: compute/models.py:135
 msgid "宿主机所属的组"
 msgstr "The group to which the host belongs"
 
-#: compute/models.py:136
+#: compute/models.py:137
 msgid "物理服务器"
 msgstr "Physical server"
 
-#: compute/models.py:137 novnc/models.py:7
+#: compute/models.py:138 novnc/models.py:7
 msgid "宿主机ip"
 msgstr "Host ip"
 
-#: compute/models.py:138
+#: compute/models.py:139
 msgid "真实物理CPU(核)"
 msgstr "Total number of real physical cpus"
 
-#: compute/models.py:139
+#: compute/models.py:140
 msgid "真实物理内存(Gb)"
 msgstr "Real physical memory size (Gb)"
 
-#: compute/models.py:140
+#: compute/models.py:141
 msgid "虚拟CPU(核）"
 msgstr "vCPU cores"
 
-#: compute/models.py:141
+#: compute/models.py:142
 msgid "已用CPU（核）"
 msgstr "Used CPU (core)"
 
-#: compute/models.py:142
+#: compute/models.py:143
 msgid "虚拟内存(GB)"
 msgstr "Virtual Memory (GB)"
 
-#: compute/models.py:143
+#: compute/models.py:144
 msgid "已用内存(GB)"
 msgstr "Used memory (GB)"
 
-#: compute/models.py:144
+#: compute/models.py:145
 msgid "本地虚拟机数量上限"
 msgstr "Number of servers"
 
-#: compute/models.py:145
+#: compute/models.py:146
 msgid "本地已创建虚拟机数量"
 msgstr "Create server"
 
-#: compute/models.py:146
+#: compute/models.py:147
 msgid "启用宿主机"
 msgstr "Enable host"
 
-#: compute/models.py:154 device/models.py:32 device/templates/pci_list.html:45
+#: compute/models.py:155 device/models.py:32 device/templates/pci_list.html:45
 #: device/templates/pci_list.html:82 device/templates/pci_mount.html:24
-#: image/models.py:119 image/templates/image_vm_create2.html:68
-#: reports/templates/reports_group.html:27
+#: image/models.py:119 reports/templates/reports_group.html:27
 #: reports/templates/reports_list.html:28
-#: reports/templates/reports_list.html:138 templates/app_nav.html:44
+#: reports/templates/reports_list.html:143 templates/app_nav.html:44
 #: vms/models.py:123 vms/templates/vm_detail.html:236
 #: vms/templates/vm_disk_expand.html:31 vms/templates/vm_live_migrate.html:30
 #: vms/templates/vm_migrate.html:36 vms/templates/vm_mount_pci.html:24
@@ -299,7 +338,7 @@ msgstr "Enable host"
 msgid "宿主机"
 msgstr "Hosts"
 
-#: compute/models.py:155
+#: compute/models.py:156
 msgid "06_宿主机"
 msgstr "Host machine"
 
@@ -341,7 +380,8 @@ msgstr "Mount time"
 msgid "启用设备"
 msgstr "Enable device"
 
-#: device/models.py:37 device/models.py:38 templates/base.html:57
+#: device/models.py:37 device/models.py:38 templates/app_nav.html:48
+#: templates/base.html:57
 msgid "本地资源"
 msgstr "Local Resource"
 
@@ -349,15 +389,14 @@ msgstr "Local Resource"
 msgid "本地资源设备列表"
 msgstr "Local device list"
 
-#: device/templates/pci_list.html:35 image/templates/image_vm_create2.html:35
-#: reports/templates/reports_list.html:128 vdisk/templates/vdisk_list.html:48
-#: vms/templates/vm_unshelve.html:39 vms/templates/vms_create.html:33
-#: vms/templates/vms_list.html:36
+#: device/templates/pci_list.html:35 reports/templates/reports_list.html:133
+#: vdisk/templates/vdisk_list.html:48 vms/templates/vm_unshelve.html:39
+#: vms/templates/vms_create.html:33 vms/templates/vms_list.html:36
 msgid "主机组"
 msgstr "Host group"
 
 #: device/templates/pci_list.html:66 device/templates/pci_mount.html:43
-#: image/templates/image_list.html:58 reports/templates/reports_list.html:158
+#: image/templates/image_list.html:58 reports/templates/reports_list.html:163
 #: vdisk/templates/vdisk_list.html:77 vdisk/templates/vdisk_mount_to_vm.html:45
 #: vms/templates/vm_attach_ip_list.html:58 vms/templates/vm_mount_disk.html:39
 #: vms/templates/vm_mount_pci.html:38 vms/templates/vm_shelve_list.html:33
@@ -371,7 +410,7 @@ msgid "搜 IP地址、备注"
 msgstr "Search for IP addresses and notes"
 
 #: device/templates/pci_list.html:71 device/templates/pci_mount.html:48
-#: image/templates/image_list.html:62 reports/templates/reports_list.html:164
+#: image/templates/image_list.html:62 reports/templates/reports_list.html:169
 #: vdisk/templates/vdisk_list.html:82 vdisk/templates/vdisk_mount_to_vm.html:50
 #: vms/templates/vm_attach_ip_list.html:63 vms/templates/vm_mount_disk.html:44
 #: vms/templates/vm_mount_pci.html:43 vms/templates/vm_shelve_list.html:38
@@ -392,8 +431,8 @@ msgid "地址"
 msgstr "Address"
 
 #: device/templates/pci_list.html:83 templates/app_nav.html:82
-#: templates/base.html:55 vms/models.py:159 vms/models.py:160 vms/models.py:615
-#: vms/models.py:829
+#: templates/base.html:55 vms/apps.py:7 vms/models.py:159 vms/models.py:160
+#: vms/models.py:615 vms/models.py:829
 msgid "虚拟机"
 msgstr "Virtual server"
 
@@ -436,7 +475,7 @@ msgstr "Local device details"
 msgid "类型"
 msgstr "Type"
 
-#: device/templates/pci_mount.html:25 reports/templates/reports_list.html:185
+#: device/templates/pci_mount.html:25 reports/templates/reports_list.html:195
 #: vdisk/templates/vdisk_create.html:33 vdisk/templates/vdisk_list.html:90
 #: vdisk/templates/vdisk_mount_to_vm.html:27
 #: vms/templates/vm_attach_ip_list.html:33
@@ -462,7 +501,7 @@ msgid "可供挂载的虚拟机"
 msgstr "Available virtual servers"
 
 #: device/templates/pci_mount.html:56 network/models.py:125
-#: network/templates/vlan_add.html:72 templates/app_nav.html:152
+#: network/templates/vlan_add.html:72 templates/app_nav.html:156
 #: vdisk/templates/vdisk_mount_to_vm.html:58 vms/models.py:367
 #: vms/templates/vm_detach_ip_list.html:55 vms/templates/vm_unshelve.html:62
 #: vms/templates/vms_list.html:78
@@ -499,7 +538,7 @@ msgid "状态"
 msgstr "Status"
 
 #: device/templates/pci_mount.html:62 image/templates/image_list.html:85
-#: reports/templates/reports_list.html:195 vdisk/templates/vdisk_list.html:99
+#: reports/templates/reports_list.html:204 vdisk/templates/vdisk_list.html:99
 #: vdisk/templates/vdisk_mount_to_vm.html:65
 #: vms/templates/vm_attach_ip_list.html:79
 #: vms/templates/vm_detach_ip_list.html:62 vms/templates/vm_detail.html:189
@@ -519,11 +558,11 @@ msgstr "shutdown"
 msgid "强制断电"
 msgstr "Power off"
 
-#: django_site/settings.py:146
+#: django_site/settings.py:163
 msgid "English"
 msgstr ""
 
-#: django_site/settings.py:147
+#: django_site/settings.py:164
 msgid "中文简体"
 msgstr ""
 
@@ -780,19 +819,6 @@ msgstr "Default password"
 msgid "镜像大小"
 msgstr "Image size"
 
-#: image/templates/image_list.html:207 vdisk/models.py:162
-#: vdisk/templates/vdisk_list.html:94 vdisk/templates/vdisk_mount_to_vm.html:25
-#: vms/models.py:849 vms/templates/vm_detail.html:64
-#: vms/templates/vm_detail.html:186 vms/templates/vm_detail.html:282
-#: vms/templates/vm_mount_disk.html:60 vpn/models.py:19
-#: vpn/templates/vpn_list.html:53
-msgid "创建时间"
-msgstr "Create Time"
-
-#: image/templates/image_list.html:210
-msgid "更新时间"
-msgstr "Update Time"
-
 #: image/templates/image_list.html:213 vpn/templates/vpn_list.html:56
 msgid "创建人"
 msgstr "Creator"
@@ -809,9 +835,7 @@ msgstr "Server Memory"
 msgid "虚拟机CPU"
 msgstr "Server CPU"
 
-#: image/templates/image_list.html:227
-#: image/templates/image_vm_create2.html:109
-#: image/templates/image_vm_create2.html:123 vms/templates/vm_edit.html:26
+#: image/templates/image_list.html:227 vms/templates/vm_edit.html:26
 #: vms/templates/vm_edit.html:45 vms/templates/vm_live_migrate.html:42
 #: vms/templates/vm_migrate.html:51 vms/templates/vms_create.html:99
 #: vms/templates/vms_create.html:110
@@ -819,9 +843,6 @@ msgid "核"
 msgstr "Core"
 
 #: image/templates/image_vm_create.html:6
-#: image/templates/image_vm_create2.html:6
-#: image/templates/image_vm_create2.html:12
-#: image/templates/image_vm_create2.html:14
 msgid "创建镜像虚拟机"
 msgstr "Create image template server"
 
@@ -833,59 +854,74 @@ msgstr "Create image"
 msgid "管理虚拟机"
 msgstr "Manage severs"
 
-#: image/templates/image_vm_create.html:42
-#: image/templates/image_vm_create2.html:175
-#: vdisk/templates/vdisk_create.html:83 vms/templates/vms_create.html:156
+#: image/templates/image_vm_create.html:42 vdisk/templates/vdisk_create.html:83
+#: vms/templates/vms_create.html:156
 msgid "创建"
 msgstr "Create"
 
-#: image/templates/image_vm_create2.html:47
-#: vms/templates/vm_attach_ip_list.html:47 vms/templates/vm_unshelve.html:50
-#: vms/templates/vms_create.html:43
-msgid "网段"
-msgstr "Network segment"
+#: logrecord/apps.py:9 logrecord/models.py:21
+#: logrecord/templates/log_list.html:31 templates/app_nav.html:198
+#: templates/base.html:66
+#, fuzzy
+#| msgid "操作日志"
+msgid "用户操作日志"
+msgstr "Operation log"
 
-#: image/templates/image_vm_create2.html:50
-#: image/templates/image_vm_create2.html:62
-#: image/templates/image_vm_create2.html:71 vms/templates/vm_unshelve.html:53
-#: vms/templates/vm_unshelve.html:68 vms/templates/vm_unshelve.html:77
-#: vms/templates/vms_create.html:46 vms/templates/vms_create.html:57
-#: vms/templates/vms_create.html:65
-msgid "自动选择"
-msgstr "Auto select"
+#: logrecord/models.py:11 vms/models.py:845
+msgid "状态码"
+msgstr "Status"
 
-#: image/templates/image_vm_create2.html:77 templates/app_nav.html:65
-#: vms/templates/vm_detail.html:105 vms/templates/vms_create.html:70
-msgid "系统镜像"
-msgstr "System image"
+#: logrecord/models.py:12 vms/models.py:846
+msgid "请求方法"
+msgstr "Request method"
 
-#: image/templates/image_vm_create2.html:97 vms/templates/vms_create.html:88
-msgid "配置"
-msgstr "config"
+#: logrecord/models.py:13 logrecord/templates/log_list.html:54
+msgid "操作内容"
+msgstr "Operation content"
 
-#: image/templates/image_vm_create2.html:103 vms/templates/vm_edit.html:40
-#: vms/templates/vms_create.html:94
-msgid "模板样式"
-msgstr "Template style"
+#: logrecord/models.py:14 vms/models.py:847
+msgid "请求路径"
+msgstr "Request path"
 
-#: image/templates/image_vm_create2.html:106 vms/templates/vm_edit.html:43
-#: vms/templates/vms_create.html:97
-msgid "自定义"
-msgstr "User-defined"
+#: logrecord/models.py:17 vms/models.py:850
+msgid "请求用户"
+msgstr "Requesting user"
 
-#: image/templates/image_vm_create2.html:141 vms/templates/vms_create.html:126
-msgid "配置系统盘容量"
-msgstr "config system disk capacity"
+#: logrecord/models.py:18
+msgid "cstcloud用户"
+msgstr "cstcloud user"
 
-#: image/templates/image_vm_create2.html:146 vms/templates/vms_create.html:131
-msgid "系统盘容量"
-msgstr "system disk capacity"
+#: logrecord/templates/log_list.html:24
+#, fuzzy
+#| msgid "操作日志"
+msgid "用户操作日志列表"
+msgstr "Operation log"
 
-#: image/templates/image_vm_create2.html:157 vms/templates/vms_create.html:140
-msgid "当前您选择的操作系统镜像，要求系统盘最小50GB"
-msgstr ""
-"The operating system image you have selected currently requires a minimum "
-"system disk size of 50GB."
+#: logrecord/templates/log_list.html:39 vpn/templates/vpn_list.html:37
+#: vpn/templates/vpn_log_list.html:41
+msgid "搜索"
+msgstr "Search"
+
+#: logrecord/templates/log_list.html:44 vpn/templates/vpn_log_list.html:46
+msgid "清理半年前日志"
+msgstr "Clear logs from six months ago"
+
+#: logrecord/templates/log_list.html:52
+#, fuzzy
+#| msgid "型号"
+msgid "序号"
+msgstr "Model"
+
+#: logrecord/templates/log_list.html:53
+#: users/templates/registration/login.html:30 vpn/models.py:16 vpn/models.py:82
+#: vpn/templates/delete.html:14 vpn/templates/vpn_list.html:50
+#: vpn/templates/vpn_log_list.html:55
+msgid "用户名"
+msgstr "Username"
+
+#: logrecord/templates/log_list.html:55
+msgid "操作时间"
+msgstr "Operating time"
 
 #: network/apps.py:7
 msgid "网络，IP与MAC"
@@ -971,7 +1007,7 @@ msgstr "Enable network"
 msgid "镜像虚拟机专用"
 msgstr "Dedicated to image VMS"
 
-#: network/models.py:49 network/models.py:123 templates/app_nav.html:140
+#: network/models.py:49 network/models.py:123 templates/app_nav.html:144
 msgid "VLAN子网"
 msgstr "VLAN subnet"
 
@@ -979,7 +1015,7 @@ msgstr "VLAN subnet"
 msgid "05_VLAN子网"
 msgstr "VLAN subnet"
 
-#: network/models.py:95 templates/app_nav.html:170
+#: network/models.py:95 templates/app_nav.html:174
 #: vdisk/templates/vdisk_list.html:93 vdisk/templates/vdisk_mount_to_vm.html:28
 #: vms/templates/vm_detail.html:185 vms/templates/vm_mount_disk.html:59
 msgid "用户"
@@ -1101,16 +1137,13 @@ msgstr "Attach"
 msgid "vnc端口"
 msgstr "vnc port"
 
-#: novnc/models.py:11 vpn/models.py:21 vpn/templates/vpn_list.html:55
+#: novnc/models.py:11 vpn/models.py:21
 msgid "过期时间"
 msgstr "Expiration time"
 
-#: pcservers/models.py:13 pcservers/models.py:30 pcservers/models.py:48
-#: pcservers/models.py:84 vms/models.py:358 vms/models.py:578 vms/models.py:613
-#: vms/models.py:808 vms/models.py:828 vms/models.py:844 vpn/models.py:15
-#: vpn/models.py:66 vpn/models.py:81
-msgid "ID"
-msgstr "ID"
+#: pcservers/apps.py:8 pcservers/models.py:108 pcservers/models.py:109
+msgid "服务器"
+msgstr "Physical server"
 
 #: pcservers/models.py:14
 msgid "部门编号"
@@ -1233,30 +1266,32 @@ msgstr "use"
 msgid "硬件配置信息"
 msgstr "Config info"
 
-#: pcservers/models.py:108 pcservers/models.py:109
-msgid "服务器"
-msgstr "Physical server"
-
 #: reports/templates/quota.html:5 reports/templates/quota.html:12
+#: reports/templates/reports_list.html:243
 msgid "资源配额概况"
 msgstr "Overview of resource quotas"
 
-#: reports/templates/quota.html:73 vms/models.py:810
-#: vms/templates/vm_disk_expand.html:26 vms/templates/vm_live_migrate.html:27
-#: vms/templates/vm_migrate.html:30 vms/templates/vm_reset.html:26
+#: reports/templates/quota.html:73 reports/templates/reports_list.html:405
+#: vms/models.py:810 vms/templates/vm_disk_expand.html:26
+#: vms/templates/vm_live_migrate.html:27 vms/templates/vm_migrate.html:30
+#: vms/templates/vm_reset.html:26
 msgid "内存"
 msgstr "Memory"
 
 #: reports/templates/quota.html:74 reports/templates/quota.html:75
 #: reports/templates/quota.html:76 reports/templates/quota.html:77
+#: reports/templates/reports_list.html:406
+#: reports/templates/reports_list.html:407
+#: reports/templates/reports_list.html:408
+#: reports/templates/reports_list.html:409
 msgid "已使用"
 msgstr "Used"
 
-#: reports/templates/quota.html:84
+#: reports/templates/quota.html:84 reports/templates/reports_list.html:416
 msgid "VCPU数"
 msgstr "vCPU cores"
 
-#: reports/templates/quota.html:86
+#: reports/templates/quota.html:86 reports/templates/reports_list.html:418
 msgid "IP地址数"
 msgstr "Number of ip addresses"
 
@@ -1264,9 +1299,10 @@ msgstr "Number of ip addresses"
 #: reports/templates/reports_center.html:61
 #: reports/templates/reports_group.html:46
 #: reports/templates/reports_group.html:64
-#: reports/templates/reports_list.html:56
-#: reports/templates/reports_list.html:90
-#: reports/templates/reports_list.html:193
+#: reports/templates/reports_list.html:61
+#: reports/templates/reports_list.html:95
+#: reports/templates/reports_list.html:197
+#: reports/templates/reports_list.html:419
 msgid "虚拟机数"
 msgstr "Number of servers"
 
@@ -1288,15 +1324,14 @@ msgstr "Visual charts"
 
 #: reports/templates/reports_center.html:38
 #: reports/templates/reports_center.html:55
-#: reports/templates/reports_list.html:50
-#: reports/templates/reports_list.html:84
+#: reports/templates/reports_list.html:55
+#: reports/templates/reports_list.html:89
 msgid "总虚拟cpu(/核)"
 msgstr "Total vCPU (/Core)"
 
 #: reports/templates/reports_center.html:39
-#: reports/templates/reports_list.html:51
-#: reports/templates/reports_list.html:85
-#: reports/templates/reports_list.html:188
+#: reports/templates/reports_list.html:56
+#: reports/templates/reports_list.html:90
 msgid "已分配cpu(/核)"
 msgstr "Allocated vCPU (/Core)"
 
@@ -1304,9 +1339,8 @@ msgstr "Allocated vCPU (/Core)"
 #: reports/templates/reports_center.html:57
 #: reports/templates/reports_group.html:42
 #: reports/templates/reports_group.html:60
-#: reports/templates/reports_list.html:52
-#: reports/templates/reports_list.html:86
-#: reports/templates/reports_list.html:189
+#: reports/templates/reports_list.html:57
+#: reports/templates/reports_list.html:91
 msgid "分配率"
 msgstr "Allocation rate"
 
@@ -1314,8 +1348,8 @@ msgstr "Allocation rate"
 #: reports/templates/reports_center.html:58
 #: reports/templates/reports_group.html:43
 #: reports/templates/reports_group.html:61
-#: reports/templates/reports_list.html:53
-#: reports/templates/reports_list.html:87
+#: reports/templates/reports_list.html:58
+#: reports/templates/reports_list.html:92
 msgid "总内存"
 msgstr "Total memory"
 
@@ -1323,8 +1357,8 @@ msgstr "Total memory"
 #: reports/templates/reports_center.html:59
 #: reports/templates/reports_group.html:44
 #: reports/templates/reports_group.html:62
-#: reports/templates/reports_list.html:54
-#: reports/templates/reports_list.html:88
+#: reports/templates/reports_list.html:59
+#: reports/templates/reports_list.html:93
 msgid "已使用内存"
 msgstr "Used memory"
 
@@ -1332,8 +1366,8 @@ msgstr "Used memory"
 #: reports/templates/reports_center.html:60
 #: reports/templates/reports_group.html:45
 #: reports/templates/reports_group.html:63
-#: reports/templates/reports_list.html:55
-#: reports/templates/reports_list.html:89
+#: reports/templates/reports_list.html:60
+#: reports/templates/reports_list.html:94
 msgid "内存使用率"
 msgstr "Memory usage rate"
 
@@ -1351,49 +1385,69 @@ msgstr "Total CPU (/Core)"
 msgid "已分配(/核)"
 msgstr "Allocated (/Core)"
 
-#: reports/templates/reports_list.html:49
-#: reports/templates/reports_list.html:83
+#: reports/templates/reports_list.html:40
+#, fuzzy
+#| msgid "资源配额"
+msgid "资源配额图标"
+msgstr "Resource quota"
+
+#: reports/templates/reports_list.html:54
+#: reports/templates/reports_list.html:88
 msgid "总物理cpu(/核)"
 msgstr "Total physical CPU (/Core)"
 
-#: reports/templates/reports_list.html:161
+#: reports/templates/reports_list.html:166
 #: vms/templates/vm_attach_ip_list.html:61
 msgid "搜 IP地址"
 msgstr "Search for ip address"
 
-#: reports/templates/reports_list.html:168
+#: reports/templates/reports_list.html:181
 msgid "批量保存"
 msgstr "Batch save"
 
-#: reports/templates/reports_list.html:172
+#: reports/templates/reports_list.html:183
 msgid "一键检测"
 msgstr "One-click detection"
 
-#: reports/templates/reports_list.html:184 vms/templates/vm_detail.html:77
+#: reports/templates/reports_list.html:196 vms/templates/vm_detail.html:77
 msgid "宿主机IP地址"
 msgstr "Host ip address"
 
-#: reports/templates/reports_list.html:186
-msgid "物理cpu(/核)"
+#: reports/templates/reports_list.html:198
+#, fuzzy
+#| msgid "物理cpu(/核)"
+msgid "物理cpu核"
 msgstr "Physical CPU (/Core)"
 
-#: reports/templates/reports_list.html:187
-msgid "虚拟cpu(/核)"
-msgstr "vCPU (/Core)"
+#: reports/templates/reports_list.html:199
+#, fuzzy
+#| msgid "虚拟CPU(核）"
+msgid "虚拟CPU核:"
+msgstr "vCPU cores"
 
-#: reports/templates/reports_list.html:190
-msgid "可分配内存/实际可分配内存"
-msgstr "Allocatable memory/Actual allocatable memory"
+#: reports/templates/reports_list.html:199
+msgid "已用/总数/利用率"
+msgstr "Used/Total/Utilization"
 
-#: reports/templates/reports_list.html:191
-msgid "已使用内存/实际已使用内存"
-msgstr "Used memory/Actual used memory"
+#: reports/templates/reports_list.html:200
+#, fuzzy
+#| msgid "虚拟内存(GB)"
+msgid "虚拟内存GB:"
+msgstr "Virtual Memory (GB)"
 
-#: reports/templates/reports_list.html:192
-msgid "内存使用率/实际内存使用率"
-msgstr "Memory usage/Actual memory usage"
+#: reports/templates/reports_list.html:200
+msgid "已分配/总数/分配率"
+msgstr "Allocated/Total/allocation rate"
 
-#: templates/about.html:3 templates/base.html:92
+#: reports/templates/reports_list.html:201
+msgid "实际大页内存GB:"
+msgstr "The actual large page memory is GB:"
+
+#: reports/templates/reports_list.html:201
+msgid "已分配/总数/利用率"
+msgstr "Allocated/Total/utilization"
+
+#: templates/about.html:3 templates/base.html:94
 msgid "关于"
 msgstr "About"
 
@@ -1465,13 +1519,14 @@ msgstr "Physical server"
 msgid "宿主机配置"
 msgstr "Host config"
 
-#: templates/app_nav.html:48
-msgid "本地设备"
-msgstr "Local device"
-
 #: templates/app_nav.html:62
 msgid "虚拟机模板配置"
 msgstr "Virtual sever template config"
+
+#: templates/app_nav.html:65 vms/templates/vm_detail.html:105
+#: vms/templates/vms_create.html:70
+msgid "系统镜像"
+msgstr "System image"
 
 #: templates/app_nav.html:73
 msgid "硬件样式模板"
@@ -1501,131 +1556,140 @@ msgstr "Novnc client tokens"
 msgid "存储资源配置与管理"
 msgstr "Storage resource configuration and management"
 
-#: templates/app_nav.html:107
-msgid "CEPH配置"
-msgstr "Ceph config"
+#: templates/app_nav.html:110
+msgid "站点配置"
+msgstr "Site configuration"
 
 #: templates/app_nav.html:114
+msgid "CEPH集群"
+msgstr "Ceph cluster"
+
+#: templates/app_nav.html:118
 msgid "CEPH池"
 msgstr "Ceph pool"
 
-#: templates/app_nav.html:118
+#: templates/app_nav.html:122
 msgid "云硬盘池"
 msgstr "vdisk pool"
 
-#: templates/app_nav.html:123
+#: templates/app_nav.html:127
 msgid "云硬盘信息管理"
 msgstr "vdisk info management"
 
-#: templates/app_nav.html:126 templates/base.html:56
+#: templates/app_nav.html:130 templates/base.html:56
 #: vdisk/templates/vdisk_mount_to_vm.html:23 vms/templates/vm_detail.html:173
 #: vms/templates/vm_shelve_list.html:52 vms/templates/vms_list.html:83
 msgid "云硬盘"
 msgstr "vdisk"
 
-#: templates/app_nav.html:135
+#: templates/app_nav.html:139
 msgid "网络资源配置与管理"
 msgstr "Network resource configuration and management"
 
-#: templates/app_nav.html:137
+#: templates/app_nav.html:141
 msgid "网络配置"
 msgstr "Network config"
 
-#: templates/app_nav.html:144 vpn/models.py:75
+#: templates/app_nav.html:148 vpn/models.py:75
 msgid "VPN配置文件"
 msgstr "VPN config file"
 
-#: templates/app_nav.html:149
+#: templates/app_nav.html:153
 msgid "网络信息管理"
 msgstr "Network info management"
 
-#: templates/app_nav.html:156
+#: templates/app_nav.html:160
 msgid "VPN用户信息"
 msgstr "VPN user info"
 
-#: templates/app_nav.html:165
+#: templates/app_nav.html:169
 msgid "系统信息管理"
 msgstr "System info management"
 
-#: templates/app_nav.html:167
+#: templates/app_nav.html:171
 msgid "用户信息管理"
 msgstr "User management"
 
-#: templates/app_nav.html:174
+#: templates/app_nav.html:178
 msgid "用户分组"
 msgstr "User group"
 
-#: templates/app_nav.html:179
+#: templates/app_nav.html:183
 msgid "认证信息管理"
 msgstr "Certification info management"
 
-#: templates/app_nav.html:182
+#: templates/app_nav.html:186
 msgid "身份认证TOKENS"
 msgstr "Identity authentication tokens"
 
-#: templates/app_nav.html:187
+#: templates/app_nav.html:191
 msgid "日志信息管理"
 msgstr "Log management"
 
-#: templates/app_nav.html:190
+#: templates/app_nav.html:194
 msgid "操作日志"
 msgstr "Operation log"
+
+#: templates/app_nav.html:202 vpn/templates/add.html:15
+#: vpn/templates/change.html:15 vpn/templates/vpn_list.html:28
+#: vpn/templates/vpn_log_list.html:31
+msgid "VPN登录日志"
+msgstr "VPN login logs"
 
 #: templates/base.html:60
 msgid "网络"
 msgstr "Network"
 
-#: templates/base.html:63
-msgid "资源配额"
-msgstr "Resource quota"
-
 #: templates/base.html:65
 msgid "资源统计管理"
 msgstr "Resource statistical management"
 
-#: templates/base.html:77
+#: templates/base.html:79
 msgid "语言"
 msgstr "Language"
 
-#: templates/base.html:86
+#: templates/base.html:88
 msgid "帮助&文档"
 msgstr "Help & docs"
 
-#: templates/base.html:88
+#: templates/base.html:90
 msgid "API交互文档"
 msgstr "API interactive docs"
 
-#: templates/base.html:89
+#: templates/base.html:91
 msgid "API文档"
 msgstr "API docs"
 
-#: templates/base.html:90
+#: templates/base.html:92
 msgid "文档"
 msgstr "Docs"
 
-#: templates/base.html:102
+#: templates/base.html:104
 msgid "登出"
 msgstr "Logout"
 
-#: templates/base.html:103
+#: templates/base.html:105 users/views.py:194
 msgid "修改密码"
 msgstr "Change password"
 
-#: templates/base.html:106
+#: templates/base.html:108
 msgid "后台管理"
 msgstr "Backend management"
 
-#: templates/base.html:111 users/templates/registration/login.html:8
-#: users/templates/registration/login.html:45
+#: templates/base.html:113 users/templates/registration/login.html:8
+#: users/templates/registration/login.html:47 users/views.py:153
+#: users/views.py:208 users/views.py:245
 msgid "登录"
 msgstr "Login"
 
-#: templates/base.html:115 users/templates/registration/login.html:49
+#: templates/base.html:117 users/templates/registration/login.html:51
+#: users/views.py:119
 msgid "不允许个人注册，请联系管理员"
 msgstr ""
 "Individual registration is not allowed. Please contact the administrator."
 
-#: templates/base.html:115 users/templates/registration/login.html:50
+#: templates/base.html:117 users/templates/registration/login.html:52
+#: users/views.py:140 users/views.py:154 users/views.py:246
 msgid "注册"
 msgstr "Register"
 
@@ -1657,6 +1721,110 @@ msgstr "Permissions"
 msgid "Important dates"
 msgstr "Important dates"
 
+#: users/forms.py:16 users/forms.py:176
+msgid "用户名(邮箱)"
+msgstr "Username(Email)"
+
+#: users/forms.py:21
+msgid "请输入邮箱作为用户名"
+msgstr "Please input a valid email as your username"
+
+#: users/forms.py:23 vpn/models.py:17 vpn/templates/vpn_list.html:51
+msgid "密码"
+msgstr "Password"
+
+#: users/forms.py:28
+msgid "请输入一个8-20位的密码"
+msgstr "Please enter a password of 8-20 digits"
+
+#: users/forms.py:30
+msgid "确认密码"
+msgstr "Password confirm"
+
+#: users/forms.py:35
+msgid "请输入确认密码"
+msgstr "Please enter password confirm"
+
+#: users/forms.py:38
+msgid "姓氏"
+msgstr "Lastname"
+
+#: users/forms.py:41 users/forms.py:47 users/forms.py:53 users/forms.py:58
+msgid "请如实填写"
+msgstr "Please fill in truthfully"
+
+#: users/forms.py:44
+msgid "名字"
+msgstr "Firstname"
+
+#: users/forms.py:50
+msgid "电话"
+msgstr "Telephone"
+
+#: users/forms.py:55
+msgid "公司/单位"
+msgstr "Company"
+
+#: users/forms.py:72 users/forms.py:191
+msgid "用户名不能为空"
+msgstr "The username cannot be empty"
+
+#: users/forms.py:78
+msgid "用户名已存在，请重新输入"
+msgstr "Username already exist, please enter another one"
+
+#: users/forms.py:84
+msgid "密码输入不一致"
+msgstr "Inconsistent password input"
+
+#: users/forms.py:125
+msgid "原密码"
+msgstr "Old Password"
+
+#: users/forms.py:130
+msgid "请输入原密码"
+msgstr "Please enter old password"
+
+#: users/forms.py:132 users/forms.py:211
+msgid "新密码"
+msgstr "New Password"
+
+#: users/forms.py:137 users/forms.py:216
+#, fuzzy
+#| msgid "请输入一个8-20位的密码"
+msgid "请输入一个8-20位的新密码"
+msgstr "Please enter a password of 8-20 digits"
+
+#: users/forms.py:139 users/forms.py:218
+msgid "确认新密码"
+msgstr "New Password Confirm"
+
+#: users/forms.py:144 users/forms.py:223
+msgid "请再次输入新密码"
+msgstr "Please enter new password again"
+
+#: users/forms.py:159 users/forms.py:235
+msgid "新密码输入不一致，请重新输入"
+msgstr "The new password input is inconsistent"
+
+#: users/forms.py:168
+msgid "原密码有误"
+msgstr "Old password is not correct"
+
+#: users/forms.py:180
+msgid "请输入用户名"
+msgstr "Please enter the username"
+
+#: users/forms.py:197
+msgid "用户不存在"
+msgstr "Username not exist"
+
+#: users/forms.py:243
+msgid "重置密码失败，jwt无效或已过期，请重新找回密码获取新的链接"
+msgstr ""
+"Password reset failed, jwt is invalid or has expired. Please retrieve your "
+"password to obtain a new link"
+
 #: users/templates/message.html:4
 msgid "提示信息"
 msgstr "Notification"
@@ -1669,19 +1837,128 @@ msgstr "Virtual server platform"
 msgid "虚拟机平台EVCloud登录"
 msgstr "EVCloud login"
 
-#: users/templates/registration/login.html:28 vpn/models.py:16 vpn/models.py:82
-#: vpn/templates/delete.html:14 vpn/templates/vpn_list.html:50
-#: vpn/templates/vpn_log_list.html:50
-msgid "用户名"
-msgstr "Username"
-
-#: users/templates/registration/login.html:35
+#: users/templates/registration/login.html:37
 msgid "密 码"
 msgstr "Password"
 
-#: users/templates/registration/login.html:46
+#: users/templates/registration/login.html:48
 msgid "忘记密码"
 msgstr "Forgot password"
+
+#: users/views.py:92
+msgid "EVCloud账户激活"
+msgstr "EVCloud Account Activate"
+
+#: users/views.py:132
+msgid "用户注册成功，请登录邮箱访问收到的连接以激活用户"
+msgstr ""
+"User registration successful, please log in to email to access the received "
+"connection to activate the user"
+
+#: users/views.py:134
+msgid "邮件发送失败，请检查邮箱输入是否有误"
+msgstr ""
+"Email sending failed, please check if there is an error in the email input"
+
+#: users/views.py:136
+msgid "用户注册失败，保存用户数据是错误"
+msgstr "User registration failed, error saving user data"
+
+#: users/views.py:140
+msgid "用户注册"
+msgstr "User Registration"
+
+#: users/views.py:163
+msgid "用户激活失败，无待激活账户，或者账户已被激活，请直接尝试登录"
+msgstr ""
+"User activation failed, there is no account to be activated, or the account "
+"has already been activated. Please try logging in directly"
+
+#: users/views.py:171
+msgid "用户已激活"
+msgstr "User has been activated"
+
+#: users/views.py:194 vms/templates/vm_edit.html:75
+msgid "修改"
+msgstr "Edit"
+
+#: users/views.py:220
+msgid "用户未激活，请先登录邮箱访问收到的链接以激活用户"
+msgstr ""
+"The user is not activated. Please log in to your email first to access the "
+"received link to activate the user"
+
+#: users/views.py:222 users/views.py:229
+msgid "邮件发送失败，请检查用户名输入是否有误，稍后重试"
+msgstr ""
+"Email sending failed. Please check if the username was entered incorrectly "
+"and try again later"
+
+#: users/views.py:227
+msgid ""
+"重置密码确认邮件已发送，请尽快登录邮箱访问收到的链接以完成密码重置，以防链接"
+"过期无效"
+msgstr ""
+"The password reset confirmation email has been sent. Please log in to your "
+"email as soon as possible to access the received link to complete the "
+"password reset, in case the link expires or becomes invalid"
+
+#: users/views.py:233
+msgid "找回密码"
+msgstr "Forgot Password"
+
+#: users/views.py:233
+msgid "提交"
+msgstr "Submit"
+
+#: users/views.py:257
+msgid "用户重置密码成功，请尝试登录"
+msgstr "User reset password successful, please try logging in"
+
+#: users/views.py:266
+msgid "链接无效或已过期，请重新找回密码获取新的链接"
+msgstr ""
+"The link is invalid or has expired. Please retrieve your password to obtain "
+"a new link"
+
+#: users/views.py:271
+msgid "重置密码"
+msgstr "Password Reset"
+
+#: users/views.py:271 vms/templates/vm_disk_expand.html:54
+msgid "确定"
+msgstr "Confirm"
+
+#: users/views.py:298
+msgid "EVCloud账户找回密码"
+msgstr "EVCloud User Password Forgot"
+
+#: utils/iprestrict.py:18
+msgid "无效的IP子网"
+msgstr "The IP subnet is invalid"
+
+#: utils/iprestrict.py:22
+msgid "无效的IP网段"
+msgstr "The IP address segment is invalid"
+
+#: utils/iprestrict.py:32 utils/iprestrict.py:34
+msgid "无效的IP网段，地址无效"
+msgstr "The IP address is invalid"
+
+#: utils/iprestrict.py:40
+#, fuzzy
+#| msgid "源IP地址"
+msgid "无效的IP地址"
+msgstr "Source ip address"
+
+#: utils/iprestrict.py:96
+msgid "无法获取到有效的客户端IPv4地址。"
+msgstr "Failed to obtain a valid client IPv4 address."
+
+#: utils/iprestrict.py:106
+#, python-format
+msgid "拒绝IP地址为'%s'访问, 请联系管理员。"
+msgstr "Access denied with IP address '%s', please contact the administrator"
 
 #: vdisk/apps.py:7
 msgid "云硬盘设置"
@@ -1788,7 +2065,7 @@ msgstr "Mount"
 
 #: vdisk/templates/vdisk_list.html:150 vms/templates/vm_detail.html:309
 #: vms/templates/vm_operations.html:16 vms/templates/vm_operations.html:44
-#: vms/templates/vms_list.html:150 vpn/templates/change.html:41
+#: vms/templates/vms_list.html:150 vpn/templates/change.html:51
 msgid "删除"
 msgstr "Delete"
 
@@ -2081,25 +2358,9 @@ msgstr "Attached MAC IP"
 msgid "虚拟机附加ip"
 msgstr "VM Attach ip"
 
-#: vms/models.py:845
-msgid "状态码"
-msgstr "Status"
-
-#: vms/models.py:846
-msgid "请求方法"
-msgstr "Request method"
-
-#: vms/models.py:847
-msgid "请求路径"
-msgstr "Request path"
-
 #: vms/models.py:848
 msgid "日志信息"
 msgstr "Log management"
-
-#: vms/models.py:850
-msgid "请求用户"
-msgstr "Requesting user"
 
 #: vms/models.py:855
 msgid "接口错误日志记录表"
@@ -2127,6 +2388,11 @@ msgstr "Virtual server ip address"
 #: vms/templates/vm_attach_ip_list.html:42
 msgid "可供附加的IP地址"
 msgstr "Available IP addresses"
+
+#: vms/templates/vm_attach_ip_list.html:47 vms/templates/vm_unshelve.html:50
+#: vms/templates/vms_create.html:43
+msgid "网段"
+msgstr "Network segment"
 
 #: vms/templates/vm_attach_ip_list.html:94 vms/templates/vm_operations.html:20
 msgid "附加IP地址"
@@ -2224,10 +2490,6 @@ msgstr "original bridge name"
 msgid "用户信息"
 msgstr "User info"
 
-#: vms/templates/vm_detail.html:154
-msgid "备注信息"
-msgstr "Notes"
-
 #: vms/templates/vm_detail.html:180
 msgid "设备"
 msgstr "Device"
@@ -2289,10 +2551,6 @@ msgstr "Enter the expansion value"
 msgid "扩容大小"
 msgstr "Expansion size"
 
-#: vms/templates/vm_disk_expand.html:54
-msgid "确定"
-msgstr "Confirm"
-
 #: vms/templates/vm_edit.html:5 vms/templates/vm_edit.html:13
 msgid "修改虚拟机"
 msgstr "Edit virtual server"
@@ -2307,9 +2565,13 @@ msgstr "Virtual server ip"
 msgid "新的配置"
 msgstr "New config"
 
-#: vms/templates/vm_edit.html:75
-msgid "修改"
-msgstr "Edit"
+#: vms/templates/vm_edit.html:40 vms/templates/vms_create.html:94
+msgid "模板样式"
+msgstr "Template style"
+
+#: vms/templates/vm_edit.html:43 vms/templates/vms_create.html:97
+msgid "自定义"
+msgstr "User-defined"
 
 #: vms/templates/vm_image_release.html:5 vms/templates/vm_image_release.html:13
 msgid "镜像发布"
@@ -2463,6 +2725,30 @@ msgstr "Restore server option"
 msgid "恢复虚拟机"
 msgstr "Restore server"
 
+#: vms/templates/vm_unshelve.html:53 vms/templates/vm_unshelve.html:68
+#: vms/templates/vm_unshelve.html:77 vms/templates/vms_create.html:46
+#: vms/templates/vms_create.html:57 vms/templates/vms_create.html:65
+msgid "自动选择"
+msgstr "Auto select"
+
+#: vms/templates/vms_create.html:88
+msgid "配置"
+msgstr "config"
+
+#: vms/templates/vms_create.html:126
+msgid "配置系统盘容量"
+msgstr "config system disk capacity"
+
+#: vms/templates/vms_create.html:131
+msgid "系统盘容量"
+msgstr "system disk capacity"
+
+#: vms/templates/vms_create.html:140
+msgid "当前您选择的操作系统镜像，要求系统盘最小50GB"
+msgstr ""
+"The operating system image you have selected currently requires a minimum "
+"system disk size of 50GB."
+
 #: vms/templates/vms_list.html:86
 msgid "任务"
 msgstr "Task"
@@ -2507,17 +2793,9 @@ msgstr "%s TB"
 msgid "%s PB"
 msgstr "%s PB"
 
-#: vpn/models.py:17 vpn/templates/vpn_list.html:51
-msgid "密码"
-msgstr "Password"
-
 #: vpn/models.py:18 vpn/templates/vpn_list.html:52
 msgid "激活状态"
 msgstr "Active"
-
-#: vpn/models.py:20 vpn/models.py:71 vpn/templates/vpn_list.html:54
-msgid "修改时间"
-msgstr "Modification time"
 
 #: vpn/models.py:23
 msgid "修改者"
@@ -2527,7 +2805,8 @@ msgstr "mender"
 msgid "CA证书"
 msgstr "CA certificate"
 
-#: vpn/models.py:64 vpn/templates/vpn_list.html:30
+#: vpn/models.py:64 vpn/templates/add.html:17 vpn/templates/change.html:17
+#: vpn/templates/vpn_list.html:30 vpn/templates/vpn_log_list.html:33
 msgid "配置文件"
 msgstr "Config file"
 
@@ -2543,11 +2822,11 @@ msgstr "File content"
 msgid "登录时间戳"
 msgstr "Entry time stamp"
 
-#: vpn/models.py:84 vpn/templates/vpn_log_list.html:56
+#: vpn/models.py:84 vpn/templates/vpn_log_list.html:62
 msgid "登录时间"
 msgstr "Login time"
 
-#: vpn/models.py:85 vpn/templates/vpn_log_list.html:57
+#: vpn/models.py:85 vpn/templates/vpn_log_list.html:63
 msgid "登出时间"
 msgstr "Logout time"
 
@@ -2559,23 +2838,29 @@ msgstr "Server IP address"
 msgid "ASSIGN_IP"
 msgstr "ASSIGN IP"
 
-#: vpn/models.py:88 vpn/templates/vpn_log_list.html:52
+#: vpn/models.py:88 vpn/templates/vpn_log_list.html:58
 msgid "客户端IP"
 msgstr "Client IP"
 
-#: vpn/models.py:89 vpn/templates/vpn_log_list.html:53
+#: vpn/models.py:89 vpn/templates/vpn_log_list.html:59
 msgid "客户端公网端口"
 msgstr "Client public network port"
 
-#: vpn/models.py:90 vpn/templates/vpn_log_list.html:54
+#: vpn/models.py:90 vpn/templates/vpn_log_list.html:60
 msgid "上行流量"
 msgstr "Upstream traffic"
 
-#: vpn/models.py:91 vpn/templates/vpn_log_list.html:55
+#: vpn/models.py:91 vpn/templates/vpn_log_list.html:61
 msgid "下行流量"
 msgstr "Downstream traffic"
 
-#: vpn/models.py:95
+#: vpn/models.py:92
+#, fuzzy
+#| msgid "DNS服务IP"
+msgid "VPN服务IP"
+msgstr "DNS service IP address"
+
+#: vpn/models.py:96
 msgid "VPN日志记录"
 msgstr "VPN logging"
 
@@ -2583,19 +2868,31 @@ msgstr "VPN logging"
 msgid "VPN添加"
 msgstr "Add VPN"
 
-#: vpn/templates/add.html:17
+#: vpn/templates/add.html:13 vpn/templates/change.html:13
+#: vpn/templates/vpn_list.html:27 vpn/templates/vpn_log_list.html:30
+msgid "VPN用户"
+msgstr "VPN user"
+
+#: vpn/templates/add.html:16 vpn/templates/change.html:16
+#: vpn/templates/vpn_list.html:29 vpn/templates/vpn_log_list.html:32
+#, fuzzy
+#| msgid "创建VPN"
+msgid "创建VPN账户"
+msgstr "Create VPN"
+
+#: vpn/templates/add.html:25
 msgid "添加 VPN"
 msgstr "Add VPN"
 
-#: vpn/templates/add.html:43 vpn/templates/change.html:43
+#: vpn/templates/add.html:53 vpn/templates/change.html:54
 msgid "保存并继续编辑"
 msgstr "Save and continue editing"
 
-#: vpn/templates/add.html:44 vpn/templates/change.html:44
+#: vpn/templates/add.html:55 vpn/templates/change.html:56
 msgid "保存并添加另一个"
 msgstr "Save and add another"
 
-#: vpn/templates/add.html:45 vpn/templates/change.html:45
+#: vpn/templates/add.html:57 vpn/templates/change.html:58
 msgid "保存"
 msgstr "Save"
 
@@ -2603,7 +2900,7 @@ msgstr "Save"
 msgid "VPN修改"
 msgstr "Edit VPN"
 
-#: vpn/templates/change.html:14
+#: vpn/templates/change.html:22
 msgid "修改 VPN"
 msgstr "Edit VPN"
 
@@ -2623,191 +2920,60 @@ msgstr "Absent"
 msgid "VPN列表"
 msgstr "VPN list"
 
-#: vpn/templates/vpn_list.html:27 vpn/templates/vpn_log_list.html:30
-msgid "VPN用户"
-msgstr "VPN user"
-
-#: vpn/templates/vpn_list.html:28 vpn/templates/vpn_log_list.html:31
-msgid "VPN登录日志"
-msgstr "VPN login logs"
-
-#: vpn/templates/vpn_list.html:29 vpn/templates/vpn_log_list.html:32
-msgid "创建VPN"
-msgstr "Create VPN"
-
 #: vpn/templates/vpn_list.html:36
 msgid "用户名、备注"
 msgstr "Username, notes"
 
-#: vpn/templates/vpn_list.html:37 vpn/templates/vpn_log_list.html:40
-msgid "搜索"
-msgstr "Search"
+#: vpn/templates/vpn_list.html:42
+msgid "删除非激活用户"
+msgstr "Example Delete an inactive user"
 
 #: vpn/templates/vpn_log_list.html:24
 msgid "登录日志列表"
 msgstr "Login log list"
 
-#: users/form.py:16
-msgid "用户名(邮箱)"
-msgstr "Username(Email)"
+#: vpn/templates/vpn_log_list.html:56
+msgid "VPN服务端IP"
+msgstr "VPN server IP address"
 
-#: users/form.py:21
-msgid "请输入邮箱作为用户名"
-msgstr "Please input a valid email as your username"
+#~ msgid "03_CEPH集群"
+#~ msgstr "Ceph cluster"
 
-#: users/form.py:28
-msgid "请输入一个8-20位的密码"
-msgstr "Please enter a password of 8-20 digits"
+#~ msgid "站点名称"
+#~ msgstr "Site name"
 
-#: users/form.py:30
-msgid "确认密码"
-msgstr "Password confirm"
+#~ msgid "技术支持"
+#~ msgstr "Technical support"
 
-#: users/form.py:35
-msgid "请输入确认密码"
-msgstr "Please enter password confirm"
+#~ msgid "novnc http协议配置"
+#~ msgstr "novnc http configuration"
 
-#: users/form.py:38
-msgid "姓氏"
-msgstr "Lastname"
+#~ msgid "配置novnchttp协议 http/https"
+#~ msgstr "Configure novnchttp protocol http or https"
 
-#: users/form.py:41
-msgid "请如实填写"
-msgstr "Please fill in truthfully"
+#~ msgid "novnc http协议配置有误。"
+#~ msgstr "The HTTP protocol configuration of Novnc is incorrect."
 
-#: users/form.py:44
-msgid "名字"
-msgstr "Firstname"
+#~ msgid "虚拟cpu(/核)"
+#~ msgstr "vCPU (/Core)"
 
-#: users/form.py:50
-msgid "电话"
-msgstr "Telephone"
+#~ msgid "可分配内存/实际可分配内存"
+#~ msgstr "Allocatable memory/Actual allocatable memory"
 
-#: users/form.py:55
-msgid "公司/单位"
-msgstr "Company"
+#~ msgid "已使用内存/实际已使用内存"
+#~ msgstr "Used memory/Actual used memory"
 
-#: users/form.py:72
-msgid "用户名不能为空"
-msgstr "The username cannot be empty"
+#~ msgid "内存使用率/实际内存使用率"
+#~ msgstr "Memory usage/Actual memory usage"
 
-#: users/form.py:78
-msgid "用户名已存在，请重新输入"
-msgstr "Username already exist, please enter another one"
+#~ msgid "本地设备"
+#~ msgstr "Local device"
 
-#: users/form.py:125
-msgid "密码输入不一致"
-msgstr "Inconsistent password input"
-
-#: users/form.py:84
-msgid "原密码"
-msgstr "Old Password"
-
-#: users/form.py:130
-msgid "请输入原密码"
-msgstr "Please enter old password"
-
-#: users/form.py:132
-msgid "新密码"
-msgstr "New Password"
-
-#: users/form.py:139
-msgid "确认新密码"
-msgstr "New Password Confirm"
-
-#: users/form.py:144
-msgid "请再次输入新密码"
-msgstr "Please enter new password again"
-
-#: users/form.py:159
-msgid "新密码输入不一致，请重新输入"
-msgstr "The new password input is inconsistent"
-
-#: users/form.py:168
-msgid "原密码有误"
-msgstr "Old password is not correct"
-
-#: users/form.py:180
-msgid "请输入用户名"
-msgstr "Please enter the username"
-
-#: users/form.py:197
-msgid "用户不存在"
-msgstr "Username not exist"
-
-#: users/form.py:243
-msgid "重置密码失败，jwt无效或已过期，请重新找回密码获取新的链接"
-msgstr "Password reset failed, jwt is invalid or has expired. Please retrieve your password to obtain a new link"
-
-#: users/views.py:67
-msgid "EVCloud账户激活"
-msgstr "EVCloud Account Activate"
-
-#: users/views.py:129
-msgid "用户注册成功，请登录邮箱访问收到的连接以激活用户"
-msgstr "User registration successful, please log in to email to access the received connection to activate the user"
-
-#: users/views.py:131
-msgid "邮件发送失败，请检查邮箱输入是否有误"
-msgstr "Email sending failed, please check if there is an error in the email input"
-
-#: users/views.py:133
-msgid "用户注册失败，保存用户数据是错误"
-msgstr "User registration failed, error saving user data"
-
-#: users/views.py:137
-msgid "用户注册"
-msgstr "User Registration"
-
-#: users/views.py:158
-msgid "用户激活失败，无待激活账户，或者账户已被激活，请直接尝试登录"
-msgstr "User activation failed, there is no account to be activated, or the account has already been activated. Please try logging in directly"
-
-#: users/views.py:166
-msgid "用户已激活"
-msgstr "User has been activated"
-
-#: users/views.py:215
-msgid "用户未激活，请先登录邮箱访问收到的链接以激活用户"
-msgstr "The user is not activated. Please log in to your email first to access the received link to activate the user"
-
-#: users/views.py:217
-msgid "邮件发送失败，请检查用户名输入是否有误，稍后重试"
-msgstr "Email sending failed. Please check if the username was entered incorrectly and try again later"
-
-#: users/views.py:221
-msgid "重置密码确认邮件已发送，请尽快登录邮箱访问收到的链接以完成密码重置，以防链接过期无效"
-msgstr "The password reset confirmation email has been sent. Please log in to your email as soon as possible to access the received link to complete the password reset, in case the link expires or becomes invalid"
-
-#: users/views.py:227
-msgid "找回密码"
-msgstr "Forgot Password"
-
-#: users/views.py:227
-msgid "提交"
-msgstr "Submit"
-
-#: users/views.py:251
-msgid "用户重置密码成功，请尝试登录"
-msgstr "User reset password successful, please try logging in"
-
-#: users/views.py:259
-msgid "链接无效或已过期，请重新找回密码获取新的链接"
-msgstr "The link is invalid or has expired. Please retrieve your password to obtain a new link"
-
-#: users/views.py:264
-msgid "重置密码"
-msgstr "Password Reset"
-
-#: users/views.py:285
-msgid "EVCloud账户找回密码"
-msgstr "EVCloud User Password Forgot"
+#~ msgid "CEPH配置"
+#~ msgstr "Ceph config"
 
 #~ msgid "统计报表"
 #~ msgstr "Statistics report"
-
-#~ msgid "源IP地址"
-#~ msgstr "Source ip address"
 
 #~ msgid "源MAC地址"
 #~ msgstr "Source MAC address"
