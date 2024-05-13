@@ -4383,7 +4383,7 @@ class MigrateTaskViewSet(CustomGenericViewSet):
 
 class VersionViewSet(CustomGenericViewSet):
     permission_classes = []
-    pagination_class = LimitOffsetPagination
+    pagination_class = None
 
     @swagger_auto_schema(
         operation_summary='查询部署版本',
@@ -4392,6 +4392,9 @@ class VersionViewSet(CustomGenericViewSet):
     def list(self, request, *args, **kwargs):
         """
         查询当前部署EVCloud版本
+            {
+              "version": "v4.4.1"
+            }
         """
         return Response(data={'version': __version__})
 

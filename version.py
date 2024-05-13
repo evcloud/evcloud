@@ -2,7 +2,7 @@ import os
 import subprocess
 import datetime
 
-from django.utils.version import get_version
+from django.utils.version import get_main_version
 
 
 VERSION = (4, 4, 1, 'final', 0)     # 'alpha', 'beta', 'rc', 'final'
@@ -42,6 +42,6 @@ def get_git_changeset():
         return None
     return tags
 
-
-__version__ = get_version(VERSION)
+standard_version = f'v{get_main_version(VERSION)}'
+__version__ = standard_version
 __version_git_change_set__ = get_git_changeset()

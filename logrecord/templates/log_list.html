@@ -58,7 +58,7 @@
                 <tbody>
                 {% for obj in page %}
                     <tr>
-                        <td>{{ forloop.counter }}</td>
+                        <td>{{ forloop.counter| add:page_start_index }}</td>
                         {% if obj.real_user %}
                             <td>cstcloud:{{ obj.real_user }}</td>
                         {% else %}

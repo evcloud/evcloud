@@ -33,6 +33,7 @@ class LogRecordView(View):
         context['page_nav'] = page_nav
         context['page'] = page
         context['count'] = paginator.count
+        context['page_start_index'] = (int(page_num) -1) * self.NUM_PER_PAGE
         return context
 
     def post(self, request, *args, **kwargs):
