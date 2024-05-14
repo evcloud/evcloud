@@ -148,7 +148,8 @@ class GlobalConfig(models.Model):
         cls.objects.get_or_create(name='siteName', content='EVCloud')
         cls.objects.get_or_create(name='poweredBy', content='https://gitee.com/cstcloud-cnic/evcloud')
         cls.objects.get_or_create(name='novncAccess', content='https')
-        cls.objects.get_or_create(name='vncUserConfig', content='')
+        cls.objects.get_or_create(name='vpnUserConfig', content='')
+        cls.objects.get_or_create(name='vpnUserConfigDownloadName', content='client.ovpn')
 
         return cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess'])
 
@@ -156,7 +157,7 @@ class GlobalConfig(models.Model):
     @classmethod
     def get_instance(cls):
         inst_idct = {}
-        inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'vncUserConfig'])
+        inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'vpnUserConfig'])
         if not inst:
             inst = cls.create_base_data()
 

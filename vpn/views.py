@@ -212,15 +212,18 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         """
         # user_operation_record.add_log(request=request, operation_content=f'下载vpn配置文件',
         #                               remark='')
-        obj = VPNManager().vpn_config_file()
-        filename = 'client.ovpn'
+
+        obj = GlobalConfig.objects.filter(name='vnpUserConfig').first()
+
         if not obj:
-            obj = GlobalConfig.objects.filter(name='vncUserConfig').first()
-            if not obj:
-                return Response(data={'未添加vpn配置文件'}, status=status.HTTP_404_NOT_FOUND)
-            filename = f'{obj.name}{filename}'
+            return Response(data={'未添加vpn配置文件'}, status=status.HTTP_404_NOT_FOUND)
+
+        filename = GlobalConfig.objects.filter(name='vpnUserConfigDownloadName').first()
+        if not filename:
+            filename = 'client.ovpn'
         else:
-            filename = obj.filename if obj.filename else filename
+            filename = filename.content
+
         content = obj.content.encode(encoding='utf-8')
 
         return FileResponse(BytesIO(initial_bytes=content), as_attachment=True, filename=filename)
