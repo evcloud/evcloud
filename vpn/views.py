@@ -210,8 +210,8 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         """
         下载用户vpn配置文件
         """
-        user_operation_record.add_log(request=request, operation_content=f'下载vpn配置文件',
-                                      remark='')
+        # user_operation_record.add_log(request=request, operation_content=f'下载vpn配置文件',
+        #                               remark='')
         obj = VPNManager().vpn_config_file()
         filename = 'client.ovpn'
         if not obj:
