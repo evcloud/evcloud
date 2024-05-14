@@ -480,7 +480,7 @@ class VmAPI:
         """
         device = self.get_user_pci_device(device_id=device_id, user=user)
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'host__group'))
-        return VmInstance(vm=vm).mount_pci_device(device=device)
+        return VmInstance(vm=vm).mount_pci_device(device=device), vm
 
     def change_sys_disk(self, vm_uuid: str, image_id: int, request):
         """

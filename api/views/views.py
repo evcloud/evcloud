@@ -3850,13 +3850,13 @@ class PCIDeviceViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         try:
-            device = VmAPI().mount_pci_device(vm_uuid=vm_uuid, device_id=dev_id, user=request.user)
+            device, vm = VmAPI().mount_pci_device(vm_uuid=vm_uuid, device_id=dev_id, user=request.user)
         except VmError as e:
             e.msg = f'挂载失败，{str(e)}'
             return self.exception_response(e)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'挂载PCI设备, 云主机IP：{device.vm.mac_ip}, pcie设备：{device}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'挂载PCI设备, 云主机IP：{vm.mac_ip}, pcie设备：{device}', remark='')
 
         return Response(data={'code': 201, 'code_text': '挂载成功'}, status=status.HTTP_201_CREATED)
 
