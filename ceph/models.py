@@ -143,23 +143,37 @@ class GlobalConfig(models.Model):
         return f'GlobalConfig<{self.name}>'
 
     @classmethod
-    def create_base_data(cls):
+    def create_base_data(cls, name, content, remark):
         """写入基数据"""
-        cls.objects.get_or_create(name='siteName', content='EVCloud')
-        cls.objects.get_or_create(name='poweredBy', content='https://gitee.com/cstcloud-cnic/evcloud')
-        cls.objects.get_or_create(name='novncAccess', content='https')
-        cls.objects.get_or_create(name='vpnUserConfig', content='')
-        cls.objects.get_or_create(name='vpnUserConfigDownloadName', content='client.ovpn')
+        obj = cls.objects.filter(name=name).first()
+        if not obj:
+            cls.objects.get_or_create(name=name, content=content, remark=remark)
 
-        return cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess'])
+        return
 
+    def initial_site_parameter(self):
+        """初始站点化参数"""
+        parameter_list = [
+            {'name': 'siteName', 'content': 'EVCloud', 'remark': '站点名称'},
+            {'name': 'poweredBy', 'content': 'https://gitee.com/cstcloud-cnic/evcloud', 'remark': '技术支持'},
+            {'name': 'novncAccess', 'content': 'https', 'remark': 'vnc http协议'},
+            {'name': 'vpnUserConfig', 'content': '', 'remark': 'vpn配置文件'},
+            {'name': 'vpnUserConfigDownloadName', 'content': 'client.ovpn', 'remark': 'vpn配置文件下载名称。'},
+            {'name': 'vpnUserConfigCA', 'content': '', 'remark': 'vpn ca证书文件'},
+            {'name': 'vpnUserConfigCADownloadName', 'content': 'ca.crt', 'remark': 'vpn ca证书文件下载名称。'},
+        ]
+
+        for param in parameter_list:
+            self.create_base_data(name=param['name'], content=param['content'], remark=param['remark'])
+
+        return
 
     @classmethod
     def get_instance(cls):
         inst_idct = {}
         inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'vpnUserConfig'])
         if not inst:
-            inst = cls.create_base_data()
+            inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'vpnUserConfig'])
 
         for obj in inst:
             if obj.name == 'siteName':
@@ -211,7 +225,7 @@ class ApiAllowIP(models.Model):
     class Meta:
         db_table = 'app_global_parameter_apiallowip' # 后续 app 更名为 app_global_parameter
         ordering = ['-creation_time']
-        verbose_name = _('管理员IP白名单')
+        verbose_name = _('访问IP白名单')
         verbose_name_plural = verbose_name
 
     def __str__(self):

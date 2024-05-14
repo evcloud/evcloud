@@ -210,19 +210,14 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         """
         下载用户vpn配置文件
         """
-        # user_operation_record.add_log(request=request, operation_content=f'下载vpn配置文件',
-        #                               remark='')
 
-        obj = GlobalConfig.objects.filter(name='vnpUserConfig').first()
+        obj = VPNManager().vpn_config_file()
 
         if not obj:
             return Response(data={'未添加vpn配置文件'}, status=status.HTTP_404_NOT_FOUND)
 
         filename = GlobalConfig.objects.filter(name='vpnUserConfigDownloadName').first()
-        if not filename:
-            filename = 'client.ovpn'
-        else:
-            filename = filename.content
+        filename = filename.content if filename else 'client.ovpn'
 
         content = obj.content.encode(encoding='utf-8')
 
@@ -237,13 +232,14 @@ class VPNFileViewSet(viewsets.GenericViewSet):
         下载用户vpn ca证书文件
         """
 
-        user_operation_record.add_log(request=request, operation_content=f'下载用户vpn证书文件',
-                                      remark='')
         obj = VPNManager().vpn_ca_file()
         if not obj:
             return Response(data={'未添加vpn ca证书文件'}, status=status.HTTP_404_NOT_FOUND)
 
-        filename = obj.filename if obj.filename else 'ca.crt'
+        filename = GlobalConfig.objects.filter(name='vpnUserConfigCADownloadName').first()
+        filename = filename.content if filename else 'ca.crt'
+
+        # filename = obj.filename if obj.filename else 'ca.crt'
         content = obj.content.encode(encoding='utf-8')
         return FileResponse(BytesIO(initial_bytes=content), as_attachment=True, filename=filename)
 

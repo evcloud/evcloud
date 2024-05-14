@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import VPNAuth, VPNConfig, VPNLog
+from .models import VPNAuth, VPNLog
 
 
 @admin.register(VPNAuth)
@@ -11,9 +11,9 @@ class VPNAuthAdmin(admin.ModelAdmin):
     search_fields = ['username', 'remarks']
 
 
-@admin.register(VPNConfig)
-class VPNConfigAdmin(admin.ModelAdmin):
-    list_display = ['id', 'tag', 'filename', 'modified_time']
+# @admin.register(VPNConfig)
+# class VPNConfigAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'tag', 'filename', 'modified_time']
 
 
 @admin.register(VPNLog)

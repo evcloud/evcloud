@@ -11,7 +11,7 @@
 	{% block head %}
         <script src="{% url 'javascript-catalog' %}"></script>
 	{% endblock %}
-    {% get_global_config as global_config %}
+    {% get_global_config_tag as global_config %}
 	<title> {% if global_config %} {{ global_config.siteName }} | {% endif %}{% block title %}{% endblock %}</title>
     <style>
         html{

@@ -1,5 +1,6 @@
+from ceph.models import GlobalConfig
 from utils.errors import VPNError
-from .models import VPNAuth, VPNConfig, VPNLog
+from .models import VPNAuth, VPNLog
 
 
 class VPNManager:
@@ -65,18 +66,19 @@ class VPNManager:
         """
         vpn配置文件元数据
         :return:
-            None or VPNConfig()
+            None or GlobalConfig()
         """
-        return VPNConfig.objects.filter(tag=VPNConfig.TAG_CONFIG).first()
+
+        return GlobalConfig.objects.filter(name='vpnUserConfig').first()
 
     @staticmethod
     def vpn_ca_file():
         """
         vpn ca证书元数据
         :return:
-            None or VPNConfig()
+            None or GlobalConfig()
         """
-        return VPNConfig.objects.filter(tag=VPNConfig.TAG_CA).first()
+        return GlobalConfig.objects.filter(name='vpnUserConfigCA').first()
 
     def vpn_login_num(self):
         """vpn 登录数"""
