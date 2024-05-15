@@ -21,8 +21,10 @@
                     {% if form.errors %}
                         <div class="text-danger">{{ form.non_field_errors }}</div>
                     {% else %}
-                        <div class="text-danger"> {{ ip_error }}</div>
+                        <div class="text-danger" style="font-size: 20px"> {{ ip_error }}</div>
                     {% endif %}
+
+                    {% if not ip_error  %}
                     <form method="post" action="{% url 'users:login' %}" id="login-form">
                         {% csrf_token %}
                         <div class="input-group form-group">
@@ -52,6 +54,7 @@
                                href="#"{% endif %}>{% translate '注册' %}</a>
                         </div>
                     </form>
+                    {% endif %}
                 </div>
             </div>
         </div>

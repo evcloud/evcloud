@@ -2608,15 +2608,16 @@ class AuthTokenViewSet(ObtainAuthToken):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        if self.request.method.upper() in ['POST']:
-            return []
-        return [IsAuthenticated()]
+        if self.request.method.upper() in ['POST', 'PUT']:
+            return [APIIPPermission()]
+        return [APIIPPermission(), IsAuthenticated()]
 
 
 class JWTObtainPairView(TokenObtainPairView):
     """
     JWT登录认证视图
     """
+    permission_classes = [APIIPPermission]
 
     @swagger_auto_schema(
         operation_summary='登录认证，获取JWT',
@@ -2650,6 +2651,7 @@ class JWTRefreshView(TokenRefreshView):
     """
     Refresh JWT视图
     """
+    permission_classes = [APIIPPermission]
 
     @swagger_auto_schema(
         operation_summary='刷新access JWT',
@@ -2682,6 +2684,7 @@ class JWTVerifyView(TokenVerifyView):
     """
     校验access JWT视图
     """
+    permission_classes = [APIIPPermission]
 
     @swagger_auto_schema(
         operation_summary='校验access JWT是否有效',

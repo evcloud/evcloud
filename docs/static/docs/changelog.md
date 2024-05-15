@@ -1,3 +1,16 @@
+## v4.5.0
+2024-05-11
+* 修复挂载接口因记录日志报错  提交人：wanghuang
+* 删除 vpn 原有的配置字段，改成站点参数配置  提交人：wanghuang
+* vpn 配置文件和ca证书名称和内容在站点参数中设置  提交人：wanghuang
+* 下载vpn配置文件不做记录  提交人：wanghuang
+* 管理员IP白名单修改为访问IP白名单  提交人：wanghuang
+* 查询版本号接口返回格式修改:v4.5.0  提交人：wanghuang
+* 增加站点参数检测命令：check_global_config  提交人：wanghuang
+* 用户登录界面IP 限制，不显示登录框  提交人：wanghuang
+* 取消csrf验证  提交人：wanghuang
+
+
 ## v4.4.1
 2024-05-11
 * 用户界面操作日志视图:删除半年信息日志时间错误修改  提交人：wanghuang
