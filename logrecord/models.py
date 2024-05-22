@@ -16,6 +16,7 @@ class LogRecord(models.Model):
     create_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
     username = models.CharField(verbose_name=_('请求用户'), max_length=150, blank=True, default='')
     real_user = models.CharField(verbose_name=_('cstcloud用户'), max_length=150, blank=True, default='')
+    request_ip = models.CharField(verbose_name=_('IP信息'), max_length=255, blank=True, default='')
 
     class Meta:
         verbose_name = _("用户操作日志")

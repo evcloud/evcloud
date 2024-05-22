@@ -1,4 +1,5 @@
 from logrecord.models import LogRecord
+from utils.iprestrict import IPRestrictor
 
 
 def extract_string(text):
@@ -47,6 +48,8 @@ class LogManager:
             vo, real_user = extract_string(text=vo_or_user)
             remark = f'项目组：{vo}, {remark}' if vo else remark
 
+        clinet_ip, _ = IPRestrictor().get_remote_ip(request)
+
         try:
             LogRecord.objects.create(
                 method=method,
@@ -55,6 +58,7 @@ class LogManager:
                 message=remark,
                 username=username,
                 real_user=real_user,
+                request_ip=clinet_ip if clinet_ip else '',
             )
         except Exception as e:
             pass

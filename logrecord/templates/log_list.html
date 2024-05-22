@@ -50,7 +50,7 @@
                 <thead class="thead-light">
                 <tr>
                     <th>{% translate '序号' %}</th>
-                    <th>{% translate '用户名' %}</th>
+                    <th>{% translate '用户名/IP' %}</th>
                     <th>{% translate '操作内容' %}</th>
                     <th>{% translate '操作时间' %}</th>
                 </tr>
@@ -59,10 +59,16 @@
                 {% for obj in page %}
                     <tr>
                         <td>{{ forloop.counter| add:page_start_index }}</td>
-                        {% if obj.real_user %}
+                        {% if obj.real_user and obj.request_ip%}
+                            <td>cstcloud:{{ obj.real_user }}{{ obj.request_ip }}</td>
+                        {% elif obj.real_user %}
                             <td>cstcloud:{{ obj.real_user }}</td>
-                        {% else %}
+                        {% elif obj.username and obj.request_ip %}
+                            <td>{{ obj.username }}/{{ obj.request_ip }}</td>
+                        {% elif obj.username %}
                             <td>{{ obj.username }}</td>
+                        {% else %}
+                            <td></td>
                         {% endif %}
                         <td class="text-left">{{ obj.operation_content }}</td>
                         <td>{{ obj.create_time }}</td>
