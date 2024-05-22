@@ -580,6 +580,7 @@ class VmLog(models.Model):
     content = models.TextField(verbose_name=_('日志内容'), default='')
     about = models.SmallIntegerField(verbose_name=_('关于日志'), choices=ABOUT_CHOICES, default=ABOUT_NORMAL)
     create_time = models.DateTimeField(verbose_name=_('时间'), auto_now_add=True)
+    error_handler = models.BooleanField(verbose_name=_('解决'), default=False)
 
     class Meta:
         ordering = ['-id']

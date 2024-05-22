@@ -147,7 +147,7 @@ class VmArchiveAdmin(admin.ModelAdmin):
 @admin.register(VmLog)
 class VmLogAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'title',)
-    list_display = ('id', 'title', 'about', 'create_time', 'content')
+    list_display = ('id', 'title', 'about', 'create_time', 'content', 'error_handler')
     search_fields = ['title', 'content']
     list_filter = ['about']
 
