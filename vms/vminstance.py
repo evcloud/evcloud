@@ -1,3 +1,5 @@
+from django.forms import model_to_dict
+
 from ceph.managers import RadosError, ImageExistsError
 from utils.ev_libvirt.virt import (
     VirtError, VmDomain, VirDomainNotExist, VirHostDown
@@ -216,6 +218,8 @@ class VmInstance:
         host = vm.host
         # 虚拟机的状态
         domain = self.vm_domain
+        log_manager = VmLogManager()
+        vm_uuid = vm.get_uuid()     # 提前暂存uuid, vm元数据删除后主键uuid会被设为None
 
         try:
             run = domain.is_running()
@@ -226,19 +230,23 @@ class VmInstance:
                 raise errors.VmError(msg='无法连接宿主机')
             run = False
         except VirtError as e:
-            raise errors.VmError(msg=f'获取虚拟机运行状态失败, {str(e)}')
+            if not force:
+                raise errors.VmError(msg=f'获取虚拟机运行状态失败, {str(e)}')
+            msg = f'虚拟机（uuid={vm_uuid}），获取虚拟机运行状态失败;错误信息：{str(e)}'
+            log_manager.add_log(title='获取虚拟机运行状态失败', about=log_manager.about.ABOUT_DISK, text=msg)
 
         if run:
             try:
                 domain.poweroff()
             except VirtError as e:
-                raise errors.VmRunningError(msg=f'关闭虚拟机失败，{str(e)}')
+                if not force:
+                    raise errors.VmRunningError(msg=f'关闭虚拟机失败，{str(e)}')
+                msg = f'虚拟机（uuid={vm_uuid}），关闭虚拟机失败;错误信息：{str(e)}'
+                log_manager.add_log(title='关闭虚拟机失败', about=log_manager.about.ABOUT_DISK, text=msg)
 
         att_ip = vm.vm_attach.all()  # 需要提前删除附加的ip，否则后端MACIP表有问题
         if att_ip:
             raise errors.VmError(msg=f'请先卸载附加IP')
-        # for att in att_ip:
-        #     AttachmentsIPManager().detach_ip_to_vm(attach_ip_obj=att.sub_ip)
 
         # 删除系统盘快照
         try:
@@ -246,17 +254,24 @@ class VmInstance:
             for snap in snaps:
                 snap.delete()
         except Exception as e:
-            raise errors.VmError(msg=f'删除虚拟机系统盘快照失败,{str(e)}')
+            if not force:
+                raise errors.VmError(msg=f'删除虚拟机系统盘快照失败,{str(e)}')
+            msg = f'虚拟机（uuid={vm_uuid}），删除虚拟机系统盘快照失败: {model_to_dict(self.vm)};错误信息：{str(e)}'
+            log_manager.add_log(title='删除虚拟机系统盘快照失败', about=log_manager.about.ABOUT_VM_METADATA, text=msg)
 
         # 归档虚拟机
         try:
             vm_ahv = VmArchiveManager().add_vm_archive(vm)
         except errors.VmError as e:
             vm_ahv = VmArchiveManager().get_vm_archive(vm)
-            if not vm_ahv:
-                raise errors.VmError(msg=f'归档虚拟机失败，{str(e)}')
+            if not vm_ahv and not force:
+                raise errors.VmError(msg=f'归档虚拟机失败:{str(e)}')
+            elif not force:
+                raise errors.VmError(msg=f'虚拟机已归档，有错误信息:{str(e)}')
+            elif force:
+                msg = f'虚拟机（uuid={vm_uuid}），归档虚拟机失败: {model_to_dict(self.vm)};错误信息：{str(e)}'
+                log_manager.add_log(title='归档虚拟机失败', about=log_manager.about.ABOUT_VM_METADATA, text=msg)
 
-        log_manager = VmLogManager()
 
         # 删除虚拟机
         undefine_result = '已删除'
@@ -268,10 +283,12 @@ class VmInstance:
             undefine_result = '未删除'
         except (VirtError, errors.VmError):
             vm_ahv.delete()  # 删除归档记录
-            raise errors.VmError(msg='删除虚拟机失败')
+            if not force:
+                raise errors.VmError(msg='删除虚拟机失败')
+            msg = f'虚拟机（uuid={vm_uuid}），删除虚拟机失败: {model_to_dict(self.vm)}。'
+            log_manager.add_log(title='删除虚拟机失败', about=log_manager.about.ABOUT_VM_METADATA, text=msg)
 
         # 删除虚拟机元数据
-        vm_uuid = vm.get_uuid()     # 提前暂存uuid, vm元数据删除后主键uuid会被设为None
         try:
             vm.delete()
         except Exception as e:
@@ -308,7 +325,12 @@ class VmInstance:
             log_manager.add_log(title='释放宿主机men, cpu资源失败', about=log_manager.about.ABOUT_MEM_CPU, text=msg)
 
         # vm系统盘RBD镜像修改了已删除归档的名称
-        vm_ahv.rename_sys_disk_archive()
+        try:
+            vm_ahv.rename_sys_disk_archive()
+        except Exception as e:
+            msg = f'虚拟机uuid={vm_uuid};删除后重命名系统盘失败;错误信息：{str(e)}'
+            log_manager.add_log(title='重命名系统盘失败', about=log_manager.about.ABOUT_DISK, text=msg)
+
         return True
 
     def delete_for_image(self, force=False):
