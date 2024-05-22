@@ -825,4 +825,10 @@ class VmBuilder:
             rbd_manager.remove_snap(image_name=vm_uuid, snap=snap_name)
             raise errors.VmError(msg=f'flatten image error, {str(e)}')
 
+        # 取消 用户镜像保护，并删除创建的镜像
+        try:
+            rbd_manager.remove_snap(image_name=vm_uuid, snap=snap_name)
+        except Exception as e:
+            pass
+
         return True
