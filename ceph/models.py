@@ -159,8 +159,6 @@ class GlobalConfig(models.Model):
             {'name': 'novncAccess', 'content': 'https', 'remark': 'vnc http协议'},
             {'name': 'vpnUserConfig', 'content': '', 'remark': 'vpn配置文件'},
             {'name': 'vpnUserConfigDownloadName', 'content': 'client.ovpn', 'remark': 'vpn配置文件下载名称。'},
-            {'name': 'vpnUserConfigCA', 'content': '', 'remark': 'vpn ca证书文件'},
-            {'name': 'vpnUserConfigCADownloadName', 'content': 'ca.crt', 'remark': 'vpn ca证书文件下载名称。'},
         ]
 
         for param in parameter_list:
@@ -170,20 +168,23 @@ class GlobalConfig(models.Model):
 
     @classmethod
     def get_instance(cls):
-        inst_idct = {}
-        inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'vpnUserConfig'])
+        inst_dict = {}
+        inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess'])
         if not inst:
-            inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'vpnUserConfig'])
+            inst_dict['siteName'] = 'EVCloud'
+            inst_dict['poweredBy'] = 'https://gitee.com/cstcloud-cnic/evcloud'
+            inst_dict['novncAccess'] = 'https'
+            return inst_dict
 
         for obj in inst:
             if obj.name == 'siteName':
-                inst_idct['siteName'] = obj.content
+                inst_dict['siteName'] = obj.content
             elif obj.name == 'poweredBy':
-                inst_idct['poweredBy'] = obj.content
+                inst_dict['poweredBy'] = obj.content
             elif obj.name == 'novncAccess':
-                inst_idct['novncAccess'] = obj.content
+                inst_dict['novncAccess'] = obj.content
 
-        return inst_idct
+        return inst_dict
 
     def save(self, *args, **kwargs):
 
