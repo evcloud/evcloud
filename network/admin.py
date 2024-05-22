@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.forms import ModelForm
+from django.utils.translation import gettext_lazy as _
 
 from .models import Vlan, MacIP, ShieldVlan
 from django.core.exceptions import ValidationError
@@ -27,7 +28,7 @@ class MacIPAdmin(admin.ModelAdmin):
         if obj.attach_ip:
             return obj.attach_ip
 
-    get_attach_ip.short_description = '附加IP虚拟机'
+    get_attach_ip.short_description = _('附加IP虚拟机')
 
 
 class ShieldVlanForm(ModelForm):

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-05-22 11:25+0800\n"
+"POT-Creation-Date: 2024-05-22 14:36+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,8 +19,6 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ceph/apps.py:7 templates/app_nav.html:107
-#, fuzzy
-#| msgid "全局配置表"
 msgid "全局配置"
 msgstr "Global configuration table"
 
@@ -95,8 +93,6 @@ msgid "ceph用户名，需与keyring文件一致"
 msgstr "ceph user name, which must be the same as the keyring file"
 
 #: ceph/models.py:39
-#, fuzzy
-#| msgid "CEPH集群"
 msgid "CEPH存储集群"
 msgstr "Ceph cluster"
 
@@ -116,7 +112,7 @@ msgstr "Name of the data store POOL"
 msgid "启用存储POOL"
 msgstr "Enabling a storage POOL"
 
-#: ceph/models.py:115 ceph/models.py:221 device/models.py:31
+#: ceph/models.py:115 ceph/models.py:222 device/models.py:31
 #: device/templates/pci_list.html:85 device/templates/pci_mount.html:27
 #: device/templates/pci_mount.html:60 image/templates/image_list.html:77
 #: network/models.py:42 network/templates/vlan_list.html:35
@@ -135,13 +131,12 @@ msgstr "Enabling a storage POOL"
 #: vms/templates/vm_mount_pci.html:26 vms/templates/vm_mount_pci.html:59
 #: vms/templates/vm_reset.html:30 vms/templates/vm_shelve_list.html:53
 #: vms/templates/vms_create.html:149 vms/templates/vms_list.html:84
-#: vpn/models.py:24 vpn/templates/vpn_list.html:57
+#: vpn/forms.py:14 vpn/forms.py:25 vpn/models.py:24
+#: vpn/templates/vpn_list.html:57
 msgid "备注"
 msgstr "Notes"
 
 #: ceph/models.py:119
-#, fuzzy
-#| msgid "CEPH存储池"
 msgid "CEPH数据存储池"
 msgstr "Ceph pool"
 
@@ -153,8 +148,6 @@ msgid "ID"
 msgstr "ID"
 
 #: ceph/models.py:131
-#, fuzzy
-#| msgid "内存"
 msgid "内容"
 msgstr "Memory"
 
@@ -162,7 +155,7 @@ msgstr "Memory"
 msgid "备注信息"
 msgstr "Notes"
 
-#: ceph/models.py:133 ceph/models.py:222 image/templates/image_list.html:207
+#: ceph/models.py:133 ceph/models.py:223 image/templates/image_list.html:207
 #: logrecord/models.py:16 vdisk/models.py:162
 #: vdisk/templates/vdisk_list.html:94 vdisk/templates/vdisk_mount_to_vm.html:25
 #: vms/models.py:849 vms/templates/vm_detail.html:64
@@ -180,17 +173,33 @@ msgstr "Modification time"
 msgid "站点参数"
 msgstr "site parameter"
 
-#: ceph/models.py:220
+#: ceph/models.py:221
 msgid "IP"
 msgstr ""
 
-#: ceph/models.py:223 image/templates/image_list.html:210
+#: ceph/models.py:224 image/templates/image_list.html:210
 msgid "更新时间"
 msgstr "Update Time"
 
-#: ceph/models.py:228 templates/app_nav.html:114
+#: ceph/models.py:229 templates/app_nav.html:114
 msgid "访问IP白名单"
 msgstr "Access the IP address whitelist"
+
+#: compute/admin.py:21 templates/app_nav.html:118
+msgid "CEPH集群"
+msgstr "Ceph cluster"
+
+#: compute/admin.py:44
+msgid "测试宿主机是否可访问连接"
+msgstr "Test whether the host can access the connection"
+
+#: compute/admin.py:70
+msgid "更新宿主机的资源使用量"
+msgstr "Update the resource usage of the host computer"
+
+#: compute/admin.py:102
+msgid "真实物理资源"
+msgstr "Real physical resources"
 
 #: compute/apps.py:7
 msgid "计算资源管理"
@@ -917,6 +926,10 @@ msgstr "Username/IP"
 msgid "操作时间"
 msgstr "Operating time"
 
+#: network/admin.py:31
+msgid "附加IP虚拟机"
+msgstr "Additional IP virtual machine"
+
 #: network/apps.py:7
 msgid "网络，IP与MAC"
 msgstr "Network, IP and MAC"
@@ -1545,10 +1558,6 @@ msgstr "Storage resource configuration and management"
 msgid "站点配置"
 msgstr "Site configuration"
 
-#: templates/app_nav.html:118
-msgid "CEPH集群"
-msgstr "Ceph cluster"
-
 #: templates/app_nav.html:122
 msgid "CEPH池"
 msgstr "Ceph pool"
@@ -1710,7 +1719,8 @@ msgstr "Username(Email)"
 msgid "请输入邮箱作为用户名"
 msgstr "Please input a valid email as your username"
 
-#: users/forms.py:23 vpn/models.py:17 vpn/templates/vpn_list.html:51
+#: users/forms.py:23 vpn/forms.py:11 vpn/forms.py:21 vpn/models.py:17
+#: vpn/templates/vpn_list.html:51
 msgid "密码"
 msgstr "Password"
 
@@ -1771,8 +1781,6 @@ msgid "新密码"
 msgstr "New Password"
 
 #: users/forms.py:137 users/forms.py:216
-#, fuzzy
-#| msgid "请输入一个8-20位的密码"
 msgid "请输入一个8-20位的新密码"
 msgstr "Please enter a password of 8-20 digits"
 
@@ -1818,9 +1826,9 @@ msgstr "Virtual server platform"
 msgid "虚拟机平台EVCloud登录"
 msgstr "EVCloud login"
 
-#: users/templates/registration/login.html:32 vpn/models.py:16 vpn/models.py:82
-#: vpn/templates/delete.html:14 vpn/templates/vpn_list.html:50
-#: vpn/templates/vpn_log_list.html:55
+#: users/templates/registration/login.html:32 vpn/forms.py:9 vpn/forms.py:19
+#: vpn/models.py:16 vpn/models.py:82 vpn/templates/delete.html:14
+#: vpn/templates/vpn_list.html:50 vpn/templates/vpn_log_list.html:55
 msgid "用户名"
 msgstr "Username"
 
@@ -1933,10 +1941,8 @@ msgid "无效的IP网段，地址无效"
 msgstr "The IP address is invalid"
 
 #: utils/iprestrict.py:40
-#, fuzzy
-#| msgid "源IP地址"
 msgid "无效的IP地址"
-msgstr "Source ip address"
+msgstr "Invalid IP address"
 
 #: utils/iprestrict.py:96
 msgid "无法获取到有效的客户端IPv4地址。"
@@ -1946,6 +1952,14 @@ msgstr "Failed to obtain a valid client IPv4 address."
 #, python-format
 msgid "拒绝IP地址为'%s'访问, 请联系管理员。"
 msgstr "Access denied with IP address '%s', please contact the administrator"
+
+#: vdisk/admin.py:20
+msgid "实时统计的已使用容量(GB)"
+msgstr "Real time statistics of used capacity (GB)"
+
+#: vdisk/admin.py:46
+msgid "删除状态"
+msgstr "deleted state"
 
 #: vdisk/apps.py:7
 msgid "云硬盘设置"
@@ -2780,9 +2794,18 @@ msgstr "%s TB"
 msgid "%s PB"
 msgstr "%s PB"
 
-#: vpn/models.py:18 vpn/templates/vpn_list.html:52
+#: vpn/forms.py:13 vpn/forms.py:24 vpn/models.py:18
+#: vpn/templates/vpn_list.html:52
 msgid "激活状态"
 msgstr "Active"
+
+#: vpn/forms.py:13 vpn/forms.py:24
+msgid "选中（激活）可用，不选中不可用"
+msgstr "Selected (activated) available, unselected unavailable"
+
+#: vpn/forms.py:33
+msgid "vpn用户名已存在"
+msgstr "VPN username already exists"
 
 #: vpn/models.py:23
 msgid "修改者"
@@ -2825,10 +2848,8 @@ msgid "下行流量"
 msgstr "Downstream traffic"
 
 #: vpn/models.py:92
-#, fuzzy
-#| msgid "DNS服务IP"
 msgid "VPN服务IP"
-msgstr "DNS service IP address"
+msgstr "VPN service IP"
 
 #: vpn/models.py:96
 msgid "VPN日志记录"
@@ -2845,8 +2866,6 @@ msgstr "VPN user"
 
 #: vpn/templates/add.html:16 vpn/templates/change.html:16
 #: vpn/templates/vpn_list.html:29 vpn/templates/vpn_log_list.html:32
-#, fuzzy
-#| msgid "创建VPN"
 msgid "创建VPN账户"
 msgstr "Create VPN"
 
@@ -2910,57 +2929,3 @@ msgstr "Login log list"
 #: vpn/templates/vpn_log_list.html:56
 msgid "VPN服务端IP"
 msgstr "VPN server IP address"
-
-#~ msgid "CA证书"
-#~ msgstr "CA certificate"
-
-#~ msgid "文件名"
-#~ msgstr "file name"
-
-#~ msgid "文件内容"
-#~ msgstr "File content"
-
-#~ msgid "03_CEPH集群"
-#~ msgstr "Ceph cluster"
-
-#~ msgid "站点名称"
-#~ msgstr "Site name"
-
-#~ msgid "技术支持"
-#~ msgstr "Technical support"
-
-#~ msgid "novnc http协议配置"
-#~ msgstr "novnc http configuration"
-
-#~ msgid "配置novnchttp协议 http/https"
-#~ msgstr "Configure novnchttp protocol http or https"
-
-#~ msgid "novnc http协议配置有误。"
-#~ msgstr "The HTTP protocol configuration of Novnc is incorrect."
-
-#~ msgid "虚拟cpu(/核)"
-#~ msgstr "vCPU (/Core)"
-
-#~ msgid "可分配内存/实际可分配内存"
-#~ msgstr "Allocatable memory/Actual allocatable memory"
-
-#~ msgid "已使用内存/实际已使用内存"
-#~ msgstr "Used memory/Actual used memory"
-
-#~ msgid "内存使用率/实际内存使用率"
-#~ msgstr "Memory usage/Actual memory usage"
-
-#~ msgid "本地设备"
-#~ msgstr "Local device"
-
-#~ msgid "CEPH配置"
-#~ msgstr "Ceph config"
-
-#~ msgid "统计报表"
-#~ msgstr "Statistics report"
-
-#~ msgid "源MAC地址"
-#~ msgstr "Source MAC address"
-
-#~ msgid "源网桥名"
-#~ msgstr "Source bridge"

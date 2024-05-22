@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 
 from .models import Vdisk, Quota
 
@@ -16,7 +17,7 @@ class QuotaAdmin(admin.ModelAdmin):
             return s
         return 'get error'
 
-    get_stats_used.short_description = '实时统计的已使用容量(GB)'
+    get_stats_used.short_description = _('实时统计的已使用容量(GB)')
 
 
 @admin.register(Vdisk)
@@ -42,4 +43,4 @@ class VdiskAdmin(admin.ModelAdmin):
             return '已删除'
         return '使用中'
 
-    get_deleted.short_description = '删除状态'
+    get_deleted.short_description = _('删除状态')

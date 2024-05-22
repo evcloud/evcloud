@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.db.models import Sum, Subquery, Count, Q
 from django.contrib import messages
+from django.utils.translation import gettext_lazy as _
 
 from pcservers.models import PcServer
 from image.models import Image
@@ -17,7 +18,7 @@ class CenterAdmin(admin.ModelAdmin):
 
     # 显示多对多字段, 定义一个方法，遍历，然后用列表返回
     # Field producer_country
-    @admin.display(description='CEPH集群')
+    @admin.display(description=_('CEPH集群'))
     def ceph_clusters_list(self, obj):
         return [str(item) for item in obj.ceph_clusters.all()]
 
@@ -40,7 +41,7 @@ class HostAdmin(admin.ModelAdmin):
     search_fields = ['ipv4']
     actions = ['test_connect_host', 'update_host_quota']
 
-    @admin.display(description='测试宿主机是否可访问连接')
+    @admin.display(description=_('测试宿主机是否可访问连接'))
     def test_connect_host(self, request, queryset):
         """
         测试宿主机是否可访问连接
@@ -66,7 +67,7 @@ class HostAdmin(admin.ModelAdmin):
         else:
             self.message_user(request, "所选宿主机都可访问连接", level=messages.SUCCESS)
 
-    @admin.display(description='更新宿主机的资源使用量')
+    @admin.display(description=_('更新宿主机的资源使用量'))
     def update_host_quota(self, request, queryset):
         """
         更新宿主机的资源使用量
@@ -98,7 +99,7 @@ class HostAdmin(admin.ModelAdmin):
         else:
             self.message_user(request, "所选宿主机都更新成功", level=messages.SUCCESS)
 
-    @admin.display(description='真实物理资源')
+    @admin.display(description=_('真实物理资源'))
     def pc_server_resource(self, obj):
         if obj.pcserver:
             return f'{obj.pcserver.real_cpu}核/{obj.pcserver.real_mem}GB'
