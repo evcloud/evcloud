@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 
 from . import views
 
-app_name = 'log_record'
+app_name = 'log-record'
 
 urlpatterns = [
     path('list/', login_required(views.LogRecordView.as_view()), name='log-record-list'),

@@ -12,13 +12,14 @@
 
 {% block boby %}
     <div class="container-fluid d-flex flex-column h-100">
-        <div class="d-flex px-3">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item active" aria-current="page">{% translate '全部' %}</li>
-                </ol>
-            </nav>
-            {#            <p class="h5">资源分配统计</p>#}
+        <div class="d-flex px-3" style="margin-bottom: 10px">
+{#            <nav aria-label="breadcrumb">#}
+{#                <ol class="breadcrumb">#}
+{#                    <li class="breadcrumb-item active" aria-current="page">{% translate '全部' %}</li>#}
+{#                </ol>#}
+{#            </nav>#}
+
+            <a class="btn btn-outline-primary" href="{% url 'log-record:log-record-list' %}">{% translate '用户操作日志' %}</a>
         </div>
         <div class="d-flex px-3" style="flex: 1">
             <div style="width: 200px">
@@ -37,7 +38,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" data-toggle="tab" href="#quota" aria-controls="host_quota"
-                           aria-selected="false">{% translate '资源配额图标' %}</a>
+                           aria-selected="false">{% translate '资源配额占比' %}</a>
                     </li>
 
                 </ul>
@@ -168,14 +169,14 @@
                                 <button type="submit"
                                         class="btn btn-primary form-control">{% translate '筛选' %}</button>
                                 {% if user.is_superuser %}
-{#                                    <button type="button" class="btn btn-primary" data-toggle="modal"#}
-{#                                            data-target="#exampleModal2"#}
-{#                                            style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>#}
+                                    {#                                    <button type="button" class="btn btn-primary" data-toggle="modal"#}
+                                    {#                                            data-target="#exampleModal2"#}
+                                    {#                                            style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>#}
 
-{#                                    <button type="button" class="btn btn-primary" data-toggle="modal"#}
-{#                                            data-target="#exampleModal">#}
-{#                                        {% translate '一键检测' %}#}
-{#                                    </button>#}
+                                    {#                                    <button type="button" class="btn btn-primary" data-toggle="modal"#}
+                                    {#                                            data-target="#exampleModal">#}
+                                    {#                                        {% translate '一键检测' %}#}
+                                    {#                                    </button>#}
 
                                     <button type="button" class="btn btn-primary" id="batch-save"
                                             style="color: #fff; margin-right: 10px; margin-left: 10px"> {% translate '批量保存' %} </button>
@@ -196,9 +197,9 @@
                                 <th>{% translate '宿主机IP地址' %}</th>
                                 <th>{% translate '虚拟机数' %}</th>
                                 <th>{% translate '物理cpu核' %}</th>
-                                <th>{% translate '虚拟CPU核:' %} <br>  {% translate '已用/总数/利用率' %}</th>
+                                <th>{% translate '虚拟CPU核:' %} <br> {% translate '已用/总数/利用率' %}</th>
                                 <th>{% translate '虚拟内存GB:' %} <br> {% translate '已分配/总数/分配率' %} </th>
-                                <th>{% translate '实际大页内存GB:' %} <br>  {% translate '已分配/总数/利用率' %}</th>
+                                <th>{% translate '实际大页内存GB:' %} <br> {% translate '已分配/总数/利用率' %}</th>
 
                                 {% if user.is_superuser %}
                                     <th>{% translate '操作' %}</th>
@@ -212,8 +213,10 @@
                                     <td>{{ c.ipv4 }}</td>
                                     <td>{{ c.vm_created }}</td>
                                     <td>{{ c.real_cpu }}</td>
-                                    <td>{{ c.vcpu_allocated }} / {{ c.vcpu_total }} / {{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
-                                    <td>{{ c.mem_allocated }} / {{ c.mem_total }} / {{ c.mem_allocated | percentageformat:c.mem_total }}</td>
+                                    <td>{{ c.vcpu_allocated }} / {{ c.vcpu_total }}
+                                        / {{ c.vcpu_allocated | percentageformat:c.vcpu_total }}</td>
+                                    <td>{{ c.mem_allocated }} / {{ c.mem_total }}
+                                        / {{ c.mem_allocated | percentageformat:c.mem_total }}</td>
                                     <td>未检测 / 未检测 / 未检测</td>
                                     {% if  user.is_superuser %}
                                         <td><a type="button" class="btn btn-primary"
@@ -238,17 +241,25 @@
 
                     <div class="card tab-pane fade show h-100" id="quota" role="tabpanel"
                          aria-labelledby="quota-tab">
-                           <div class="container-fluid col-lg-12">
-                                <div class="pt-4 pb-4">
-                                    <p class="font-weight-bold">{% translate '资源配额概况' %}</p>
+                        <div class="container-fluid col-lg-12">
+                            <div class="pt-4 pb-4">
+                                <p class="font-weight-bold">{% translate '资源配额概况' %}</p>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 col-sm-4 col-md-3">
+                                    <canvas id="id-chart-cpu" height=""></canvas>
                                 </div>
-                                <div class="row">
-                                    <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-cpu" height=""></canvas></div>
-                                    <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-mem" height=""></canvas></div>
-                                    <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-ips" height=""></canvas></div>
-                                    <div class="col-12 col-sm-4 col-md-3"><canvas id="id-chart-vm" height=""></canvas></div>
+                                <div class="col-12 col-sm-4 col-md-3">
+                                    <canvas id="id-chart-mem" height=""></canvas>
+                                </div>
+                                <div class="col-12 col-sm-4 col-md-3">
+                                    <canvas id="id-chart-ips" height=""></canvas>
+                                </div>
+                                <div class="col-12 col-sm-4 col-md-3">
+                                    <canvas id="id-chart-vm" height=""></canvas>
                                 </div>
                             </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -357,42 +368,42 @@
     <script type="text/javascript" src="{% static 'reports/reports_common.js' %}"></script>
     <script>
         {% verbatim script %}
-            window.onload = function() {
+            window.onload = function () {
 
                 initQuotaCharts();
             };
-        function create_chart(dom_canvas, title, subtitle, data){
-            return new Chart(
-                dom_canvas, {
-                    type: 'pie',
-                    options: {
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: title,
-                                align: 'center',
-                                position: 'bottom'
-                            },
-                            subtitle: {
-                                display: true,
-                                text: subtitle,
-                                position: 'bottom'
+            function create_chart(dom_canvas, title, subtitle, data) {
+                return new Chart(
+                    dom_canvas, {
+                        type: 'pie',
+                        options: {
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: title,
+                                    align: 'center',
+                                    position: 'bottom'
+                                },
+                                subtitle: {
+                                    display: true,
+                                    text: subtitle,
+                                    position: 'bottom'
+                                }
                             }
+                        },
+                        data: {
+                            labels: ['已用', '可用'],
+                            datasets: [{
+                                label: '已用',
+                                backgroundColor: [window.chartColors.grey, window.chartColors.green],
+                                data: [data.used, data.total - data.used]
+                            }]
                         }
-                    },
-                    data: {
-                        labels: ['已用', '可用'],
-                        datasets: [{
-                            label: '已用',
-                            backgroundColor: [window.chartColors.grey, window.chartColors.green],
-                            data: [data.used, data.total - data.used]
-                        }]
                     }
-                }
-            );
-        }
+                );
+            }
         {% endverbatim script %}
-        function initQuotaCharts(){
+        function initQuotaCharts() {
             let cpu_total = {{ quota.vcpu_total }};
             let cpu_used = {{ quota.vcpu_allocated }};
             let mem_total = {{ quota.mem_total }};
@@ -404,7 +415,7 @@
 
             let mem_title = '{% translate '内存' %} (' + sizeFormat(mem_total, "GB") + ')'
             let vcpu_subtitle = "{% translate '已使用' %} " + cpu_used + " of " + cpu_total;
-            let mem_subtitle = "{% translate '已使用' %} " + mem_used + "Gb of " + mem_total+ "Gb";
+            let mem_subtitle = "{% translate '已使用' %} " + mem_used + "Gb of " + mem_total + "Gb";
             let ips_subtitle = "{% translate '已使用' %} " + ips_used + " of " + ips_total;
             let vm_subtitle = "{% translate '已使用' %} " + vm_used + " of " + vm_total;
 

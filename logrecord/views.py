@@ -38,7 +38,7 @@ class LogRecordView(View):
 
     def post(self, request, *args, **kwargs):
         """清理半年前日志"""
-        six_months_ago = datetime.now() - timedelta(days=180)
+        six_months_ago = timezone.now() - timedelta(days=180)
         queryset = LogRecord.objects.filter(create_time__lte=six_months_ago).all()
         try:
             queryset.delete()
