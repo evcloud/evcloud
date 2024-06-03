@@ -48,9 +48,8 @@ class LogManager:
             vo, real_user = extract_string(text=vo_or_user)
             remark = f'项目组：{vo}, {remark}' if vo else remark
 
-        clinet_ip, _ = IPRestrictor().get_remote_ip(request)
-
         try:
+            clinet_ip, _ = IPRestrictor().get_remote_ip(request)
             LogRecord.objects.create(
                 method=method,
                 operation_content=operation_content,
