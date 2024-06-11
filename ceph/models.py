@@ -226,7 +226,7 @@ class ApiAllowIP(models.Model):
     class Meta:
         db_table = 'app_global_parameter_apiallowip' # 后续 app 更名为 app_global_parameter
         ordering = ['-creation_time']
-        verbose_name = _('访问IP白名单')
+        verbose_name = _('IP访问白名单')
         verbose_name_plural = verbose_name
 
     def __str__(self):

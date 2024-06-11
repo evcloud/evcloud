@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
                 ('update_time', models.DateTimeField(auto_now=True, verbose_name='更新时间')),
             ],
             options={
-                'verbose_name': '访问IP白名单',
-                'verbose_name_plural': '访问IP白名单',
+                'verbose_name': 'IP访问白名单',
+                'verbose_name_plural': 'IP访问白名单',
                 'db_table': 'app_global_parameter_apiallowip',
                 'ordering': ['-creation_time'],
             },

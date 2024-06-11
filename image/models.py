@@ -20,6 +20,7 @@ class VmXmlTemplate(models.Model):
     name = models.CharField(verbose_name=_('模板名称'), max_length=100, unique=True)
     xml = models.TextField(verbose_name=_('XML模板'))
     desc = models.TextField(verbose_name=_('描述'), default='', blank=True)
+    max_cpu_socket = models.IntegerField(verbose_name=('cpu 颗数'), default=0, blank=True)
 
     def __str__(self):
         return self.name

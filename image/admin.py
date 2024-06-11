@@ -6,7 +6,7 @@ from .models import VmXmlTemplate, Image
 @admin.register(VmXmlTemplate)
 class VmXmlTemplateAdmin(admin.ModelAdmin):
     list_display_links = ('id', 'name',)
-    list_display = ('id', 'name', 'desc')
+    list_display = ('id', 'name', 'desc', 'max_cpu_socket')
     search_fields = ('name', 'desc')
 
 

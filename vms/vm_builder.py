@@ -385,7 +385,7 @@ class VmBuilder:
                 vm_uuid = self.new_uuid_obj().hex
                 xml_desc = VmXMLBuilder().build_vm_xml_desc(
                     vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, vm_disk_name=diskname,
-                    image_xml_tpl=image.xml_tpl.xml, ceph_pool=image.ceph_pool, mac_ip=macip, is_image_vm=True)
+                    image_xml_tpl=image.xml_tpl.xml, ceph_pool=image.ceph_pool, mac_ip=macip, is_image_vm=True, max_cpu_sockets=image.xml_tpl.max_cpu_socket)
             except Exception as e:
                 raise errors.VmError(msg=f'构建镜像虚拟机xml错误,{str(e)}')
 
@@ -448,7 +448,7 @@ class VmBuilder:
         try:
             xml_desc = VmXMLBuilder().build_vm_xml_desc(
                 vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, vm_disk_name=diskname,
-                image_xml_tpl=image.xml_tpl.xml, ceph_pool=image.ceph_pool, mac_ip=macip)
+                image_xml_tpl=image.xml_tpl.xml, ceph_pool=image.ceph_pool, mac_ip=macip, max_cpu_sockets=image.xml_tpl.max_cpu_socket)
         except Exception as e:
             raise errors.VmError(msg=f'构建虚拟机xml错误,{str(e)}')
 
@@ -493,7 +493,7 @@ class VmBuilder:
             # 虚拟机xml
             xml_desc = VmXMLBuilder().build_vm_xml_desc(
                 vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=disk_name,
-                image_xml_tpl=new_image.xml_tpl.xml, ceph_pool=new_image.ceph_pool, mac_ip=vm.mac_ip)
+                image_xml_tpl=new_image.xml_tpl.xml, ceph_pool=new_image.ceph_pool, mac_ip=vm.mac_ip, max_cpu_sockets=new_image.xml_tpl.max_cpu_socket)
             rbd_manager = new_image.get_rbd_manager()
         except Exception as e:
             raise errors.VmError(msg=str(e))
@@ -691,7 +691,7 @@ class VmBuilder:
         try:
             xml_desc = VmXMLBuilder().build_vm_xml_desc(
                 vm_uuid=vm.uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=vm.disk,
-                image_xml_tpl=image.xml_tpl.xml, ceph_pool=image.ceph_pool, mac_ip=macip)
+                image_xml_tpl=image.xml_tpl.xml, ceph_pool=image.ceph_pool, mac_ip=macip, max_cpu_sockets=image.xml_tpl.max_cpu_socket)
         except Exception as e:
             raise errors.VmError(msg=f'构建虚拟机xml错误,{str(e)}')
 

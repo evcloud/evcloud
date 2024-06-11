@@ -160,7 +160,7 @@ class VmXMLBuilder:
 
     def build_vm_xml_desc(
             self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str,
-            image_xml_tpl: str, ceph_pool, mac_ip, is_image_vm=False):
+            image_xml_tpl: str, ceph_pool, mac_ip, is_image_vm=False, max_cpu_sockets=0):
         """
         构建虚拟机的xml
         :param vm_uuid:
@@ -170,6 +170,7 @@ class VmXMLBuilder:
         :param image_xml_tpl: 创建虚拟机的xml模板字符串
         :param ceph_pool: 镜像所在的ceph pool
         :param mac_ip: MacIP实例
+        :param max_cpu_sockets: cpu 颗数 将 vcpu 平均
         :return:
             xml: str
         """
@@ -200,6 +201,18 @@ class VmXMLBuilder:
                                   ceph_pool=pool_name, diskname=vm_disk_name, ceph_username=ceph.username,
                                   ceph_hosts_xml=ceph.hosts_xml, mac=mac_ip.mac, bridge=mac_ip.vlan.br)
 
+        if max_cpu_sockets > 0:
+            try:
+                cores_num = self.add_cpu_topology_cores(vcpu=vcpu, max_cpu_sockets=max_cpu_sockets)
+            except errors.VmError as e:
+                raise e
+
+            if cores_num:
+                cpu_topology = f'<topology sockets="{max_cpu_sockets}" dies="1" cores="{cores_num}" threads="1"/>'
+
+                index = xml_desc.find('</cpu>')
+                xml_desc = xml_desc[:index] + cpu_topology + xml_desc[index:]
+
         if not ceph.has_auth:
             xml_desc = self.xml_remove_sys_disk_auth(xml_desc)
 
@@ -207,3 +220,21 @@ class VmXMLBuilder:
             xml_desc = self.xml_remove_huge_page(xml_desc)
 
         return xml_desc
+
+    def add_cpu_topology_cores(self, vcpu:int, max_cpu_sockets:int):
+        """计算 topology 中的 cores 数 """
+
+        if not isinstance(vcpu, int) or not isinstance(max_cpu_sockets, int):
+            return None
+
+        if max_cpu_sockets == 1:
+            return vcpu
+
+        if vcpu >= max_cpu_sockets:
+            remainder = vcpu % max_cpu_sockets
+            if remainder == 0:
+                """vcpu 是 max_cpu_sockets 倍数"""
+                cores = vcpu // max_cpu_sockets
+                return cores
+            return None
+        return None
