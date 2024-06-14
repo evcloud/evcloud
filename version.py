@@ -4,7 +4,7 @@ import datetime
 
 from django.utils.version import get_complete_version
 
-VERSION = (4, 6, 0, 'final', 0)     # 'alpha', 'beta', 'rc', 'final'
+VERSION = (4, 7, 0, 'final', 0)     # 'alpha', 'beta', 'rc', 'final'
 
 
 def get_git_changeset():

@@ -1,3 +1,10 @@
+## v4.7.0
+2024-06-14
+* xml模板数据表增加cpu识别参数字段max_cpu_socket，创建时插入xml信息  提交人：wanghuang
+* 虚拟机错误信息表增加“解决”字段  提交人：wanghuang
+* 访问IP白名单更名 IP访问白名单  提交人：wanghuang
+
+
 ## v4.6.0
 2024-05-22
 * 用户操作日志增加IP信息  提交人：wanghuang
