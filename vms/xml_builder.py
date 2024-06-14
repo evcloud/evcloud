@@ -158,6 +158,37 @@ class VmXMLBuilder:
         root.removeChild(huge_page_node[0])
         return root.toxml()
 
+    @staticmethod
+    def add_cpu_topology_xml(xml_desc: str, max_cpu_sockets: int, cores_num: int):
+        """为cpu 添加 topology 节点
+
+        topology： node-name
+            sockets： cpu 卡槽  attr
+            cores: cpu 核      attr
+            threads: 线程      attr
+        """
+
+        if not max_cpu_sockets or not cores_num:
+            return xml_desc
+
+        xml = XMLEditor()
+        if not xml.set_xml(xml_desc):
+            raise errors.VmError(msg='虚拟机xml文本无效')
+
+        node = xml.create_node(tag_name='topology',
+                               atter_dict={'sockets': str(max_cpu_sockets), 'dies': "1", 'cores': str(cores_num),
+                                           'threads': "1"})
+
+        if not node:
+            return xml_desc
+
+        root = xml.get_root()
+        cpu_node = root.getElementsByTagName('cpu')
+        if not cpu_node:
+            return xml_desc
+        cpu_node[0].appendChild(node)
+        return root.toxml()
+
     def build_vm_xml_desc(
             self, vm_uuid: str, mem: int, vcpu: int, vm_disk_name: str,
             image_xml_tpl: str, ceph_pool, mac_ip, is_image_vm=False, max_cpu_sockets=0):
@@ -203,15 +234,13 @@ class VmXMLBuilder:
 
         if max_cpu_sockets > 0:
             try:
-                cores_num = self.add_cpu_topology_cores(vcpu=vcpu, max_cpu_sockets=max_cpu_sockets)
-            except errors.VmError as e:
-                raise e
+                cores_num = self.get_cpu_topology_cores(vcpu=vcpu, max_cpu_sockets=max_cpu_sockets)
+            except Exception as e:
+                raise errors.VmError(msg=f'分配cpu核数时报错：{str(e)}')
 
             if cores_num:
-                cpu_topology = f'<topology sockets="{max_cpu_sockets}" dies="1" cores="{cores_num}" threads="1"/>'
-
-                index = xml_desc.find('</cpu>')
-                xml_desc = xml_desc[:index] + cpu_topology + xml_desc[index:]
+                xml_desc = self.add_cpu_topology_xml(xml_desc=xml_desc, max_cpu_sockets=max_cpu_sockets,
+                                                     cores_num=cores_num)
 
         if not ceph.has_auth:
             xml_desc = self.xml_remove_sys_disk_auth(xml_desc)
@@ -221,7 +250,7 @@ class VmXMLBuilder:
 
         return xml_desc
 
-    def add_cpu_topology_cores(self, vcpu:int, max_cpu_sockets:int):
+    def get_cpu_topology_cores(self, vcpu: int, max_cpu_sockets: int):
         """计算 topology 中的 cores 数 """
 
         if not isinstance(vcpu, int) or not isinstance(max_cpu_sockets, int):
@@ -230,7 +259,7 @@ class VmXMLBuilder:
         if max_cpu_sockets == 1:
             return vcpu
 
-        if vcpu >= max_cpu_sockets:
+        elif vcpu >= max_cpu_sockets:
             remainder = vcpu % max_cpu_sockets
             if remainder == 0:
                 """vcpu 是 max_cpu_sockets 倍数"""

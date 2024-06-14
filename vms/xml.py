@@ -5,6 +5,7 @@ class XMLEditor(object):
     """
     xml文本编辑器
     """
+
     def set_xml(self, xml_desc):
         """
         设置要处理的xml文本
@@ -65,3 +66,25 @@ class XMLEditor(object):
                 return None
 
         return node_list
+
+    def create_node(self, tag_name: str, atter_dict: dict):
+        """
+        创建一个节点及属性
+
+        :param tag_name: 节点名称
+        :param atter_dict: 属性字典
+        """
+
+        if not atter_dict:
+            return None
+
+        doc = minidom.Document()
+        new_node = doc.createElement(tag_name)
+
+        for attr, value in atter_dict.items():
+            # attr_key = doc.createAttribute(attr)
+            # attr_key.nodeValue = value
+            # new_node.setAttributeNode(attr_key)
+            new_node.setAttribute(attr, value)
+
+        return new_node

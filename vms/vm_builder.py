@@ -564,7 +564,7 @@ class VmBuilder:
             try:
                 xml_desc = VmXMLBuilder().build_vm_xml_desc(
                     vm_uuid=vm_uuid, mem=vm.mem, vcpu=vm.vcpu, vm_disk_name=vm.disk,
-                    image_xml_tpl=vm.image_xml_tpl, ceph_pool=vm.ceph_pool, mac_ip=vm.mac_ip)
+                    image_xml_tpl=vm.image_xml_tpl, ceph_pool=vm.ceph_pool, mac_ip=vm.mac_ip)  #  max_cpu_sockets 比添加此参数， 根据vm.image_xml_tpl 生成
             except Exception as e:
                 raise errors.VmError(msg=f'构建虚拟机xml错误，{str(e)}')
 
