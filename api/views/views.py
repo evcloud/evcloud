@@ -612,7 +612,8 @@ class VmsViewSet(CustomGenericViewSet):
             data['data'] = serializer.data
             return Response(data, status=status.HTTP_200_OK)
 
-        user_operation_record.add_log(request=request, operation_content=f'创建云主机, 云主机IP：{vm.mac_ip}', remark=validated_data['remarks'])
+        user_operation_record.add_log(request=request, operation_content=f'创建云主机, 云主机IP：{vm.mac_ip}',
+                                      remark=validated_data['remarks'])
 
         return Response(data={
             'code': 201,
@@ -935,7 +936,8 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
 
-        user_operation_record.add_log(request=request, operation_content=f'远程连接云主机vnc,云主机IP：{vm.mac_ip}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'远程连接云主机vnc,云主机IP：{vm.mac_ip}',
+                                      remark='')
         # 搁置虚拟机，不允许
         status_bool = vm_normal_status(vm=vm)
         if status_bool is False:
@@ -1000,7 +1002,6 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='参数有误，无效的备注信息')
             return self.exception_response(exc)
 
-
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
         try:
@@ -1057,7 +1058,6 @@ class VmsViewSet(CustomGenericViewSet):
         remark = request.query_params.get('remark', '')
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
-
 
         try:
             snap = api.create_vm_sys_snap(vm_uuid=vm_uuid, remarks=remark, user=request.user, request=request)
@@ -1690,7 +1690,6 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的id')
             return self.exception_response(exc)
 
-
         queryset = MacIPManager().get_macip_by_id(macip_id=ip_id)
         if not queryset or queryset.used or queryset.enable is False:
             exc = exceptions.BadRequestError(msg='无效的id')
@@ -2257,6 +2256,12 @@ class ImageViewSet(CustomGenericViewSet):
                 description='系统类型'
             ),
             openapi.Parameter(
+                name='mirror_image_market', in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description='公共镜像市场'
+            ),
+            openapi.Parameter(
                 name='search', in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 description="关键字查询(名称和描述)",
@@ -2335,11 +2340,18 @@ class ImageViewSet(CustomGenericViewSet):
         center_id = str_to_int_or_default(request.query_params.get('center_id', 0), 0)
         tag = str_to_int_or_default(request.query_params.get('tag', 0), 0)
         sys_type = str_to_int_or_default(request.query_params.get('sys_type', 0), 0)
+        mirror_image_market = request.query_params.get('mirror_image_market', False)
         search = request.query_params.get('search', None)
+
+        if not mirror_image_market or mirror_image_market == 'false':
+            mirror_image_market = False
+        else:
+            mirror_image_market = True
 
         try:
             queryset = ImageManager().filter_image_queryset(center_id=center_id, sys_type=sys_type, tag=tag,
-                                                            search=search, all_no_filters=True).filter(enable=True)
+                                                            search=search, all_no_filters=True).filter(enable=True,
+                                                                                                       mirror_image_market=mirror_image_market)
         except exceptions.ImageError as e:
             exc = exceptions.BadRequestError(msg=str(e))
             return self.exception_response(exc)
@@ -2475,6 +2487,37 @@ class ImageViewSet(CustomGenericViewSet):
 
         return Response(data={'code': 200, 'code_text': '修改虚拟机备注信息成功'})
 
+    @swagger_auto_schema(
+        operation_summary='获取镜像模板信息',
+        request_body=no_body,
+        manual_parameters=[],
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=['get'], detail=False, url_path=r'xmltemplate', url_name='image-xmltemplate')
+    def get_image_xmltemplate(self, request, *args, **kwargs):
+        """
+        获取镜像模板信息
+
+               {
+                  "id": 1,
+                  "name": "test",
+                  "desc": "",
+                  "max_cpu_socket": 2
+                }
+        """
+
+        queryset = ImageManager().get_xml_template()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -2483,6 +2526,9 @@ class ImageViewSet(CustomGenericViewSet):
         """
         if self.action in ['list', 'retrieve']:
             return serializers.ImageSerializer
+
+        if self.action == 'get_image_xmltemplate':
+            return serializers.VmXmlTemplateSerializer
         return Serializer
 
 
@@ -2810,7 +2856,6 @@ class VDiskViewSet(CustomGenericViewSet):
         search = request.query_params.get('search', '')
         mounted = request.query_params.get('mounted', '')
 
-
         user = request.user
         manager = VdiskManager()
         try:
@@ -2980,7 +3025,6 @@ class VDiskViewSet(CustomGenericViewSet):
 
         # 用户操作日志记录
         user_operation_record.add_log(request=request, operation_content=f'创建云硬盘, 容量为 {size} GB', remark='')
-
 
         manager = VdiskManager()
         try:
@@ -3509,7 +3553,6 @@ class StatCenterViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
 
-
         c_id = str_to_int_or_default(kwargs.get(self.lookup_field, 0), 0)
         if c_id > 0:
             center = CenterManager().get_stat_center_queryset(filters={'id': c_id}).values(
@@ -3859,7 +3902,9 @@ class PCIDeviceViewSet(CustomGenericViewSet):
             return self.exception_response(e)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'挂载PCI设备, 云主机IP：{vm.mac_ip}, pcie设备：{device}', remark='')
+        user_operation_record.add_log(request=request,
+                                      operation_content=f'挂载PCI设备, 云主机IP：{vm.mac_ip}, pcie设备：{device}',
+                                      remark='')
 
         return Response(data={'code': 201, 'code_text': '挂载成功'}, status=status.HTTP_201_CREATED)
 
@@ -3903,9 +3948,10 @@ class PCIDeviceViewSet(CustomGenericViewSet):
         except VmError as exc:
             return self.exception_response(exc)
 
-
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'卸载PCI设备, 云主机IP:{device.vm_id}，pcie设备：{device}', remark='')
+        user_operation_record.add_log(request=request,
+                                      operation_content=f'卸载PCI设备, 云主机IP:{device.vm_id}，pcie设备：{device}',
+                                      remark='')
 
         return Response(data={'code': 201, 'code_text': '卸载成功'}, status=status.HTTP_201_CREATED)
 
@@ -4143,7 +4189,8 @@ class VPNViewSet(CustomGenericViewSet):
             return self.exception_response(e)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'创建vpn账户, VPN账户：{vpn.username}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'创建vpn账户, VPN账户：{vpn.username}',
+                                      remark='')
 
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_201_CREATED)
 
@@ -4213,7 +4260,8 @@ class VPNViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'修改VPN账户密码, VPN账户：{vpn.username}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'修改VPN账户密码, VPN账户：{vpn.username}',
+                                      remark='')
 
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
 
@@ -4264,7 +4312,8 @@ class VPNViewSet(CustomGenericViewSet):
                 return self.exception_response(exceptions.VPNError(msg=f'激活用户vpn失败，{str(e)}'))
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'激活vpn账户, VPN账户：{vpn.username}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'激活vpn账户, VPN账户：{vpn.username}',
+                                      remark='')
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
@@ -4301,7 +4350,6 @@ class VPNViewSet(CustomGenericViewSet):
         """
         username = kwargs.get(self.lookup_field)
 
-
         mgr = VPNManager()
         vpn = mgr.get_vpn(username=username)
         if not vpn:
@@ -4315,7 +4363,8 @@ class VPNViewSet(CustomGenericViewSet):
                 return self.exception_response(exceptions.VPNError(msg=f'停用用户vpn失败，{str(e)}'))
 
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'停用vpn账户,  VPN账户：{vpn.username}', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'停用vpn账户,  VPN账户：{vpn.username}',
+                                      remark='')
         return Response(data=serializers.VPNSerializer(vpn).data, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):

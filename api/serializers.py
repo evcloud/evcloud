@@ -1,12 +1,13 @@
 import math
 
 from rest_framework import serializers
+from django.utils.translation import gettext_lazy as _
 
 from logrecord.models import LogRecord
 from vms.models import Vm, MigrateTask, AttachmentsIP
 from compute.models import Center, Group, Host
 from network.models import Vlan
-from image.models import Image
+from image.models import Image, MirrorImageTask, VmXmlTemplate
 from vdisk.models import Vdisk
 
 
@@ -253,7 +254,6 @@ class QuotaSimpleSerializer(serializers.Serializer):
     ceph = serializers.SerializerMethodField(method_name='get_ceph')
     group = serializers.SerializerMethodField(method_name='get_group')
 
-
     @staticmethod
     def get_pool(obj):
         pool = obj.cephpool
@@ -279,7 +279,6 @@ class QuotaSimpleSerializer(serializers.Serializer):
         if not group:
             return {}
         return {'id': group.id, 'name': group.name}
-
 
 
 class QuotaListSerializer(QuotaSimpleSerializer):
@@ -608,7 +607,8 @@ class FlavorSerializer(serializers.Serializer):
 
 class VPNCreateSerializer(serializers.Serializer):
     username = serializers.CharField(required=True, min_length=1, max_length=150)
-    password = serializers.CharField(required=False, min_length=6, max_length=64, default='', help_text='如果未指定，随机分配密码')
+    password = serializers.CharField(required=False, min_length=6, max_length=64, default='',
+                                     help_text='如果未指定，随机分配密码')
 
 
 class VPNSerializer(serializers.Serializer):
@@ -656,3 +656,65 @@ class LogRecordSerializer(serializers.ModelSerializer):
         if obj.real_user:
             return obj.real_user
         return obj.username
+
+
+class VmXmlTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VmXmlTemplate
+        fields = ('id', 'name', 'desc', 'max_cpu_socket')
+
+
+class MirrorImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MirrorImageTask
+        fields = ('id', 'mirror_image_name', 'mirror_image_sys_type', 'mirror_image_version', 'mirror_image_release',
+                  'mirror_image_architecture', 'mirror_image_boot_mode', 'mirror_image_base_image',
+                  'mirror_image_enable', 'mirror_image_xml_tpl', 'user', 'create_time', 'update_time', 'desc',
+                  'mirror_image_default_user', 'mirror_image_default_password', 'mirror_image_size', 'operate',
+                  'mirrors_image_service_url', 'status', 'import_date', 'import_date_complate',
+                  'export_date', 'export_date_complate', 'error_msg', 'bucket_name', 'file_path', 'token')
+
+
+class MirrorImageCreateSerializer(serializers.Serializer):
+    mirrors_image_service_url = serializers.CharField(label=_('公共镜像地址'), required=True, max_length=255)
+    bucket_name = serializers.CharField(label=_('存储桶名称'), required=True, max_length=255)
+    file_path = serializers.CharField(label=_('文件路径'), required=True, max_length=255, help_text=_('完整路径'))
+    token = serializers.CharField(label=_('存储桶token'), required=True, max_length=255)
+    mirror_image_name = serializers.CharField(label=_('镜像名称'), required=True, max_length=255)
+    mirror_image_base_image = serializers.CharField(label=_('镜像'), required=True, max_length=255,
+                                                    help_text='导入ceph的镜像需要的名称与镜像名称不一样，如果不唯一就会报错')
+    mirror_image_xml_tpl = serializers.IntegerField(label=_('xml模板'), required=True,
+                                                    help_text=' 找到xml模板的数据,填写id')
+    mirror_image_sys_type = serializers.CharField(label=_('系统类型'), required=False, max_length=255, default='Linux',
+                                                  help_text='默认Linux :Windows、Linux、Unix、MacOS、Android、其他')
+    mirror_image_version = serializers.CharField(label=_('系统发行编号'), required=False, max_length=255,
+                                                 help_text='默认 stream 9', default='stream 9')
+    mirror_image_release = serializers.CharField(label=_('系统发行版本'), required=False, max_length=255,
+                                                 default='Centos',
+                                                 help_text=' 默认Centos ：Centos、Ubuntu、Windows Desktop、Windows Server、Fedora、Rocky、Unknown')
+    mirror_image_architecture = serializers.CharField(label=_('系统架构'), required=False, max_length=255,
+                                                      help_text=' 默认x86-64 ：x86-64、i386、arm-64、unknown',
+                                                      default='x86-64')
+    mirror_image_boot_mode = serializers.CharField(label=_('系统启动方式'), required=False, max_length=255,
+                                                   help_text='默认BIOS ：BIOS、UEFI', default='BIOS')
+    mirror_image_enable = serializers.BooleanField(label=_('启用'), required=False, default=True,
+                                                   help_text='镜像导入成功后，会启用镜像，否则不会启用')
+    desc = serializers.CharField(label=_('描述'), required=False, max_length=255)
+    mirror_image_default_user = serializers.CharField(label=_('系统默认登录用户名'), required=False, max_length=255,
+                                                      default='xxx')
+    mirror_image_default_password = serializers.CharField(label=_('系统默认登录密码'), required=False, max_length=255,
+                                                          default='xxx', )
+    mirror_image_size = serializers.IntegerField(label=_('镜像大小（Gb）'), required=False, default=0,
+                                                 help_text='不是整Gb大小，要向上取整，如1.1GB向上取整为2Gb')
+
+    def validate(self, data):
+        file_path = data.get('file_path')
+        mirrors_image_service_url = data.get('mirrors_image_service_url')
+
+        if not file_path:
+            raise serializers.ValidationError(detail={'file_path': '必须填写的参数， 格式/xxx/xxx.qcow2'})
+
+        if not file_path.endswith('.qcow2'):
+            raise serializers.ValidationError(detail={'file_path': '格式/xxx/xxx.qcow2'})
+
+        return data

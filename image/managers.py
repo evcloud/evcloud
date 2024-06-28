@@ -1,14 +1,15 @@
 from django.db.models import Q
 
-from .models import Image
+from .models import Image, MirrorImageTask, VmXmlTemplate
 from compute.managers import CenterManager, ComputeError
-from utils.errors import ImageError
+from utils.errors import ImageError, BadRequestError, Error
 
 
 class ImageManager:
     """
     镜像管理器
     """
+
     @staticmethod
     def get_image_by_id(image_id: int, related_fields: tuple = ()):
         """
@@ -134,3 +135,83 @@ class ImageManager:
             return queryset.filter(enable=True).select_related(*related_fields).all()
         else:
             return queryset.select_related(*related_fields).all()
+
+    def get_xml_template(self):
+
+        return VmXmlTemplate.objects.all()
+
+
+class MirrorImageManager:
+    """公共镜像任务管理"""
+
+    def get_mirror_image_task(self):
+        """获取公共镜像任务所有数据"""
+
+        return MirrorImageTask.objects.all()
+
+    def get_mirror_image_queryset(self, task_id: int = None, status: int = None):
+
+        query = self.get_mirror_image_task()
+        if task_id:
+            query = query.filter(id=int(task_id))
+
+        if status:
+            query = query.filter(status=int(status))
+
+        return query
+
+    def add_mirror_image_pull_task(self, task_dict):
+
+        if 'mirror_image_name' not in task_dict or 'mirror_image_base_image' not in task_dict:
+            raise BadRequestError(msg=f'mirror_image_name 和 mirror_image_base_image 必填且不能为string')
+
+        try:
+            obj = MirrorImageTask.objects.create(**task_dict)
+        except Exception as e:
+            raise Error(msg=str(e))
+
+        return obj
+
+    def modify_mirror_image_pull_task(self, task_dict, task_id):
+        obj = MirrorImageTask.objects.filter(id=task_id).first()
+
+        if not obj:
+            raise BadRequestError(msg=f'未找到{task_id}信息')
+        try:
+            MirrorImageTask.objects.filter(id=task_id).update(**task_dict)
+        except Exception as e:
+            raise Error(msg=f'修改信息失败：{str(e)}')
+
+        return obj
+
+    def add_mirror_image_push_task(self, task_dict, image_id):
+
+        image = Image.objects.filter(id=image_id).first()
+
+        if not image:
+            raise BadRequestError(msg=f'image_id 内容填写不正确')
+
+        mirror_image_obj = MirrorImageTask.objects.filter(mirror_image_name=image.name, mirror_image_version=image.version, operate=2).first()
+        if mirror_image_obj:
+            raise BadRequestError(msg=f'请删除任务(id={mirror_image_obj.id})后重新操作，不允许添加重复的数据。')
+
+        try:
+            obj = MirrorImageTask.objects.create(
+                mirror_image_name=image.name,
+                mirror_image_sys_type=image.get_sys_type_display(),
+                mirror_image_version=image.version,
+                mirror_image_release=image.get_release_display(),
+                mirror_image_architecture=image.get_architecture_display(),
+                mirror_image_boot_mode=image.get_boot_mode_display(),
+                mirror_image_base_image=image.base_image,
+                mirror_image_enable=image.enable,
+                mirror_image_xml_tpl=image.xml_tpl_id,
+                mirror_image_default_user=image.default_user,
+                mirror_image_default_password=image.default_password,
+                mirror_image_size=image.size,
+                **task_dict
+            )
+        except Exception as e:
+            raise Error(msg=str(e))
+
+        return obj
