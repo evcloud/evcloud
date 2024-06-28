@@ -104,7 +104,8 @@ class Image(models.Model):
     ceph_pool = models.ForeignKey(to=CephPool, on_delete=models.CASCADE, verbose_name=_('CEPH存储后端'))
     tag = models.SmallIntegerField(verbose_name=_('镜像标签'), choices=CHOICES_TAG, default=TAG_USER)
     base_image = models.CharField(verbose_name=_('镜像'), max_length=200, default='', help_text='用于创建镜像快照')
-    enable = models.BooleanField(verbose_name=_('启用'), default=True, help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
+    enable = models.BooleanField(verbose_name=_('启用'), default=True,
+                                 help_text="若取消复选框，用户创建虚拟机时无法看到该镜像")
     snap = models.CharField(verbose_name=_('当前生效镜像快照'), max_length=200, default='', blank=True, editable=True)
     xml_tpl = models.ForeignKey(to=VmXmlTemplate, on_delete=models.CASCADE, verbose_name=_('xml模板'),
                                 help_text='使用此镜象创建虚拟机时要使用的XML模板，不同类型的镜像有不同的XML格式')
@@ -120,9 +121,12 @@ class Image(models.Model):
     vm_host = models.ForeignKey(to=Host, on_delete=models.SET_NULL, verbose_name=_('宿主机'), null=True, blank=True,
                                 default=None)
     vm_uuid = models.CharField(verbose_name=_('虚拟机UUID'), max_length=36, null=True, blank=True, )
-    vm_mac_ip = models.ForeignKey(to=MacIP, on_delete=models.SET_NULL, verbose_name=_('MAC IP'), null=True, blank=True, )
+    vm_mac_ip = models.ForeignKey(to=MacIP, on_delete=models.SET_NULL, verbose_name=_('MAC IP'), null=True,
+                                  blank=True, )
     vm_vcpu = models.IntegerField(verbose_name=_('CPU数'), null=True, blank=True, )
     vm_mem = models.IntegerField(verbose_name=_('内存大小'), help_text='单位GB', null=True, blank=True, )
+
+    mirror_image_market = models.BooleanField(verbose_name=_('镜像市场'), help_text='镜像市场下载的镜像', default=False)
 
     def __str__(self):
         return self.name
@@ -301,3 +305,87 @@ class Image(models.Model):
     def get_center(self):
         """获取数据中心"""
         return self.ceph_pool.ceph.center
+
+
+class MirrorImageTask(models.Model):
+    """公共镜像任务表"""
+
+    OPERATE_PULL = 1
+    OPERATE_PUSH = 2
+    OPERATE_CHOICES = (
+        (OPERATE_PULL, '下载'),
+        (OPERATE_PUSH, '上传'),
+    )
+
+    DOWNLOADING = 1
+    DOWNLOADCOMPLATE = 2
+    UPLOADING = 3
+    UPLOADCOMPLATE = 4
+    UPLOADFAILURE = 5
+    DOWNLOADFAILURE = 6
+    NONESTATUS = 7
+    TASK_STATUS_CHOICES = (
+        (DOWNLOADING, '下载中'),
+        (DOWNLOADCOMPLATE, '下载完成'),
+        (UPLOADING, '上传中'),
+        (UPLOADCOMPLATE, '上传完成'),
+        (UPLOADFAILURE, '上传失败'),
+        (DOWNLOADFAILURE, '下载失败'),
+        (NONESTATUS, '无'),
+    )
+
+    mirror_image_name = models.CharField(verbose_name=_('镜像名称'), max_length=100)
+    mirror_image_sys_type = models.CharField(verbose_name=_('系统类型'), max_length=100, default='Linux',
+                                             help_text='Windows、Linux、Unix、MacOS、Android、其他')
+    mirror_image_version = models.CharField(verbose_name=_('系统发行编号'), max_length=100, default='stream 9')
+    mirror_image_release = models.CharField(verbose_name=_('系统发行版本'), max_length=100, default='Centos',
+                                            help_text='Centos、Ubuntu、Windows Desktop、Windows Server、Fedora、Rocky、Unknown')
+    mirror_image_architecture = models.CharField(verbose_name=_('系统架构'), max_length=100, default='x86-64',
+                                                 help_text='x86-64、i386、arm-64、unknown')
+    mirror_image_boot_mode = models.CharField(verbose_name=_('系统启动方式'), max_length=100, default='BIOS',
+                                              help_text='BIOS、UEFI')
+    mirror_image_base_image = models.CharField(verbose_name=_('镜像'), max_length=200, default='',
+                                               help_text='导入ceph的镜像需要的名称')
+    mirror_image_enable = models.BooleanField(verbose_name=_('启用'), default=True,
+                                              help_text="镜像导入成功后，会启用镜像，否则不会启用")
+
+    mirror_image_xml_tpl = models.IntegerField(verbose_name=_('xml模板'), help_text='找到xml模板的数据,填写id')
+    user = models.CharField(verbose_name=_('用户'), max_length=255, default='', null=True, blank=True)
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+    desc = models.TextField(verbose_name=_('描述'), blank=True, null=True, default=None)
+    mirror_image_default_user = models.CharField(verbose_name=_('系统默认登录用户名'), max_length=32, default='root')
+    mirror_image_default_password = models.CharField(verbose_name=_('系统默认登录密码'), max_length=32,
+                                                     default='cnic.cn')
+    mirror_image_size = models.IntegerField(verbose_name=_('镜像大小（Gb）'), default=0,
+                                            help_text='image size不是整Gb大小，要向上取整，如1.1GB向上取整为2Gb')
+
+    operate = models.SmallIntegerField(verbose_name=_('操作'), choices=OPERATE_CHOICES, default=OPERATE_PULL)
+    update_local_path = models.CharField(verbose_name=_('上传本地存储路径'), max_length=100, default='/00_data/mirror_image/upload/')
+    download_local_path = models.CharField(verbose_name=_('下载本地存储路径'), max_length=100, default='/00_data/mirror_image/downnlod/')
+    mirrors_image_service_url = models.CharField(verbose_name=_('公共镜像地址'), max_length=255)
+    status = models.SmallIntegerField(verbose_name=_('任务状态'), choices=TASK_STATUS_CHOICES, default=DOWNLOADING)
+    import_date = models.DateTimeField(verbose_name=_('导入开始时间'), null=True, blank=True, default=None)
+    import_date_complate = models.DateTimeField(verbose_name=_('导入完成时间'), null=True, blank=True, default=None)
+    export_date = models.DateTimeField(verbose_name=_('导出开始时间'), null=True, blank=True, default=None)
+    export_date_complate = models.DateTimeField(verbose_name=_('导出完成时间'), null=True, blank=True, default=None)
+    error_msg = models.CharField(verbose_name=_('错误信息'), max_length=1000, null=True, blank=True, default=None)
+    bucket_name = models.CharField(verbose_name=_('存储桶名称'), max_length=255, default='')
+    file_path = models.CharField(verbose_name=_('文件路径'), max_length=500, default='')
+    token = models.CharField(verbose_name=_('存储桶token'), max_length=500, default='')
+    # image_import_or_export_name = models.CharField(verbose_name=_('导入或导出的镜像名称'), max_length=255, default=None,
+    #                                                blank=True, null=True)
+    local_hostname = models.CharField(verbose_name=_('本地hosnname'), max_length=255, default=None, blank=True,
+                                      null=True)
+    download_or_upload_status = models.BooleanField(verbose_name=_('下载或上传完成'), default=False)
+    create_os_image = models.BooleanField(verbose_name=_('创建操作系统镜像完成'), default=False)
+
+    class Meta:
+        ordering = ['-id']
+        db_table = 'app_image_mirror_image_task'
+        verbose_name = _('公共镜像任务表')
+        verbose_name_plural = _('公共镜像任务表')
+        unique_together = ('mirror_image_name', 'mirror_image_version', 'operate')
+
+    def __str__(self):
+        return self.mirror_image_name
