@@ -256,7 +256,7 @@ class MirrorImageHandler:
 
         url = f'{url}api/v2/obj/{bucket_name}/{objpath}?offset={offset}'
 
-        print(f'{offset} - {len(chunk)} - {url}')
+        # print(f'{offset} - {len(chunk)} - {url}')
 
         m = hashlib.md5()
         m.update(chunk)
@@ -341,7 +341,7 @@ class MirrorImageHandler:
 
             url = f'{base_url}?offset={offset}&size={chunk_size}'
 
-            print(f'第 {count} 块 {offset} - {chunk_size} - {remote_image_obj_size}')
+            # print(f'第 {count} 块 {offset} - {chunk_size} - {remote_image_obj_size}')
 
             req = requests.get(url=url, headers=header)
             if req.status_code == 200:
@@ -393,7 +393,7 @@ class MirrorImageHandler:
         if task.status == MirrorImageTask.NONESTATUS:
             mirror_image_task_logger.error(f'任务({task.id}) 未导入镜像前停止服务')
             return
-        
+
         image_local_path = f'{task.update_local_path}{task.mirror_image_base_image}'
 
         # 删除镜像
@@ -731,11 +731,15 @@ def loacl_node_run_server(task: MirrorImageTask, operate):
         return handler.push_image(task)
 
     if operate == 'pull':
+        if task.status == 1:
+            return
         task.status = 1
         task.save(update_fields=['status'])
         return handler.pull_image(task=task)
 
     if operate == 'push':
+        if task.status == 3:
+            return
         task.status = 3
         task.save(update_fields=['status'])
         return handler.push_image(task=task)
