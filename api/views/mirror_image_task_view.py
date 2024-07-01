@@ -107,7 +107,7 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
         manual_parameters=[
         ],
         responses={
-            200: ''
+            200: "{'id': 1}"  # 任务id
         }
     )
     @action(methods=['post'], detail=False, url_path=r'image/pull', url_name='image-pull')
@@ -122,7 +122,7 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
               "token": "string",  # 存储桶 token  必填
               "mirror_image_name": "string",  # 镜像名称  必填
               "mirror_image_base_image": "string",  # 导入ceph的镜像名称  必填
-              "mirror_image_xml_tpl": 0,   #  xml 模板   必填
+              "xml_tpl_search": "Linux"  # xml 名称关键字  如：Linux、hugepage等
               "mirror_image_sys_type": "Linux",  # 系统类型   Windows、Linux、Unix、MacOS、Android、其他
               "mirror_image_version": "stream 9",  # 系统发行编号
               "mirror_image_release": "Centos",  # 系统发行版本  Centos、Ubuntu、Windows Desktop、Windows Server、Fedora、Rocky、Unknown
@@ -155,16 +155,6 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
         else:
             valid_data.update({'user': username})
 
-        mirror_image_xml_tpl = valid_data.get('mirror_image_xml_tpl')
-        if not mirror_image_xml_tpl or mirror_image_xml_tpl == 0:
-            exc = exceptions.BadRequestError(msg=f'mirror_image_xml_tpl 字段必填')
-            return self.exception_response(exc)
-
-        xml_t = VmXmlTemplate.objects.filter(id=mirror_image_xml_tpl).first()
-        if not xml_t:
-            exc = exceptions.BadRequestError(msg=f'mirror_image_xml_tpl 信息有误')
-            return self.exception_response(exc)
-
         valid_data.update({'operate': 1})
         valid_data.update({'status': 7})
         task_dict = {key: value for key, value in valid_data.items() if value != 'string'}
@@ -178,7 +168,7 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
         except Exception as e:
             return self.exception_response(e)
 
-        return Response(status=200)
+        return Response(status=200, data={"id": obj.id})
 
     @swagger_auto_schema(
         operation_summary='公共镜像上传',
@@ -222,7 +212,7 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
 
         ],
         responses={
-            200: ''
+            200: "{'id': 1}"  # 任务id
         }
     )
     @action(methods=['post'], detail=False, url_path=r'image/push', url_name='image-push')
@@ -276,7 +266,7 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
         except Exception as e:
             return self.exception_response(e)
 
-        return Response(status=200)
+        return Response(status=200, data={'id': obj.id})
 
     @swagger_auto_schema(
         operation_summary='启动/暂停/删除任务接口',
@@ -398,8 +388,8 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
             200: ''
         }
     )
-    @action(methods=['post'], detail=False, url_path=r'image/modify', url_name='image-operate')
-    def mirror_image_task_modify(self, request, *args, **kwargs):
+    @action(methods=['post'], detail=False, url_path=r'image/upload', url_name='image-upload')
+    def mirror_image_task_upload(self, request, *args, **kwargs):
         """"""
 
         task_id = request.query_params.get('task_id', None)

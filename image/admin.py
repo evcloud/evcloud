@@ -69,5 +69,5 @@ class MirrorImageTaskAdmin(admin.ModelAdmin):
                     'mirror_image_default_user', 'mirror_image_default_password', 'mirror_image_size', 'operate',
                     'mirrors_image_service_url', 'status', 'import_date', 'import_date_complate',
                     'export_date', 'export_date_complate', 'error_msg', 'bucket_name', 'file_path', 'token',
-                    'download_or_upload_status', 'create_os_image')
+                    'download_or_upload_status', 'create_os_image', 'xml_tpl_search')
     search_fields = ('mirror_image_name',)

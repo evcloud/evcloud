@@ -349,7 +349,7 @@ class MirrorImageTask(models.Model):
     mirror_image_enable = models.BooleanField(verbose_name=_('启用'), default=True,
                                               help_text="镜像导入成功后，会启用镜像，否则不会启用")
 
-    mirror_image_xml_tpl = models.IntegerField(verbose_name=_('xml模板'), help_text='找到xml模板的数据,填写id')
+    mirror_image_xml_tpl = models.IntegerField(verbose_name=_('xml模板'), null=True, blank=True, default=0, help_text='找到xml模板的数据,填写id')
     user = models.CharField(verbose_name=_('用户'), max_length=255, default='', null=True, blank=True)
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
@@ -379,6 +379,8 @@ class MirrorImageTask(models.Model):
                                       null=True)
     download_or_upload_status = models.BooleanField(verbose_name=_('下载或上传完成'), default=False)
     create_os_image = models.BooleanField(verbose_name=_('创建操作系统镜像完成'), default=False)
+    xml_tpl_search = models.CharField(verbose_name=_('xml模板关键字查询'), max_length=255, null=True, blank=True, default=None)
+
 
     class Meta:
         ordering = ['-id']

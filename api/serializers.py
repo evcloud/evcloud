@@ -694,8 +694,7 @@ class MirrorImageCreateSerializer(serializers.Serializer):
     mirror_image_name = serializers.CharField(label=_('镜像名称'), required=True, max_length=255)
     mirror_image_base_image = serializers.CharField(label=_('镜像'), required=True, max_length=255,
                                                     help_text='导入ceph的镜像需要的名称与镜像名称不一样，如果不唯一就会报错')
-    mirror_image_xml_tpl = serializers.IntegerField(label=_('xml模板'), required=True,
-                                                    help_text=' 找到xml模板的数据,填写id')
+    xml_tpl_search = serializers.CharField(label=_('xml模板关键字查询'), required=False)
     mirror_image_sys_type = serializers.CharField(label=_('系统类型'), required=False, max_length=255, default='Linux',
                                                   help_text='默认Linux :Windows、Linux、Unix、MacOS、Android、其他')
     mirror_image_version = serializers.CharField(label=_('系统发行编号'), required=False, max_length=255,

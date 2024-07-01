@@ -165,6 +165,14 @@ class MirrorImageManager:
         if 'mirror_image_name' not in task_dict or 'mirror_image_base_image' not in task_dict:
             raise BadRequestError(msg=f'mirror_image_name 和 mirror_image_base_image 必填且不能为string')
 
+        xml = VmXmlTemplate.objects.all()
+        if 'xml_tpl_search' in task_dict:
+            xml_seatch = xml.filter(name__contains=task_dict['xml_tpl_search']).first()
+            if xml_seatch:
+                task_dict['mirror_image_xml_tpl'] = xml_seatch.id
+        else:
+            task_dict['mirror_image_xml_tpl'] = xml.first().id
+
         try:
             obj = MirrorImageTask.objects.create(**task_dict)
         except Exception as e:
@@ -191,7 +199,8 @@ class MirrorImageManager:
         if not image:
             raise BadRequestError(msg=f'image_id 内容填写不正确')
 
-        mirror_image_obj = MirrorImageTask.objects.filter(mirror_image_name=image.name, mirror_image_version=image.version, operate=2).first()
+        mirror_image_obj = MirrorImageTask.objects.filter(mirror_image_name=image.name,
+                                                          mirror_image_version=image.version, operate=2).first()
         if mirror_image_obj:
             raise BadRequestError(msg=f'请删除任务(id={mirror_image_obj.id})后重新操作，不允许添加重复的数据。')
 
