@@ -665,14 +665,25 @@ class VmXmlTemplateSerializer(serializers.ModelSerializer):
 
 
 class MirrorImageSerializer(serializers.ModelSerializer):
+    operate_status = serializers.SerializerMethodField()
+
+    task_status = serializers.SerializerMethodField()
+
     class Meta:
         model = MirrorImageTask
-        fields = ('id', 'mirror_image_name', 'mirror_image_sys_type', 'mirror_image_version', 'mirror_image_release',
-                  'mirror_image_architecture', 'mirror_image_boot_mode', 'mirror_image_base_image',
-                  'mirror_image_enable', 'mirror_image_xml_tpl', 'user', 'create_time', 'update_time', 'desc',
-                  'mirror_image_default_user', 'mirror_image_default_password', 'mirror_image_size', 'operate',
-                  'mirrors_image_service_url', 'status', 'import_date', 'import_date_complate',
-                  'export_date', 'export_date_complate', 'error_msg', 'bucket_name', 'file_path', 'token')
+        fields = (
+            'id', 'operate_status', 'task_status', 'mirrors_image_service_url', 'bucket_name', 'file_path', 'token',
+            'mirror_image_name', 'mirror_image_sys_type', 'mirror_image_version', 'mirror_image_release',
+            'mirror_image_architecture', 'mirror_image_boot_mode', 'mirror_image_base_image',
+            'mirror_image_enable', 'mirror_image_xml_tpl', 'mirror_image_default_user', 'mirror_image_default_password',
+            'mirror_image_size', 'user', 'desc', 'import_date', 'import_date_complate',
+            'export_date', 'export_date_complate', 'error_msg', 'create_time', 'update_time',)
+
+    def get_operate_status(self, obj):
+        return obj.get_operate_display()
+
+    def get_task_status(self, obj):
+        return obj.get_status_display()
 
 
 class MirrorImageCreateSerializer(serializers.Serializer):

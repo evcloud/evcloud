@@ -50,6 +50,39 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
     )
     def list(self, request, *args, **kwargs):
         """
+        查看公共镜像任务
+
+            {
+              "id": 1,
+              "operate_status": "下载",  # 操作(上传/下载)
+              "task_status": "无",    # 任务状态
+              "mirrors_image_service_url": "http://223.193.36.121:8001/",  # 公共镜像url
+              "bucket_name": "202020",  # 存储桶名称
+              "file_path": "develop-iso-test.qcow2",  #镜像路径
+              "token": "ad39f5a689ea0b185dfa8a4e7df61a8c31c04d6c",  # 存储桶token
+              "mirror_image_name": "devlop-test-centos9",
+              "mirror_image_sys_type": "Linux",
+              "mirror_image_version": "stream 9",
+              "mirror_image_release": "Centos",
+              "mirror_image_architecture": "x86-64",
+              "mirror_image_boot_mode": "BIOS",
+              "mirror_image_base_image": "develop-iso-test.qcow2",
+              "mirror_image_enable": false,
+              "mirror_image_xml_tpl": 1,  # xml模板
+              "mirror_image_default_user": "xxx",  # 镜像默认用户
+              "mirror_image_default_password": "xxx",   # 镜像默认密码
+              "mirror_image_size": 2,  # 镜像大小
+              "user": "wanghuang",
+              "desc": null,
+              "import_date": null,  # 导入开始时间
+              "import_date_complate": null,   # 导入完成时间
+              "export_date": null,   # 导出开始时间
+              "export_date_complate": null,    # 导出完成时间
+              "error_msg": null,   # 错误信息
+              "create_time": "2024-07-01T09:09:48.867187+08:00",
+              "update_time": "2024-07-01T09:09:48.867261+08:00"
+            }
+
         """
 
         task_id = request.query_params.get('task_id', None)
@@ -319,7 +352,6 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
                 exc = exceptions.BadRequestError(msg=f'删除任务(id={task_id})错误：{str(e)}')
                 return self.exception_response(exc)
 
-
         return Response(status=200)
 
     @swagger_auto_schema(
@@ -402,8 +434,6 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
 
         return Response(status=200)
 
-
-
     def get_hostname(self):
         hostname = os.uname().nodename
         # ip = socket.gethostbyname(hostname)
@@ -411,9 +441,9 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
 
     def execute_task(self, operate_type, task_id):
         """执行任务脚本"""
-        subprocess.Popen(f'python3 /home/uwsgi/evcloud/image/script/mirror_image_task.py -t {task_id} -o {operate_type}', shell=True)
+        subprocess.Popen(
+            f'python3 /home/uwsgi/evcloud/image/script/mirror_image_task.py -t {task_id} -o {operate_type}', shell=True)
         return
-
 
     def get_serializer_class(self):
         if self.action in ['list']:
