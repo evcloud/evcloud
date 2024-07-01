@@ -377,7 +377,7 @@ class MirrorImageHandler:
         count = 1
         for chunk in chunks:
             try:
-                print(f'第 {count} 块 ')
+                # print(f'第 {count} 块 ')
                 self.request_upload_chunk(chunk=chunk, url=image_task.mirrors_image_service_url,
                                           bucket_token=image_task.token, bucket_name=image_task.bucket_name,
                                           objpath=image_task.file_path, offset=offset)
@@ -660,8 +660,12 @@ def loacl_node_run_server(task: MirrorImageTask, operate):
     if not image_name.endswith('.qcow2'):
         msg = f'file_path 文件名称错误，格式/xxx/xxx.qcow2'
         mirror_image_task_logger.error(msg)
+
+        if task.operate == 1:  # 下载
+            task.status = 6
+        elif task.operate == 2:
+            task.status = 5
         task.error_msg = msg
-        task.status = 6
         task.save(update_fields=['error_msg', 'status'])
 
         return
