@@ -67,7 +67,9 @@ class MirrorImageHandler:
         image_os = Image.objects.filter(name=task.mirror_image_name).first()
 
         if image_os:
-            raise Exception(f'操作系统镜像({task.mirror_image_name})已存在，不能重复添加')
+            mirror_image_task_logger.warning(msg=f'公共镜像任务(id={task.id}), 操作系统镜像({task.mirror_image_name})已存在，不能重复添加')
+            return image_os
+            # raise Exception(f'操作系统镜像({task.mirror_image_name})已存在，不能重复添加')
 
         try:
             obj = Image.objects.create(
@@ -578,44 +580,44 @@ class MirrorImageHandler:
             task.save(update_fields=['error_msg'])
             return
 
-    def ceph_image_exists_delete(self, task):
-        """导出"""
-
-        try:
-            ceph_pool = self.get_ceph_pool()
-        except Exception as e:
-            msg = f'获取本地ceph信息时：{str(e)}'
-            mirror_image_task_logger.error(msg)
-            task.error_msg = msg
-            task.status = 6
-            task.save(update_fields=['error_msg', 'status'])
-            return
-
-        try:
-
-            image_exists_bool = self.ceph_image_exists(ceph=ceph_pool.ceph, pool_name=ceph_pool.pool_name,
-                                                       image_name=task.mirror_image_base_image)
-        except Exception as e:
-            msg = f'查询该镜像（{task.mirror_image_base_image}）是否存在本地ceph中存储池（{ceph_pool.pool_name}）时：{str(e)}'
-            mirror_image_task_logger.error(msg)
-            task.error_msg = msg
-            task.status = 6
-            task.save(update_fields=['error_msg', 'status'])
-            return
-
-        if not image_exists_bool:
-            return
-
-        try:
-            self.remove_ceph_image(ceph=ceph_pool.ceph, pool_name=ceph_pool.pool_name,
-                                   image_name=task.mirror_image_base_image)
-        except Exception as e:
-            msg = f'删除镜像（{task.mirror_image_base_image}）在本地ceph中存储池（{ceph_pool.pool_name}）时：{str(e)}'
-            mirror_image_task_logger.error(msg)
-            task.error_msg = msg
-            task.status = 6
-            task.save(update_fields=['error_msg', 'status'])
-            return
+    # def ceph_image_exists_delete(self, task):   # 不能删除镜像,如果已经有用在此建立虚拟机会很危险
+    #     """导出"""
+    #
+    #     try:
+    #         ceph_pool = self.get_ceph_pool()
+    #     except Exception as e:
+    #         msg = f'获取本地ceph信息时：{str(e)}'
+    #         mirror_image_task_logger.error(msg)
+    #         task.error_msg = msg
+    #         task.status = 6
+    #         task.save(update_fields=['error_msg', 'status'])
+    #         return
+    #
+    #     try:
+    #
+    #         image_exists_bool = self.ceph_image_exists(ceph=ceph_pool.ceph, pool_name=ceph_pool.pool_name,
+    #                                                    image_name=task.mirror_image_base_image)
+    #     except Exception as e:
+    #         msg = f'查询该镜像（{task.mirror_image_base_image}）是否存在本地ceph中存储池（{ceph_pool.pool_name}）时：{str(e)}'
+    #         mirror_image_task_logger.error(msg)
+    #         task.error_msg = msg
+    #         task.status = 6
+    #         task.save(update_fields=['error_msg', 'status'])
+    #         return
+    #
+    #     if not image_exists_bool:
+    #         return
+    #
+    #     try:
+    #         self.remove_ceph_image(ceph=ceph_pool.ceph, pool_name=ceph_pool.pool_name,
+    #                                image_name=task.mirror_image_base_image)
+    #     except Exception as e:
+    #         msg = f'删除镜像（{task.mirror_image_base_image}）在本地ceph中存储池（{ceph_pool.pool_name}）时：{str(e)}'
+    #         mirror_image_task_logger.error(msg)
+    #         task.error_msg = msg
+    #         task.status = 6
+    #         task.save(update_fields=['error_msg', 'status'])
+    #         return
 
 
 def loacl_node_run_server(task: MirrorImageTask, operate):

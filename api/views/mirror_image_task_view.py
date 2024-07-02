@@ -285,7 +285,7 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=True,
                 description='操作',
-                enum=['start', 'stop', 'delete'],
+                enum=['start', 'stop', 'delete', 'force_start'],
                 default=''
             ),
         ],
@@ -305,8 +305,8 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
         elif not operate:
             exc = exceptions.BadRequestError(msg=f'operate 必填')
             return self.exception_response(exc)
-        elif operate not in ['start', 'stop', 'delete']:
-            exc = exceptions.BadRequestError(msg=f'operate 信息错误')
+        elif operate not in ['start', 'stop', 'delete', 'force_start']:
+            exc = exceptions.BadRequestError(msg=f'operate 参数信息错误')
             return self.exception_response(exc)
 
         mirror_image_mamager = MirrorImageManager()
@@ -318,9 +318,9 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         if operate == 'start':
-            if queryset.status == MirrorImageTask.UPLOADFAILURE:
+            if queryset.status == MirrorImageTask.UPLOADFAILURE or queryset.status == MirrorImageTask.UPLOADCOMPLATE:  # 上传失败或上传完成都可以再次启动任务
                 self.execute_task(operate_type='push', task_id=task_id)
-            elif queryset.status == MirrorImageTask.DOWNLOADFAILURE:
+            elif queryset.status == MirrorImageTask.DOWNLOADFAILURE or queryset.status == MirrorImageTask.DOWNLOADCOMPLATE:
                 self.execute_task(operate_type='pull', task_id=task_id)
             elif queryset.status == MirrorImageTask.NONESTATUS and queryset.operate == MirrorImageTask.OPERATE_PULL:
                 self.execute_task(operate_type='pull', task_id=task_id)
@@ -341,6 +341,11 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
             except Exception as e:
                 exc = exceptions.BadRequestError(msg=f'删除任务(id={task_id})错误：{str(e)}')
                 return self.exception_response(exc)
+        elif operate == 'force_start':
+            if queryset.operate == MirrorImageTask.OPERATE_PUSH:
+                self.execute_task(operate_type='push', task_id=task_id)
+            elif queryset.status == MirrorImageTask.OPERATE_PULL:
+                self.execute_task(operate_type='pull', task_id=task_id)
 
         return Response(status=200)
 
