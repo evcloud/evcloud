@@ -102,7 +102,7 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
         return Response(serializer.data)
 
     @swagger_auto_schema(
-        operation_summary='添加公共镜像任务信息',
+        operation_summary='添加公共镜像下载任务信息',
         # request_body=no_body,
         manual_parameters=[
         ],
@@ -171,7 +171,7 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
         return Response(status=200, data={"id": obj.id})
 
     @swagger_auto_schema(
-        operation_summary='公共镜像上传',
+        operation_summary='添加公共镜像上传任务信息',
         request_body=no_body,
         manual_parameters=[
             openapi.Parameter(
@@ -388,8 +388,8 @@ class MirrorImageTaskViewSet(CustomGenericViewSet):
             200: ''
         }
     )
-    @action(methods=['post'], detail=False, url_path=r'image/upload', url_name='image-upload')
-    def mirror_image_task_upload(self, request, *args, **kwargs):
+    @action(methods=['post'], detail=False, url_path=r'image/update', url_name='image-update')
+    def mirror_image_task_update(self, request, *args, **kwargs):
         """"""
 
         task_id = request.query_params.get('task_id', None)

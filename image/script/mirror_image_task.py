@@ -633,8 +633,8 @@ def loacl_node_run_server(task: MirrorImageTask, operate):
 
     # 检查基本的信息
 
-    if task.status in [2, 4]:  # 下载完成或上传完成
-        return
+    # if task.status in [2, 4]:  # 下载完成或上传完成
+    #     return
 
     if task.operate == 1 and task.status == 3:
         msg = f'命令错误：操作是下载，而状态是上传中'
@@ -735,14 +735,14 @@ def loacl_node_run_server(task: MirrorImageTask, operate):
         return handler.push_image(task)
 
     if operate == 'pull':
-        if task.status == 1:
+        if task.status == 1:  # 上传中不允许再操作
             return
         task.status = 1
         task.save(update_fields=['status'])
         return handler.pull_image(task=task)
 
     if operate == 'push':
-        if task.status == 3:
+        if task.status == 3:  # 上传中不允许再操作
             return
         task.status = 3
         task.save(update_fields=['status'])
