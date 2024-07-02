@@ -387,7 +387,7 @@ class MirrorImageTask(models.Model):
         db_table = 'app_image_mirror_image_task'
         verbose_name = _('公共镜像任务表')
         verbose_name_plural = _('公共镜像任务表')
-        unique_together = ('mirror_image_name', 'mirror_image_version', 'operate')
+        # unique_together = ('mirror_image_name', 'mirror_image_version', 'operate')
 
     def __str__(self):
         return self.mirror_image_name

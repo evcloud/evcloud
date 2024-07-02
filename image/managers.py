@@ -199,10 +199,10 @@ class MirrorImageManager:
         if not image:
             raise BadRequestError(msg=f'image_id 内容填写不正确')
 
-        mirror_image_obj = MirrorImageTask.objects.filter(mirror_image_name=image.name,
-                                                          mirror_image_version=image.version, operate=2).first()
-        if mirror_image_obj:
-            raise BadRequestError(msg=f'请删除任务(id={mirror_image_obj.id})后重新操作，不允许添加重复的数据。')
+        # mirror_image_obj = MirrorImageTask.objects.filter(mirror_image_name=image.name,
+        #                                                   mirror_image_version=image.version, operate=2).first()
+        # if mirror_image_obj:
+        #     raise BadRequestError(msg=f'请删除任务(id={mirror_image_obj.id})后重新操作，不允许添加重复的数据。')
 
         try:
             obj = MirrorImageTask.objects.create(
