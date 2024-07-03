@@ -84,6 +84,7 @@ ADMIN_SORTED_APP_LIST = [
 MIDDLEWARE = [
     'utils.middleware.CloseCsrfMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'utils.middleware.AdminIPRestrictMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
