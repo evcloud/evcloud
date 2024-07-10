@@ -364,7 +364,9 @@ class CenterManager:
             ips_total=Count('id'),
             ips_used=Count('id', filter=Q(used=True)),
             ips_private=Count('id', filter=Q(vlan__tag=0)),
-            ips_public=Count('id', filter=Q(vlan__tag=1))
+            ips_public=Count('id', filter=Q(vlan__tag=1)),
+            ips_public_useed = Count('id', filter=Q(vlan__tag=1, used=True)),
+            ips_private_useed = Count('id', filter=Q(vlan__tag=0, used=True)),
         )
 
         quota.update(ip_data)

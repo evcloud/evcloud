@@ -128,6 +128,8 @@ class ComputeQuotaViewSet(CustomGenericViewSet):
                     "vpn_total": 1,  # vpn总数
                     "vpn_active": 1,  # vpn 有效数
                     "vpn_invalid": 0,  # vpn 无效数
+                    "ips_public_useed": 0,  # 公网已使用IP数
+                    "ips_private_useed": 1, # 私网已使用IP数
                     "ips_rate": 0.11,  # ip 使用率
                     "cpu_rate": 0.01,  # cpu 使用率
                     "mem_rate": 0.03,  # 内存使用率
