@@ -1,3 +1,8 @@
+from datetime import timedelta
+from django.utils import timezone
+
+from django.db.models import Count
+
 from ceph.models import GlobalConfig
 from utils.errors import VPNError
 from .models import VPNAuth, VPNLog
@@ -82,4 +87,8 @@ class VPNManager:
 
     def vpn_login_num(self):
         """vpn 登录数"""
-        return VPNLog.objects.filter(logout_time=None).count()
+        one_month_ago = timezone.now() - timedelta(days=30)
+        vpn_online_num = VPNLog.objects.filter(logout_time__isnull=True,
+                                               login_time__gte=one_month_ago
+                                               ).values('username').annotate(username_count=Count('username')).count()
+        return vpn_online_num
