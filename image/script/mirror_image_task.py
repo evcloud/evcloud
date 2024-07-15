@@ -620,8 +620,41 @@ class MirrorImageHandler:
     #         return
 
 
+def get_folder_size(folder_path):
+    command = ["du", "-s", folder_path]
+    result = subprocess.run(command, capture_output=True, text=True)
+    output = result.stdout.strip().split("\t")
+    total_size = math.ceil(int(output[0])/1024/1024)  # MB/GB
+    # print(f'{folder_path} 目录大小 {total_size}')
+    return total_size
+
 def loacl_node_run_server(task: MirrorImageTask, operate):
     """此节点能否运行服务"""
+
+    # 确定目录空间
+    path_ = '/00_data'
+    try:
+        path_size = get_folder_size(folder_path=path_)  # GB
+    except Exception as e:
+        if task.operate == 1:
+            task.status = 6
+        else:
+            task.status = 5
+        task.error_msg = f'查询目录空间时报错信息：{str(e)}'
+        task.save(update_fields=['status', 'error_msg'])
+        mirror_image_task_logger.error(f'查询目录空间时报错信息：{str(e)}')
+        return
+
+    if path_size < 30:
+        # 目录空间不足
+        if task.operate == 1:
+            task.status = 6
+        else:
+            task.status = 5
+        task.error_msg = '目录空间不足，请等10分钟后在操作'
+        task.save(update_fields=['status', 'error_msg'])
+        mirror_image_task_logger.error(f'目录空间不足，请等10分钟后在操作')
+        return
 
     hostname = os.uname().nodename
     if not task.local_hostname:
@@ -755,8 +788,6 @@ def main(task_id, operate):
     if operate not in ['pull', 'push']:
         mirror_image_task_logger.error(f'命令执行方法不正确 {operate}')
         return
-
-    # 确定目录空间
 
     mirror_image_handler = MirrorImageHandler()
     image_task = mirror_image_handler.get_mirror_image_task(task_id=task_id)
