@@ -3986,7 +3986,15 @@ class MacIPViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_BOOLEAN,
                 required=False,
                 description='筛选条件，false(可用的未分配的)，其他值等同true(已分配的)'
+            ),
+            openapi.Parameter(
+                name='orderby',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_BOOLEAN,
+                required=False,
+                description='筛选条件，false(正序)，true(倒序)'
             )
+
         ],
 
     )
@@ -4019,7 +4027,11 @@ class MacIPViewSet(CustomGenericViewSet):
         if used is not None:
             used = False if (used.lower() == 'false') else True
 
-        queryset = MacIPManager().filter_macip_queryset(vlan=vlan_id, used=used)
+        orderby = request.query_params.get('orderby', None)
+        if orderby is not None:
+            orderby = False if (orderby.lower() == 'false') else True
+
+        queryset = MacIPManager().filter_macip_queryset(vlan=vlan_id, used=used, orderby=orderby)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

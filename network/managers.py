@@ -361,7 +361,7 @@ class MacIPManager:
         """所有开启使用的未分配的"""
         return self.get_enable_macip_queryset().filter(used=False).all()
 
-    def filter_macip_queryset(self, vlan=None, used=None):
+    def filter_macip_queryset(self, vlan=None, used=None, orderby=False):
         """
         筛选macip查询集
 
@@ -376,6 +376,9 @@ class MacIPManager:
 
         if used is not None:
             queryset = queryset.filter(used=used).all()
+
+        if orderby:
+            queryset = queryset.order_by('-id')
 
         return queryset
 
