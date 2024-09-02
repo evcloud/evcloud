@@ -13,7 +13,8 @@
         8: gettext('故障'),  //libvirt预留状态码
         9: gettext('无法访问宿主机'),  //宿主机连接失败
         10: gettext('未找到'),  //虚拟机丢失
-        11: gettext('虚拟机不存在')
+        11: gettext('虚拟机不存在'),
+        12: gettext('搁置')
     };
 
     var VM_STATUS_LABEL = {
@@ -28,7 +29,8 @@
         8: 'default',
         9: 'danger',
         10: 'warning',
-        11: 'warning'
+        11: 'warning',
+        12: 'warning'
     };
 
     $('.edit_image_remark').click(function (e) {
@@ -107,7 +109,6 @@
             },
             error: function (xhr) {
                 node_status.html('<span class="badge  badge-danger">查询失败</span>');
-                ;
             },
             complete: function () {
 
@@ -357,7 +358,7 @@
                 if (xhr.status === 200) {
                     get_vm_status(image_id)
                 } else {
-                    alert(gettext("虚拟机启动失败！") + data.code_text);
+                    alert(gettext("虚拟机断电失败！") + data.code_text);
                 }
             },
             error: function (xhr) {
@@ -373,6 +374,113 @@
             }
         })
     });
+
+    // 搁置 btn-vm-shelve
+    $(".btn-vm-shelve").click(function (e) {
+        e.preventDefault();
+        let image_id = $(this).attr('data-image-id');
+        let api = build_absolute_url('image/image-vm-operate/');
+        let node_status = $("#vm_status_" + image_id);
+        node_status.html(gettext(`搁置中...`));
+        $.ajax({
+            url: api,
+            type: 'post',
+            dataType: "json",
+            data: {'image_id': image_id, 'operation': 'shelve-vm'},
+            success: function (data, status, xhr) {
+                if (xhr.status === 200) {
+                    get_vm_status(image_id)
+                } else {
+                    alert(gettext("虚拟机搁置失败！") + data.code_text);
+                }
+            },
+            error: function (xhr) {
+                let msg = gettext('镜像更新失败!');
+                try {
+                    msg = msg + xhr.responseJSON.code_text;
+                } catch (e) {
+                }
+                alert(msg);
+            },
+            complete: function () {
+                 window.location.reload()
+
+            }
+        })
+    });
+
+    // 恢复搁置 btn-vm-unshelve
+    $(".btn-vm-unshelve").click(function (e) {
+        e.preventDefault();
+        let image_id = $(this).attr('data-image-id');
+        let api = build_absolute_url('image/image-vm-operate/');
+        let node_status = $("#vm_status_" + image_id);
+        node_status.html(gettext(`搁置恢复中...`));
+        $.ajax({
+            url: api,
+            type: 'post',
+            dataType: "json",
+            data: {'image_id': image_id, 'operation': 'unshelve-vm'},
+            async: true,
+            success: function (data, status, xhr) {
+                if (xhr.status === 200) {
+                    get_vm_status(image_id)
+                } else {
+                    alert(data.code_text);
+                }
+            },
+            error: function (xhr) {
+                let msg = ''
+                try {
+                    msg = xhr.responseJSON.code_text;
+                } catch (e) {
+                }
+                alert(msg);
+            },
+            complete: function () {
+                window.location.reload()
+
+            }
+        })
+    });
+
+    // 删除搁置 btn-vm-delshelve
+    $(".btn-vm-delshelve").click(function (e) {
+        e.preventDefault();
+        let image_id = $(this).attr('data-image-id');
+        let api = build_absolute_url('image/image-vm-operate/');
+        let node_status = $("#vm_status_" + image_id);
+        node_status.html(gettext(`删除中...`));
+        $.ajax({
+            url: api,
+            type: 'post',
+            dataType: "json",
+            data: {'image_id': image_id, 'operation': 'delshelve-vm'},
+            async: true,
+            success: function (data, status, xhr) {
+                if (xhr.status === 200) {
+                    get_vm_status(image_id)
+                } else {
+                    alert(data.code_text);
+                }
+            },
+            error: function (xhr) {
+                let msg = ''
+                try {
+                    msg = xhr.responseJSON.code_text;
+                } catch (e) {
+                }
+                alert(msg);
+            },
+            complete: function () {
+                window.location.reload()
+
+            }
+        })
+    });
+
+
+
 
     //展开或关闭表格行
     $(".btn-row-expand-or-collapse").click(function (e) {

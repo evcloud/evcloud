@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.http import QueryDict, JsonResponse
 from django.shortcuts import render, redirect, reverse
+from django.utils.translation import gettext_lazy as _
 from django.views import View
 from rest_framework import status
 
@@ -168,26 +169,27 @@ class ImageVmCreateView(View):
         vcpu = post.get('vcpu')
         mem = post.get('mem')
 
-        try:
-            api = ImageManager()
-            image = api.get_image_by_id(image_id)
-        except ImageError as e:
-            error = ImageError(msg='查询镜像时错误', err=e)
-            return error.render(request=request)
+        # try:
+        #     api = ImageManager()
+        #     image = api.get_image_by_id(image_id)
+        # except ImageError as e:
+        #     error = ImageError(msg='查询镜像时错误', err=e)
+        #     return error.render(request=request)
 
-        form = ImageVmCreateFrom(data=post, initial={'image_id': image_id})
-        if not form.is_valid():
-            context = {
-                'form': form,
-                'image': image
-            }
-            return render(request, 'image_vm_create.html', context=context)
+        # form = ImageVmCreateFrom(data=post, initial={'image_id': image_id})
+        # if not form.is_valid():
+        #     context = {
+        #         'form': form,
+        #         'image': image
+        #     }
+        #     return render(request, 'image_vm_create.html', context=context)
 
         api = VmAPI()
-        cleaned_data = form.cleaned_data
-        validated_data = {'image_id': cleaned_data['image_id'], 'vcpu': cleaned_data['vcpu'],
-                          'mem': cleaned_data['mem'], 'host_id': int(host_image),
+
+        validated_data = {'image_id': image_id, 'vcpu': int(vcpu),
+                          'mem': int(mem), 'host_id': int(host_image),
                           'ipv4': mac_ip}
+
         try:
             api.create_vm_for_image(**validated_data)
         except Exception as e:
@@ -215,14 +217,15 @@ class ImageVmOperateView(View):
             return JsonResponse({'code': status.HTTP_500_INTERNAL_SERVER_ERROR, 'code_text': f'镜像查询错误，{str(e)}'},
                                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        if operation not in ['get-vnc-url', 'get-vm-status', 'start-vm', 'shutdown-vm', 'poweroff-vm', 'delete-vm']:
+        if operation not in ['get-vnc-url', 'get-vm-status', 'start-vm', 'shutdown-vm', 'poweroff-vm', 'delete-vm', 'unshelve-vm', 'shelve-vm', 'delshelve-vm']:
             return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': '镜像操作参数错误'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
         if operation == 'get-vnc-url':
             vnc_manager = NovncTokenManager()
             try:
-                vnc_id, url = vnc_manager.generate_token(vmid=image.vm_uuid, hostip=image.vm_host.ipv4, sshkey=image.vm_host.group.center.ssh_key)
+                vnc_id, url = vnc_manager.generate_token(vmid=image.vm_uuid, hostip=image.vm_host.ipv4,
+                                                         sshkey=image.vm_host.group.center.ssh_key)
                 # url = request.build_absolute_uri(url)
                 http_host = request.META['HTTP_HOST']
                 # http_host = http_host.split(':')[0]
@@ -263,21 +266,50 @@ class ImageVmOperateView(View):
             api.vm_operations_for_image(vm=vm, op='poweroff')
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '虚拟机关闭成功'}, status=status.HTTP_200_OK)
 
+        if operation == 'unshelve-vm':
+            try:
+                self.unshelve_image_vm(image=image)
+            except Exception as e:
+                return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': _('虚拟机恢复失败:') + str(e)},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'code': status.HTTP_200_OK, 'msg': _('虚拟机恢复成功')}, status=status.HTTP_200_OK)
+
+        if operation == 'shelve-vm':
+            try:
+                self.shelve_image_vm(image=image)
+            except Exception as e:
+                return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': _('虚拟机搁置失败:') + str(e)},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'code': status.HTTP_200_OK, 'msg': _('虚拟机搁置成功')}, status=status.HTTP_200_OK)
+
+        if operation == 'delshelve-vm':
+            try:
+                self.delshelve_image_vm(image=image)
+            except Exception as e:
+                return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': _('虚拟机删除失败:') + str(e)},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'code': status.HTTP_200_OK, 'msg': _('虚拟机删除成功')}, status=status.HTTP_200_OK)
+
         if operation == 'delete-vm':
             image.remove_image_vm()
             image.vm_uuid = None
             image.vm_mem = None
-            image.vm_cpu = None
+            image.vm_vcpu = None
             image.vm_host = None
             image.vm_mac_ip = None
             image.save(update_fields=['vm_uuid', 'vm_mem', 'vm_vcpu', 'vm_host', 'vm_mac_ip'])
             return JsonResponse({'code': status.HTTP_200_OK, 'msg': '镜像虚拟机删除成功'}, status=status.HTTP_200_OK)
 
         if operation == 'get-vm-status':
-            if not image.vm_uuid:
+            if not image.vm_uuid and not image.vm_mac_ip:
                 return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '获取虚拟机状态成功',
                                      'status': {'status_code': 11, 'status_text': '尚未创建镜像虚拟机'}},
                                     status=status.HTTP_200_OK)
+            elif not image.vm_uuid:
+                return JsonResponse({'code': status.HTTP_200_OK, 'code_text': '获取虚拟机状态成功',
+                                     'status': {'status_code': 12, 'status_text': '虚拟机已搁置'}},
+                                    status=status.HTTP_200_OK)
+
             try:
                 vm = Vm(uuid=image.vm_uuid, name=image.vm_uuid, vcpu=image.vm_vcpu, mem=image.vm_mem,
                         host=image.vm_host)
@@ -292,3 +324,43 @@ class ImageVmOperateView(View):
 
         return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': '操作失败，没有匹配的处理程序。'},
                             status=status.HTTP_400_BAD_REQUEST)
+
+    def shelve_image_vm(self, image: Image):
+        """搁置 镜像虚拟机 """
+        image.remove_image_vm()
+
+        image.vm_uuid = None
+        try:
+            image.save(update_fields=['vm_uuid'])
+        except Exception as e:
+            raise ImageError(msg='搁置镜像虚拟机信息失败:' + str(e))
+
+        return
+
+    def unshelve_image_vm(self, image: Image):
+        """恢复搁置 镜像虚拟机"""
+
+        api = VmAPI()
+        validated_data = {'image_id': image.id, 'vcpu': image.vm_vcpu,
+                          'mem': image.vm_mem, 'host_id': image.vm_host_id,
+                          'ipv4': image.vm_mac_ip.ipv4}
+
+        try:
+            api.create_vm_for_image(**validated_data)
+        except Exception as e:
+            error = ImageError(msg='创建镜像时错误:' + str(e))
+            raise error
+        return
+
+    def delshelve_image_vm(self, image: Image):
+        """ 删除 搁置的 镜像虚拟机 """
+        image.vm_host = None
+        image.vm_mem = None
+        image.vm_vcpu = None
+        image.vm_mac_ip = None
+        try:
+            image.save(update_fields=['vm_host', 'vm_mem', 'vm_vcpu', 'vm_mac_ip'])
+        except Exception as e:
+            raise ImageError(msg='删除搁置镜像虚拟机信息失败:' + str(e))
+
+        return

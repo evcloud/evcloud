@@ -82,7 +82,7 @@
                                     class="fa fa-sync"></i>
                             </button>
                         </th>
-                        <th style="width: 200px">{% translate '操作' %}</th>
+                        <th style="width: 220px">{% translate '操作' %}</th>
                     {% endif %}
                 </tr>
                 </thead>
@@ -171,6 +171,9 @@
                                             <button class="dropdown-item bg-danger btn-vm-delete" type="button"
                                                     data-image-id="{{ image.id }}">{% translate '强制删除VM' %}
                                             </button>
+                                            <button class="dropdown-item bg-danger btn-vm-shelve" type="button"
+                                                    data-image-id="{{ image.id }}">{% translate '搁置' %}
+                                            </button>
                                         </div>
                                         <a class="btn btn-sm btn-danger operation-button"
                                            href="{% url 'image:image-delete' id=image.id %}">{% translate '删除镜像' %}</a>
@@ -182,6 +185,25 @@
                                            href="{% url 'image:image-vm-create' image_id=image.id %}">{% translate '创建虚拟机' %}</a>
                                         <a class="btn btn-sm btn-danger operation-button"
                                            href="{% url 'image:image-delete' id=image.id %}">{% translate '删除镜像' %}</a>
+
+                                        {% if image.vm_mac_ip %}
+                                                               <button type="button"
+                                                class="btn btn-sm btn-success dropdown-toggle operation-button"
+                                                id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                                                aria-expanded="false">
+                                            <i class="fa fa-power-off"></i></button>
+                                        </button>
+
+                                            <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
+                                                <button class="dropdown-item bg-danger btn-vm-unshelve" type="button"
+                                                        data-image-id="{{ image.id }}">{% translate '搁置恢复' %}
+                                                </button>
+                                                <button class="dropdown-item bg-danger btn-vm-delshelve" type="button"
+                                                        data-image-id="{{ image.id }}">{% translate '删除搁置' %}
+                                                </button>
+                                            </div>
+
+                                        {% endif %}
                                     </div>
                                 {% endif %}
                             </td>

@@ -50,9 +50,9 @@
     }
 
     // 分中心下拉框选项改变事件
-    $('select[name="center_id"]').change(function () {
-        this.form.submit();
-    });
+    // $('select[name="center_id"]').change(function () {
+    //     this.form.submit();
+    // });
     $('select[name="data_center"]').change(function () {
         // this.form.submit();
         update_group_select_items()
@@ -106,9 +106,9 @@
         <option value="">自动选择</option>
         {{ each results }}
             <option value="{{ $value.id }}">
-                {{ $value.ipv4 }}(vCPU:{{$value.vcpu_allocated}}/{{$value.vcpu_total - $value.vcpu_allocated}}/{{$value.vcpu_total}}, 
-                RAM:{{$value.mem_allocated}}Gb/{{$value.mem_total - $value.mem_allocated}}Gb/{{$value.mem_total}}Gb),
-                Num:{{$value.vm_created}}/{{$value.vm_limit - $value.vm_created}}/{{$value.vm_limit}}
+                {{ $value.ipv4 }}(CPU(核):已分配{{$value.vcpu_allocated}}/剩余{{$value.vcpu_total - $value.vcpu_allocated}}/总共{{$value.vcpu_total}}, 
+                RAM:已分配{{$value.mem_allocated}}Gb/剩余{{$value.mem_total - $value.mem_allocated}}Gb/总共{{$value.mem_total}}Gb),
+                Num:已创建{{$value.vm_created}}/剩余{{$value.vm_limit - $value.vm_created}}/总共{{$value.vm_limit}}
             </option>
         {{/each}}
     `);
@@ -183,7 +183,7 @@
             ipv4.append(html);
             return;
         }
-        let qs = encode_params({vlan_id: vlan, used: false});
+        let qs = encode_params({vlan_id: vlan, used: false, orderby:true});
         let api = build_absolute_url('/api/v3/macip/?' + qs);
         $.ajax({
             url: api, type: 'get', async: false, success: function (data) {
@@ -269,10 +269,6 @@
             }
         })
     });
-
-
-
-
 
 
 })();
