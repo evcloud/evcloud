@@ -247,6 +247,9 @@
                                             <label for="sys_type_display" class="col-sm-1 col-form-label">{% translate '虚拟机CPU' %}</label>
                                             <span class="col-sm-3 form-control-plaintext"
                                                   id="sys_type_display">{{ image.vm_vcpu }}{% translate '核' %}</span>
+                                            <label for="sys_type_display" class="col-sm-1 col-form-label">{% translate '虚拟机IP信息' %}</label>
+                                            <span class="col-sm-3 form-control-plaintext"
+                                                  id="sys_type_display">{{ image.vm_mac_ip }}</span>
                                         </div>
                                     {% endif %}
                                 </form>

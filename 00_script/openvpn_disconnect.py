@@ -20,8 +20,7 @@ def get_environ_value():
         username = os.environ.get('common_name')
 
         # logout_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
-        now_time = datetime.datetime.now()
-        utc_time = now_time - datetime.timedelta(hours=8)  # 减去8小时
+        utc_time = datetime.datetime.utcnow()
         logout_time = utc_time.strftime("%Y-%m-%d %H:%M:%S")
     except Exception as e:
         log.error(f'无法重vpn获取当前的参数， error:{str(e)}')

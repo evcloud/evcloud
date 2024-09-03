@@ -21,9 +21,7 @@ def get_environ_value():
         client_trusted_ip = os.environ.get('trusted_ip')  # 客户端公网IP地址
         client_trusted_port = os.environ.get('trusted_port')  # 客户端公网IP地址端口
 
-        # login_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))
-        now_time = datetime.datetime.now()
-        utc_time = now_time - datetime.timedelta(hours=8)  # 减去8小时
+        utc_time = datetime.datetime.utcnow()
         login_time = utc_time.strftime("%Y-%m-%d %H:%M:%S")
     except Exception as e:
         log.error(f'无法重vpn获取当前的参数， error:{str(e)}')
@@ -55,10 +53,10 @@ def main():
 
 
 if __name__ == '__main__':
-    # os.environ['common_name'] = 'test'
-    # os.environ['time_unix'] = '1693882866'
-    # os.environ['ifconfig_local'] = '10.10.10.10'
-    # os.environ['ifconfig_pool_remote_ip'] = '192.168.192.111'
-    # os.environ['trusted_ip'] = '111.111.111.111'
-    # os.environ['trusted_port'] = '232'
+    os.environ['common_name'] = 'test'
+    os.environ['time_unix'] = '1693882866'
+    os.environ['ifconfig_local'] = '10.10.10.10'
+    os.environ['ifconfig_pool_remote_ip'] = '192.168.192.111'
+    os.environ['trusted_ip'] = '111.111.111.111'
+    os.environ['trusted_port'] = '232'
     main()
