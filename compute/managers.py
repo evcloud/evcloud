@@ -699,7 +699,7 @@ class GroupManager:
 
         g_ids = list(group_qs.values_list('id', flat=True))
         if g_ids:
-            ip_qs = Vlan.objects.filter(group__in=g_ids, enable=True, image_specialized=False).exclude(vlan_shield__user_name_id=user.id) # 镜像专用vlan过滤
+            ip_qs = Vlan.objects.filter(group__in=g_ids, enable=True).exclude(vlan_shield__user_name_id=user.id) # 镜像专用vlan过滤
         else:
             ip_qs = Vlan.objects.none()
 

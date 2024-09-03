@@ -38,7 +38,7 @@ class Vlan(models.Model):
     dhcp_config = models.TextField(verbose_name=_('DHCP部分配置信息'))
     dhcp_config_v6 = models.TextField(verbose_name=_('DHCP6部分配置信息'), null=True, blank=True,  default=None)
     enable = models.BooleanField(verbose_name=_('启用网络'), default=True)
-    image_specialized = models.BooleanField(verbose_name=_('镜像虚拟机专用'), default=False)
+    # image_specialized = models.BooleanField(verbose_name=_('镜像虚拟机专用'), default=False)
     remarks = models.TextField(verbose_name=_('备注'), default='', blank=True)
 
     def __str__(self):

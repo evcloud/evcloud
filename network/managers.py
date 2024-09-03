@@ -152,7 +152,7 @@ class VlanManager:
                 return queryset.none()
 
             queryset = queryset.filter(group__in=group_ids).all()
-        queryset = queryset.filter(image_specialized=False).all()
+        # queryset = queryset.filter(image_specialized=False).all()
         return queryset
 
     def shield_vlan(self, queryset, user=None):
