@@ -7,6 +7,8 @@ from rest_framework import status
 
 from ceph.models import GlobalConfig
 from compute.managers import CenterManager, ComputeError
+from logrecord.manager import user_operation_record
+from network.managers import MacIPManager
 from novnc.manager import NovncTokenManager
 from utils.errors import NovncError, VmError, NoSuchImage
 from utils.paginators import NumsPaginator
@@ -268,7 +270,7 @@ class ImageVmOperateView(View):
 
         if operation == 'unshelve-vm':
             try:
-                self.unshelve_image_vm(image=image)
+                self.unshelve_image_vm(request=request, image=image)
             except Exception as e:
                 return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': _('虚拟机恢复失败:') + str(e)},
                                     status=status.HTTP_400_BAD_REQUEST)
@@ -276,7 +278,7 @@ class ImageVmOperateView(View):
 
         if operation == 'shelve-vm':
             try:
-                self.shelve_image_vm(image=image)
+                self.shelve_image_vm(request=request, image=image)
             except Exception as e:
                 return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': _('虚拟机搁置失败:') + str(e)},
                                     status=status.HTTP_400_BAD_REQUEST)
@@ -284,7 +286,7 @@ class ImageVmOperateView(View):
 
         if operation == 'delshelve-vm':
             try:
-                self.delshelve_image_vm(image=image)
+                self.delshelve_image_vm(request=request, image=image)
             except Exception as e:
                 return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': _('虚拟机删除失败:') + str(e)},
                                     status=status.HTTP_400_BAD_REQUEST)
@@ -325,20 +327,32 @@ class ImageVmOperateView(View):
         return JsonResponse({'code': status.HTTP_400_BAD_REQUEST, 'code_text': '操作失败，没有匹配的处理程序。'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-    def shelve_image_vm(self, image: Image):
+    def shelve_image_vm(self, request, image: Image):
         """搁置 镜像虚拟机 """
-        image.remove_image_vm()
+
+        image.remove_image_vm()  # 底层关机
 
         image.vm_uuid = None
         try:
             image.save(update_fields=['vm_uuid'])
         except Exception as e:
             raise ImageError(msg='搁置镜像虚拟机信息失败:' + str(e))
+        request.query_params = {}
+        user_operation_record.add_log(request=request, operation_content=f'镜像主机搁置, 云主机IP: {image.vm_mac_ip.ipv4}')
 
         return
 
-    def unshelve_image_vm(self, image: Image):
+    def unshelve_image_vm(self, request, image: Image):
         """恢复搁置 镜像虚拟机"""
+
+        used = image.vm_mac_ip.can_used()
+
+        if used is False:
+            # ip 被使用
+            mac_ip = MacIPManager().get_free_ip_in_vlan(vlan_id=image.vm_mac_ip.vlan_id).order_by('-id').first()
+            if mac_ip is None:
+                raise ImageError(msg='恢复搁置中的镜像主机时，无法查找到可用的IP信息')
+            image.vm_mac_ip = mac_ip
 
         api = VmAPI()
         validated_data = {'image_id': image.id, 'vcpu': image.vm_vcpu,
@@ -350,10 +364,18 @@ class ImageVmOperateView(View):
         except Exception as e:
             error = ImageError(msg='创建镜像时错误:' + str(e))
             raise error
+
+        request.query_params = {}
+        user_operation_record.add_log(request=request, operation_content=f'恢复搁置中的镜像主机, 云主机IP: {image.vm_mac_ip.ipv4}')
+
         return
 
-    def delshelve_image_vm(self, image: Image):
+    def delshelve_image_vm(self, request, image: Image):
         """ 删除 搁置的 镜像虚拟机 """
+
+        request.query_params = {}
+        user_operation_record.add_log(request=request, operation_content=f'删除搁置中的镜像主机, 云主机IP: {image.vm_mac_ip.ipv4}')
+
         image.vm_host = None
         image.vm_mem = None
         image.vm_vcpu = None

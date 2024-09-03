@@ -35,7 +35,7 @@ def extract_string(text):
 
 class LogManager:
 
-    def add_log(self, request, operation_content, remark=None):
+    def add_log(self, request, operation_content, remark=''):
         """
             添加用户操作
         """
@@ -54,7 +54,7 @@ class LogManager:
                 method=method,
                 operation_content=operation_content,
                 full_path=full_path,
-                message=remark,
+                message=remark,  # 为None 会报错，导致无法写入数据
                 username=username,
                 real_user=real_user,
                 request_ip=clinet_ip if clinet_ip else '',
