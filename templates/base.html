@@ -142,7 +142,7 @@
             localStorage.setItem('useTimeZone', useTimezone)
         }
 
-        let serviceUseTineZone = {{ request.session.useTimeZone }}
+        let serviceUseTineZone = "{{ request.session.useTimeZone }}"
 
         if (serviceUseTineZone === '' || serviceUseTineZone === null) {
             setServiceTimeZone(useTimezone)
@@ -155,23 +155,18 @@
 
     function setServiceTimeZone(useTimeZone) {
 
-        // 将时区发送到服务器
-        fetch('/timezone/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({timezone: useTimeZone})
-        })
-            .then(response => {
+        $.ajax({
+            url: '{% url 'timezone' %}',
+            type: 'POST',
+            async: false,
+            data: {'timezone': useTimeZone},
+            success: function (data) {
                 localStorage.setItem('useTimeZone', useTimeZone)
-            })
-            .then(data => {
-                console.log("Server Response:", data);
-            })
-            .catch(error => {
-                console.error("Error:", error);
-            });
+            },
+            error: function (xhr) {
+                console.error("Error:", xhr);
+            }
+        })
     }
 </script>
 <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
