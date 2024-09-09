@@ -34,6 +34,7 @@ from utils.permissions import APIIPPermission
 from version import __version__, __version_git_change_set__
 
 from . import admin_site  # admin后台一些设置
+from .views import SetTimezoneView
 
 
 def home(request):
@@ -94,6 +95,7 @@ urlpatterns = [
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
     path("i18n/", include("django.conf.urls.i18n")),
     path('jsi18n/', JavaScriptCatalog.as_view(), name='javascript-catalog'),
+    path('timezone/', SetTimezoneView.as_view(), name='timezone'),
 
 ]
 

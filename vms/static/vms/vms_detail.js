@@ -312,6 +312,7 @@
 
     //art-template渲染模板注册过滤器
     template.defaults.imports.isoTimeToLocal = isoTimeToLocal;
+    template.defaults.imports.setUTCToLocalTimezone = setUTCToLocalTimezone;
 
     //
     // 创建快照渲染模板
@@ -319,8 +320,8 @@
     let render_vm_snap_item = template.compile(`
         <tr id="tr_snap_{{ snap.id }}">
             <td>{{ snap.id }}</td>
-            <td class="line-limit-length" style="max-width: 150px;" title="{{ snap.snap }}">{{ snap.snap }}</td>
-            <td>{{ $imports.isoTimeToLocal(snap.create_time) }}</td>
+            <td class="line-limit-length" style="max-width: 150px;" title="{{ snap.snap }}">{{ snap.snap }}
+            <td>{{ $.imports.setUTCToLocalTimezone(snap.create_time) }}</td>
             <td class="mouse-hover">
                 <div>
                     <span>{{ snap.remarks }}</span>

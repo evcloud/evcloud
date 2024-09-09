@@ -128,6 +128,52 @@
     <p>Powered by <a href="{% if global_config %}{{ global_config.poweredBy }}
             {% else %} https://gitee.com/cstcloud-cnic/evcloud {% endif %}"> Evcloud </a></p>
 </footer>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+        // 获取用户时区
+        const useTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        console.log("User Timezone:", useTimezone);
+        let localStorageTimeZone = localStorage.getItem('useTimeZone')
+        if (localStorageTimeZone === null || localStorageTimeZone === '') {
+            localStorage.setItem('useTimeZone', useTimezone)
+        } else if (useTimezone !== localStorageTimeZone) {
+            localStorage.setItem('useTimeZone', useTimezone)
+        }
+
+        let serviceUseTineZone = {{ request.session.useTimeZone }}
+
+        if (serviceUseTineZone === '' || serviceUseTineZone === null) {
+            setServiceTimeZone(useTimezone)
+
+        } else if (serviceUseTineZone !== localStorageTimeZone) {
+            setServiceTimeZone(useTimezone)
+        }
+
+    });
+
+    function setServiceTimeZone(useTimeZone) {
+
+        // 将时区发送到服务器
+        fetch('/timezone/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({timezone: useTimeZone})
+        })
+            .then(response => {
+                localStorage.setItem('useTimeZone', useTimeZone)
+            })
+            .then(data => {
+                console.log("Server Response:", data);
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+    }
+</script>
 <script type="text/javascript" src="{% static 'jquery/jquery-3.4.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'bootstrap-4.4.1/js/bootstrap.bundle.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'fontawesome-free/js/all.min.js' %}"></script>

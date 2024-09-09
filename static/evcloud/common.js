@@ -166,6 +166,25 @@ function isoTimeToLocal(isoTime) {
     return lTime;
 }
 
+
+function setUTCToLocalTimezone(utcTime) {
+    const utcTimeObj = new Date(utcTime);  // 从服务器获取的 UTC 时间
+    let useTimeZone = localStorage.getItem('useTimeZone'); // 获取用户的时区
+    if (useTimeZone === '' || useTimeZone === null) {
+        const useTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        localStorage.setItem('useTimeZone', useTimezone)
+        useTimeZone = useTimezone
+    }else if (useTimeZone === 'UTC'){
+        return isoTimeToLocal(utcTime)
+    }
+    // 将 UTC 时间转换为用户的本地时间
+    const options = {timeZone: useTimeZone, hour12: false};
+
+    return isoTimeToLocal(utcTimeObj.toLocaleString('en-US', options))
+}
+
+
+
  /**
   * 自定义Loading插件，来自网络
   * @param {Object} config

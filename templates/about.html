@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load tz %}
 {% load i18n %}
 {% block title %}{% translate '关于' %}{% endblock %}
 
@@ -22,8 +23,9 @@
                         <h5>{% trans '当前版本' %}</h5>
                         <p>
                             <span class="p-2 bd-highlight" style="color: #0d6efd">{{ version_git_change_set.0.0 }} </span>
-
+                            {% timezone request.session.useTimeZone|default:'UTC' %}
                             <span class="p-2 bd-highlight">{% translate '发布时间' %}：{{ version_git_change_set.0.1 | date:'Y-m-d H:i:s' }}</span>
+                            {% endtimezone %}
 
                             <span class="p-2 bd-highlight">{% translate '发布人' %}：{{ version_git_change_set.0.2 }}</span>
                         </p>
@@ -35,9 +37,9 @@
                         {% for tag in version_git_change_set|slice:"1:" %}
                             <p>
                                 <span class="p-2 bd-highlight" style="color: #0d6efd">{{ tag.0 }} </span>
-
+                                {% timezone request.session.useTimeZone|default:'UTC' %}
                                 <span class="p-2 bd-highlight">{% translate '发布时间' %}：{{ tag.1 | date:'Y-m-d H:i:s' }}</span>
-
+                                {% endtimezone %}
                                 <span class="p-2 bd-highlight">{% translate '发布人' %}：{{ tag.2 }}</span>
                             </p>
                             <pre style="white-space: pre-wrap;word-wrap: break-word; font-size: 1rem">{{ tag.4 }}</pre>

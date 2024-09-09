@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load static %}
 {% load  sizeformat %}
+{% load tz %}
 
 {% block head %}
 {#    <link rel="stylesheet" type="text/css" href="{% static 'vms/vms_list.css' %}">#}
@@ -61,7 +62,11 @@
                                             {% endif %}
                                         </div>
                                         <div class="col-4"><strong>{% translate '创建者' %}：</strong>{{vm.user}}</div>
-                                        <div class="col-4"><strong>{% translate '创建时间' %}：</strong>{{vm.create_time|date:'Y-m-d H:i:s'}}</div>
+                                        {% timezone request.session.useTimeZone|default:'UTC' %}
+                                            <div class="col-4">
+                                                <strong>{% translate '创建时间' %}：</strong>{{ vm.create_time|date:'Y-m-d H:i:s' }}
+                                            </div>
+                                        {% endtimezone %}
                                     </div>
                                 </div>
                             </div>
@@ -198,7 +203,9 @@
                                             <td>{{ disk.quota }}</td>
                                             <td>{{ disk.size|sizeformat:'GB' }}</td>
                                             <td>{{ disk.user }}</td>
+                                        {% timezone request.session.useTimeZone|default:'UTC' %}
                                             <td>{{ disk.create_time | date:'Y-m-d H:i:s' }}</td>
+                                        {% endtimezone %}
                                             <td>
                                                 {% if disk.enable %}
                                                     <i class="fa fa-check"></i>
@@ -289,7 +296,9 @@
                                         <tr id="tr_snap_{{ snap.id }}">
                                             <td>{{ snap.id }}</td>
                                             <td class="line-limit-length" style="max-width: 150px;" title="{{ snap.snap }}">{{ snap.snap }}</td>
+                                            {% timezone request.session.useTimeZone|default:'UTC' %}
                                             <td>{{ snap.create_time |date:'Y-m-d H:i:s' }}</td>
+                                            {% endtimezone %}
                                             <td class="mouse-hover">
                                                 <div>
                                                     <span>{{ snap.remarks|default_if_none:'' }}</span>

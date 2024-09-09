@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load tz %}
 {% load i18n %}
 {% load static %}
 {% load  sizeformat %}
@@ -71,7 +72,9 @@
                         <td>{{ disk.quota }}</td>
                         <td>{{ disk.size|sizeformat:'GB' }}</td>
                         <td>{{ disk.user }}</td>
+                        {% timezone request.session.useTimeZone|default:'UTC' %}
                         <td>{{ disk.create_time }}</td>
+                        {% endtimezone %}
                          <td>
                             {%if disk.enable%}
                                 <i class="fa fa-check"></i>

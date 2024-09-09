@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load tz %}
 {% load static %}
 {% load i18n %}
 {% load  sizeformat %}
@@ -22,7 +23,9 @@
                         <dl class="row">
                             <dt class="col-2 text-right">{% translate '云硬盘' %}UUID:</dt> <dd class="col-10" id="id-mount-disk-uuid">{{ disk.uuid }}</dd>
                             <dt class="col-2 text-right">{% translate '云硬盘容量' %}:</dt> <dd class="col-10">{{ disk.size|sizeformat:"GB" }}</dd>
+                            {% timezone request.session.useTimeZone|default:'UTC' %}
                             <dt class="col-2 text-right">{% translate '创建时间' %}:</dt> <dd class="col-10">{{ disk.create_time }}</dd>
+                            {% endtimezone %}
                             <dt class="col-2 text-right">{% translate '存储池' %}:</dt> <dd class="col-10">{{ disk.quota }}</dd>
                             <dt class="col-2 text-right">{% translate '机组' %}:</dt> <dd class="col-10">{{ disk.quota.group }}</dd>
                             <dt class="col-2 text-right">{% translate '用户' %}:</dt> <dd class="col-10">{{ disk.user }}</dd>
