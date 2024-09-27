@@ -1365,6 +1365,16 @@ class VmsViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='更换虚拟机系统',
         request_body=no_body,
+        manual_parameters=[
+
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+        ],
         responses={
             201: """
                 {
@@ -1392,9 +1402,14 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的image_id参数')
             return self.exception_response(exc)
 
+        try:
+            user = get_admin_specified_user_or_own(request=request)
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         api = VmAPI()
         try:
-            api.change_sys_disk(vm_uuid=vm_uuid, image_id=image_id, request=request)
+            api.change_sys_disk(vm_uuid=vm_uuid, image_id=image_id, request=request, user=user)
         except VmError as e:
             e.msg = f'更换虚拟机系统失败，{str(e)}'
             return self.exception_response(e)

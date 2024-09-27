@@ -396,7 +396,7 @@ class VmAPI:
                               remark='')
         return snap
 
-    def vm_rollback_to_snap(self, vm_uuid: str, snap_id: int, request):
+    def vm_rollback_to_snap(self, vm_uuid: str, snap_id: int, request, user):
         """
         回滚虚拟机系统盘到指定快照
 
@@ -408,7 +408,7 @@ class VmAPI:
 
         :raises: VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=())
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=())
 
         self.vm_operation_log(request=request, operation_content=f'云主机系统盘回滚到指定快照, 指定快照id为：{snap_id} 云主机IP：{vm.mac_ip}',
                               remark='')
@@ -482,7 +482,7 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'host__group'))
         return VmInstance(vm=vm).mount_pci_device(device=device), vm
 
-    def change_sys_disk(self, vm_uuid: str, image_id: int, request):
+    def change_sys_disk(self, vm_uuid: str, image_id: int, request, user):
         """
         更换虚拟机系统镜像
 
@@ -494,7 +494,7 @@ class VmAPI:
 
         :raises: VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=(
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
             'user', 'host__group', 'image__ceph_pool__ceph'))
 
         self.vm_operation_log(request=request, operation_content=f'更换云主机系统成功, 云主机IP：{vm.mac_ip}',
