@@ -3161,13 +3161,22 @@ class VDiskViewSet(CustomGenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='创建云硬盘',
+        manual_parameters=[
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+        ],
         responses={
             201: """"""
         }
     )
     def create(self, request, *args, **kwargs):
         """
-        创建云硬盘
+        资源管理员/超级管理员 创建云硬盘
 
             http code 201 创建成功:
             {
@@ -3201,6 +3210,11 @@ class VDiskViewSet(CustomGenericViewSet):
             data['data'] = serializer.data
             return Response(data, status=exc.status_code)
 
+        try:
+            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限创建云硬盘')
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         data = serializer.validated_data
         size = data.get('size')
         center_id = data.get('center_id', None)
@@ -3213,7 +3227,7 @@ class VDiskViewSet(CustomGenericViewSet):
 
         manager = VdiskManager()
         try:
-            disk = manager.create_vdisk(size=size, user=request.user, center=center_id,
+            disk = manager.create_vdisk(size=size, user=user, center=center_id,
                                         group=group_id, quota=quota_id, remarks=remarks)
         except VdiskError as e:
             r_data = e.data()
