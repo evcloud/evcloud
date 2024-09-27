@@ -4650,6 +4650,11 @@ class VPNViewSet(CustomGenericViewSet):
         """
         username = kwargs.get(self.lookup_field)
 
+        if not check_superuser_and_resource_permissions(request):
+            if username != request.user.username:
+                exc = exceptions.BadRequestError(msg='当前用户没有权限')
+                return self.exception_response(exc)
+
         mgr = VPNManager()
         vpn = mgr.get_vpn(username=username)
         if not vpn:
