@@ -676,7 +676,14 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='内存计算单位（默认MB，可选GB）'
-            )
+            ),
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称(对资源管理员和超级管理员开放，普通管理员无效)'
+            ),
         ],
         responses={
             200: ''
@@ -690,6 +697,12 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         vm_uuid = kwargs.get(self.lookup_field, '')
+
+        try:
+            user = get_admin_specified_user_or_own(request=request)
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         try:
             vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid, related_fields=('image', 'mac_ip', 'host', 'user'))
         except VmError as e:
@@ -698,7 +711,7 @@ class VmsViewSet(CustomGenericViewSet):
         if not vm:
             return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(),
                             status=status.HTTP_404_NOT_FOUND)
-        if not vm.user_has_perms(user=request.user):
+        if not vm.user_has_perms(user=user):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
 
