@@ -3411,7 +3411,15 @@ class VDiskViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=True,
                 description='要挂载的虚拟机uuid'
-            )
+            ),
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+
         ],
         responses={
             200: """
@@ -3425,7 +3433,7 @@ class VDiskViewSet(CustomGenericViewSet):
     @action(methods=['patch'], url_path='mount', detail=True, url_name='disk-mount')
     def disk_mount(self, request, *args, **kwargs):
         """
-        挂载硬盘
+        资源管理员/超级管理员 挂载硬盘
 
             http code 200:
             {
@@ -3442,9 +3450,14 @@ class VDiskViewSet(CustomGenericViewSet):
         disk_uuid = kwargs.get(self.lookup_field, '')
         vm_uuid = request.query_params.get('vm_uuid', '')
 
+        try:
+            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限挂载硬盘')  # 由中坤操作 flag为true
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         api = VmAPI()
         try:
-            api.mount_disk(request=request, vm_uuid=vm_uuid, vdisk_uuid=disk_uuid)
+            api.mount_disk(request=request, vm_uuid=vm_uuid, vdisk_uuid=disk_uuid, user=user)
         except exceptions.Error as e:
             e.msg = f'挂载硬盘失败，{str(e)}'
             return self.exception_response(e)
