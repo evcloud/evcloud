@@ -999,6 +999,15 @@ class VmsViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='创建虚拟机vnc',
         request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+        ],
         responses={
             200: """
             {
@@ -1027,6 +1036,12 @@ class VmsViewSet(CustomGenericViewSet):
               }
             }
         """
+
+        try:
+            user = get_admin_specified_user_or_own(request=request)  # 由中坤操作 flag为true
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
             vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid)
@@ -1036,7 +1051,7 @@ class VmsViewSet(CustomGenericViewSet):
         if not vm:
             return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(),
                             status=status.HTTP_404_NOT_FOUND)
-        if not vm.user_has_perms(user=request.user):
+        if not vm.user_has_perms(user=user):
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
 
