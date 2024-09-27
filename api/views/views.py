@@ -4428,7 +4428,7 @@ class VPNViewSet(CustomGenericViewSet):
     )
     def create(self, request, *args, **kwargs):
         """
-        创建vpn
+        资源管理员或超级管理员 创建vpn
 
             http code 201:
                 {
@@ -4465,6 +4465,12 @@ class VPNViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         create_user = request.user.username
+
+        if not check_superuser_and_resource_permissions(request):  # 普通用户不能创建
+            if username != request.user.username:
+                exc = exceptions.BadRequestError(msg='当前用户没有权限创建vpn账户')
+                return self.exception_response(exc)
+
         try:
             vpn = mgr.create_vpn(username=username, password=password, remarks=create_user, create_user=create_user,
                                  active=VPN_USER_ACTIVE_DEFAULT)
