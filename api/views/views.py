@@ -1311,6 +1311,16 @@ class VmsViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='虚拟机系统盘回滚到指定快照',
         request_body=no_body,
+        manual_parameters=[
+
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+        ],
         responses={
             201: """
             {
@@ -1338,9 +1348,14 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的id参数')
             return self.exception_response(exc)
 
+        try:
+            user = get_admin_specified_user_or_own(request=request)  # 由中坤操作 flag为true
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         api = VmAPI()
         try:
-            api.vm_rollback_to_snap(vm_uuid=vm_uuid, snap_id=snap_id, request=request)
+            api.vm_rollback_to_snap(vm_uuid=vm_uuid, snap_id=snap_id, request=request, user=user)
         except VmError as e:
             e.msg = f'回滚虚拟机失败，{str(e)}'
             return self.exception_response(e)
