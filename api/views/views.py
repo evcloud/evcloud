@@ -1208,7 +1208,14 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=True,
                 description='快照id'
-            )
+            ),
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
         ],
         responses={
             204: """SUCCESS NO CONTENT""",
@@ -1224,7 +1231,7 @@ class VmsViewSet(CustomGenericViewSet):
     @action(methods=['delete'], url_path=r'snap/(?P<id>[0-9]+)', detail=False, url_name='delete-vm-snap')
     def delete_vm_snap(self, request, *args, **kwargs):
         """
-        删除一个虚拟机系统快照
+        资源管理员/超级管理员 删除一个虚拟机系统快照
         """
         snap_id = str_to_int_or_default(kwargs.get('id', '0'), default=0)
         if snap_id <= 0:
@@ -1232,7 +1239,12 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         try:
-            VmAPI().delete_sys_disk_snap(snap_id=snap_id, user=request.user, request=request)
+            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限删除快照')  # 由中坤操作 flag为true
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
+        try:
+            VmAPI().delete_sys_disk_snap(snap_id=snap_id, user=user, request=request)
         except VmError as e:
             e.msg = f'删除虚拟机系统快照失败，{str(e)}'
             return self.exception_response(e)
