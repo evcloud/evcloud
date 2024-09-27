@@ -776,7 +776,14 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='内存计算单位（默认MB，可选GB）'
-            )
+            ),
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
         ],
         responses={
             200: """
@@ -789,7 +796,7 @@ class VmsViewSet(CustomGenericViewSet):
     )
     def partial_update(self, request, *args, **kwargs):
         """
-        修改虚拟机vcpu和内存大小
+        资源管理员/超级管理员 修改虚拟机vcpu和内存大小
 
             指定flavor或者直接指定vcpu和mem, 优先使用flavor
 
@@ -809,6 +816,9 @@ class VmsViewSet(CustomGenericViewSet):
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
+
+        if mem_unit == 'UNKNOWN':
+            mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
 
         serializer = self.get_serializer(data=request.data, context={'mem_unit': mem_unit})
         if not serializer.is_valid(raise_exception=False):
@@ -841,9 +851,14 @@ class VmsViewSet(CustomGenericViewSet):
                 vcpu = flavor.vcpus
                 mem = flavor.ram
 
+        try:
+            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限修改cpu和内存信息')
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         api = VmAPI()
         try:
-            api.edit_vm_vcpu_mem(user=request.user, vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, request=request)
+            api.edit_vm_vcpu_mem(user=user, vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, request=request)
         except VmError as e:
             return Response(data=e.data(), status=e.status_code)
 
