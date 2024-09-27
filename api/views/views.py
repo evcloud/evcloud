@@ -2978,7 +2978,7 @@ class VDiskViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_INTEGER,
                 required=False,
-                description='所属用户id，当前为超级用户时此参数有效'
+                description='所属用户id，当前为超级用户或资源管理员时此参数有效'
             ),
             openapi.Parameter(
                 name='search',
@@ -3044,7 +3044,7 @@ class VDiskViewSet(CustomGenericViewSet):
         user = request.user
         manager = VdiskManager()
         try:
-            if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
+            if user.is_superuser or check_resource_permissions(user=user):  # 当前是超级用户，user_id查询参数有效
                 queryset = manager.filter_vdisk_queryset(center_id=center_id, group_id=group_id, quota_id=quota_id,
                                                          search=search, user_id=user_id, all_no_filters=True)
             else:
