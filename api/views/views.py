@@ -3241,6 +3241,21 @@ class VDiskViewSet(CustomGenericViewSet):
         }
         return Response(data=data, status=status.HTTP_201_CREATED)
 
+    @swagger_auto_schema(
+        operation_summary='获取硬盘详细数据',
+        manual_parameters=[
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+        ],
+        responses={
+            200: """"""
+        }
+    )
     def retrieve(self, request, *args, **kwargs):
         """
         获取硬盘详细数据
@@ -3290,6 +3305,11 @@ class VDiskViewSet(CustomGenericViewSet):
         #                               operation_content='获取硬盘详细数据', remark='')
 
         try:
+            user = get_admin_specified_user_or_own(request=request)
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
+        try:
             disk = VdiskManager().get_vdisk_by_uuid(uuid=disk_uuid)
         except VdiskError as e:
             return self.exception_response(e)
@@ -3297,7 +3317,7 @@ class VDiskViewSet(CustomGenericViewSet):
         if not disk:
             exc = exceptions.VdiskNotExist()
             return self.exception_response(exc)
-        if not disk.user_has_perms(user=request.user):
+        if not disk.user_has_perms(user=user):
             exc = exceptions.VdiskAccessDenied(msg='没有权限访问此云硬盘')
             return self.exception_response(exc)
 
