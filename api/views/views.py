@@ -374,7 +374,7 @@ class VmsViewSet(CustomGenericViewSet):
         manager = VmManager()
 
         try:
-            if user.is_superuser:  # 当前是超级用户，user_id查询参数有效
+            if user.is_superuser or check_resource_permissions(request.user):  # 当前是超级用户，user_id查询参数有效
                 self.queryset = manager.filter_vms_queryset(center_id=center_id, group_id=group_id, host_id=host_id,
                                                             search=search, user_id=user_id, all_no_filters=True)
             else:
