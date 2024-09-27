@@ -3,7 +3,7 @@ import os
 import rados    # yum install python36-rbd.x86_64 python-rados.x86_64
 import rbd
 
-from .models import CephCluster
+from .models import CephCluster, GlobalConfig
 
 
 class RadosError(rados.Error):
@@ -430,3 +430,29 @@ class CephClusterManager:
             return CephCluster.objects.filter(id=ceph_id).first()
         except Exception as e:
             raise RadosError(f'查询CEPH集群时错误,{str(e)}')
+
+
+def check_resource_permissions(user):
+    """ 资源管理员 """
+
+    # 资源管理员
+    resource_user = GlobalConfig.objects.filter(name='resourceAdmin').first()
+
+    if not resource_user:
+        return False
+
+    resource_user_list = resource_user.content.split(',')
+    if user.username in resource_user_list:
+        return True
+
+    return False
+
+
+def check_superuser_and_resource_permissions(request):
+    """检查资源管理员"""
+
+    if request.user.is_superuser:
+        return True
+
+    return check_resource_permissions(user=request.user)
+

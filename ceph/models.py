@@ -157,6 +157,7 @@ class GlobalConfig(models.Model):
             {'name': 'siteName', 'content': 'EVCloud', 'remark': '站点名称'},
             {'name': 'poweredBy', 'content': 'https://gitee.com/cstcloud-cnic/evcloud', 'remark': '技术支持'},
             {'name': 'novncAccess', 'content': 'https', 'remark': 'vnc http协议'},
+            {'name': 'resourceAdmin', 'content': 'gosc,cstcloud', 'remark': '资源管理员，格式：admin1,admin2...'},
             {'name': 'vpnUserConfig', 'content': '', 'remark': 'vpn配置文件'},
             {'name': 'vpnUserConfigDownloadName', 'content': 'client.ovpn', 'remark': 'vpn配置文件下载名称。'},
         ]

@@ -19,6 +19,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         print(options)
+
+        admin = GlobalConfig.objects.filter(name='resourceAdministrator').first()
+        if admin:
+            admin.name = 'resourceAdmin'
+            admin.save()
+
         try:
             GlobalConfig().initial_site_parameter()
         except Exception as e:

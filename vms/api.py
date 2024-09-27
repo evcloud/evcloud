@@ -274,7 +274,7 @@ class VmAPI:
         self.vm_operation_log(request=request, operation_content=f'修改云主机备注信息, 云主机IP: {vm.mac_ip}, 备注信息为：{remark}')
         return VmInstance(vm=vm).modify_remark(remark=remark)
 
-    def mount_disk(self, vm_uuid: str, vdisk_uuid: str, request):
+    def mount_disk(self, vm_uuid: str, vdisk_uuid: str, request, user):
         """
         向虚拟机挂载硬盘
 
@@ -296,16 +296,16 @@ class VmAPI:
             raise errors.VmError.from_error(errors.VdiskNotExist())
         if not vdisk.enable:
             raise errors.VmError.from_error(errors.VdiskNotActive())
-        if not vdisk.user_has_perms(user=request.user):
+        if not vdisk.user_has_perms(user=user):
             raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限访问此硬盘'))
 
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=('host__group', 'user'))
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
 
         self.vm_operation_log(request=request, operation_content=f'挂载云硬盘, 云主机IP: {vm.mac_ip}, 云硬盘id：{vdisk_uuid}')
 
         return VmInstance(vm=vm).mount_disk(vdisk=vdisk)
 
-    def umount_disk(self, vdisk_uuid: str, request):
+    def umount_disk(self, vdisk_uuid: str, request, user):
         """
         从虚拟机卸载硬盘
 
@@ -324,7 +324,7 @@ class VmAPI:
         if vdisk is None:
             raise errors.VmError.from_error(errors.VdiskNotExist())
 
-        if not vdisk.user_has_perms(user=request.user):
+        if not vdisk.user_has_perms(user=user):
             raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限访问此硬盘'))
 
         status_bool = vm_normal_status(vm=vdisk.vm)
@@ -335,7 +335,7 @@ class VmAPI:
         if not vm:
             return vdisk
 
-        if not vm.user_has_perms(user=request.user):
+        if not vm.user_has_perms(user=user):
             raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
 
@@ -606,7 +606,7 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host',))
         return VmInstance(vm).get_stats()
 
-    def vm_sys_disk_expand(self, vm_uuid: str, expand_size: int, request):
+    def vm_sys_disk_expand(self, vm_uuid: str, expand_size: int, request, user):
         """
         vm系统盘扩容，系统盘最大5Tb
 
@@ -614,7 +614,7 @@ class VmAPI:
         :return:    vm
         :raises: VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=request.user, related_fields=('image__ceph_pool__ceph',))
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('image__ceph_pool__ceph',))
 
         self.vm_operation_log(request=request, operation_content=f'云主机系统盘扩容, 云主机IP：{vm.mac_ip}, 扩容大小为{expand_size}GB',
                               remark='')
