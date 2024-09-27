@@ -889,6 +889,15 @@ class VmsViewSet(CustomGenericViewSet):
                 )
             }
         ),
+        manual_parameters=[
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+        ],
         responses={
             200: """
             {
@@ -927,9 +936,19 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.InvalidParamError(msg='op参数无效')
             return self.exception_response(exc)
 
+        user_ = request.user
+
+        if op in ['delete', 'delete_force']:
+            try:
+                user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限删除虚拟机')  # 由中坤操作 flag为true
+            except exceptions.BadRequestError as e:
+                return self.exception_response(e)
+
+            user_ = user
+
         api = VmAPI()
         try:
-            ok = api.vm_operations(user=request.user, vm_uuid=vm_uuid, op=op, request=request)
+            ok = api.vm_operations(user=user_, vm_uuid=vm_uuid, op=op, request=request)
         except VmError as e:
             return self.exception_response(e)
 
