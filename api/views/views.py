@@ -12,8 +12,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.utils import swagger_auto_schema, no_body
 from drf_yasg import openapi
 
+from ceph.managers import check_superuser_and_resource_permissions, check_resource_permissions
 from ceph.models import GlobalConfig
 from logrecord.manager import user_operation_record
+from users.models import UserProfile
 from utils.permissions import APIIPPermission
 from vms.manager import VmManager, VmError, FlavorManager
 from vms.api import VmAPI
@@ -36,6 +38,36 @@ from api.viewsets import CustomGenericViewSet
 from version import __version__
 
 VPN_USER_ACTIVE_DEFAULT = getattr(settings, 'VPN_USER_ACTIVE_DEFAULT', False)
+
+
+def get_admin_specified_user_or_own(request, flag=False, msg=''):
+    """
+    获取指定用户或自己
+    flag: 限制不是资源管理员或超级管理员直接返回错误信息
+    """
+    user = None
+
+    if not check_superuser_and_resource_permissions(request):
+        if flag:
+            exc = exceptions.BadRequestError(msg=msg)
+            raise exc
+        user_name = request.query_params.get('username', None)
+        if user_name:
+            exc = exceptions.BadRequestError(msg=f'您没有权限为该用户({user_name})设置或查询任何信息')
+            raise exc
+        user = request.user
+    else:
+        user_name = request.query_params.get('username', None)
+        if user_name:
+            user = UserProfile.objects.filter(username=user_name).first()
+
+        else:
+            user = request.user
+
+    if not user:
+        raise exceptions.BadRequestError(msg=f'未找到 {user_name} 该用户信息')
+
+    return user
 
 
 def serializer_error_msg(errors, default=''):
@@ -556,13 +588,21 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='内存计算单位（默认MB，可选GB）'
-            )
+            ),
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
         ],
         responses={
             201: ''
         }
     )
     def create(self, request, *args, **kwargs):
+        """ 资源管理员/超级管理员 创建虚拟机 """
         ip_type = request.query_params.get('ip-type', None)
         if ip_type is None:
             ip_public = None
@@ -581,6 +621,11 @@ class VmsViewSet(CustomGenericViewSet):
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
+
+        try:
+            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限创建虚拟机')  # 由中坤操作 flag为true
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
 
         serializer = self.get_serializer(data=request.data, context={'mem_unit': mem_unit})
         if not serializer.is_valid(raise_exception=False):
@@ -606,7 +651,7 @@ class VmsViewSet(CustomGenericViewSet):
 
         api = VmAPI()
         try:
-            vm = api.create_vm(user=request.user, **validated_data, ip_public=ip_public)
+            vm = api.create_vm(user=user, **validated_data, ip_public=ip_public)
         except VmError as e:
             data = e.data()
             data['data'] = serializer.data
