@@ -3467,6 +3467,15 @@ class VDiskViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='卸载硬盘',
         request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+        ],
         responses={
             200: """
                 {
@@ -3479,7 +3488,7 @@ class VDiskViewSet(CustomGenericViewSet):
     @action(methods=['patch'], url_path='umount', detail=True, url_name='disk-umount')
     def disk_umount(self, request, *args, **kwargs):
         """
-        卸载硬盘
+        资源管理员/超级管理员 卸载硬盘
 
             http code 200:
             {
@@ -3495,9 +3504,14 @@ class VDiskViewSet(CustomGenericViewSet):
         """
         disk_uuid = kwargs.get(self.lookup_field, '')
 
+        try:
+            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限卸载硬盘')  # 由中坤操作 flag为true
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         api = VmAPI()
         try:
-            api.umount_disk(request=request, vdisk_uuid=disk_uuid)
+            api.umount_disk(request=request, vdisk_uuid=disk_uuid, user=user)
         except VmError as e:
             return self.exception_response(e)
 
