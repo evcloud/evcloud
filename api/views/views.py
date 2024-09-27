@@ -3327,9 +3327,25 @@ class VDiskViewSet(CustomGenericViewSet):
             'vm': self.get_serializer(disk).data
         })
 
+
+    @swagger_auto_schema(
+        operation_summary='销毁硬盘',
+        manual_parameters=[
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
+        ],
+        responses={
+            204: """"""
+        }
+    )
     def destroy(self, request, *args, **kwargs):
         """
-        销毁硬盘
+        资源管理员/超级管理员 销毁硬盘
 
             销毁硬盘
 
@@ -3342,6 +3358,11 @@ class VDiskViewSet(CustomGenericViewSet):
             }
         """
         disk_uuid = kwargs.get(self.lookup_field, '')
+
+        try:
+            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限删除云硬盘')
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
 
         # 用户操作日志记录
         user_operation_record.add_log(request=request, operation_content=f'销毁云硬盘， 云硬盘id：{disk_uuid}', remark='')
@@ -3356,7 +3377,7 @@ class VDiskViewSet(CustomGenericViewSet):
         if vdisk is None:
             return self.exception_response(exceptions.VdiskNotExist())
 
-        if not vdisk.user_has_perms(user=request.user):
+        if not vdisk.user_has_perms(user=user):
             exc = exceptions.VdiskAccessDenied(msg='没有权限访问此硬盘')
             return self.exception_response(exc)
 
