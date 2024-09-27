@@ -1141,7 +1141,14 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='快照备注信息'
-            )
+            ),
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='用户名称'
+            ),
         ],
         responses={
             201: """
@@ -1172,14 +1179,19 @@ class VmsViewSet(CustomGenericViewSet):
     @action(methods=['post'], url_path='snap', detail=True, url_name='vm-sys-snap')
     def vm_sys_snap(self, request, *args, **kwargs):
         """
-        创建虚拟机系统盘快照
+        资源管理员/超级管理员 创建虚拟机系统盘快照
         """
         remark = request.query_params.get('remark', '')
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
 
         try:
-            snap = api.create_vm_sys_snap(vm_uuid=vm_uuid, remarks=remark, user=request.user, request=request)
+            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限创建快照')  # 由中坤操作 flag为true
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
+        try:
+            snap = api.create_vm_sys_snap(vm_uuid=vm_uuid, remarks=remark, user=user, request=request)
         except VmError as e:
             e.msg = f'创建虚拟机系统快照失败，{str(e)}'
             return self.exception_response(e)
