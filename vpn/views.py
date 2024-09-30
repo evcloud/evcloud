@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.serializers import Serializer
 from drf_yasg.utils import swagger_auto_schema
 
+from ceph.managers import check_superuser_and_resource_permissions
 from ceph.models import GlobalConfig
 from logrecord.manager import user_operation_record
 from utils.paginators import NumsPaginator
@@ -78,6 +79,10 @@ class VPNChangeView(View):
         form = VPNChangeFrom(data=post)
         if not form.is_valid():
             return render(request, 'change.html', context={'form': form})
+
+        if not check_superuser_and_resource_permissions(request):
+            return JsonResponse({'msg': f'修改信息失败: 当前用户没有权限。'}, json_dumps_params={'ensure_ascii': False},
+                                status=400)
 
         vpn = VPNManager().get_vpn_by_id(kwargs['id'])
         if not vpn:
@@ -147,6 +152,10 @@ class VPNAddView(View):
         if not form.is_valid():
             return render(request, 'add.html', context={'form': form})
 
+        if not check_superuser_and_resource_permissions(request):
+            return JsonResponse({'msg': f'添加信息失败: 当前用户没有权限。'}, json_dumps_params={'ensure_ascii': False},
+                                status=400)
+
         d = form.cleaned_data
         try:
             vpn = VPNManager().create_vpn(**d, create_user=request.user.username)
@@ -171,16 +180,27 @@ class VPNDeleteView(View):
         return add_vpn_view(request, kwargs['id'])
 
     def post(self, request, *args, **kwargs):
+
+        if not check_superuser_and_resource_permissions(request):
+            return JsonResponse({'msg': f'删除失败: 当前用户没有权限。'}, json_dumps_params={'ensure_ascii': False},
+                                status=400)
+
         vpn = VPNManager().get_vpn_by_id(kwargs['id'])
         if vpn:
             vpn.delete()
 
         return redirect(to=reverse('vpn:vpn-list'))
 
+
 class VPNDeleteUnactiveView(View):
     """删除非激活用户"""
 
     def post(self, request, *args, **kwargs):
+
+        if not check_superuser_and_resource_permissions(request):
+            return JsonResponse({'msg': f'删除失败: 当前用户没有权限。'}, json_dumps_params={'ensure_ascii': False},
+                                status=400)
+
         vpn = VPNManager().get_unactive_vpn_queryset()
         if not vpn:
             return JsonResponse({'msg': f'删除失败: 未查到相关信息。'}, json_dumps_params={'ensure_ascii': False}, status=400)
