@@ -997,7 +997,7 @@ class VmsViewSet(CustomGenericViewSet):
         # user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.SELECT,
         #                               operation_content='获取云主机当前运行状态', remark='')
         try:
-            code, msg = api.get_vm_status(user=request.user, vm_uuid=vm_uuid)
+            code, msg = api.get_vm_status(user=request.user, vm_uuid=vm_uuid, query_user=False)
         except VmError as e:
             e.msg = f'获取虚拟机状态失败，{str(e)}'
             return self.exception_response(e)

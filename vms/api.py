@@ -24,7 +24,7 @@ class VmAPI:
         self._vdisk_manager = VdiskManager()
         self._pci_manager = PCIDeviceManager()
 
-    def _get_user_perms_vm(self, vm_uuid: str, user, related_fields: tuple = (), flag=False):
+    def _get_user_perms_vm(self, vm_uuid: str, user, related_fields: tuple = (), flag=False, query_user=True):
         """
         获取用户有访问权的的虚拟机
 
@@ -32,6 +32,7 @@ class VmAPI:
         :param user: 用户
         :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
         :param flag: 用于虚拟机在搁置的情况下，对一些情况允许
+        :param query_user: 查询虚拟机用户 目前仅限于虚拟机状态的查询可用不要查询虚拟机的用户信息
         :return:
             Vm()   # success
 
@@ -41,8 +42,9 @@ class VmAPI:
         if vm is None:
             raise VmNotExistError(msg='虚拟机不存在')
 
-        if not vm.user_has_perms(user=user):
-            raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
+        if query_user:
+            if not vm.user_has_perms(user=user):
+                raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
         status_bool = vm_normal_status(vm=vm, flag=flag)
         if status_bool is False:
@@ -244,7 +246,7 @@ class VmAPI:
         """
         return VmInstance(vm=vm).status()
 
-    def get_vm_status(self, vm_uuid: str, user):
+    def get_vm_status(self, vm_uuid: str, user, query_user):
         """
         获取虚拟机的运行状态
 
@@ -255,7 +257,7 @@ class VmAPI:
 
         :raise VmError()
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'), query_user=query_user)
         return VmInstance(vm=vm).status()
 
     def modify_vm_remark(self, vm_uuid: str, remark: str, user, request):
