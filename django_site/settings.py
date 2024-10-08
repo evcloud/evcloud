@@ -210,6 +210,32 @@ LOGIN_URL = '/users/login/'
 LOGOUT_URL = '/users/logout/'
 LOGIN_REDIRECT_URL = '/'    # 默认重定向url
 
+
+PASSPORT_JWT = {
+    'ALGORITHM': 'RS512',
+    'SIGNING_KEY': '',
+    # 'VERIFYING_KEY': None,
+    # 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    # 'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'AUDIENCE': None,
+    'ISSUER': None,
+
+    'AUTH_HEADER_TYPES': ('AAI-JWT',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'username',
+    'USER_ID_CLAIM': 'email',              # 'cstnetId','email'
+    'TOKEN_TYPE_CLAIM': 'type',
+    'EXPIRATION_CLAIM': 'exp',
+
+    # 'JTI_CLAIM': 'jti'
+
+    # passort jwt field
+    'ORG_NAME_FIELD': 'orgName',
+    'TRUE_NAME_FIELD': 'name',
+    'VERIFYING_KEY': ''
+}
+
+
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
@@ -219,9 +245,9 @@ REST_FRAMEWORK = {
         # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'users.auth.authentication.AuthKeyAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'users.aai.authentication.AAIJWTAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),

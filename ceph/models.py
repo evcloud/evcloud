@@ -160,6 +160,7 @@ class GlobalConfig(models.Model):
             {'name': 'resourceAdmin', 'content': 'gosc,cstcloud', 'remark': '资源管理员，格式：admin1,admin2...'},
             {'name': 'vpnUserConfig', 'content': '', 'remark': 'vpn配置文件'},
             {'name': 'vpnUserConfigDownloadName', 'content': 'client.ovpn', 'remark': 'vpn配置文件下载名称。'},
+            {'name': 'passportJwt', 'content': '', 'remark': '一体云JWT配置。'},
         ]
 
         for param in parameter_list:
@@ -170,7 +171,7 @@ class GlobalConfig(models.Model):
     @classmethod
     def get_instance(cls):
         inst_dict = {}
-        inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess'])
+        inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'passportJwt'])
         if not inst:
             inst_dict['siteName'] = 'EVCloud'
             inst_dict['poweredBy'] = 'https://gitee.com/cstcloud-cnic/evcloud'
@@ -184,6 +185,8 @@ class GlobalConfig(models.Model):
                 inst_dict['poweredBy'] = obj.content
             elif obj.name == 'novncAccess':
                 inst_dict['novncAccess'] = obj.content
+            elif obj.name == 'passportJwt':
+                inst_dict['passportJwt'] = obj.content
 
         return inst_dict
 
@@ -207,6 +210,10 @@ class GlobalConfig(models.Model):
 
         obj = GlobalConfig.get_instance()
         cache.set('global_config_key', obj, 120)
+
+        passport_jwt = getattr(settings, 'PASSPORT_JWT', None)
+        if passport_jwt and 'passportJwt' in obj and passport_jwt['VERIFYING_KEY'] != obj['passportJwt']:
+            settings.PASSPORT_JWT['VERIFYING_KEY'] = obj['passportJwt']
 
         return cache.get('global_config_key')
 
