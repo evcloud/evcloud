@@ -157,7 +157,7 @@ class VdiskManager:
         except Exception as e:
             raise VdiskError(msg=str(e))
 
-    def create_vdisk(self, size: int, user, center, group=None, quota=None, remarks=''):
+    def create_vdisk(self, size: int, user, center, group=None, quota=None, remarks='', owner=None):
         """
         创建一个虚拟云硬盘
 
@@ -170,6 +170,7 @@ class VdiskManager:
         :param size: 硬盘的容量大小
         :param user: 创建硬盘的用户
         :param remarks: 备注信息
+        :param owner: 拥有者
         :return:
             Vdisk()     # success
 
@@ -198,6 +199,10 @@ class VdiskManager:
         except Exception as e:
             quota.free(size=size)  # 释放申请的存储资源
             raise VdiskError(msg=str(e))
+
+        if owner:
+            vd.user = owner
+            vd.save(update_fields=['user'])
 
         return vd
 

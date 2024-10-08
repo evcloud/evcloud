@@ -87,6 +87,7 @@ class VmCreateSerializer(serializers.Serializer):
                                          default=None, help_text='配置样式id')
     sys_disk_size = serializers.IntegerField(label='系统盘大小', min_value=50, max_value=5 * 1024, required=False,
                                              allow_null=True, default=None, help_text='单位GB')
+    username = serializers.CharField(label='用户名称', allow_blank=True, max_length=150, default='', required=False)
 
     def validate(self, data):
         center_id = data.get('center_id')
@@ -368,6 +369,8 @@ class VdiskCreateSerializer(serializers.Serializer):
     center_id = serializers.IntegerField(label='数据中心id', required=False, allow_null=True,
                                          min_value=1, help_text='数据中心id', default=None)
     remarks = serializers.CharField(label='备注', required=False, allow_blank=True, default='')
+
+    username = serializers.CharField(label='用户名称', required=False, allow_blank=True, max_length=150, default='')
 
     def validate(self, data):
         center_id = data.get('center_id')

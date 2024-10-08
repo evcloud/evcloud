@@ -70,6 +70,51 @@ def get_admin_specified_user_or_own(request, flag=False, msg=''):
     return user
 
 
+def get_admin_specified_user_or_own_body(request, flag=False, msg='', create_user=False, body_arg:dict={}):
+    """
+    获取指定用户或自己
+    flag: 限制不是资源管理员或超级管理员直接返回错误信息
+    """
+    user = request.user
+    owner = None  # 指定用户
+
+    if not check_superuser_and_resource_permissions(request):
+        if flag:
+            exc = exceptions.BadRequestError(msg=msg)
+            raise exc
+        user_name = body_arg.get('username', None)
+        if user_name:
+            exc = exceptions.BadRequestError(msg=f'您没有权限为该用户({user_name})设置或查询任何信息')
+            raise exc
+        owner = request.user
+    else:
+
+        user_name = body_arg.get('username', None)
+        if user_name:
+            owner = UserProfile.objects.filter(username=user_name).first()
+
+        else:
+            owner = request.user
+
+    if not owner:
+        # 云主机创建时，如果指定的用户不存在需要创建
+        user_name = body_arg.get('username', None)
+        if create_user and user_name:
+
+            owner = UserProfile(
+                username=user_name,
+                is_active=True,
+            )
+            owner.save()
+
+            return owner, user
+
+        raise exceptions.BadRequestError(msg=f'未找到该用户信息')
+
+    return owner, user
+
+
+
 def serializer_error_msg(errors, default=''):
     """
     获取一个错误信息
@@ -598,13 +643,6 @@ class VmsViewSet(CustomGenericViewSet):
                 required=False,
                 description='内存计算单位（默认MB，可选GB）'
             ),
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
         ],
         responses={
             201: ''
@@ -631,11 +669,6 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
             return self.exception_response(exc)
 
-        try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限创建虚拟机')  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         serializer = self.get_serializer(data=request.data, context={'mem_unit': mem_unit})
         if not serializer.is_valid(raise_exception=False):
             code_text = serializer_error_msg(errors=serializer.errors, default='参数验证有误')
@@ -658,16 +691,23 @@ class VmsViewSet(CustomGenericViewSet):
                 validated_data['vcpu'] = flavor.vcpus
                 validated_data['mem'] = flavor.ram  # 单位为GB
 
+        try:
+            owner, user = get_admin_specified_user_or_own_body(request=request, flag=True, msg='当前用户没有权限创建虚拟机',
+                                                        create_user=True, body_arg=validated_data)  # 由中坤操作 flag为true
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         api = VmAPI()
         try:
-            vm = api.create_vm(user=user, **validated_data, ip_public=ip_public)
+
+            vm = api.create_vm(user=user, **validated_data, ip_public=ip_public, owner=owner)
         except VmError as e:
             data = e.data()
             data['data'] = serializer.data
             return Response(data, status=status.HTTP_200_OK)
 
         user_operation_record.add_log(request=request, operation_content=f'创建云主机, 云主机IP：{vm.mac_ip}',
-                                      remark=validated_data['remarks'])
+                                      remark=validated_data['remarks'], owner=owner)
 
         return Response(data={
             'code': 201,
@@ -3170,15 +3210,7 @@ class VDiskViewSet(CustomGenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='创建云硬盘',
-        manual_parameters=[
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
-        ],
+        request_body=no_body,
         responses={
             201: """"""
         }
@@ -3219,11 +3251,6 @@ class VDiskViewSet(CustomGenericViewSet):
             data['data'] = serializer.data
             return Response(data, status=exc.status_code)
 
-        try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限创建云硬盘')
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         data = serializer.validated_data
         size = data.get('size')
         center_id = data.get('center_id', None)
@@ -3231,13 +3258,19 @@ class VDiskViewSet(CustomGenericViewSet):
         quota_id = data.get('quota_id', None)
         remarks = data.get('remarks', '')
 
+        try:
+            owner, user = get_admin_specified_user_or_own_body(request=request, flag=True, msg='当前用户没有权限创建云硬盘',
+                                                               create_user=True, body_arg=data)
+        except exceptions.BadRequestError as e:
+            return self.exception_response(e)
+
         # 用户操作日志记录
-        user_operation_record.add_log(request=request, operation_content=f'创建云硬盘, 容量为 {size} GB', remark='')
+        user_operation_record.add_log(request=request, operation_content=f'创建云硬盘, 容量为 {size} GB', remark='', owner=owner)
 
         manager = VdiskManager()
         try:
             disk = manager.create_vdisk(size=size, user=user, center=center_id,
-                                        group=group_id, quota=quota_id, remarks=remarks)
+                                        group=group_id, quota=quota_id, remarks=remarks, owner=owner)  # user 给 owner 创建
         except VdiskError as e:
             r_data = e.data()
             r_data['data'] = data

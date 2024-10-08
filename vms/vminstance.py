@@ -44,7 +44,7 @@ class VmInstance:
 
     @classmethod
     def create_instance(cls, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
-                        host_id=None, ipv4=None, remarks=None, ip_public=None, sys_disk_size: int = None):
+                        host_id=None, ipv4=None, remarks=None, ip_public=None, sys_disk_size: int = None, owner=None):
         """
         创建虚拟机
 
@@ -74,7 +74,7 @@ class VmInstance:
         """
         vm = VmBuilder().create_vm(image_id=image_id, vcpu=vcpu, mem=mem, vlan_id=vlan_id, user=user,
                                    center_id=center_id, group_id=group_id, host_id=host_id, ipv4=ipv4,
-                                   remarks=remarks, ip_public=ip_public, sys_disk_size=sys_disk_size)
+                                   remarks=remarks, ip_public=ip_public, sys_disk_size=sys_disk_size, owner=owner)
         return cls(vm=vm)
 
     @classmethod

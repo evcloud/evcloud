@@ -205,7 +205,7 @@ class VmBuilder:
         raise errors.VmError(msg='必须指定一个有效的center id或者group id或者host id')
 
     def create_vm(self, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
-                  host_id=None, ipv4=None, remarks=None, ip_public=None, sys_disk_size: int = None):
+                  host_id=None, ipv4=None, remarks=None, ip_public=None, sys_disk_size: int = None, owner=None):
         """
         创建一个虚拟机
 
@@ -227,6 +227,7 @@ class VmBuilder:
         :param remarks: 备注
         :param ip_public: 指定分配公网或私网ip；默认None（不指定），True(公网)，False(私网)
         :param sys_disk_size: 系统盘大小GB, 系统盘最大5Tb
+        :param owner: 拥有者
         :return:
             Vm()
             raise VmError
@@ -339,6 +340,11 @@ class VmBuilder:
             vm.update_sys_disk_size()  # 系统盘有变化，更新系统盘大小
         except Exception as e:
             pass
+
+        # owner 有值
+        if owner:
+            vm.user = owner
+            vm.save(update_fields=['user'])
 
         return vm
 

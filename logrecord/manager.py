@@ -35,7 +35,7 @@ def extract_string(text):
 
 class LogManager:
 
-    def add_log(self, request, operation_content, remark=''):
+    def add_log(self, request, operation_content, remark='', owner=None):
         """
             添加用户操作
         """
@@ -47,6 +47,9 @@ class LogManager:
         if vo_or_user:
             vo, real_user = extract_string(text=vo_or_user)
             remark = f'项目组：{vo}, {remark}' if vo else remark
+
+        if not real_user and owner:
+            real_user = owner.username
 
         try:
             clinet_ip, _ = IPRestrictor().get_remote_ip(request)
