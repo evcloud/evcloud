@@ -3288,7 +3288,6 @@ class VDiskViewSet(CustomGenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='创建云硬盘',
-        request_body=no_body,
         responses={
             201: """"""
         }
