@@ -2033,13 +2033,6 @@ class VmsViewSet(CustomGenericViewSet):
         request_body=no_body,
         manual_parameters=[
             openapi.Parameter(
-                name='owner',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='虚拟机拥有者用户名称'
-            ),
-            openapi.Parameter(
                 name='username',
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
@@ -2086,7 +2079,6 @@ class VmsViewSet(CustomGenericViewSet):
         vm_uuid = kwargs.get(self.lookup_field, '')
 
         username = request.query_params.get('username', None)
-        owner = request.query_params.get('owner', None)
 
         if not check_superuser_and_resource_permissions(request):
             exc = exceptions.BadRequestError(msg='当前用户没有权限')
@@ -2097,17 +2089,13 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg=f'未找到当前用户{username}信息')
             return self.exception_response(exc)
 
-        owner_user = UserProfile.objects.filter(username=owner).first()
-        if not owner_user:
-            owner_user = request.user
-        
         api = VmAPI()
         try:
-            vm = api.vm_hand_over_user(vm_uuid=vm_uuid, user=owner_user, owner=user)
+            vm = api.vm_hand_over_user(vm_uuid=vm_uuid, user=None, owner=user, query_user=False)
         except VmError as e:
             return Response(data=e.data(), status=e.status_code)
 
-        user_operation_record.add_log(request=request, operation_content=f'用户 {owner_user.username} 的云主机IP：{vm.mac_ip} 移交到 {username} 用户名下',
+        user_operation_record.add_log(request=request, operation_content=f'IP：{vm.mac_ip} 云主机移交到 {username} 用户名下',
                                       remark=f'经办人员: {request.user.username}', owner=user)
 
         return Response(data={
