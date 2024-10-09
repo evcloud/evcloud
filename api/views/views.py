@@ -2028,6 +2028,94 @@ class VmsViewSet(CustomGenericViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @swagger_auto_schema(
+        operation_summary='虚拟机移交到用户名下',
+        request_body=no_body,
+        manual_parameters=[
+            openapi.Parameter(
+                name='owner',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=False,
+                description='虚拟机拥有者用户名称'
+            ),
+            openapi.Parameter(
+                name='username',
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                required=True,
+                description='用户名称'
+            ),
+        ],
+        responses={
+            200: ''
+        }
+    )
+    @action(methods=['post'], url_path='handover', detail=True, url_name='vm-hand-over')
+    def vm_hand_over(self, request, *args, **kwargs):
+        """
+        虚拟机移交
+        {
+          "code": 201,
+          "code_text": "移交成功",
+          "vm": {
+            "uuid": "0860b01e9c9c434d96cdc0cac1747cd1",
+            "name": "0860b01e9c9c434d96cdc0cac1747cd1",
+            "vcpu": 2,
+            "mem": 2,
+            "image": "centos7",
+            "disk": "0860b01e9c9c434d96cdc0cac1747cd1",
+            "sys_disk_size": 5120,
+            "host": "223.193.36.121",
+            "mac_ip": "192.168.1.4",
+            "ip": {
+              "ipv4": "192.168.1.4",
+              "public_ipv4": false,
+              "ipv6": null
+            },
+            "user": {
+              "id": 2,
+              "username": "test"
+            },
+            "create_time": "2024-09-27T02:16:52.451171Z",
+            "mem_unit": "GB"
+          }
+        }
+
+        """
+        vm_uuid = kwargs.get(self.lookup_field, '')
+
+        username = request.query_params.get('username', None)
+        owner = request.query_params.get('owner', None)
+
+        if not check_superuser_and_resource_permissions(request):
+            exc = exceptions.BadRequestError(msg='当前用户没有权限')
+            return self.exception_response(exc)
+
+        user = UserProfile.objects.filter(username=username).first()
+        if not user:
+            exc = exceptions.BadRequestError(msg=f'未找到当前用户{username}信息')
+            return self.exception_response(exc)
+
+        owner_user = UserProfile.objects.filter(username=owner).first()
+        if not owner_user:
+            owner_user = request.user
+        
+        api = VmAPI()
+        try:
+            vm = api.vm_hand_over_user(vm_uuid=vm_uuid, user=owner_user, owner=user)
+        except VmError as e:
+            return Response(data=e.data(), status=e.status_code)
+
+        user_operation_record.add_log(request=request, operation_content=f'用户 {owner_user.username} 的云主机IP：{vm.mac_ip} 移交到 {username} 用户名下',
+                                      remark=f'经办人员: {request.user.username}', owner=user)
+
+        return Response(data={
+            'code': 201,
+            'code_text': '移交成功',
+            'vm': serializers.VmSerializer(vm, context={'mem_unit': 'GB'}).data
+        }, status=status.HTTP_201_CREATED)
+
     def get_serializer_class(self):
         """
         Return the class to use for the serializer.
@@ -2048,6 +2136,8 @@ class VmsViewSet(CustomGenericViewSet):
             return serializers.VmShelveListSerializer
         elif self.action == 'vm_attach_ip_list':
             return serializers.VmAttachListSerializer
+        elif self.action == 'vm_hand_over':
+            return serializers.VmCreateSerializer
         return Serializer
 
 

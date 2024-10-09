@@ -722,3 +722,9 @@ class VmAPI:
 
     def vm_operation_log(self, request, operation_content, remark=''):
         user_operation_record.add_log(request=request, operation_content=operation_content, remark=remark)
+
+    def vm_hand_over_user(self, vm_uuid: str, user, owner):
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user',))
+        vm.user = owner
+        vm.save(update_fields=['user'])
+        return vm
