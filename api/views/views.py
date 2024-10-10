@@ -697,6 +697,7 @@ class VmsViewSet(CustomGenericViewSet):
         except exceptions.BadRequestError as e:
             return self.exception_response(e)
 
+        validated_data.pop('username')  # create_vm 没有username 参数
         api = VmAPI()
         try:
 
