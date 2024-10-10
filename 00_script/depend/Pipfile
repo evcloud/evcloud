@@ -22,6 +22,7 @@ django-tidb = "==4.2.3"
 func-timeout = "==4.3.5"
 uwsgitop = "==0.12"
 concurrent-log-handler = "==0.9.19"
+cryptography = "==37.0.4"
 
 [requires]
 python_version = "3.9"
