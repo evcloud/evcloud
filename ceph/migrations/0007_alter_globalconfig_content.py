@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='globalconfig',
             name='content',
-            field=models.TextField(blank=True, default='', null=True, verbose_name='内容'),
+            field=models.TextField(blank=True, default='', null=True, verbose_name='值'),
         ),
     ]

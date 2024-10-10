@@ -1,3 +1,48 @@
+### v4.9.0
+注意：删除镜像虚拟机专用字段，需要迁移操作，及时做好备份操作。
+1. 所有节点停止服务
+   ```
+   systemctl stop evcloud.service
+   systemctl stop evcloud_vnc.service
+   ``` 
+2. 备份数据库
+   ```shell
+   mysqldump -u user -p  数据库名称 > 文件
+   tidb：
+   mysqldump -u user -h ip -P 4000 -p  数据库名称 > 文件
+   ```
+
+3. 更新代码前查看是否有手动修改的文件，妥善处理
+   ```
+   git status # 查看 是否有手动修改的内容，并记录 
+   
+   git checkout file  # 如果 git status 有手动修改的代码，此命令是删除手动修改的代码，代码更新后，手动恢复修改的文件内容
+
+   ```
+4. 更新代码
+   ```
+   git pull origin master
+   git fetch --tag
+   python manage.py migrate --plan # 查看是否有数据表修改  如果有多个节点使用同一个数据库，只在其中一个节点执行数据迁移操作就行
+   python manage.py migrate  # 数据迁移
+   pip install -r 00_script/depend/requirements.txt
+   python manage.py collectstatic
+   python manage.py check_global_config  # 检测和添加默认站点参数，新增 aai 的 passportJwt 配置参数  resourceAdministrator 更名为 resourceAdmin
+   
+   其他节点执行：
+    rsync -avP --delete ip:/home/uwsgi/evcloud/  /home/uwsgi/evcloud/
+    并到每个节点服务中执行pip install -r /home/uwsgi/evcloud/00_script/depend/requirements.txt 下载依赖包
+   ```
+
+5. 启动一个服务查看站点参数是否修改正确，并添加 passportJwt 的值
+
+
+6. 启动服务
+   ``````
+   systemctl start evcloud.service
+   systemctl start evcloud_vnc.service
+   
+
 ### v4.8.0
 注意：增加公共镜像任务表，需要迁移操作，及时做好备份操作。
 1. 所有节点停止服务

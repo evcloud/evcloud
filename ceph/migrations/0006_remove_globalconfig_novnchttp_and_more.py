@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='globalconfig',
             name='content',
-            field=models.CharField(default='', max_length=255, verbose_name='内容'),
+            field=models.CharField(default='', max_length=255, verbose_name='值'),
         ),
         migrations.AddField(
             model_name='globalconfig',
@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='globalconfig',
             name='name',
-            field=models.CharField(verbose_name='名称', max_length=255),
+            field=models.CharField(verbose_name='变量', max_length=255),
         ),
         migrations.AddField(
             model_name='globalconfig',

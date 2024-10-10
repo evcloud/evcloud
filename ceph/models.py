@@ -127,8 +127,8 @@ class GlobalConfig(models.Model):
     """全局配置表-站点参数"""
 
     id = models.AutoField(primary_key=True, verbose_name=_('ID'))
-    name = models.CharField(verbose_name=_('名称'), max_length=255)
-    content = models.TextField(verbose_name=_('内容'), default='', null=True, blank=True)
+    name = models.CharField(verbose_name=_('变量'), max_length=255)
+    content = models.TextField(verbose_name=_('值'), default='', null=True, blank=True)
     remark = models.CharField(verbose_name=_('备注信息'), max_length=255, default='', blank=True)
     create_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
     modif_time = models.DateTimeField(verbose_name=_('修改时间'), auto_now=True)
