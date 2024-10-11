@@ -244,7 +244,16 @@ class VmAPI:
             False   # failed
         :raise VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
+        if op in ['delete', 'delete_force']:
+            vm = self._get_user_perms_vm(
+                vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'),
+                allow_superuser=True, allow_resource=True, allow_owner=False
+            )
+        else:
+            vm = self._get_user_perms_vm(
+                vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'),
+                allow_superuser=True, allow_resource=True, allow_owner=True
+            )
 
         ops_dict = {
             'start': '启动云主机',
