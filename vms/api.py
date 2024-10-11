@@ -201,7 +201,10 @@ class VmAPI:
         if vcpu == 0 and mem == 0:
             return True
 
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
+        vm = self._get_user_perms_vm(
+            vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'),
+            allow_superuser=True, allow_resource=True, allow_owner=False
+        )
 
         self.vm_operation_log(request=request, operation_content=f'修改云主机vcpu和内存大小，云主机IP：{vm.mac_ip}, 内存修改为{mem}, vcpu修改为{vcpu}')
         return VmInstance(vm=vm).edit_vcpu_mem(vcpu=vcpu, mem=mem, force=force)

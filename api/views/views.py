@@ -819,14 +819,7 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='内存计算单位（默认MB，可选GB）'
-            ),
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
+            )
         ],
         responses={
             200: """
@@ -894,14 +887,9 @@ class VmsViewSet(CustomGenericViewSet):
                 vcpu = flavor.vcpus
                 mem = flavor.ram
 
-        try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限修改cpu和内存信息')
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         api = VmAPI()
         try:
-            api.edit_vm_vcpu_mem(user=user, vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, request=request)
+            api.edit_vm_vcpu_mem(user=request.user, vm_uuid=vm_uuid, mem=mem, vcpu=vcpu, request=request)
         except VmError as e:
             return Response(data=e.data(), status=e.status_code)
 
