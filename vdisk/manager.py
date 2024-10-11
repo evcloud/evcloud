@@ -188,7 +188,9 @@ class VdiskManager:
         else:
             raise errors.VdiskInvalidParams(msg='至少需要一个有效的group或quota参数')
 
-        vd = Vdisk(size=size, quota=quota, user=user, remarks=remarks)
+        # owner有效，指定了资源拥有者, 否则拥有者为用户个人
+        disk_owner = owner if owner else user
+        vd = Vdisk(size=size, quota=quota, user=disk_owner, remarks=remarks)
         try:
             vd.save()  # 创建元数据
             try:
@@ -199,10 +201,6 @@ class VdiskManager:
         except Exception as e:
             quota.free(size=size)  # 释放申请的存储资源
             raise VdiskError(msg=str(e))
-
-        if owner:
-            vd.user = owner
-            vd.save(update_fields=['user'])
 
         return vd
 

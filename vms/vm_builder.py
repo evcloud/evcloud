@@ -319,9 +319,12 @@ class VmBuilder:
             else:
                 sys_disk_size = image_size
 
+            # owner有效，指定了资源拥有者, 否则拥有者为用户个人
+            vm_owner = owner if owner else user
+
             # 创建虚拟机
             vm = self._create_vm2(vm_uuid=vm_uuid, diskname=diskname, vcpu=vcpu, mem=mem, image=image,
-                                  host=host, macip=macip, user=user, remarks=remarks, sys_disk_size=sys_disk_size)
+                                  host=host, macip=macip, user=vm_owner, remarks=remarks, sys_disk_size=sys_disk_size)
         except Exception as e:
             if macip:
                 self._macip_manager.free_used_ip(ip_id=macip.id)  # 释放已申请的mac ip资源
@@ -340,11 +343,6 @@ class VmBuilder:
             vm.update_sys_disk_size()  # 系统盘有变化，更新系统盘大小
         except Exception as e:
             pass
-
-        # owner 有值
-        if owner:
-            vm.user = owner
-            vm.save(update_fields=['user'])
 
         return vm
 
