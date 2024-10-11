@@ -785,14 +785,7 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_BOOLEAN,
                 required=False,
                 description='true:强制删除'
-            ),
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
+            )
         ],
         responses={
             204: 'SUCCESS NO CONTENT'
@@ -816,14 +809,9 @@ class VmsViewSet(CustomGenericViewSet):
         force = request.query_params.get('force', '').lower()
         force = True if force == 'true' else False
 
-        try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限删除虚拟机')  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         api = VmAPI()
         try:
-            api.delete_vm(user=user, vm_uuid=vm_uuid, force=force, request=request)
+            api.delete_vm(user=request.user, vm_uuid=vm_uuid, force=force, request=request)
         except VmError as e:
             return Response(data=e.data(), status=e.code)
 

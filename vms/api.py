@@ -8,6 +8,7 @@ from compute.managers import HostManager
 from utils.errors import VmError, VmNotExistError
 from utils import errors
 from utils.vm_normal_status import vm_normal_status
+from ceph.managers import check_resource_permissions
 from .manager import VmManager, AttachmentsIPManager
 from .vminstance import VmInstance
 from .vm_builder import VmBuilder
@@ -24,7 +25,35 @@ class VmAPI:
         self._vdisk_manager = VdiskManager()
         self._pci_manager = PCIDeviceManager()
 
-    def _get_user_perms_vm(self, vm_uuid: str, user, related_fields: tuple = (), flag=False, query_user=True):
+    @staticmethod
+    def check_user_permissions_of_vm(vm, user, allow_superuser: bool, allow_resource: bool, allow_owner: bool = True):
+        """
+        :param vm: 云主机对象
+        :param user: 用户对象
+        :param allow_superuser: True(允许超级管理员)
+        :param allow_resource: True(允许资源管理员)
+        :param allow_owner: True(允许资源所有者)
+        :ratuen:
+            True    # 满足权限
+            raise VmAccessDeniedError # 没有权限
+
+        :raises: VmAccessDeniedError
+        """
+        if allow_superuser and user.is_superuser:
+            return True
+
+        if allow_owner and vm.user_id == user.id:
+            return True
+
+        if allow_resource and check_resource_permissions(user=user):
+            return True
+
+        raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
+
+    def _get_user_perms_vm(
+            self, vm_uuid: str, user, related_fields: tuple = (), flag=False, query_user=True,
+            allow_superuser=True, allow_resource=False, allow_owner=True
+    ):
         """
         获取用户有访问权的的虚拟机
 
@@ -33,6 +62,9 @@ class VmAPI:
         :param related_fields: 外键字段；外键字段直接一起获取，而不是惰性的用时再获取
         :param flag: 用于虚拟机在搁置的情况下，对一些情况允许
         :param query_user: 查询虚拟机用户 目前仅限于虚拟机状态的查询可用不要查询虚拟机的用户信息
+        :param allow_superuser: True(允许超级管理员)
+        :param allow_resource: True(允许资源管理员)
+        :param allow_owner: True(允许资源所有者)
         :return:
             Vm()   # success
 
@@ -43,8 +75,10 @@ class VmAPI:
             raise VmNotExistError(msg='虚拟机不存在')
 
         if query_user:
-            if not vm.user_has_perms(user=user):
-                raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
+            self.check_user_permissions_of_vm(
+                vm=vm, user=user,
+                allow_superuser=allow_superuser, allow_resource=allow_resource, allow_owner=allow_owner
+            )
 
         status_bool = vm_normal_status(vm=vm, flag=flag)
         if status_bool is False:
@@ -124,7 +158,10 @@ class VmAPI:
 
         :raise VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'))
+        vm = self._get_user_perms_vm(
+            vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'),
+            allow_superuser=True, allow_resource=True, allow_owner=False
+        )
         self.vm_operation_log(request=request, operation_content=f'删除云主机, 云主机IP：{vm.mac_ip}')
         return VmInstance(vm=vm).delete(force=force)
 
