@@ -295,19 +295,18 @@ class VmAPI:
         """
         return VmInstance(vm=vm).status()
 
-    def get_vm_status(self, vm_uuid: str, user, query_user):
+    def get_vm_status(self, vm_uuid: str, user):
         """
         获取虚拟机的运行状态
 
         :param vm_uuid: 虚拟机uuid
         :param user: 用户
-        :param query_user: 是否要检查 vm 用户权限
         :return:
             (state_code:int, state_str:str)     # success
 
         :raise VmError()
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'), query_user=query_user)
+        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'), query_user=False)
         return VmInstance(vm=vm).status()
 
     def modify_vm_remark(self, vm_uuid: str, remark: str, user, request):

@@ -989,7 +989,7 @@ class VmsViewSet(CustomGenericViewSet):
         # user_operation_record.add_log(request=request, type=LogRecord.VMS, action_flag=LogRecord.SELECT,
         #                               operation_content='获取云主机当前运行状态', remark='')
         try:
-            code, msg = api.get_vm_status(user=request.user, vm_uuid=vm_uuid, query_user=False)
+            code, msg = api.get_vm_status(user=request.user, vm_uuid=vm_uuid)
         except VmError as e:
             e.msg = f'获取虚拟机状态失败，{str(e)}'
             return self.exception_response(e)
@@ -1000,15 +1000,6 @@ class VmsViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='创建虚拟机vnc',
         request_body=no_body,
-        manual_parameters=[
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
-        ],
         responses={
             200: """
             {
@@ -1037,12 +1028,6 @@ class VmsViewSet(CustomGenericViewSet):
               }
             }
         """
-
-        try:
-            user = get_admin_specified_user_or_own(request=request)  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         vm_uuid = kwargs.get(self.lookup_field, '')
         try:
             vm = VmManager().get_vm_by_uuid(vm_uuid=vm_uuid)
@@ -1052,7 +1037,12 @@ class VmsViewSet(CustomGenericViewSet):
         if not vm:
             return Response(data=exceptions.VmNotExistError(msg='虚拟机不存在').data(),
                             status=status.HTTP_404_NOT_FOUND)
-        if not vm.user_has_perms(user=user):
+
+        try:
+            VmAPI.check_user_permissions_of_vm(
+                vm=vm, user=request.user, allow_superuser=True, allow_resource=True, allow_owner=True
+            )
+        except exceptions.VmAccessDeniedError as exc:
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
                             status=status.HTTP_403_FORBIDDEN)
 
