@@ -1958,26 +1958,24 @@ class VmsViewSet(CustomGenericViewSet):
 
         """
         vm_uuid = kwargs.get(self.lookup_field, '')
-
         username = request.query_params.get('username', None)
+        if not username:
+            exc = exceptions.BadRequestError(msg=_('必须指定资源移交的目标用户'))
+            return self.exception_response(exc)
 
         if not check_superuser_and_resource_permissions(request):
             exc = exceptions.BadRequestError(msg='当前用户没有权限')
             return self.exception_response(exc)
 
-        user = UserProfile.objects.filter(username=username).first()
-        if not user:
-            exc = exceptions.BadRequestError(msg=f'未找到当前用户{username}信息')
-            return self.exception_response(exc)
-
+        new_owner = UserManager.get_or_create_user(username=username)
         api = VmAPI()
         try:
-            vm = api.vm_hand_over_user(vm_uuid=vm_uuid, user=None, owner=user, query_user=False)
+            vm = api.vm_hand_over_user(vm_uuid=vm_uuid, owner=new_owner)
         except VmError as e:
             return Response(data=e.data(), status=e.status_code)
 
         user_operation_record.add_log(request=request, operation_content=f'IP：{vm.mac_ip} 云主机移交到 {username} 用户名下',
-                                      remark=f'经办人员: {request.user.username}', owner=user)
+                                      remark=f'经办人员: {request.user.username}', owner=new_owner)
 
         return Response(data={
             'code': 201,
