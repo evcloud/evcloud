@@ -42,7 +42,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='globalconfig',
             name='name',
-            field=models.CharField(verbose_name='变量', max_length=255),
+            field=models.CharField(
+                choices=[
+                    ('siteName', '站点名称[siteName]'), ('poweredBy', '技术支持[poweredBy]'),
+                    ('novncAccess', 'vnc http协议'), ('resourceAdmin', '资源管理员'),
+                    ('vpnUserConfig', 'vpn配置文件'), ('vpnUserConfigDownloadName', 'vpn配置文件下载名称'),
+                    ('passportJwt', 'AAI JWT认证公钥')
+                ], verbose_name='变量', max_length=255),
         ),
         migrations.AddField(
             model_name='globalconfig',

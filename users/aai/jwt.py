@@ -14,6 +14,7 @@ from rest_framework.settings import settings
 from rest_framework import HTTP_HEADER_ENCODING
 
 from utils.errors import Error
+from ceph.models import GlobalConfig
 
 
 class DictObjectWrapper:
@@ -94,10 +95,10 @@ class TokenBackend:
         algorithms that require it
         """
         if algorithm not in ALLOWED_ALGORITHMS:
-            raise JWTInvalidError(f"Unrecognized algorithm type '{algorithm}'")
+            raise JWTInvalidError(msg=f"Unrecognized algorithm type '{algorithm}'")
 
         if algorithm in algorithms.requires_cryptography and not algorithms.has_crypto:
-            raise JWTInvalidError(f"You must have cryptography installed to use {algorithm}.")
+            raise JWTInvalidError(msg=f"You must have cryptography installed to use {algorithm}.")
 
     def encode(self, payload, headers=None):
         """
@@ -133,13 +134,23 @@ class TokenBackend:
                 }
             )
         except InvalidAlgorithmError as ex:
-            raise JWTInvalidError('Invalid algorithm specified') from ex
+            raise JWTInvalidError(msg='Invalid algorithm specified') from ex
         except InvalidTokenError:
-            raise JWTInvalidError('Token is invalid or expired')
+            raise JWTInvalidError(msg='Token is invalid or expired')
 
 
-token_backend = TokenBackend(JWT_SETTINGS.ALGORITHM, JWT_SETTINGS.SIGNING_KEY,
-                             JWT_SETTINGS.VERIFYING_KEY, JWT_SETTINGS.AUDIENCE, JWT_SETTINGS.ISSUER)
+def build_token_backend() -> TokenBackend:
+    global_configs = GlobalConfig.get_global_config()
+    verifying_key = global_configs.get(GlobalConfig.ConfigName.AAI_JWT_VERIFYING_KEY.value)
+    if not verifying_key and not verifying_key.strip(' '):
+        raise JWTInvalidError(
+            msg='The authentication public key of AAI JWT is not '
+                'configured in the global configuration of the admin site')
+
+    return TokenBackend(
+        algorithm=JWT_SETTINGS.ALGORITHM, signing_key=JWT_SETTINGS.SIGNING_KEY,
+        verifying_key=verifying_key,
+        audience=JWT_SETTINGS.AUDIENCE, issuer=JWT_SETTINGS.ISSUER)
 
 
 class Token:
@@ -150,21 +161,22 @@ class Token:
     lifetime = timedelta(hours=1, minutes=5)
     exp_claim = JWT_SETTINGS.EXPIRATION_CLAIM or 'exp'
 
-    def __init__(self, token, verify=True):
+    def __init__(self, token, verify=True, backend: TokenBackend = None):
         """
         !!!! IMPORTANT !!!! MUST raise a TokenError with a user-facing error
         message if the given token is invalid, expired, or otherwise not safe
         to use.
         """
+        self.token_backend = backend if backend else build_token_backend()
         if self.token_type is None or self.lifetime is None:
-            raise JWTInvalidError('Cannot create token with no type or lifetime')
+            raise JWTInvalidError(msg='Cannot create token with no type or lifetime')
 
         self.token = token
         self.current_time = make_utc(datetime.utcnow())
 
         # Set up token
         if token is not None:
-            self.decode_token = token_backend.decode(token, verify_signature=verify)
+            self.decode_token = self.token_backend.decode(token, verify_signature=verify)
             self.headers = self.decode_token['header']
             self.payload = self.decode_token['payload']
 
@@ -203,7 +215,7 @@ class Token:
         """
         Signs and returns a token as a base64 encoded string.
         """
-        return token_backend.encode(self.payload)
+        return self.token_backend.encode(payload=self.payload, headers=self.headers)
 
     def verify(self):
         """
@@ -226,10 +238,10 @@ class Token:
         try:
             token_type = self.headers[JWT_SETTINGS.TOKEN_TYPE_CLAIM]
         except KeyError:
-            raise JWTInvalidError('Token has no type')
+            raise JWTInvalidError(msg='Token has no type')
 
         if self.token_type != token_type:
-            raise JWTInvalidError('Token has wrong type')
+            raise JWTInvalidError(msg='Token has wrong type')
 
     def set_jti(self):
         """
@@ -267,12 +279,12 @@ class Token:
         try:
             claim_value = self.payload[claim]
         except KeyError:
-            raise JWTInvalidError(f"Token has no '{claim}' claim")
+            raise JWTInvalidError(msg=f"Token has no '{claim}' claim")
 
         try:
             claim_time = datetime_from_epoch(claim_value)
         except ValueError as e:
-            raise JWTInvalidError(f"Token '{claim}' claim not valid, {str(e)}")
+            raise JWTInvalidError(msg=f"Token '{claim}' claim not valid, {str(e)}")
 
         if claim_time <= current_time:
-            raise JWTInvalidError(f"Token '{claim}' claim has expired")
+            raise JWTInvalidError(msg=f"Token '{claim}' claim has expired")

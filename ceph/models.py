@@ -125,9 +125,17 @@ class CephPool(models.Model):
 
 class GlobalConfig(models.Model):
     """全局配置表-站点参数"""
+    class ConfigName(models.TextChoices):
+        SITE_NAME = 'siteName', _('站点名称[siteName]')
+        POWERED_BY = 'poweredBy', _('技术支持[poweredBy]')
+        NOVNC_ACCESS = 'novncAccess', _('vnc http协议')
+        RESOURCE_ADMIN = 'resourceAdmin', _('资源管理员')
+        VPN_USER_CONFIG = 'vpnUserConfig', _('vpn配置文件')
+        VPN_USER_CONFIG_FILE_NAME = 'vpnUserConfigDownloadName', _('vpn配置文件下载名称')
+        AAI_JWT_VERIFYING_KEY = 'passportJwt', _('AAI JWT认证公钥')
 
     id = models.AutoField(primary_key=True, verbose_name=_('ID'))
-    name = models.CharField(verbose_name=_('变量'), max_length=255)
+    name = models.CharField(verbose_name=_('变量'), max_length=255, choices=ConfigName.choices)
     content = models.TextField(verbose_name=_('值'), default='', null=True, blank=True)
     remark = models.CharField(verbose_name=_('备注信息'), max_length=255, default='', blank=True)
     create_time = models.DateTimeField(verbose_name=_('创建时间'), auto_now_add=True)
@@ -154,13 +162,16 @@ class GlobalConfig(models.Model):
     def initial_site_parameter(self):
         """初始站点化参数"""
         parameter_list = [
-            {'name': 'siteName', 'content': 'EVCloud', 'remark': '站点名称'},
-            {'name': 'poweredBy', 'content': 'https://gitee.com/cstcloud-cnic/evcloud', 'remark': '技术支持'},
-            {'name': 'novncAccess', 'content': 'https', 'remark': 'vnc http协议'},
-            {'name': 'resourceAdmin', 'content': 'gosc,cstcloud', 'remark': '资源管理员，格式：admin1,admin2...'},
-            {'name': 'vpnUserConfig', 'content': '', 'remark': 'vpn配置文件'},
-            {'name': 'vpnUserConfigDownloadName', 'content': 'client.ovpn', 'remark': 'vpn配置文件下载名称。'},
-            {'name': 'passportJwt', 'content': '', 'remark': '一体云JWT配置。'},
+            {'name': GlobalConfig.ConfigName.SITE_NAME.value, 'content': 'EVCloud', 'remark': '站点名称'},
+            {'name': GlobalConfig.ConfigName.POWERED_BY.value,
+                'content': 'https://gitee.com/cstcloud-cnic/evcloud', 'remark': '技术支持'},
+            {'name': GlobalConfig.ConfigName.NOVNC_ACCESS.value, 'content': 'https', 'remark': 'vnc http协议'},
+            {'name': GlobalConfig.ConfigName.RESOURCE_ADMIN.value,
+                'content': 'gosc,cstcloud', 'remark': '资源管理员，格式：admin1,admin2...'},
+            {'name': GlobalConfig.ConfigName.VPN_USER_CONFIG.value, 'content': '', 'remark': 'vpn配置文件'},
+            {'name': GlobalConfig.ConfigName.VPN_USER_CONFIG_FILE_NAME.value,
+                'content': 'client.ovpn', 'remark': 'vpn配置文件下载名称。'},
+            {'name': GlobalConfig.ConfigName.AAI_JWT_VERIFYING_KEY.value, 'content': '', 'remark': '一体云JWT配置。'},
         ]
 
         for param in parameter_list:
@@ -171,22 +182,27 @@ class GlobalConfig(models.Model):
     @classmethod
     def get_instance(cls):
         inst_dict = {}
-        inst = cls.objects.filter(name__in=['siteName', 'poweredBy', 'novncAccess', 'passportJwt'])
+        inst = cls.objects.filter(name__in=[
+            GlobalConfig.ConfigName.SITE_NAME.value,
+            GlobalConfig.ConfigName.POWERED_BY.value,
+            GlobalConfig.ConfigName.NOVNC_ACCESS.value,
+            GlobalConfig.ConfigName.AAI_JWT_VERIFYING_KEY.value
+        ])
         if not inst:
-            inst_dict['siteName'] = 'EVCloud'
-            inst_dict['poweredBy'] = 'https://gitee.com/cstcloud-cnic/evcloud'
-            inst_dict['novncAccess'] = 'https'
+            inst_dict[GlobalConfig.ConfigName.SITE_NAME.value] = 'EVCloud'
+            inst_dict[GlobalConfig.ConfigName.POWERED_BY.value] = 'https://gitee.com/cstcloud-cnic/evcloud'
+            inst_dict[GlobalConfig.ConfigName.NOVNC_ACCESS.value] = 'https'
             return inst_dict
 
         for obj in inst:
-            if obj.name == 'siteName':
-                inst_dict['siteName'] = obj.content
-            elif obj.name == 'poweredBy':
-                inst_dict['poweredBy'] = obj.content
-            elif obj.name == 'novncAccess':
-                inst_dict['novncAccess'] = obj.content
-            elif obj.name == 'passportJwt':
-                inst_dict['passportJwt'] = obj.content
+            if obj.name == GlobalConfig.ConfigName.SITE_NAME.value:
+                inst_dict[GlobalConfig.ConfigName.SITE_NAME.value] = obj.content
+            elif obj.name == GlobalConfig.ConfigName.POWERED_BY.value:
+                inst_dict[GlobalConfig.ConfigName.POWERED_BY.value] = obj.content
+            elif obj.name == GlobalConfig.ConfigName.NOVNC_ACCESS.value:
+                inst_dict[GlobalConfig.ConfigName.NOVNC_ACCESS.value] = obj.content
+            elif obj.name == GlobalConfig.ConfigName.AAI_JWT_VERIFYING_KEY.value:
+                inst_dict[GlobalConfig.ConfigName.AAI_JWT_VERIFYING_KEY.value] = obj.content
 
         return inst_dict
 
@@ -210,10 +226,6 @@ class GlobalConfig(models.Model):
 
         obj = GlobalConfig.get_instance()
         cache.set('global_config_key', obj, 120)
-
-        passport_jwt = getattr(settings, 'PASSPORT_JWT', None)
-        if passport_jwt and 'passportJwt' in obj and passport_jwt['VERIFYING_KEY'] != obj['passportJwt']:
-            settings.PASSPORT_JWT['VERIFYING_KEY'] = obj['passportJwt']
 
         return cache.get('global_config_key')
 

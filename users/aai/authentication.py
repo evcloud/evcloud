@@ -84,8 +84,8 @@ class AAIJWTAuthentication(authentication.BaseAuthentication):
         try:
             return Token(raw_token)
         except JWTInvalidError as e:
-            extend_msg = f'token_type={Token.token_type}, message={e.args[0]}'
-            raise JWTInvalidError(message='Given token not valid for any token type.', extend_msg=extend_msg)
+            extend_msg = f'token_type={Token.token_type}, message={str(e)}'
+            raise JWTInvalidError(msg=f'Given token not valid for any token type.{extend_msg}')
 
     def get_user(self, validated_token):
         """
@@ -94,7 +94,7 @@ class AAIJWTAuthentication(authentication.BaseAuthentication):
         try:
             user_id = validated_token[JWT_SETTINGS.USER_ID_CLAIM]
         except KeyError:
-            raise JWTInvalidError('Token contained no recognizable user identification')
+            raise JWTInvalidError(msg='Token contained no recognizable user identification')
 
         params = {JWT_SETTINGS.USER_ID_FIELD: user_id}
         try:
@@ -143,9 +143,30 @@ class AAIJWTAuthentication(authentication.BaseAuthentication):
         try:
             user_id = validated_token[JWT_SETTINGS.USER_ID_CLAIM]
         except KeyError:
-            raise JWTInvalidError(f'Token contained no recognizable user identification "{JWT_SETTINGS.USER_ID_CLAIM}"')
+            raise JWTInvalidError(
+                msg=f'Token contained no recognizable user identification "{JWT_SETTINGS.USER_ID_CLAIM}"')
 
-        params = {JWT_SETTINGS.USER_ID_FIELD: user_id}
+        info = self.get_user_info(validated_token)
+        first_name = info['first_name']
+        last_name = info['last_name']
+        org_name = info['org_name']
+
+        params = {
+            JWT_SETTINGS.USER_ID_FIELD: user_id, 'email': user_id,
+            'first_name': first_name, 'last_name': last_name, 'company': org_name
+        }
+        user = self.user_model(**params)
+        try:
+            user.save(force_insert=True)
+        except Exception as e:
+            try:
+                user = self.user_model.objects.get(**{JWT_SETTINGS.USER_ID_FIELD: user_id})
+            except self.user_model.DoesNotExist:
+                raise AuthenticationFailed(_('User create failed') + f';error: {str(e)}', code='user_create_failed')
+
+        return user
+
+    def get_user_info(self, validated_token: dict):
         try:
             truename = validated_token.get(JWT_SETTINGS.TRUE_NAME_FIELD, '')
             first_name, last_name = self.get_first_and_last_name(truename)
@@ -154,12 +175,36 @@ class AAIJWTAuthentication(authentication.BaseAuthentication):
 
         org_name = validated_token.get(JWT_SETTINGS.ORG_NAME_FIELD, '')
         org_name = org_name if org_name else ''
-        params.update({'email': user_id, 'first_name': first_name, 'last_name': last_name, 'company': org_name})
-        user = self.user_model(**params)
+
+        return {
+            'first_name': first_name,
+            'last_name': last_name,
+            'org_name': org_name
+        }
+
+    def try_updata_user_info(self, user, validated_token: dict):
         try:
-            user.save()
-        except Exception as e:
-            raise AuthenticationFailed(_('User create failed') + f';error: {str(e)}', code='user_create_failed')
+            self.updata_user_info(user=user, validated_token=validated_token)
+        except Exception as exc:
+            pass
 
-        return user
+    def updata_user_info(self, user, validated_token: dict):
+        info = self.get_user_info(validated_token)
+        first_name = info['first_name']
+        last_name = info['last_name']
+        org_name = info['org_name']
 
+        update_fields = []
+        full_name = first_name + last_name
+        if full_name and full_name != (user.first_name + user.last_name):
+            user.first_name = first_name
+            user.last_name = last_name
+            update_fields.append('first_name')
+            update_fields.append('last_name')
+
+        if org_name and org_name != user.company:
+            user.company = org_name
+            update_fields.append('company')
+
+        if update_fields:
+            user.save(update_fields=update_fields)
