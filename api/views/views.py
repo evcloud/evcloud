@@ -1132,14 +1132,7 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=False,
                 description='快照备注信息'
-            ),
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
+            )
         ],
         responses={
             201: """
@@ -1177,12 +1170,7 @@ class VmsViewSet(CustomGenericViewSet):
         api = VmAPI()
 
         try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限创建快照')  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
-        try:
-            snap = api.create_vm_sys_snap(vm_uuid=vm_uuid, remarks=remark, user=user, request=request)
+            snap = api.create_vm_sys_snap(vm_uuid=vm_uuid, remarks=remark, user=request.user, request=request)
         except VmError as e:
             e.msg = f'创建虚拟机系统快照失败，{str(e)}'
             return self.exception_response(e)
@@ -1199,14 +1187,7 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=True,
                 description='快照id'
-            ),
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
+            )
         ],
         responses={
             204: """SUCCESS NO CONTENT""",
@@ -1230,12 +1211,7 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(exc)
 
         try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限删除快照')  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
-        try:
-            VmAPI().delete_sys_disk_snap(snap_id=snap_id, user=user, request=request)
+            VmAPI().delete_sys_disk_snap(snap_id=snap_id, user=request.user, request=request)
         except VmError as e:
             e.msg = f'删除虚拟机系统快照失败，{str(e)}'
             return self.exception_response(e)
@@ -1302,16 +1278,6 @@ class VmsViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='虚拟机系统盘回滚到指定快照',
         request_body=no_body,
-        manual_parameters=[
-
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
-        ],
         responses={
             201: """
             {
@@ -1339,14 +1305,9 @@ class VmsViewSet(CustomGenericViewSet):
             exc = exceptions.BadRequestError(msg='无效的id参数')
             return self.exception_response(exc)
 
-        try:
-            user = get_admin_specified_user_or_own(request=request)  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         api = VmAPI()
         try:
-            api.vm_rollback_to_snap(vm_uuid=vm_uuid, snap_id=snap_id, request=request, user=user)
+            api.vm_rollback_to_snap(vm_uuid=vm_uuid, snap_id=snap_id, request=request, user=request.user)
         except VmError as e:
             e.msg = f'回滚虚拟机失败，{str(e)}'
             return self.exception_response(e)

@@ -1,6 +1,6 @@
 from django.forms import model_to_dict
 
-from ceph.managers import RadosError, ImageExistsError
+from ceph.managers import RadosError, ImageExistsError, check_resource_permissions
 from utils.ev_libvirt.virt import (
     VirtError, VmDomain, VirDomainNotExist, VirHostDown
 )
@@ -41,6 +41,31 @@ class VmInstance:
 
         self._vm_domain = get_vm_domain(self.vm)
         return self._vm_domain
+
+    @staticmethod
+    def check_user_permissions_of_vm(vm, user, allow_superuser: bool, allow_resource: bool, allow_owner: bool = True):
+        """
+        :param vm: 云主机对象
+        :param user: 用户对象
+        :param allow_superuser: True(允许超级管理员)
+        :param allow_resource: True(允许资源管理员)
+        :param allow_owner: True(允许资源所有者)
+        :ratuen:
+            True    # 满足权限
+            raise VmAccessDeniedError # 没有权限
+
+        :raises: VmAccessDeniedError
+        """
+        if allow_superuser and user.is_superuser:
+            return True
+
+        if allow_owner and vm.user_id == user.id:
+            return True
+
+        if allow_resource and check_resource_permissions(user=user):
+            return True
+
+        raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
     @classmethod
     def create_instance(cls, image_id: int, vcpu: int, mem: int, vlan_id: int, user, center_id=None, group_id=None,
@@ -234,6 +259,7 @@ class VmInstance:
                 raise errors.VmError(msg=f'获取虚拟机运行状态失败, {str(e)}')
             msg = f'虚拟机（uuid={vm_uuid}），获取虚拟机运行状态失败;错误信息：{str(e)}'
             log_manager.add_log(title='获取虚拟机运行状态失败', about=log_manager.about.ABOUT_DISK, text=msg)
+            run = True
 
         if run:
             try:
@@ -675,12 +701,15 @@ class VmInstance:
         return True
 
     @staticmethod
-    def get_user_disk_snap(snap_id: int, user):
+    def get_user_disk_snap(snap_id: int, user, allow_superuser=True, allow_resource=False, allow_owner=True):
         """
         获取用户有权限访问的系统盘快照
 
         :param snap_id: 快照id
         :param user: 用户
+        :param allow_superuser: True(允许超级管理员)
+        :param allow_resource: True(允许资源管理员)
+        :param allow_owner: True(允许资源所有者)
         :return:
             VmDiskSnap()
         :raises: VmError
@@ -689,9 +718,13 @@ class VmInstance:
         if not snap:
             raise errors.VmError.from_error(errors.NotFoundError(msg='快照不存在'))
 
-        if not user.is_superuser:
-            if snap.vm and not snap.vm.user_has_perms(user):
-                raise errors.VmError.from_error(errors.AccessDeniedError(msg='没有此快照的访问权限'))
+        try:
+            VmInstance.check_user_permissions_of_vm(
+                vm=snap.vm, user=user,
+                allow_superuser=allow_superuser, allow_resource=allow_resource, allow_owner=allow_owner
+            )
+        except errors.VmAccessDeniedError as exc:
+            raise errors.VmError.from_error(errors.AccessDeniedError(msg='没有此快照的访问权限'))
 
         status_bool = vm_normal_status(vm=snap.vm)
         if status_bool is False:
@@ -711,7 +744,10 @@ class VmInstance:
 
         :raises: VmError
         """
-        snap = VmInstance.get_user_disk_snap(snap_id=snap_id, user=user)
+        snap = VmInstance.get_user_disk_snap(
+            snap_id=snap_id, user=user,
+            allow_superuser=True, allow_resource=True, allow_owner=False
+        )
 
         try:
             snap.delete()

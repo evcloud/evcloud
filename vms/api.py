@@ -39,16 +39,10 @@ class VmAPI:
 
         :raises: VmAccessDeniedError
         """
-        if allow_superuser and user.is_superuser:
-            return True
-
-        if allow_owner and vm.user_id == user.id:
-            return True
-
-        if allow_resource and check_resource_permissions(user=user):
-            return True
-
-        raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
+        return VmInstance.check_user_permissions_of_vm(
+            vm=vm, user=user,
+            allow_superuser=allow_superuser, allow_resource=allow_resource, allow_owner=allow_owner
+        )
 
     def _get_user_perms_vm(
             self, vm_uuid: str, user, related_fields: tuple = (), flag=False, query_user=True,
@@ -404,7 +398,10 @@ class VmAPI:
             VmDiskSnap()    # success
         :raises: VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('user', 'image__ceph_pool__ceph'))
+        vm = self._get_user_perms_vm(
+            vm_uuid=vm_uuid, user=user, related_fields=('user', 'image__ceph_pool__ceph'),
+            allow_superuser=True, allow_resource=True, allow_owner=False
+        )
 
         vm_snap = VmInstance(vm=vm).create_sys_snap(remarks=remarks)
         self.vm_operation_log(request=request, operation_content=f'创建云主机系统盘快照, 云主机IP: {vm.mac_ip}, 快照ID：{vm_snap.id}',
@@ -459,7 +456,10 @@ class VmAPI:
 
         :raises: VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=())
+        vm = self._get_user_perms_vm(
+            vm_uuid=vm_uuid, user=user, related_fields=(),
+            allow_superuser=True, allow_resource=True, allow_owner=True
+        )
 
         self.vm_operation_log(request=request, operation_content=f'云主机系统盘回滚到指定快照, 指定快照id为：{snap_id} 云主机IP：{vm.mac_ip}',
                               remark='')
