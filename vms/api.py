@@ -545,8 +545,10 @@ class VmAPI:
 
         :raises: VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=(
-            'user', 'host__group', 'image__ceph_pool__ceph'))
+        vm = self._get_user_perms_vm(
+            vm_uuid=vm_uuid, user=user, related_fields=('user', 'host__group', 'image__ceph_pool__ceph'),
+            allow_superuser=True, allow_resource=True, allow_owner=False
+        )
 
         self.vm_operation_log(request=request, operation_content=f'更换云主机系统成功, 云主机IP：{vm.mac_ip}',
                               remark='')
