@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils.translation import gettext as _
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, BasePermission
@@ -16,6 +17,7 @@ from ceph.managers import check_superuser_and_resource_permissions, check_resour
 from ceph.models import GlobalConfig
 from logrecord.manager import user_operation_record
 from users.models import UserProfile
+from users.managers import UserManager
 from utils.permissions import APIIPPermission
 from vms.manager import VmManager, VmError, FlavorManager
 from vms.api import VmAPI
@@ -691,17 +693,20 @@ class VmsViewSet(CustomGenericViewSet):
                 validated_data['vcpu'] = flavor.vcpus
                 validated_data['mem'] = flavor.ram  # 单位为GB
 
-        try:
-            owner, user = get_admin_specified_user_or_own_body(request=request, flag=True, msg='当前用户没有权限创建虚拟机',
-                                                        create_user=True, body_arg=validated_data)  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
+        if not check_superuser_and_resource_permissions(request):
+            return self.exception_response(
+                exceptions.AccessDeniedError(msg=_('你没有权限创建虚拟机')))
 
-        validated_data.pop('username')  # create_vm 没有username 参数
+        owner_name = validated_data.get('username')
+        if owner_name:
+            owner = UserManager.get_or_create_user(username=owner_name)
+        else:
+            owner = None
+
+        validated_data.pop('username', None)  # create_vm 没有username 参数
         api = VmAPI()
         try:
-
-            vm = api.create_vm(user=user, **validated_data, ip_public=ip_public, owner=owner)
+            vm = api.create_vm(user=request.user, **validated_data, ip_public=ip_public, owner=owner)
         except VmError as e:
             data = e.data()
             data['data'] = serializer.data
