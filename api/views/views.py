@@ -3213,19 +3213,23 @@ class VDiskViewSet(CustomGenericViewSet):
         group_id = data.get('group_id', None)
         quota_id = data.get('quota_id', None)
         remarks = data.get('remarks', '')
+        owner_name = data.get('username', None)
 
-        try:
-            owner, user = get_admin_specified_user_or_own_body(request=request, flag=True, msg='当前用户没有权限创建云硬盘',
-                                                               create_user=True, body_arg=data)
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
+        if not check_superuser_and_resource_permissions(request):
+            return self.exception_response(
+                exceptions.AccessDeniedError(msg=_('你没有权限创建云硬盘')))
+
+        if owner_name:
+            owner = UserManager.get_or_create_user(username=owner_name)
+        else:
+            owner = None
 
         # 用户操作日志记录
         user_operation_record.add_log(request=request, operation_content=f'创建云硬盘, 容量为 {size} GB', remark='', owner=owner)
 
         manager = VdiskManager()
         try:
-            disk = manager.create_vdisk(size=size, user=user, center=center_id,
+            disk = manager.create_vdisk(size=size, user=request.user, center=center_id,
                                         group=group_id, quota=quota_id, remarks=remarks, owner=owner)  # user 给 owner 创建
         except VdiskError as e:
             r_data = e.data()
@@ -3241,15 +3245,6 @@ class VDiskViewSet(CustomGenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='获取硬盘详细数据',
-        manual_parameters=[
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
-        ],
         responses={
             200: """"""
         }
@@ -3303,11 +3298,6 @@ class VDiskViewSet(CustomGenericViewSet):
         #                               operation_content='获取硬盘详细数据', remark='')
 
         try:
-            user = get_admin_specified_user_or_own(request=request)
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
-        try:
             disk = VdiskManager().get_vdisk_by_uuid(uuid=disk_uuid)
         except VdiskError as e:
             return self.exception_response(e)
@@ -3315,8 +3305,13 @@ class VDiskViewSet(CustomGenericViewSet):
         if not disk:
             exc = exceptions.VdiskNotExist()
             return self.exception_response(exc)
-        if not disk.user_has_perms(user=user):
-            exc = exceptions.VdiskAccessDenied(msg='没有权限访问此云硬盘')
+
+        try:
+            VmAPI.check_user_permissions_of_disk(
+                disk=disk, user=request.user,
+                allow_superuser=True, allow_resource=True, allow_owner=True
+            )
+        except exceptions.Error as exc:
             return self.exception_response(exc)
 
         return Response(data={
@@ -3324,7 +3319,6 @@ class VDiskViewSet(CustomGenericViewSet):
             'code_text': '获取云硬盘信息成功',
             'vm': self.get_serializer(disk).data
         })
-
 
     @swagger_auto_schema(
         operation_summary='销毁硬盘',

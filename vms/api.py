@@ -44,6 +44,34 @@ class VmAPI:
             allow_superuser=allow_superuser, allow_resource=allow_resource, allow_owner=allow_owner
         )
 
+    @staticmethod
+    def check_user_permissions_of_disk(
+            disk, user,
+            allow_superuser: bool, allow_resource: bool, allow_owner: bool = True
+    ):
+        """
+        :param disk: 云硬盘对象
+        :param user: 用户对象
+        :param allow_superuser: True(允许超级管理员)
+        :param allow_resource: True(允许资源管理员)
+        :param allow_owner: True(允许资源所有者)
+        :ratuen:
+            True    # 满足权限
+            raise VmAccessDeniedError # 没有权限
+
+        :raises: VmAccessDeniedError
+        """
+        if allow_superuser and user.is_superuser:
+            return True
+
+        if allow_owner and disk.user_id == user.id:
+            return True
+
+        if allow_resource and check_resource_permissions(user=user):
+            return True
+
+        raise errors.VdiskAccessDenied(msg='当前用户没有权限访问此云硬盘')
+
     def _get_user_perms_vm(
             self, vm_uuid: str, user, related_fields: tuple = (), flag=False, query_user=True,
             allow_superuser=True, allow_resource=False, allow_owner=True
