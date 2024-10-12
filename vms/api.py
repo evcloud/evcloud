@@ -369,10 +369,19 @@ class VmAPI:
             raise errors.VmError.from_error(errors.VdiskNotExist())
         if not vdisk.enable:
             raise errors.VmError.from_error(errors.VdiskNotActive())
-        if not vdisk.user_has_perms(user=user):
-            raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限访问此硬盘'))
 
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'))
+        try:
+            self.check_user_permissions_of_disk(
+                disk=vdisk, user=request.user,
+                allow_superuser=True, allow_resource=True, allow_owner=False
+            )
+        except errors.Error as exc:
+            raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限挂载此硬盘'))
+
+        vm = self._get_user_perms_vm(
+            vm_uuid=vm_uuid, user=user, related_fields=('host__group', 'user'),
+            allow_superuser=True, allow_resource=True, allow_owner=False
+        )
 
         self.vm_operation_log(request=request, operation_content=f'挂载云硬盘, 云主机IP: {vm.mac_ip}, 云硬盘id：{vdisk_uuid}')
 
@@ -397,8 +406,13 @@ class VmAPI:
         if vdisk is None:
             raise errors.VmError.from_error(errors.VdiskNotExist())
 
-        if not vdisk.user_has_perms(user=user):
-            raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限访问此硬盘'))
+        try:
+            self.check_user_permissions_of_disk(
+                disk=vdisk, user=request.user,
+                allow_superuser=True, allow_resource=True, allow_owner=False
+            )
+        except errors.Error as exc:
+            raise errors.VmError.from_error(errors.VdiskAccessDenied(msg='没有权限卸载此硬盘'))
 
         status_bool = vm_normal_status(vm=vdisk.vm)
         if status_bool is False:
@@ -408,9 +422,13 @@ class VmAPI:
         if not vm:
             return vdisk
 
-        if not vm.user_has_perms(user=user):
+        try:
+            self.check_user_permissions_of_vm(
+                vm=vm, user=request.user,
+                allow_superuser=True, allow_resource=True, allow_owner=False
+            )
+        except errors.Error as exc:
             raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
-
 
         self.vm_operation_log(request=request, operation_content=f'卸载云硬盘, 云主机IP: {vm.mac_ip}, 云硬盘id：{vdisk_uuid}')
 

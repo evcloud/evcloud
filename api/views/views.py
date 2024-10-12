@@ -3322,15 +3322,6 @@ class VDiskViewSet(CustomGenericViewSet):
 
     @swagger_auto_schema(
         operation_summary='销毁硬盘',
-        manual_parameters=[
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
-        ],
         responses={
             204: """"""
         }
@@ -3351,11 +3342,6 @@ class VDiskViewSet(CustomGenericViewSet):
         """
         disk_uuid = kwargs.get(self.lookup_field, '')
 
-        try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限删除云硬盘')
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         # 用户操作日志记录
         user_operation_record.add_log(request=request, operation_content=f'销毁云硬盘， 云硬盘id：{disk_uuid}', remark='')
 
@@ -3369,8 +3355,12 @@ class VDiskViewSet(CustomGenericViewSet):
         if vdisk is None:
             return self.exception_response(exceptions.VdiskNotExist())
 
-        if not vdisk.user_has_perms(user=user):
-            exc = exceptions.VdiskAccessDenied(msg='没有权限访问此硬盘')
+        try:
+            VmAPI.check_user_permissions_of_disk(
+                disk=vdisk, user=request.user,
+                allow_superuser=True, allow_resource=True, allow_owner=False
+            )
+        except exceptions.Error as exc:
             return self.exception_response(exc)
 
         # 搁置虚拟机，不允许
@@ -3403,15 +3393,7 @@ class VDiskViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_STRING,
                 required=True,
                 description='要挂载的虚拟机uuid'
-            ),
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
-
+            )
         ],
         responses={
             200: """
@@ -3442,14 +3424,9 @@ class VDiskViewSet(CustomGenericViewSet):
         disk_uuid = kwargs.get(self.lookup_field, '')
         vm_uuid = request.query_params.get('vm_uuid', '')
 
-        try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限挂载硬盘')  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         api = VmAPI()
         try:
-            api.mount_disk(request=request, vm_uuid=vm_uuid, vdisk_uuid=disk_uuid, user=user)
+            api.mount_disk(request=request, vm_uuid=vm_uuid, vdisk_uuid=disk_uuid, user=request.user)
         except exceptions.Error as e:
             e.msg = f'挂载硬盘失败，{str(e)}'
             return self.exception_response(e)
@@ -3459,15 +3436,6 @@ class VDiskViewSet(CustomGenericViewSet):
     @swagger_auto_schema(
         operation_summary='卸载硬盘',
         request_body=no_body,
-        manual_parameters=[
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
-        ],
         responses={
             200: """
                 {
@@ -3496,14 +3464,9 @@ class VDiskViewSet(CustomGenericViewSet):
         """
         disk_uuid = kwargs.get(self.lookup_field, '')
 
-        try:
-            user = get_admin_specified_user_or_own(request=request, flag=True, msg='当前用户没有权限卸载硬盘')  # 由中坤操作 flag为true
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
         api = VmAPI()
         try:
-            api.umount_disk(request=request, vdisk_uuid=disk_uuid, user=user)
+            api.umount_disk(request=request, vdisk_uuid=disk_uuid, user=request.user)
         except VmError as e:
             return self.exception_response(e)
 
