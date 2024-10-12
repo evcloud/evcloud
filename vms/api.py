@@ -659,7 +659,7 @@ class VmAPI:
         vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('host',))
         return VmInstance(vm).get_stats()
 
-    def vm_sys_disk_expand(self, vm_uuid: str, expand_size: int, request, user):
+    def vm_sys_disk_expand(self, vm_uuid: str, expand_size: int, request):
         """
         vm系统盘扩容，系统盘最大5Tb
 
@@ -667,7 +667,10 @@ class VmAPI:
         :return:    vm
         :raises: VmError
         """
-        vm = self._get_user_perms_vm(vm_uuid=vm_uuid, user=user, related_fields=('image__ceph_pool__ceph',))
+        vm = self._get_user_perms_vm(
+            vm_uuid=vm_uuid, user=request.user, related_fields=('image__ceph_pool__ceph',),
+            allow_superuser=True, allow_resource=True, allow_owner=False
+        )
 
         self.vm_operation_log(request=request, operation_content=f'云主机系统盘扩容, 云主机IP：{vm.mac_ip}, 扩容大小为{expand_size}GB',
                               remark='')

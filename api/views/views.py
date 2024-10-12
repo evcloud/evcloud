@@ -1576,14 +1576,7 @@ class VmsViewSet(CustomGenericViewSet):
                 type=openapi.TYPE_INTEGER,
                 required=True,
                 description="扩容大小，单位Gb"
-            ),
-            openapi.Parameter(
-                name='username',
-                in_=openapi.IN_QUERY,
-                type=openapi.TYPE_STRING,
-                required=False,
-                description='用户名称'
-            ),
+            )
         ],
         responses={
             200: """"""
@@ -1623,12 +1616,7 @@ class VmsViewSet(CustomGenericViewSet):
                 exceptions.InvalidParamError(msg='The value of query param "expand-size" is invalid'))
 
         try:
-            user = get_admin_specified_user_or_own(request=request)
-        except exceptions.BadRequestError as e:
-            return self.exception_response(e)
-
-        try:
-            vm = VmAPI().vm_sys_disk_expand(vm_uuid=vm_uuid, expand_size=expand_size, request=request, user=user)
+            vm = VmAPI().vm_sys_disk_expand(vm_uuid=vm_uuid, expand_size=expand_size, request=request)
         except VmError as e:
             return Response(data=e.data(), status=e.status_code)
 
