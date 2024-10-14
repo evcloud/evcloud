@@ -24,3 +24,5 @@ class UserManager:
                 return user
 
             raise exc
+
+        return user
