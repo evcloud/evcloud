@@ -1,9 +1,19 @@
 from django.core import validators
+from django.contrib.auth.validators import UnicodeUsernameValidator
 
 from users.models import UserProfile
 
 
 class UserManager:
+    @staticmethod
+    def is_valid_username(val: str) -> bool:
+        try:
+            UnicodeUsernameValidator()(val)
+        except validators.ValidationError:
+            return False
+
+        return True
+
     @staticmethod
     def is_email_address(val: str) -> bool:
         try:

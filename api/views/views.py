@@ -1846,7 +1846,7 @@ class VmsViewSet(CustomGenericViewSet):
                 in_=openapi.IN_QUERY,
                 type=openapi.TYPE_STRING,
                 required=True,
-                description='用户名称'
+                description='用户名称，长度为4-150个字符，只能包含字母、数字、特殊字符“@”、“.”、“-”和“_”'
             ),
         ],
         responses={
@@ -1857,32 +1857,33 @@ class VmsViewSet(CustomGenericViewSet):
     def vm_hand_over(self, request, *args, **kwargs):
         """
         虚拟机移交
-        {
-          "code": 201,
-          "code_text": "移交成功",
-          "vm": {
-            "uuid": "0860b01e9c9c434d96cdc0cac1747cd1",
-            "name": "0860b01e9c9c434d96cdc0cac1747cd1",
-            "vcpu": 2,
-            "mem": 2,
-            "image": "centos7",
-            "disk": "0860b01e9c9c434d96cdc0cac1747cd1",
-            "sys_disk_size": 5120,
-            "host": "223.193.36.121",
-            "mac_ip": "192.168.1.4",
-            "ip": {
-              "ipv4": "192.168.1.4",
-              "public_ipv4": false,
-              "ipv6": null
-            },
-            "user": {
-              "id": 2,
-              "username": "test"
-            },
-            "create_time": "2024-09-27T02:16:52.451171Z",
-            "mem_unit": "GB"
-          }
-        }
+
+            {
+              "code": 201,
+              "code_text": "移交成功",
+              "vm": {
+                "uuid": "0860b01e9c9c434d96cdc0cac1747cd1",
+                "name": "0860b01e9c9c434d96cdc0cac1747cd1",
+                "vcpu": 2,
+                "mem": 2,
+                "image": "centos7",
+                "disk": "0860b01e9c9c434d96cdc0cac1747cd1",
+                "sys_disk_size": 5120,
+                "host": "223.193.36.121",
+                "mac_ip": "192.168.1.4",
+                "ip": {
+                  "ipv4": "192.168.1.4",
+                  "public_ipv4": false,
+                  "ipv6": null
+                },
+                "user": {
+                  "id": 2,
+                  "username": "test"
+                },
+                "create_time": "2024-09-27T02:16:52.451171Z",
+                "mem_unit": "GB"
+              }
+            }
 
         """
         vm_uuid = kwargs.get(self.lookup_field, '')
@@ -1890,6 +1891,12 @@ class VmsViewSet(CustomGenericViewSet):
         if not username:
             exc = exceptions.BadRequestError(msg=_('必须指定资源移交的目标用户'))
             return self.exception_response(exc)
+
+        if UserManager.is_email_address(username):
+            pass
+        elif not (4 <= len(username) <= 150) or not UserManager.is_valid_username(username):
+            return self.exception_response(
+                exceptions.BadRequestError(msg=_('用户名无效，长度为4-150个字符，只能包含字母、数字、特殊字符“@”、“.”、“-”和“_”')))
 
         if not check_superuser_and_resource_permissions(request):
             exc = exceptions.BadRequestError(msg='当前用户没有权限')
@@ -3142,6 +3149,9 @@ class VDiskViewSet(CustomGenericViewSet):
         quota_id = data.get('quota_id', None)
         remarks = data.get('remarks', '')
         owner_name = data.get('username', None)
+
+        if owner_name and not UserManager.is_email_address(owner_name):
+            return self.exception_response(exceptions.BadRequestError(msg='用户名必须是一个有效的邮箱地址格式'))
 
         if not check_superuser_and_resource_permissions(request):
             return self.exception_response(
