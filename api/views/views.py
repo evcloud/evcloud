@@ -605,6 +605,10 @@ class VmsViewSet(CustomGenericViewSet):
             return Response(data, status=exc.status_code)
 
         validated_data = serializer.validated_data
+        owner_name = validated_data.get('username')
+        if owner_name and not UserManager.is_email_address(owner_name):
+            return self.exception_response(exceptions.BadRequestError(msg='用户名必须是一个有效的邮箱地址格式'))
+
         # 配置样式
         flavor_id = validated_data.pop('flavor_id', None)
         if flavor_id:
@@ -622,7 +626,6 @@ class VmsViewSet(CustomGenericViewSet):
             return self.exception_response(
                 exceptions.AccessDeniedError(msg=_('你没有权限创建虚拟机')))
 
-        owner_name = validated_data.get('username')
         if owner_name:
             owner = UserManager.get_or_create_user(username=owner_name)
         else:

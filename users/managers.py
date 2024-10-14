@@ -1,7 +1,18 @@
+from django.core import validators
+
 from users.models import UserProfile
 
 
 class UserManager:
+    @staticmethod
+    def is_email_address(val: str) -> bool:
+        try:
+            validators.validate_email(val)
+        except validators.ValidationError:
+            return False
+
+        return True
+
     @staticmethod
     def get_or_create_user(username: str):
         """

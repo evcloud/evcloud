@@ -204,6 +204,15 @@
             delete obj.vcpu;
             delete obj.mem;
         }
+        if (obj.username){
+            let emailReg = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+            if (!emailReg.test(obj.username)){
+                alert(gettext('输入的用户名无效，必须是一个有效的邮箱地址格式'));
+                return false;
+            }
+        }else{
+            delete obj.username
+        }
         return true;
     }
 
@@ -317,6 +326,22 @@
         }else{
             node.hide();
             $("input[name=sys_disk_size]").attr("disabled", true);
+            node_check.removeClass('font-weight-bold');
+        }
+    })
+
+    $("#check-vm-owner-username").on("change", function (e){
+        e.preventDefault();
+
+        let node = $("#div-vm-owner-username");
+        let node_check = $(this).parent();
+        if ($(this).is(":checked") === true){
+            node.show();
+            $("input[name=username]").attr("disabled", false);
+            node_check.addClass('font-weight-bold');
+        }else{
+            node.hide();
+            $("input[name=username]").attr("disabled", true);
             node_check.removeClass('font-weight-bold');
         }
     })

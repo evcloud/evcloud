@@ -152,6 +152,28 @@
                         </div>
                     </div>
                     <div class="form-group row">
+                        <label for="id-vm-owner-username" class="offset-sm-1 col-sm-2 text-right col-form-label"></label>
+                        <div class="col-sm-7">
+                            <div>
+                                <div class="form-group form-check">
+                                    <input type="checkbox" class="form-check-input" id="check-vm-owner-username">
+                                    <label class="form-check-label" for="check-vm-owner-username">{% translate '为指定用户创建虚拟机' %}</label>
+                                </div>
+                                <div id="div-vm-owner-username" style="display: none">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">{% translate '用户名' %}</span>
+                                        </div>
+                                        <input name="username" type="text" class="form-control" disabled="disabled" aria-label="用户名">
+                                    </div>
+                                    <div id="id-vm-owner-username-tips" class="text-secondary font-italic">
+                                        {% translate '如果为指定用户创建虚拟机，请输入用户名，否则请保持为空' %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row">
                         <div class="offset-sm-1 col-sm-2">
                             <button type="submit" class="btn btn-primary float-right" id="create_vm">{% translate '创建' %}</button>
                         </div>
