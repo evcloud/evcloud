@@ -11,10 +11,11 @@ class VmAdmin(admin.ModelAdmin):
     list_display = ('hex_uuid', 'mac_ip', 'image', 'vcpu', 'mem', 'host', 'sys_disk_size',
                     'disk_type', 'user', 'create_time', 'remarks',
                     'image_name', 'default_user', 'default_password', 'image_size', 'sys_type', 'version',
-                    'release', 'architecture', 'boot_mode',  'ceph_pool', 'image_parent', 'image_snap')
+                    'release', 'architecture', 'boot_mode', 'ceph_pool', 'image_parent', 'image_snap')
     search_fields = ['name', 'mac_ip__ipv4']
-    list_filter = ['host', 'user']
+    list_filter = ['host', 'image']
     raw_id_fields = ('mac_ip', 'host', 'user', 'image')
+    list_select_related = ('host', 'image', 'user', 'mac_ip', 'ceph_pool__ceph')
 
     actions = ['update_sys_disk_size', ]
 
@@ -119,7 +120,7 @@ class VmArchiveAdmin(admin.ModelAdmin):
     list_display = ('id', 'uuid', 'ipv4', 'vcpu', 'mem', 'mac', 'disk_type', 'disk', 'sys_disk_size', 'image_parent',
                     'center_name', 'group_name', 'host_ipv4', 'host_released', 'user', 'archive_time', 'remarks')
     search_fields = ['uuid', 'center_name', 'remarks', 'user']
-    list_filter = ['host_released', 'center_name', 'group_name', 'host_ipv4', 'user']
+    list_filter = ['host_released', 'center_name', 'group_name', 'host_ipv4']
     list_editable = ['host_released', ]
     actions = [clear_vm_sys_disk, undefine_vm_from_host, clear_vm_sys_snapshots]
 
@@ -157,8 +158,8 @@ class VmDiskSnapAdmin(admin.ModelAdmin):
     admin_order = 3
     list_display_links = ('id',)
     list_display = ('id', 'snap', 'disk', 'vm', 'create_time', 'remarks')
-    search_fields = ['disk', 'remarks']
-    list_filter = ['vm']
+    search_fields = ['disk', 'remarks', 'vm__mac_ip__ipv4']
+    list_select_related = ('vm',)
 
     def delete_queryset(self, request, queryset):
         """
@@ -196,4 +197,3 @@ class ErrorLogAdmin(admin.ModelAdmin):
     admin_order = 7
     list_display_links = ('id',)
     list_display = ('id', 'full_path', 'status_code', 'method', 'message', 'create_time', 'username')
-
