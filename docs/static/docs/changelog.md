@@ -24,6 +24,7 @@
 * 全局配置代码优化，配置参数以枚举方式定义；提交人：yushunwang
 * admin后台，云主机和归档记录页面优化，减少数据库查询次数，移除“用户”过滤器；提交人：yushunwang
 * 虚拟机创建视图增加为指定用户创建虚拟机功能；提交人：yushunwang
+* 安装依赖包django-cors-headers，支持浏览器跨域；提交人：yushunwang
 
 
 ## v4.8.0
