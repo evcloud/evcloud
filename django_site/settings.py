@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'drf_yasg',
+    'corsheaders',
 
     'vms',
     'users',
@@ -87,6 +88,7 @@ MIDDLEWARE = [
     'utils.middleware.AdminIPRestrictMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -408,6 +410,9 @@ SWAGGER_SETTINGS = {
 
 # create vpn user default active/inactive
 VPN_USER_ACTIVE_DEFAULT = False
+
+
+CORS_ALLOW_ALL_ORIGINS = True  # 允许所有请求来源跨域
 
 # 导入安全相关的settings
 from .security import *

@@ -7,13 +7,13 @@ coreapi==2.3.3
 coreschema==0.0.4
 cryptography==37.0.4
 Django==4.2.9
-django-admin-model-list-order==0.0.4
+django-cors-headers==3.7.0
 django-debug-toolbar==3.5.0
 django-tidb==4.2.3
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.0
 drf-yasg==1.21.7
-func-timeout==4.3.5
+func_timeout==4.3.5
 idna==3.10
 inflection==0.5.1
 itypes==1.2.0
