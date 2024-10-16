@@ -61,6 +61,15 @@ class VmSharedUserTests(MyAPITestCase):
             ]
         })
         self.assertEqual(response.status_code, 400)
+
+        # invalid username
+        response = self.client.post(url, data={
+            'user': [
+                {'username': 'use#@qq.com', 'role': VmSharedUser.Permission.READONLY.value}
+            ]
+        })
+        self.assertEqual(response.status_code, 400)
+
         self.assertEqual(UserProfile.objects.count(), 2)
         self.assertEqual(VmSharedUser.objects.count(), 2)
 
@@ -131,3 +140,61 @@ class VmSharedUserTests(MyAPITestCase):
         vm1_sh_user_dict = {
             sh_u.user.username: sh_u for sh_u in VmSharedUser.objects.select_related('user').filter(vm_id=vm1.uuid)}
         self.assertEqual(vm1_sh_user_dict['user4@qq.com'].permission, VmSharedUser.Permission.READONLY.value)
+
+    def test_list(self):
+        user1 = get_or_create_user(username='user1@qq.com')
+        user2 = get_or_create_user(username='user2@qq.com')
+        vm1 = create_vm_metadata(uuid='test-vm-uuid1', owner=self.res_user)
+        vm2 = create_vm_metadata(uuid='test-vm-uuid2', owner=user1)
+
+        # vm1 shared user
+        VmSharedUser(
+            vm=vm1, user=user1, permission=VmSharedUser.Permission.READONLY.value
+        ).save(force_insert=True)
+
+        VmSharedUser(
+            vm=vm1, user=user2, permission=VmSharedUser.Permission.READWRITE.value
+        ).save(force_insert=True)
+
+        # vm2 shared user
+        VmSharedUser(
+            vm=vm2, user=self.res_user, permission=VmSharedUser.Permission.READONLY.value
+        ).save(force_insert=True)
+
+        self.client.force_login(self.res_user)
+        url = reverse('api:share-vm-user-list', kwargs={'vm_id': 'test'})
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['err_code'], 'VmNotExist')
+
+        url = reverse('api:share-vm-user-list', kwargs={'vm_id': vm1.uuid})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data['err_code'], 'VmAccessDenied')
+
+        # 资源管理员
+        config_res_admin(username=self.res_user.username, is_res=True)
+        # ok
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['shared_users']), 2)
+        sh_user_dict = {sh_u['user']['username']: sh_u for sh_u in response.data['shared_users']}
+        self.assertEqual(sh_user_dict[user1.username]['permission'], VmSharedUser.Permission.READONLY.value)
+        self.assertEqual(sh_user_dict[user2.username]['permission'], VmSharedUser.Permission.READWRITE.value)
+
+        # 移除资源管理员
+        config_res_admin(username=self.res_user.username, is_res=False)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data['err_code'], 'VmAccessDenied')
+
+        # superuser ok
+        self.res_user.is_superuser = True
+        self.res_user.save(update_fields=['is_superuser'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data['shared_users']), 2)
+        sh_user_dict = {sh_u['user']['username']: sh_u for sh_u in response.data['shared_users']}
+        self.assertEqual(sh_user_dict[user1.username]['permission'], VmSharedUser.Permission.READONLY.value)
+        self.assertEqual(sh_user_dict[user2.username]['permission'], VmSharedUser.Permission.READWRITE.value)

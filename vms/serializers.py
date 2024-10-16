@@ -15,3 +15,19 @@ class VmShareUserPostSerializer(serializers.Serializer):
     """
     users = serializers.ListField(
         label='用户和权限', child=VmSharedUserItem(), required=True, max_length=1024, allow_empty=True)
+
+
+class VmShareUserSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    user = serializers.SerializerMethodField(label=_('用户'), method_name='get_user')
+    vm_id = serializers.CharField(label=_('虚拟机'))
+    permission = serializers.CharField(label=_('共享权限'), max_length=16)
+    create_time = serializers.DateTimeField(label=_('创建日期'))
+    remarks = serializers.CharField(label=_('备注'), required=False)
+
+    @staticmethod
+    def get_user(obj):
+        if obj.user:
+            return {'id': obj.user.id, 'username': obj.user.username}
+
+        return None

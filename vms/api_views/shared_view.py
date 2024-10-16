@@ -1,4 +1,4 @@
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext as _
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
@@ -23,7 +23,47 @@ class VmSharedUserViewSet(CustomGenericViewSet):
     lookup_value_regex = '[0-9a-z-]+'
 
     @swagger_auto_schema(
-        operation_summary='虚拟机的共享用户管理'
+        operation_summary=gettext_lazy('列举虚拟机的共享用户')
+    )
+    @action(methods=['get'], detail=True, url_path='user', url_name='user-list')
+    def list_shared_users(self, request, *args, **kwargs):
+        """
+        列举虚拟机的共享用户
+
+            http code 200 ok:
+            {
+              "shared_users": [
+                {
+                  "id": 2,
+                  "user": {
+                    "id": 11,
+                    "username": "zhangsan@qq.com"
+                  },
+                  "vm_id": "559e0f58a4d04a1da024fb8567b8828c",
+                  "permission": "readonly",     # readonly or readwrite
+                  "create_time": "2024-10-16T05:51:50.794349Z",
+                  "remarks": ""
+                }
+              ]
+            }
+        """
+        vm_id = kwargs[self.lookup_field]
+        try:
+            vm = VmAPI()._get_user_perms_vm(
+                vm_uuid=vm_id, user=request.user, related_fields=('mac_ip', 'user'),
+                allow_superuser=True, allow_resource=True, allow_owner=False
+            )
+        except errors.Error as exc:
+            return self.exception_response(exc)
+
+        objs = VmSharedUserManager.get_vm_shared_users_qs(vm_id=vm_id)
+        slzr = self.get_serializer(objs, many=True)
+        return Response(data={
+            'shared_users': slzr.data
+        }, status=200)
+
+    @swagger_auto_schema(
+        operation_summary=gettext_lazy('虚拟机的共享用户完全替换')
     )
     @action(methods=['post'], detail=True, url_path='user/replace', url_name='user-replace')
     def replace_shared_users(self, request, *args, **kwargs):
@@ -99,7 +139,9 @@ class VmSharedUserViewSet(CustomGenericViewSet):
         return UserManager.get_or_create_users(usernames=usernames)
 
     def get_serializer_class(self):
-        if self.action == 'replace_shared_users':
+        if self.action == 'list_shared_users':
+            return vm_serializers.VmShareUserSerializer
+        elif self.action == 'replace_shared_users':
             return vm_serializers.VmShareUserPostSerializer
 
         return Serializer
