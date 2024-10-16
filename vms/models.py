@@ -14,9 +14,7 @@ from ceph.models import CephPool
 from compute.managers import HostManager
 from utils.ev_libvirt.virt import VmDomain
 from utils.errors import Error
-
-# 获取用户模型
-User = get_user_model()
+from users.models import UserProfile as User
 
 
 def remove_image(ceph, pool_name: str, image_name: str):
@@ -77,8 +75,6 @@ def remove_protected_snap(ceph, pool_name: str, image_name: str):
         raise Error(msg=str(e))
 
     return True
-
-
 
 
 class VmBase(models.Model):
@@ -150,6 +146,8 @@ class Vm(VmBase):
                                  default=VmStatus.NORMAL.value)
     last_ip = models.ForeignKey(to=MacIP, verbose_name=_('虚拟机最后使用ip'), blank=True, null=True, default=None,
                                 db_constraint=False, db_index=False, on_delete=models.SET_NULL, help_text=_('该字段在使用搁置服务时使用'))
+    shared_users = models.ManyToManyField(
+        to=User, through='VmSharedUser', through_fields=('vm', 'user'), related_name='user_shared_vms_set')
 
     def __str__(self):
         return self.name
@@ -348,7 +346,6 @@ class Vm(VmBase):
 
     def get_attach_ip(self):
         return self.vm_attach.all()
-
 
 
 class VmArchive(VmBase):
@@ -872,3 +869,31 @@ class ErrorLog(models.Model):
             return exc
 
         return ins
+
+
+class VmSharedUser(models.Model):
+    """共享虚拟机的用户"""
+
+    class Permission(models.TextChoices):
+        READONLY = 'readonly', _('只读')
+        READWRITE = 'readwrite', _('读写')
+
+    id = models.BigAutoField(primary_key=True, verbose_name=_('ID'))
+    user = models.ForeignKey(to=User, verbose_name=_('用户'), on_delete=models.CASCADE, null=False)
+    vm = models.ForeignKey(to=Vm, verbose_name=_('虚拟机'), on_delete=models.CASCADE, null=False)
+    permission = models.CharField(
+        verbose_name=_('共享权限'), max_length=16, choices=Permission.choices, default=Permission.READONLY.value)
+    create_time = models.DateTimeField(verbose_name=_('创建日期'), auto_now_add=True)
+    remarks = models.CharField(verbose_name=_('备注'), max_length=255, default='', blank=True)
+
+    class Meta:
+        db_table = 'vm_shared_user'
+        ordering = ['-create_time']
+        verbose_name = _('虚拟机的共享用户')
+        verbose_name_plural = verbose_name
+        constraints = [
+            models.UniqueConstraint(fields=('vm', 'user'), name='unique_shared_vm_user')
+        ]
+
+    def __str__(self):
+        return f'{self.user.username}[{self.get_permission_display()}]'

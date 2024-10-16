@@ -1,7 +1,8 @@
+from django.utils.translation import gettext_lazy as _
 from django.contrib import admin
 from django.contrib import messages
 
-from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor, AttachmentsIP, ErrorLog
+from .models import Vm, VmArchive, VmLog, VmDiskSnap, MigrateTask, Flavor, AttachmentsIP, ErrorLog, VmSharedUser
 
 
 @admin.register(Vm)
@@ -197,3 +198,21 @@ class ErrorLogAdmin(admin.ModelAdmin):
     admin_order = 7
     list_display_links = ('id',)
     list_display = ('id', 'full_path', 'status_code', 'method', 'message', 'create_time', 'username')
+
+
+@admin.register(VmSharedUser)
+class VmSharedUserAdmin(admin.ModelAdmin):
+    admin_order = 1
+    list_display_links = ('id',)
+    list_display = ('id', 'vm_show', 'user', 'permission', 'create_time', 'remarks')
+    list_filter = ['permission']
+    list_select_related = ('vm__mac_ip', 'user')
+    raw_id_fields = ('vm', 'user')
+    search_fields = ['user__username', 'vm__mac_ip__ipv4', 'remarks']
+
+    @admin.display(description=_('虚拟机'))
+    def vm_show(self, obj):
+        try:
+            return f'{obj.vm_id} 【{obj.vm.mac_ip.ipv4}】'
+        except Exception as exc:
+            return obj.vm_id

@@ -1,8 +1,11 @@
 from django.db.models import Q
 from django.db import transaction
+from django.utils.translation import gettext as _
+
 from compute.managers import CenterManager, GroupManager, ComputeError
-from .models import (Vm, VmArchive, VmLog, Flavor, AttachmentsIP)
+from .models import (Vm, VmArchive, VmLog, Flavor, AttachmentsIP, VmSharedUser)
 from utils.errors import VmError
+from utils import errors
 from network.managers import MacIPManager
 
 
@@ -403,3 +406,42 @@ class AttachmentsIPManager:
         return queryset
 
 
+class VmSharedUserManager:
+    @staticmethod
+    def get_vm_shared_users_qs(vm_id):
+        return VmSharedUser.objects.select_related('user').filter(vm_id=vm_id)
+
+    @staticmethod
+    def replace_shared_users(vm_id, user_roles_dict: dict, users_dict: dict):
+        no_change_users = {}  # 没有变化的
+        add_users = []  # 需要添加的
+        shared_user_qs = VmSharedUserManager.get_vm_shared_users_qs(vm_id=vm_id)
+
+        # 为空时，删除所有共享用户
+        if not user_roles_dict:
+            shared_user_qs.delete()
+            return
+
+        shared_user_map = {su.user.username: su for su in shared_user_qs}
+
+        for item in user_roles_dict.values():
+            username = item['username']
+            role = item['role']
+            if role not in VmSharedUser.Permission.values:
+                raise errors.InvalidParamError(msg=_('提交的用户权限无效。'))
+
+            if username in shared_user_map:
+                sh_user: VmSharedUser = shared_user_map[username]
+                if sh_user.permission == role:
+                    no_change_users[username] = sh_user
+                    continue
+
+            add_users.append(VmSharedUser(vm_id=vm_id, user_id=users_dict[username].id, permission=role))
+
+        # 除了不需要更新的，其他都需要删除，然后创建新的共享用户
+        delete_ids = [u.id for u in shared_user_map.values() if u.user.username not in no_change_users]
+
+        with transaction.atomic():
+            # 删除权限需要变更的和需要删除的
+            VmSharedUser.objects.filter(vm_id=vm_id, id__in=delete_ids).delete()
+            VmSharedUser.objects.bulk_create(add_users)

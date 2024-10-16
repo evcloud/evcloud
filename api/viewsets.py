@@ -104,3 +104,33 @@ class CustomGenericViewSet(GenericViewSet):
             pass
 
         return response
+
+
+def serializer_error_msg(s_errors, default=''):
+    """
+    获取一个错误信息
+
+    :param s_errors: serializer.errors
+    :param default:
+    :return:
+        str
+    """
+    msg = default
+    try:
+        if isinstance(s_errors, list):
+            for err in s_errors:
+                msg = str(err)
+                break
+        elif isinstance(s_errors, dict):
+            for key in s_errors:
+                val = s_errors[key]
+                if isinstance(val, list):
+                    msg = f'{key}, {str(val[0])}'
+                else:
+                    msg = f'{key}, {str(val)}'
+
+                break
+    except Exception:
+        pass
+
+    return msg

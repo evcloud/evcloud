@@ -1,6 +1,7 @@
 from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
 
+from vms.api_views.shared_view import VmSharedUserViewSet
 from .views import views, compute_view
 from .views.logrecord_view import LogRecordViewSet
 from .views.mirror_image_task_view import MirrorImageTaskViewSet
@@ -29,6 +30,7 @@ router.register(r'mirror', MirrorImageTaskViewSet, basename='mirror-image')
 
 no_router = DefaultRouter(trailing_slash=False)
 no_router.register(r'compute/quota', compute_view.ComputeQuotaViewSet, basename='compute-quota')
+no_router.register(r'share/vm', VmSharedUserViewSet, basename='share-vm')
 
 
 urlpatterns = [
