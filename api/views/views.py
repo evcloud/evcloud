@@ -1443,6 +1443,7 @@ class VmsViewSet(CustomGenericViewSet):
         """
         虚拟机丢失修复
 
+            * 权限需要 资源管理员/超级管理员/共享用户/拥有者
             >> http code 200:
             {
               "code": 200,

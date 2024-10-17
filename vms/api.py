@@ -683,7 +683,10 @@ class VmAPI:
         :raises: VmError
         """
         vm = self._get_user_perms_vm(
-            vm_uuid=vm_uuid, user=request.user, related_fields=('host', 'user', 'image__ceph_pool__ceph'))
+            vm_uuid=vm_uuid, user=request.user, related_fields=('host', 'user', 'image__ceph_pool__ceph'),
+            allow_superuser=True, allow_resource=True, allow_owner=True,
+            allow_shared_perm=VmSharedUserManager.SHARED_PERM_WRITE
+        )
 
         self.vm_operation_log(request=request, operation_content=f'尝试恢复丢失的云主机, 云主机IP：{vm.mac_ip}',
                               remark='')
