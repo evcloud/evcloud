@@ -177,102 +177,6 @@ class VmsViewSet(CustomGenericViewSet):
                 'code': 400,
                 'code_text': '请求数据有误'
             }
-
-    retrieve:
-        获取虚拟机元数据信息
-
-        获取虚拟机详细信息
-
-        http code: 200, 请求成功：
-        {
-          "code": 200,
-          "code_text": "获取虚拟机信息成功",
-          "vm": {
-            "uuid": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
-            "name": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
-            "vcpu": 2,
-            "mem": 2048,        # MB
-            "image": "CentOS_8",
-            "image_info": {
-              "id": 4,
-              "name": "CentOS_8",
-              "desc": "",
-              "default_user": "root",
-              "default_password": "cnic.cn"
-            },
-            "disk": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
-            "sys_disk_size": 100,
-            "host": "10.100.50.121",
-            "mac_ip": "10.107.50.253",
-            "ip": {
-              "ipv4": "10.107.50.22",
-              "public_ipv4": false,
-              "ipv6": null,
-            },
-            "user": {
-              "id": 1,
-              "username": "shun"
-            },
-            "create_time": "2020-03-06T14:46:27.149648+08:00"
-            "vdisks": [
-              {
-                "uuid": "063fc7830cce4b04a01a48572ea80198",
-                "size": 6,      # GB
-                "vm": {
-                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
-                  "ipv4": "10.107.50.15"
-                },
-                "user": {
-                  "id": 1,
-                  "username": "shun"
-                },
-                "quota": {
-                  "id": 1,
-                  "name": "group1云硬盘存储池"
-                },
-                "create_time": "2020-03-06T14:46:27.149648+08:00"
-                "attach_time": "2020-03-06T14:46:27.149648+08:00"
-                "enable": true,
-                "remarks": "",
-                "group": {
-                  "id": 1,
-                  "name": "宿主机组1"
-                }
-              }
-            ],
-            "pci_devices": [
-              {
-                "id": 1,
-                "type": {
-                  "val": 1,
-                  "name": "GPU"
-                },
-                "vm": {
-                  "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
-                  "ipv4": "10.107.50.15"
-                },
-                "host": {
-                  "id": 1,
-                  "ipv4": "10.100.50.121"
-                },
-                "attach_time": "2020-03-06T14:46:27.149648+08:00"
-                "remarks": ""
-              }
-            ],
-            "host_info": {
-              "id": 4,
-              "ipv4": "10.0.200.83",
-              "group": {
-                "id": 4
-              }
-            }
-          }
-        }
-        >>Http Code: 状态码400：请求失败;
-            {
-                'code': 400,
-                'code_text': 'xxx失败'
-            }
     """
     permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
@@ -653,7 +557,102 @@ class VmsViewSet(CustomGenericViewSet):
         }
     )
     def retrieve(self, request, *args, **kwargs):
+        """
+        获取虚拟机详细信息
 
+            * 权限需要 资源管理员/超级管理员/共享用户/拥有者
+
+            http code: 200, 请求成功：
+            {
+              "code": 200,
+              "code_text": "获取虚拟机信息成功",
+              "vm": {
+                "uuid": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
+                "name": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
+                "vcpu": 2,
+                "mem": 2048,        # MB or GB
+                "image": "CentOS_8",
+                "image_info": {
+                  "id": 4,
+                  "name": "CentOS_8",
+                  "desc": "",
+                  "default_user": "root",
+                  "default_password": "cnic.cn"
+                },
+                "disk": "5b1f9a09b7224bdeb2ae12678ad0b1d4",
+                "sys_disk_size": 100,
+                "host": "10.100.50.121",
+                "mac_ip": "10.107.50.253",
+                "ip": {
+                  "ipv4": "10.107.50.22",
+                  "public_ipv4": false,
+                  "ipv6": null,
+                },
+                "user": {
+                  "id": 1,
+                  "username": "shun"
+                },
+                "create_time": "2020-03-06T14:46:27.149648+08:00"
+                "vdisks": [
+                  {
+                    "uuid": "063fc7830cce4b04a01a48572ea80198",
+                    "size": 6,      # GB
+                    "vm": {
+                      "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                      "ipv4": "10.107.50.15"
+                    },
+                    "user": {
+                      "id": 1,
+                      "username": "shun"
+                    },
+                    "quota": {
+                      "id": 1,
+                      "name": "group1云硬盘存储池"
+                    },
+                    "create_time": "2020-03-06T14:46:27.149648+08:00"
+                    "attach_time": "2020-03-06T14:46:27.149648+08:00"
+                    "enable": true,
+                    "remarks": "",
+                    "group": {
+                      "id": 1,
+                      "name": "宿主机组1"
+                    }
+                  }
+                ],
+                "pci_devices": [
+                  {
+                    "id": 1,
+                    "type": {
+                      "val": 1,
+                      "name": "GPU"
+                    },
+                    "vm": {
+                      "uuid": "c6c8f333bc9c426dad04a040ddd44b47",
+                      "ipv4": "10.107.50.15"
+                    },
+                    "host": {
+                      "id": 1,
+                      "ipv4": "10.100.50.121"
+                    },
+                    "attach_time": "2020-03-06T14:46:27.149648+08:00"
+                    "remarks": ""
+                  }
+                ],
+                "host_info": {
+                  "id": 4,
+                  "ipv4": "10.0.200.83",
+                  "group": {
+                    "id": 4
+                  }
+                }
+              }
+            }
+            >>Http Code: 状态码400：请求失败;
+                {
+                    'code': 400,
+                    'code_text': 'xxx失败'
+                }
+        """
         mem_unit = str.upper(request.query_params.get('mem_unit', 'UNKNOWN'))
         if mem_unit not in ['GB', 'MB', 'UNKNOWN']:
             exc = exceptions.BadRequestError(msg='无效的内存单位, 正确格式为GB、MB或为空')
@@ -672,7 +671,8 @@ class VmsViewSet(CustomGenericViewSet):
 
         try:
             VmAPI.check_user_permissions_of_vm(
-                vm=vm, user=request.user, allow_superuser=True, allow_resource=True, allow_owner=True
+                vm=vm, user=request.user, allow_superuser=True, allow_resource=True, allow_owner=True,
+                allow_shared_perm=VmSharedUserManager.SHARED_PERM_READ
             )
         except exceptions.VmAccessDeniedError as exc:
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
@@ -842,6 +842,9 @@ class VmsViewSet(CustomGenericViewSet):
         """
         操作虚拟机
 
+            * 权限需要 资源管理员/超级管理员/共享用户/拥有者
+            * 删除操作 权限需要 资源管理员/超级管理员
+
             >>Http Code: 状态码200：请求成功;
                 {
                     'code': 200,
@@ -965,6 +968,8 @@ class VmsViewSet(CustomGenericViewSet):
     def vm_vnc(self, request, *args, **kwargs):
         """
         创建虚拟机vnc
+
+            * 权限需要 资源管理员/超级管理员/共享用户/拥有者
 
             >> http code 200:
             {
