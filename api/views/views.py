@@ -19,7 +19,7 @@ from logrecord.manager import user_operation_record
 from users.models import UserProfile
 from users.managers import UserManager
 from utils.permissions import APIIPPermission
-from vms.manager import VmManager, VmError, FlavorManager
+from vms.manager import VmManager, VmError, FlavorManager, VmSharedUserManager
 from vms.api import VmAPI
 from vms.migrate import VmMigrateManager
 from novnc.manager import NovncTokenManager, NovncError
@@ -273,19 +273,6 @@ class VmsViewSet(CustomGenericViewSet):
                 'code': 400,
                 'code_text': 'xxx失败'
             }
-
-    vm_status:
-        获取虚拟机当前运行状态
-
-        >> http code 200, 成功：
-        {
-          "code": 200,
-          "code_text": "获取信息成功",
-          "status": {
-            "status_code": 5,
-            "status_text": "shut off"
-          }
-        }
     """
     permission_classes = [IsAuthenticated, APIIPPermission]
     pagination_class = LimitOffsetPagination
@@ -916,6 +903,34 @@ class VmsViewSet(CustomGenericViewSet):
     )
     @action(methods=['get'], url_path='status', detail=True, url_name='vm-status')
     def vm_status(self, request, *args, **kwargs):
+        """
+        获取虚拟机当前运行状态
+
+            >> http code 200, 成功：
+            {
+              "code": 200,
+              "code_text": "获取信息成功",
+              "status": {
+                "status_code": 5,
+                "status_text": "shut off"
+              }
+            }
+
+            * status_code:
+                VIR_DOMAIN_NOSTATE = 0  # no state
+                VIR_DOMAIN_RUNNING = 1  # the domain is running
+                VIR_DOMAIN_BLOCKED = 2  # the domain is blocked on resource
+                VIR_DOMAIN_PAUSED = 3  # the domain is paused by user
+                VIR_DOMAIN_SHUTDOWN = 4  # the domain is being shut down
+                VIR_DOMAIN_SHUTOFF = 5  # the domain is shut off
+                VIR_DOMAIN_CRASHED = 6  # the domain is crashed
+                VIR_DOMAIN_PMSUSPENDED = 7  # the domain is suspended by guest power management
+                        # NB: this enum value will increase over time as new events are added to the
+                        # libvirt API. It reflects the last state supported by this version of the libvirt API.
+                VIR_DOMAIN_LAST = 8
+                VIR_DOMAIN_HOST_DOWN = 9  # host connect failed
+                VIR_DOMAIN_MISS = 10  # vm miss
+        """
         vm_uuid = kwargs.get(self.lookup_field, '')
         api = VmAPI()
 
@@ -973,7 +988,8 @@ class VmsViewSet(CustomGenericViewSet):
 
         try:
             VmAPI.check_user_permissions_of_vm(
-                vm=vm, user=request.user, allow_superuser=True, allow_resource=True, allow_owner=True
+                vm=vm, user=request.user, allow_superuser=True, allow_resource=True, allow_owner=True,
+                allow_shared_perm=VmSharedUserManager.SHARED_PERM_READ
             )
         except exceptions.VmAccessDeniedError as exc:
             return Response(data=exceptions.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机').data(),
