@@ -9,7 +9,7 @@ from utils.errors import VmError, VmNotExistError
 from utils import errors
 from utils.vm_normal_status import vm_normal_status
 from ceph.managers import check_resource_permissions
-from .manager import VmManager, AttachmentsIPManager
+from .manager import VmManager, AttachmentsIPManager, VmSharedUserManager
 from .vminstance import VmInstance
 from .vm_builder import VmBuilder
 
@@ -26,13 +26,20 @@ class VmAPI:
         self._pci_manager = PCIDeviceManager()
 
     @staticmethod
-    def check_user_permissions_of_vm(vm, user, allow_superuser: bool, allow_resource: bool, allow_owner: bool = True):
+    def check_user_permissions_of_vm(
+            vm, user, allow_superuser: bool, allow_resource: bool, allow_owner: bool = True,
+            allow_shared_perm: str = None
+    ):
         """
         :param vm: 云主机对象
         :param user: 用户对象
         :param allow_superuser: True(允许超级管理员)
         :param allow_resource: True(允许资源管理员)
         :param allow_owner: True(允许资源所有者)
+        :param allow_shared_perm:
+            VmSharedUserManager.SHARED_PERM_READ: 允许有读权限的资源共享用户
+            VmSharedUserManager.SHARED_PERM_WRITE: 允许有写权限的资源共享用户
+            其他忽略不允许
         :ratuen:
             True    # 满足权限
             raise VmAccessDeniedError # 没有权限
@@ -41,7 +48,8 @@ class VmAPI:
         """
         return VmInstance.check_user_permissions_of_vm(
             vm=vm, user=user,
-            allow_superuser=allow_superuser, allow_resource=allow_resource, allow_owner=allow_owner
+            allow_superuser=allow_superuser, allow_resource=allow_resource, allow_owner=allow_owner,
+            allow_shared_perm=allow_shared_perm
         )
 
     @staticmethod
@@ -74,7 +82,7 @@ class VmAPI:
 
     def _get_user_perms_vm(
             self, vm_uuid: str, user, related_fields: tuple = (), flag=False, query_user=True,
-            allow_superuser=True, allow_resource=False, allow_owner=True
+            allow_superuser=True, allow_resource=False, allow_owner=True, allow_shared_perm: str = None
     ):
         """
         获取用户有访问权的的虚拟机
@@ -87,6 +95,10 @@ class VmAPI:
         :param allow_superuser: True(允许超级管理员)
         :param allow_resource: True(允许资源管理员)
         :param allow_owner: True(允许资源所有者)
+        :param allow_shared_perm:
+            VmSharedUserManager.SHARED_PERM_READ: 允许有读权限的资源共享用户
+            VmSharedUserManager.SHARED_PERM_WRITE: 允许有写权限的资源共享用户
+            其他忽略不允许
         :return:
             Vm()   # success
 
@@ -99,7 +111,8 @@ class VmAPI:
         if query_user:
             self.check_user_permissions_of_vm(
                 vm=vm, user=user,
-                allow_superuser=allow_superuser, allow_resource=allow_resource, allow_owner=allow_owner
+                allow_superuser=allow_superuser, allow_resource=allow_resource, allow_owner=allow_owner,
+                allow_shared_perm=allow_shared_perm
             )
 
         status_bool = vm_normal_status(vm=vm, flag=flag)
@@ -274,7 +287,8 @@ class VmAPI:
         else:
             vm = self._get_user_perms_vm(
                 vm_uuid=vm_uuid, user=user, related_fields=('host', 'user'),
-                allow_superuser=True, allow_resource=True, allow_owner=True
+                allow_superuser=True, allow_resource=True, allow_owner=True,
+                allow_shared_perm=VmSharedUserManager.SHARED_PERM_WRITE
             )
 
         ops_dict = {

@@ -407,6 +407,27 @@ class AttachmentsIPManager:
 
 
 class VmSharedUserManager:
+    SHARED_PERM_READ = 'read'
+    SHARED_PERM_WRITE = 'write'
+
+    @staticmethod
+    def has_shared_perm_of_vm(vm_id, user_id, perm: str):
+        """
+        param perm: SHARED_PERM_READ or SHARED_PERM_WRITE
+        """
+        obj = VmSharedUser.objects.filter(vm_id=vm_id, user_id=user_id).first()
+        if obj is None:
+            return False
+
+        if perm == VmSharedUserManager.SHARED_PERM_READ:
+            if obj.permission in [VmSharedUser.Permission.READONLY.value, VmSharedUser.Permission.READWRITE.value]:
+                return True
+        elif perm == VmSharedUserManager.SHARED_PERM_WRITE:
+            if obj.permission == VmSharedUser.Permission.READWRITE.value:
+                return True
+
+        return False
+
     @staticmethod
     def get_vm_shared_users_qs(vm_id):
         return VmSharedUser.objects.select_related('user').filter(vm_id=vm_id)

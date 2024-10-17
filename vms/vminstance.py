@@ -15,7 +15,7 @@ from .xml_builder import VmXMLBuilder
 from .models import (
     Vm, VmDiskSnap, rename_sys_disk_delete, rename_image, Image
 )
-from .manager import VmArchiveManager, VmLogManager, AttachmentsIPManager
+from .manager import VmArchiveManager, VmLogManager, AttachmentsIPManager, VmSharedUserManager
 from .migrate import VmMigrateManager
 from .vm_builder import VmBuilder, get_vm_domain
 
@@ -43,13 +43,20 @@ class VmInstance:
         return self._vm_domain
 
     @staticmethod
-    def check_user_permissions_of_vm(vm, user, allow_superuser: bool, allow_resource: bool, allow_owner: bool = True):
+    def check_user_permissions_of_vm(
+            vm, user, allow_superuser: bool, allow_resource: bool, allow_owner: bool = True,
+            allow_shared_perm: str = None
+    ):
         """
         :param vm: 云主机对象
         :param user: 用户对象
         :param allow_superuser: True(允许超级管理员)
         :param allow_resource: True(允许资源管理员)
         :param allow_owner: True(允许资源所有者)
+        :param allow_shared_perm:
+            VmSharedUserManager.SHARED_PERM_READ: 允许有读权限的资源共享用户
+            VmSharedUserManager.SHARED_PERM_WRITE: 允许有写权限的资源共享用户
+            其他忽略不允许
         :ratuen:
             True    # 满足权限
             raise VmAccessDeniedError # 没有权限
@@ -64,6 +71,10 @@ class VmInstance:
 
         if allow_resource and check_resource_permissions(user=user):
             return True
+
+        if allow_shared_perm:
+            if VmSharedUserManager.has_shared_perm_of_vm(vm_id=vm.uuid, user_id=user.id, perm=allow_shared_perm):
+                return True
 
         raise errors.VmAccessDeniedError(msg='当前用户没有权限访问此虚拟机')
 
