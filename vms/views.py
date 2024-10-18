@@ -15,6 +15,7 @@ from image.models import Image
 from device.manager import PCIDeviceManager, DeviceError
 from utils.paginators import NumsPaginator
 from network.managers import MacIPManager, VlanManager
+from vms.manager import VmSharedUserManager
 from .models import AttachmentsIP
 
 User = get_user_model()
@@ -204,7 +205,8 @@ class VmDetailView(View):
             except VmNotExistError as error:
                 return error.render(request=request)
 
-        return render(request, 'vm_detail.html', context={'vm': vm})
+        vm_shared_users = VmSharedUserManager.get_vm_shared_users_qs(vm_id=vm_uuid)
+        return render(request, 'vm_detail.html', context={'vm': vm, 'vm_shared_users': vm_shared_users})
 
 
 class VmEditView(View):

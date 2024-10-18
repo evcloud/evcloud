@@ -386,6 +386,38 @@
                                 </div>
                             </div>
                         </li>
+                    <li class="list-group-item" id="id-vm-shared-users-content">
+                        <p><strong>{% translate '共享用户' %}</strong></p>
+                        {% if vm_shared_users %}
+                            <table class="table table-default text-center table-vm-shared-users-list"
+                                   style="word-wrap:break-word;word-break:break-all;">
+                                <thead class="thead-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>{% translate '用户' %}</th>
+                                    <th>{% translate '权限' %}</th>
+                                    <th>{% translate '创建时间' %}</th>
+                                    <th>{% translate '备注' %}</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for sh_user in vm_shared_users %}
+                                    <tr id="tr_shared-user_{{ sh_user.id }}">
+                                        <td>{{ sh_user.id }}</td>
+                                        <td class="line-limit-length" style="max-width: 150px;" title="{{ sh_user.user.username }}">{{ sh_user.user.username }}</td>
+                                        <td>{{ sh_user.get_permission_display }}</td>
+                                        {% timezone request.session.useTimeZone|default:'UTC' %}
+                                            <td>{{ sh_user.create_time |date:'Y-m-d H:i:s' }}</td>
+                                        {% endtimezone %}
+                                        <td>{{ sh_user.remarks }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            {% translate '无共享用户' %}
+                        {% endif %}
+                    </li>
                     </ul>
                 </div>
             </div>
