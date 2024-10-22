@@ -1964,6 +1964,19 @@ class VmsViewSet(CustomGenericViewSet):
             return serializers.VmCreateSerializer
         return Serializer
 
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        # 跳过ip白名单限制
+        if self.action in [
+            'vm_status', 'vm_vnc', 'vm_operations'
+        ]:
+            return [
+                permission() for permission in self.permission_classes if permission is not APIIPPermission]
+
+        return [permission() for permission in self.permission_classes]
+
 
 class CenterViewSet(CustomGenericViewSet):
     """
