@@ -2200,7 +2200,7 @@ class VlanViewSet(CustomGenericViewSet):
     """
     vlan类视图
     """
-    permission_classes = [IsAuthenticated, APIIPPermission]
+    permission_classes = [IsAuthenticated,]
     pagination_class = LimitOffsetPagination
     lookup_field = 'id'
 
@@ -2378,7 +2378,7 @@ class ImageViewSet(CustomGenericViewSet):
     """
     镜像类视图
     """
-    permission_classes = [IsAuthenticated, APIIPPermission]
+    permission_classes = [IsAuthenticated,]
     pagination_class = LimitOffsetPagination
     lookup_field = 'id'
 
